@@ -5,14 +5,20 @@ import { OAuth2Client } from 'google-auth-library';
 const getRedirectUri = () => {
   // Check if we're running on Replit
   if (process.env.REPLIT_DEV_DOMAIN) {
-    return `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/google/callback`;
+    const uri = `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/google/callback`;
+    console.log('Using REPLIT_DEV_DOMAIN redirect URI:', uri);
+    return uri;
   }
   if (process.env.REPLIT_DOMAINS) {
     const domain = process.env.REPLIT_DOMAINS.split(',')[0];
-    return `https://${domain}/api/auth/google/callback`;
+    const uri = `https://${domain}/api/auth/google/callback`;
+    console.log('Using REPLIT_DOMAINS redirect URI:', uri);
+    return uri;
   }
   // For local development
-  return 'http://localhost:5000/api/auth/google/callback';
+  const uri = 'http://localhost:5000/api/auth/google/callback';
+  console.log('Using localhost redirect URI:', uri);
+  return uri;
 };
 
 const oauth2Client = new OAuth2Client(

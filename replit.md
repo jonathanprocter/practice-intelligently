@@ -166,7 +166,9 @@ Required environment variables:
 
 **Google Cloud Console Setup Required:**
 - App name: RemarkablePlanner
-- JavaScript Origins: https://remarkableplanner.replit.app, https://remarkableplanner.replit.dev
-- Redirect URIs: https://remarkableplanner.replit.app/api/auth/google/callback, https://remarkableplanner.replit.dev/api/auth/google/callback
+- JavaScript Origins: https://remarkableplanner.replit.app, https://remarkableplanner.replit.dev, https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev
+- Redirect URIs: https://remarkableplanner.replit.app/api/auth/google/callback, https://remarkableplanner.replit.dev/api/auth/google/callback, https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/api/auth/google/callback
+
+**Current Issue (2025-01-31):** Google Calendar OAuth failing because current Replit domain `https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev` needs to be added to Google Cloud Console authorized redirect URIs.
 
 The system is designed for scalability with serverless-ready architecture and modern deployment practices. The separation of concerns allows for independent scaling of frontend and backend components while maintaining type safety throughout the application.
