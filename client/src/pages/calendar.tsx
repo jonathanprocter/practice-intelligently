@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 
 export default function Calendar() {
@@ -20,7 +21,7 @@ export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState('week');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [selectedCalendarId, setSelectedCalendarId] = useState<string>('primary');
+  const [selectedCalendarId, setSelectedCalendarId] = useState<string>('all');
 
   // Get week range
   const weekEnd = getWeekEnd(currentWeek);
@@ -34,9 +35,14 @@ export default function Calendar() {
   };
 
   const { data: googleEvents, isLoading, error } = useQuery({
-    queryKey: ['google-calendar-events', 'dr-procter-id', currentWeek.toISOString(), selectedCalendarId],
+    queryKey: ['google-calendar-events', 'dr-procter-id', selectedCalendarId],
     queryFn: async () => {
-      const response = await fetch(`/api/calendar/events/dr-procter-id?timeMin=${currentWeek.toISOString()}&timeMax=${weekEnd.toISOString()}&calendarId=${selectedCalendarId}`);
+      // Fetch all events from 2023 to end of 2025
+      const timeMin = new Date('2023-01-01T00:00:00.000Z').toISOString();
+      const timeMax = new Date('2025-12-31T23:59:59.999Z').toISOString();
+      const calendarParam = selectedCalendarId === 'all' ? 'all' : selectedCalendarId;
+      
+      const response = await fetch(`/api/calendar/events/dr-procter-id?timeMin=${timeMin}&timeMax=${timeMax}&calendarId=${calendarParam}`);
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
           throw new Error('Google Calendar not connected');
@@ -189,19 +195,19 @@ export default function Calendar() {
       <div className="p-6">
         <Card className="therapy-card border-therapy-primary">
           <CardContent className="p-6 text-center">
-            <h2 className="text-xl font-bold text-therapy-text mb-4">Google Calendar Connection Required</h2>
+            <h2 className="text-xl font-bold text-therapy-text mb-4">Google Calendar Authentication Required</h2>
             <p className="text-therapy-text/70 mb-6">
-              To view and manage your appointments, please connect your Google Calendar account.
-              This will sync your existing events and allow you to manage your schedule directly from Practice Intelligence.
+              Your Google Calendar session has expired or needs to be reconnected.
+              Please authenticate again to view your calendar events from 2023-2025.
             </p>
             <Button 
               onClick={connectGoogleCalendar}
               className="bg-blue-600 hover:bg-blue-700 text-white mb-4"
             >
-              Connect Google Calendar
+              Reconnect Google Calendar
             </Button>
             <p className="text-sm text-therapy-text/50">
-              Your calendar data will remain private and secure.
+              This will restore access to all your calendars: Simple Practice, TrevorAI, Holidays, and personal events.
             </p>
           </CardContent>
         </Card>
@@ -219,11 +225,28 @@ export default function Calendar() {
             <div className="flex items-center space-x-3 mt-2">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-therapy-success rounded-full"></div>
-                <span className="text-sm text-therapy-text/70">Online</span>
+                <span className="text-sm text-therapy-text/70">Google Calendar Connected</span>
               </div>
               <span className="text-sm text-therapy-text/70">
-                Weekly Calendar • Click any day to view details
+                {calendarEvents.length} events from 2023-2025 • Click any day to view details
               </span>
+            </div>
+            
+            {/* Calendar Selector */}
+            <div className="mt-3">
+              <Select value={selectedCalendarId} onValueChange={setSelectedCalendarId}>
+                <SelectTrigger className="w-64 bg-therapy-bg border-therapy-border">
+                  <SelectValue placeholder="Select calendar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Calendars</SelectItem>
+                  {calendars?.map((cal: any) => (
+                    <SelectItem key={cal.id} value={cal.id}>
+                      {cal.summary}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           

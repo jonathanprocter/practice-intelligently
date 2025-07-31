@@ -87,7 +87,9 @@ export class GoogleCalendarService {
       }
       
       const response = await calendar.calendarList.list();
-      return response.data.items || [];
+      const calendars = response.data.items || [];
+      console.log(`Found ${calendars.length} calendars:`, calendars.map(c => `${c.summary} (${c.id})`));
+      return calendars;
     } catch (error: any) {
       console.error('Error fetching calendars:', error);
       if (error.code === 403) {
@@ -100,6 +102,38 @@ export class GoogleCalendarService {
     }
   }
 
+  // New method to get events from all calendars
+  async getAllEvents(timeMin?: string, timeMax?: string): Promise<GoogleCalendarEvent[]> {
+    try {
+      const calendars = await this.listCalendars();
+      const allEvents: GoogleCalendarEvent[] = [];
+      
+      // Fetch events from all calendars in parallel
+      const promises = calendars.map(async (cal) => {
+        try {
+          const events = await this.getEvents(cal.id, timeMin, timeMax);
+          return events.map(event => ({
+            ...event,
+            calendarId: cal.id,
+            calendarName: cal.summary
+          }));
+        } catch (error) {
+          console.log(`Skipping calendar ${cal.summary} due to error:`, error);
+          return [];
+        }
+      });
+      
+      const results = await Promise.all(promises);
+      results.forEach(events => allEvents.push(...events));
+      
+      console.log(`Total events found across all calendars: ${allEvents.length}`);
+      return allEvents;
+    } catch (error) {
+      console.error('Error fetching events from all calendars:', error);
+      throw error;
+    }
+  }
+
   async getEvents(calendarId: string = 'primary', timeMin?: string, timeMax?: string): Promise<GoogleCalendarEvent[]> {
     try {
       // Check if we have valid credentials
@@ -107,15 +141,29 @@ export class GoogleCalendarService {
         throw new Error('No valid credentials - authentication required');
       }
       
+      // Use very broad time range - from 2023 to end of 2025
+      const defaultTimeMin = new Date('2023-01-01T00:00:00.000Z').toISOString();
+      const defaultTimeMax = new Date('2025-12-31T23:59:59.999Z').toISOString();
+      
+      const finalTimeMin = timeMin || defaultTimeMin;
+      const finalTimeMax = timeMax || defaultTimeMax;
+      
+      console.log(`Fetching events for calendar: ${calendarId}, timeMin: ${finalTimeMin}, timeMax: ${finalTimeMax}`);
+      
       const response = await calendar.events.list({
         calendarId,
-        timeMin: timeMin || new Date().toISOString(),
-        timeMax: timeMax || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        timeMin: finalTimeMin,
+        timeMax: finalTimeMax,
         singleEvents: true,
         orderBy: 'startTime',
+        maxResults: 250,
+        showDeleted: false
       });
 
-      return (response.data.items || []).map((event: any): GoogleCalendarEvent => {
+      const events = response.data.items || [];
+      console.log(`Found ${events.length} events in calendar ${calendarId}`);
+
+      return events.map((event: any): GoogleCalendarEvent => {
         const attendees = event.attendees?.map((attendee: any) => ({
           email: attendee.email || '',
           displayName: attendee.displayName || undefined,

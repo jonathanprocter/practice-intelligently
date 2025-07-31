@@ -359,11 +359,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/calendar/events/:therapistId', async (req, res) => {
     try {
       const { timeMin, timeMax, calendarId } = req.query;
-      const events = await googleCalendarService.getEvents(
-        calendarId as string || 'primary',
-        timeMin as string,
-        timeMax as string
-      );
+      
+      let events;
+      if (!calendarId || calendarId === 'all') {
+        // Fetch from all calendars
+        events = await googleCalendarService.getAllEvents(
+          timeMin as string,
+          timeMax as string
+        );
+      } else {
+        // Fetch from specific calendar
+        events = await googleCalendarService.getEvents(
+          calendarId as string,
+          timeMin as string,
+          timeMax as string
+        );
+      }
+      
       res.json(events);
     } catch (error: any) {
       console.error('Error fetching calendar events:', error);
