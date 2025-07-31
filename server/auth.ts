@@ -80,7 +80,9 @@ export class GoogleCalendarService {
 
   async getAccessToken(code: string): Promise<void> {
     try {
+      console.log('Exchanging authorization code for tokens...');
       const { tokens } = await this.auth.getToken(code);
+      console.log('Successfully received tokens:', Object.keys(tokens));
       this.tokens = tokens;
       this.auth.setCredentials(tokens);
       this.isAuthenticated = true;

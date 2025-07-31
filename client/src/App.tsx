@@ -13,6 +13,10 @@ import Analytics from "@/pages/analytics";
 import AiInsights from "@/pages/ai-insights";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
+import { lazy, Suspense } from "react";
+
+const OAuthDebug = lazy(() => import("./pages/oauth-debug"));
+const OAuthTest = lazy(() => import("./pages/oauth-test"));
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 
@@ -42,8 +46,16 @@ function Router() {
       <Route path="/analytics" component={Analytics} />
       <Route path="/ai-insights" component={AiInsights} />
       <Route path="/settings" component={Settings} />
-      <Route path="/oauth-debug" component={() => import('./pages/oauth-debug').then(m => m.default)} />
-      <Route path="/oauth-test" component={() => import('./pages/oauth-test').then(m => m.default)} />
+      <Route path="/oauth-debug">
+        <Suspense fallback={<div className="p-6">Loading...</div>}>
+          <OAuthDebug />
+        </Suspense>
+      </Route>
+      <Route path="/oauth-test">
+        <Suspense fallback={<div className="p-6">Loading...</div>}>
+          <OAuthTest />
+        </Suspense>
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );

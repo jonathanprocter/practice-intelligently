@@ -304,7 +304,10 @@ export default function Calendar() {
               </Button>
               <Button 
                 variant="outline" 
-                onClick={() => window.open('/oauth-test', '_blank')} 
+                onClick={() => {
+                  // Use window.location.href for better compatibility
+                  window.location.href = '/oauth-test';
+                }} 
                 className="w-full text-xs"
               >
                 Debug OAuth Issues
