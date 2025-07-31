@@ -34,55 +34,104 @@ export default function Calendar() {
     window.location.href = '/api/auth/google';
   };
 
-  const { data: googleEvents, isLoading, error } = useQuery({
+  const { data: googleEvents = [], isLoading, error, refetch } = useQuery({
     queryKey: ['google-calendar-events', 'dr-procter-id', selectedCalendarId],
     queryFn: async () => {
+      // First check if Google Calendar is connected
+      const statusResponse = await fetch('/api/auth/google/status');
+      const status = await statusResponse.json();
+      
+      if (!status.connected) {
+        throw new Error('Google Calendar not connected');
+      }
+      
       // Fetch all events from 2023 to end of 2025
       const timeMin = new Date('2023-01-01T00:00:00.000Z').toISOString();
       const timeMax = new Date('2025-12-31T23:59:59.999Z').toISOString();
       const calendarParam = selectedCalendarId === 'all' ? 'all' : selectedCalendarId;
       
       const response = await fetch(`/api/calendar/events/dr-procter-id?timeMin=${timeMin}&timeMax=${timeMax}&calendarId=${calendarParam}`);
+      
       if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 401 || response.status === 403 || errorData.requiresAuth) {
           throw new Error('Google Calendar not connected');
         }
-        throw new Error('Failed to fetch calendar events');
+        throw new Error(errorData.error || 'Failed to fetch calendar events');
+      }
+      
+      return response.json();
+    },
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true
+  });
+
+  // Fetch available calendars
+  const { data: calendars = [] } = useQuery({
+    queryKey: ['google-calendars'],
+    queryFn: async () => {
+      const response = await fetch('/api/calendar/calendars');
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          return [];
+        }
+        throw new Error('Failed to fetch calendars');
       }
       return response.json();
     },
     retry: false,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    enabled: !!googleEvents?.length || !error // Only fetch if we have events or no error
   });
 
-  // Fetch available calendars
-  const { data: calendars } = useQuery({
-    queryKey: ['google-calendars'],
-    queryFn: async () => {
-      const response = await fetch('/api/calendar/calendars');
-      if (!response.ok) return [];
-      return response.json();
-    },
-    retry: false,
-    refetchOnWindowFocus: false
+  // Convert Google Calendar events to calendar events with proper error handling
+  const calendarEvents: CalendarEvent[] = googleEvents.map((event: any) => {
+    // Handle both dateTime and date formats from Google Calendar
+    let startTime: Date, endTime: Date;
+    
+    try {
+      if (event.start?.dateTime) {
+        startTime = new Date(event.start.dateTime);
+      } else if (event.start?.date) {
+        startTime = new Date(event.start.date + 'T00:00:00');
+      } else {
+        startTime = new Date();
+      }
+      
+      if (event.end?.dateTime) {
+        endTime = new Date(event.end.dateTime);
+      } else if (event.end?.date) {
+        endTime = new Date(event.end.date + 'T23:59:59');
+      } else {
+        endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour default
+      }
+    } catch (dateError) {
+      console.error('Error parsing event dates:', dateError, event);
+      startTime = new Date();
+      endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+    }
+    
+    return {
+      id: event.id || `event-${Math.random()}`,
+      title: event.summary || 'Untitled Event',
+      startTime,
+      endTime,
+      clientId: `google-${event.id}`,
+      clientName: event.summary || 'Google Calendar Event',
+      type: 'individual' as CalendarEvent['type'],
+      status: (event.status === 'confirmed' ? 'scheduled' : 'pending') as CalendarEvent['status'],
+      location: event.location || 'Remote/Office',
+      notes: event.description || '',
+      therapistId: 'dr-procter-id',
+      source: 'google' as CalendarEvent['source'],
+      attendees: event.attendees?.map((a: any) => a.email).join(', ') || '',
+      calendarName: event.calendarName || 'Google Calendar'
+    };
+  }).filter(event => {
+    // Filter out invalid events
+    return event.startTime instanceof Date && !isNaN(event.startTime.getTime());
   });
-
-  // Convert Google Calendar events to calendar events  
-  const calendarEvents: CalendarEvent[] = (googleEvents || []).map((event: any) => ({
-    id: event.id,
-    title: event.summary || 'Untitled Event',
-    startTime: new Date(event.start.dateTime),
-    endTime: new Date(event.end.dateTime),
-    clientId: `google-${event.id}`,
-    clientName: event.summary || 'Google Calendar Event',
-    type: 'individual' as CalendarEvent['type'],
-    status: (event.status === 'confirmed' ? 'scheduled' : 'pending') as CalendarEvent['status'],
-    location: event.location || 'Dr. Jonathan Procter\'s Office',
-    notes: event.description || '',
-    therapistId: 'dr-procter-id',
-    source: 'google' as CalendarEvent['source'],
-    attendees: event.attendees?.map((a: any) => a.email).join(', ') || ''
-  }));
 
   // Create calendar days with events
   const calendarDays: CalendarDay[] = weekDays.map(date => ({
@@ -179,6 +228,37 @@ export default function Calendar() {
     console.log(`Opening session notes for event ${event.id}`);
   };
 
+  // Show connection error with connect button
+  if (error && error.message?.includes('Google Calendar not connected')) {
+    return (
+      <div className="p-6">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-4">
+              <CalendarIcon className="w-16 h-16 mx-auto text-gray-400" />
+              <div>
+                <h3 className="text-lg font-semibold">Connect Google Calendar</h3>
+                <p className="text-gray-600 mt-2">
+                  Connect your Google Calendar to view and manage your appointments
+                </p>
+              </div>
+              <Button onClick={connectGoogleCalendar} className="w-full">
+                Connect Google Calendar
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => refetch()} 
+                className="w-full"
+              >
+                Retry Connection
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="p-6">
@@ -224,27 +304,34 @@ export default function Calendar() {
             <h1 className="text-2xl font-bold text-therapy-text">{weekRangeString}</h1>
             <div className="flex items-center space-x-3 mt-2">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-therapy-success rounded-full"></div>
-                <span className="text-sm text-therapy-text/70">Google Calendar Connected</span>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-600">Google Calendar Connected</span>
               </div>
-              <span className="text-sm text-therapy-text/70">
-                {calendarEvents.length} events from 2023-2025 • Click any day to view details
+              <span className="text-sm text-gray-600">
+                {calendarEvents.length} events loaded • 
+                {calendars?.length > 0 ? ` ${calendars.length} calendars` : ' Loading calendars...'}
               </span>
             </div>
             
             {/* Calendar Selector */}
             <div className="mt-3">
               <Select value={selectedCalendarId} onValueChange={setSelectedCalendarId}>
-                <SelectTrigger className="w-64 bg-therapy-bg border-therapy-border">
+                <SelectTrigger className="w-64">
                   <SelectValue placeholder="Select calendar" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Calendars</SelectItem>
-                  {calendars?.map((cal: any) => (
-                    <SelectItem key={cal.id} value={cal.id}>
-                      {cal.summary}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="all">All Calendars ({calendarEvents.length} events)</SelectItem>
+                  {calendars?.map((cal: any) => {
+                    const calendarEventCount = calendarEvents.filter(event => 
+                      event.calendarName === cal.summary || 
+                      (event as any).calendarId === cal.id
+                    ).length;
+                    return (
+                      <SelectItem key={cal.id} value={cal.id}>
+                        {cal.summary} ({calendarEventCount} events)
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>

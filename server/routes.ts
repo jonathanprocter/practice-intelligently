@@ -336,7 +336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Check Google Calendar connection status
   app.get('/api/auth/google/status', (req, res) => {
-    const isConnected = googleCalendarService.isAuthenticated();
+    const isConnected = googleCalendarService.isConnected();
     res.json({ connected: isConnected });
   });
 
@@ -360,6 +360,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { timeMin, timeMax, calendarId } = req.query;
       
+      if (!googleCalendarService.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
       let events;
       if (!calendarId || calendarId === 'all') {
         // Fetch from all calendars
@@ -379,7 +383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(events);
     } catch (error: any) {
       console.error('Error fetching calendar events:', error);
-      if (error.message?.includes('authentication required') || error.message?.includes('No valid credentials')) {
+      if (error.message?.includes('authentication required')) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
       res.status(500).json({ error: 'Failed to fetch calendar events' });
@@ -388,11 +392,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/calendar/calendars', async (req, res) => {
     try {
+      if (!googleCalendarService.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
       const calendars = await googleCalendarService.listCalendars();
       res.json(calendars);
     } catch (error: any) {
       console.error('Error fetching calendars:', error);
-      if (error.message?.includes('authentication required') || error.message?.includes('No valid credentials')) {
+      if (error.message?.includes('authentication required')) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
       res.status(500).json({ error: 'Failed to fetch calendars' });

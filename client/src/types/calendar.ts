@@ -6,7 +6,7 @@ export interface CalendarEvent {
   clientId?: string;
   clientName?: string;
   type: 'individual' | 'group' | 'intake' | 'consultation' | 'assessment' | 'follow-up';
-  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no-show';
+  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no-show' | 'pending';
   location?: string;
   notes?: string;
   isAllDay?: boolean;
@@ -14,6 +14,8 @@ export interface CalendarEvent {
   color?: string;
   source?: 'system' | 'google' | 'manual';
   therapistId: string;
+  attendees?: string;
+  calendarName?: string;
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }
