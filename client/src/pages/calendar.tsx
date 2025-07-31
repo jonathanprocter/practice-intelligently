@@ -35,6 +35,7 @@ export default function Calendar() {
   // Fetch Google Calendar events instead of mock appointments
   // Add Connect Google Calendar functionality
   const connectGoogleCalendar = () => {
+    console.log('Initiating Google Calendar connection...');
     window.location.href = '/api/auth/google';
   };
 

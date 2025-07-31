@@ -342,16 +342,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/auth/google/callback', async (req, res) => {
     try {
-      const { code } = req.query;
+      const { code, error } = req.query;
+      
+      if (error) {
+        console.error('OAuth authorization error:', error);
+        return res.redirect('/calendar?error=oauth_denied');
+      }
+      
       if (!code) {
+        console.error('No authorization code received');
         return res.status(400).json({ error: 'Authorization code is required' });
       }
       
+      console.log('Processing OAuth callback with code:', (code as string).substring(0, 10) + '...');
       await googleCalendarService.getAccessToken(code as string);
-      res.redirect('/?connected=true');
+      console.log('Google Calendar authentication successful');
+      res.redirect('/calendar?connected=true');
     } catch (error) {
       console.error('OAuth callback error:', error);
-      res.redirect('/?error=auth_failed');
+      res.redirect('/calendar?error=auth_failed');
     }
   });
 
