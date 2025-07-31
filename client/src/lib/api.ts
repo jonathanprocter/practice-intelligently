@@ -118,6 +118,26 @@ export class ApiClient {
     return response.json();
   }
 
+  static async updateAppointment(id: string, updates: Partial<Appointment>): Promise<Appointment> {
+    const response = await apiRequest('PUT', `/api/appointments/${id}`, updates);
+    return response.json();
+  }
+
+  static async updateAppointmentStatus(id: string, status: string, reason?: string): Promise<Appointment> {
+    const response = await apiRequest('PATCH', `/api/appointments/${id}/status`, { status, reason });
+    return response.json();
+  }
+
+  static async cancelAppointment(id: string, reason?: string): Promise<Appointment> {
+    const response = await apiRequest('DELETE', `/api/appointments/${id}`, { reason });
+    return response.json();
+  }
+
+  static async getAppointment(id: string): Promise<Appointment> {
+    const response = await apiRequest('GET', `/api/appointments/detail/${id}`);
+    return response.json();
+  }
+
   static async getActionItems(): Promise<ActionItem[]> {
     const response = await apiRequest('GET', `/api/action-items/${this.therapistId}`);
     return response.json();

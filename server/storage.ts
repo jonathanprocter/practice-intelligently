@@ -271,6 +271,43 @@ export class DatabaseStorage implements IStorage {
     return updatedAppointment;
   }
 
+  async getAppointment(id: string): Promise<Appointment | undefined> {
+    const [appointment] = await db
+      .select()
+      .from(appointments)
+      .where(eq(appointments.id, id));
+    return appointment || undefined;
+  }
+
+  async rescheduleAppointment(id: string, newStartTime: Date, newEndTime: Date): Promise<Appointment> {
+    return await this.updateAppointment(id, {
+      startTime: newStartTime,
+      endTime: newEndTime,
+      status: 'scheduled'
+    });
+  }
+
+  async completeAppointment(id: string): Promise<Appointment> {
+    return await this.updateAppointment(id, {
+      status: 'completed',
+      completedAt: new Date()
+    });
+  }
+
+  async checkInAppointment(id: string): Promise<Appointment> {
+    return await this.updateAppointment(id, {
+      status: 'checked_in',
+      checkedInAt: new Date()
+    });
+  }
+
+  async markNoShow(id: string, reason?: string): Promise<Appointment> {
+    return await this.updateAppointment(id, {
+      status: 'no_show',
+      noShowReason: reason
+    });
+  }
+
   async getSessionNotes(clientId: string): Promise<SessionNote[]> {
     return await db
       .select()

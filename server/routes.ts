@@ -176,6 +176,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/appointments/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      const appointment = await storage.updateAppointment(id, updateData);
+      res.json(appointment);
+    } catch (error) {
+      console.error("Error updating appointment:", error);
+      res.status(500).json({ error: "Failed to update appointment" });
+    }
+  });
+
+  app.patch("/api/appointments/:id/status", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, reason } = req.body;
+      
+      let updateData: any = { status };
+      
+      if (status === 'cancelled' && reason) {
+        updateData.cancellationReason = reason;
+      } else if (status === 'no_show' && reason) {
+        updateData.noShowReason = reason;
+      } else if (status === 'completed') {
+        updateData.completedAt = new Date();
+      } else if (status === 'checked_in') {
+        updateData.checkedInAt = new Date();
+      }
+      
+      const appointment = await storage.updateAppointment(id, updateData);
+      res.json(appointment);
+    } catch (error) {
+      console.error("Error updating appointment status:", error);
+      res.status(500).json({ error: "Failed to update appointment status" });
+    }
+  });
+
+  app.delete("/api/appointments/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      const appointment = await storage.cancelAppointment(id, reason || 'Cancelled by user');
+      res.json(appointment);
+    } catch (error) {
+      console.error("Error cancelling appointment:", error);
+      res.status(500).json({ error: "Failed to cancel appointment" });
+    }
+  });
+
+  app.get("/api/appointments/detail/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const appointment = await storage.getAppointment(id);
+      if (!appointment) {
+        res.status(404).json({ error: "Appointment not found" });
+        return;
+      }
+      res.json(appointment);
+    } catch (error) {
+      console.error("Error fetching appointment:", error);
+      res.status(500).json({ error: "Failed to fetch appointment" });
+    }
+  });
+
   // Session Notes
   app.get("/api/session-notes/:clientId", async (req, res) => {
     try {
