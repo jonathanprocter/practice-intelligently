@@ -447,6 +447,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced AI Insights endpoint
+  app.post('/api/ai/enhanced-insights', async (req, res) => {
+    try {
+      const { generateEnhancedInsights } = await import('./ai-enhanced-insights');
+      const insights = await generateEnhancedInsights(req.body);
+      res.json(insights);
+    } catch (error: any) {
+      console.error('Error generating enhanced insights:', error);
+      res.status(500).json({ error: 'Failed to generate enhanced insights' });
+    }
+  });
+
+  // Progress Report endpoint
+  app.post('/api/ai/progress-report', async (req, res) => {
+    try {
+      const { clientId, timeframe } = req.body;
+      const { generateProgressReport } = await import('./ai-enhanced-insights');
+      const report = await generateProgressReport(clientId, timeframe);
+      res.json(report);
+    } catch (error: any) {
+      console.error('Error generating progress report:', error);
+      res.status(500).json({ error: 'Failed to generate progress report' });
+    }
+  });
+
+  // Risk Assessment endpoint
+  app.post('/api/ai/risk-assessment', async (req, res) => {
+    try {
+      const { sessionContent, clientHistory } = req.body;
+      const { assessClientRisk } = await import('./ai-enhanced-insights');
+      const assessment = await assessClientRisk(sessionContent, clientHistory);
+      res.json(assessment);
+    } catch (error: any) {
+      console.error('Error conducting risk assessment:', error);
+      res.status(500).json({ error: 'Failed to conduct risk assessment' });
+    }
+  });
+
   // Session Notes endpoints
   app.post('/api/session-notes', async (req, res) => {
     try {
