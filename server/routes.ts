@@ -695,50 +695,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Document processing endpoint
+  // Document processing endpoint - AI extracts client info automatically
   app.post('/api/documents/process-clinical', upload.single('document'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
-      const { clientId, sessionDate } = req.body;
-      
-      if (!clientId || !sessionDate) {
-        return res.status(400).json({ error: 'Client ID and session date are required' });
-      }
-
       // Import document processor
       const { documentProcessor } = await import('./document-processor');
       
-      // Process the uploaded document
+      // Process the uploaded document and extract metadata using AI
       const processedDoc = await documentProcessor.processDocument(
         req.file.path,
         req.file.originalname
       );
-
-      // Generate progress note using AI
-      const progressNote = await documentProcessor.generateProgressNote(
-        processedDoc.extractedText,
-        clientId,
-        sessionDate
-      );
-
-      // Save progress note to database
-      const savedNote = await storage.createProgressNote({
-        clientId,
-        therapistId: req.body.therapistId || 'therapist-1', // Default therapist for now
-        title: progressNote.title,
-        subjective: progressNote.subjective,
-        objective: progressNote.objective,
-        assessment: progressNote.assessment,
-        plan: progressNote.plan,
-        tonalAnalysis: progressNote.tonalAnalysis,
-        keyPoints: progressNote.keyPoints,
-        significantQuotes: progressNote.significantQuotes,
-        narrativeSummary: progressNote.narrativeSummary,
-        sessionDate: new Date(sessionDate),
-      });
 
       // Clean up uploaded file
       try {
@@ -747,13 +718,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.warn('Failed to cleanup uploaded file:', cleanupError);
       }
 
+      // Return extracted information for user confirmation
       res.json({
         success: true,
-        extractedText: processedDoc.extractedText.substring(0, 500) + '...', // Return preview
+        extractedText: processedDoc.extractedText.substring(0, 1000) + '...', // Return preview
         detectedClientName: processedDoc.detectedClientName,
         detectedSessionDate: processedDoc.detectedSessionDate,
-        progressNote: savedNote,
-        message: 'Document processed and progress note generated successfully'
+        fullContent: processedDoc.extractedText, // Full content for progress note generation
+        fileName: req.file.originalname,
+        requiresConfirmation: true,
+        message: 'Document processed successfully. Please confirm the extracted information.'
       });
 
     } catch (error: any) {
@@ -770,6 +744,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(500).json({ 
         error: 'Failed to process document',
+        details: error.message 
+      });
+    }
+  });
+
+  // Generate progress note after user confirmation
+  app.post('/api/documents/generate-progress-note', async (req, res) => {
+    try {
+      const { content, clientId, sessionDate, detectedClientName, detectedSessionDate } = req.body;
+      
+      if (!content) {
+        return res.status(400).json({ error: 'Document content is required' });
+      }
+
+      // Use detected or provided information
+      const finalClientId = clientId || 'detected-client';
+      const finalSessionDate = sessionDate || detectedSessionDate || new Date().toISOString();
+
+      // Import document processor
+      const { documentProcessor } = await import('./document-processor');
+      
+      // Generate progress note using AI
+      const progressNote = await documentProcessor.generateProgressNote(
+        content,
+        finalClientId,
+        finalSessionDate
+      );
+
+      // Save progress note to database
+      const savedNote = await storage.createProgressNote({
+        clientId: finalClientId,
+        therapistId: req.body.therapistId || 'therapist-1',
+        title: progressNote.title,
+        subjective: progressNote.subjective,
+        objective: progressNote.objective,
+        assessment: progressNote.assessment,
+        plan: progressNote.plan,
+        tonalAnalysis: progressNote.tonalAnalysis,
+        keyPoints: progressNote.keyPoints,
+        significantQuotes: progressNote.significantQuotes,
+        narrativeSummary: progressNote.narrativeSummary,
+        sessionDate: new Date(finalSessionDate),
+      });
+
+      res.json({
+        success: true,
+        progressNote: savedNote,
+        message: 'Progress note generated and saved successfully'
+      });
+
+    } catch (error: any) {
+      console.error('Error generating progress note:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate progress note',
         details: error.message 
       });
     }

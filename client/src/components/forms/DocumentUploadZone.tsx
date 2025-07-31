@@ -1,31 +1,27 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileText, Image, FileSpreadsheet, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Upload, FileText, Image, FileSpreadsheet, AlertCircle, CheckCircle, Loader2, Clock, Edit } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Input } from '@/components/ui/input';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-
-interface Client {
-  id: string;
-  firstName: string;
-  lastName: string;
-}
 
 interface UploadedFile {
   file: File;
   id: string;
-  status: 'pending' | 'processing' | 'completed' | 'error';
+  status: 'pending' | 'processing' | 'awaiting-confirmation' | 'completed' | 'error';
   progress: number;
   error?: string;
   extractedData?: {
-    clientName?: string;
-    sessionDate?: string;
-    content: string;
-    suggestedClient?: string;
+    detectedClientName?: string;
+    detectedSessionDate?: string;
+    extractedText: string;
+    fullContent: string;
+    fileName: string;
+    requiresConfirmation?: boolean;
   };
 }
 
@@ -35,27 +31,13 @@ interface DocumentUploadZoneProps {
 
 export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZoneProps) {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [selectedClientId, setSelectedClientId] = useState<string>('');
-  const [sessionDate, setSessionDate] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get clients for selection
-  const { data: clients } = useQuery({
-    queryKey: ['clients'],
-    queryFn: async () => {
-      const response = await fetch('/api/clients');
-      if (!response.ok) throw new Error('Failed to fetch clients');
-      return response.json();
-    },
-  });
-
   const processDocumentMutation = useMutation({
-    mutationFn: async ({ file, clientId, sessionDate }: { file: File; clientId: string; sessionDate: string }) => {
+    mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('document', file);
-      formData.append('clientId', clientId);
-      formData.append('sessionDate', sessionDate);
 
       const response = await fetch('/api/documents/process-clinical', {
         method: 'POST',
@@ -69,10 +51,74 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
 
       return response.json();
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (data, file) => {
       setUploadedFiles(prev => prev.map(f => 
-        f.file === variables.file 
-          ? { ...f, status: 'completed', progress: 100, extractedData: data }
+        f.file === file 
+          ? { 
+              ...f, 
+              status: data.requiresConfirmation ? 'awaiting-confirmation' : 'completed', 
+              progress: 100, 
+              extractedData: data 
+            }
+          : f
+      ));
+      
+      toast({
+        title: "Document Processed",
+        description: data.requiresConfirmation 
+          ? "Please confirm the extracted information below."
+          : "Document processed successfully!",
+      });
+    },
+    onError: (error, file) => {
+      setUploadedFiles(prev => prev.map(f => 
+        f.file === file 
+          ? { ...f, status: 'error', error: error.message }
+          : f
+      ));
+      
+      toast({
+        title: "Processing Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const generateProgressNoteMutation = useMutation({
+    mutationFn: async ({ content, clientId, sessionDate, detectedClientName, detectedSessionDate }: {
+      content: string;
+      clientId?: string;
+      sessionDate?: string;
+      detectedClientName?: string;
+      detectedSessionDate?: string;
+    }) => {
+      const response = await fetch('/api/documents/generate-progress-note', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content,
+          clientId,
+          sessionDate,
+          detectedClientName,
+          detectedSessionDate,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      // Update the file status to completed
+      setUploadedFiles(prev => prev.map(f => 
+        f.extractedData?.fullContent === variables.content
+          ? { ...f, status: 'completed' }
           : f
       ));
       
@@ -81,21 +127,15 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
       }
       
       toast({
-        title: "Document processed successfully",
-        description: "Progress note has been generated and saved.",
+        title: "Progress Note Generated",
+        description: "Clinical progress note created successfully!",
       });
       
-      queryClient.invalidateQueries({ queryKey: ['progress-notes'] });
+      queryClient.invalidateQueries({ queryKey: ['progressNotes'] });
     },
-    onError: (error, variables) => {
-      setUploadedFiles(prev => prev.map(f => 
-        f.file === variables.file 
-          ? { ...f, status: 'error', error: error.message }
-          : f
-      ));
-      
+    onError: (error) => {
       toast({
-        title: "Error processing document",
+        title: "Generation Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -111,6 +151,11 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
     }));
 
     setUploadedFiles(prev => [...prev, ...newFiles]);
+
+    // Automatically start processing each file
+    newFiles.forEach(uploadedFile => {
+      processFile(uploadedFile);
+    });
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -138,70 +183,89 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
   };
 
   const processFile = async (uploadedFile: UploadedFile) => {
-    if (!selectedClientId || !sessionDate) {
+    setUploadedFiles(prev => prev.map(f => 
+      f.id === uploadedFile.id 
+        ? { ...f, status: 'processing', progress: 0 }
+        : f
+    ));
+
+    // Simulate progress updates
+    const progressInterval = setInterval(() => {
+      setUploadedFiles(prev => prev.map(f => 
+        f.id === uploadedFile.id && f.status === 'processing'
+          ? { ...f, progress: Math.min(f.progress + Math.random() * 30, 90) }
+          : f
+      ));
+    }, 500);
+
+    try {
+      await processDocumentMutation.mutateAsync(uploadedFile.file);
+    } finally {
+      clearInterval(progressInterval);
+    }
+  };
+
+  const confirmAndGenerateProgressNote = (uploadedFile: UploadedFile, clientName?: string, sessionDate?: string) => {
+    if (!uploadedFile.extractedData?.fullContent) {
       toast({
-        title: "Missing information",
-        description: "Please select a client and session date before processing documents.",
+        title: "Error",
+        description: "No content available to generate progress note.",
         variant: "destructive",
       });
       return;
     }
 
-    setUploadedFiles(prev => prev.map(f => 
-      f.id === uploadedFile.id 
-        ? { ...f, status: 'processing', progress: 10 }
-        : f
-    ));
-
-    try {
-      await processDocumentMutation.mutateAsync({
-        file: uploadedFile.file,
-        clientId: selectedClientId,
-        sessionDate: sessionDate,
-      });
-    } catch (error) {
-      // Error handling is done in mutation
-    }
+    generateProgressNoteMutation.mutate({
+      content: uploadedFile.extractedData.fullContent,
+      clientId: clientName || uploadedFile.extractedData.detectedClientName,
+      sessionDate: sessionDate || uploadedFile.extractedData.detectedSessionDate,
+      detectedClientName: uploadedFile.extractedData.detectedClientName,
+      detectedSessionDate: uploadedFile.extractedData.detectedSessionDate,
+    });
   };
 
   const removeFile = (fileId: string) => {
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
   };
 
+  const getStatusIcon = (status: UploadedFile['status']) => {
+    switch (status) {
+      case 'processing':
+        return <Loader2 className="w-5 h-5 animate-spin text-blue-500" />;
+      case 'awaiting-confirmation':
+        return <Clock className="w-5 h-5 text-orange-500" />;
+      case 'completed':
+        return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case 'error':
+        return <AlertCircle className="w-5 h-5 text-red-500" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusText = (status: UploadedFile['status']) => {
+    switch (status) {
+      case 'processing':
+        return 'Processing document...';
+      case 'awaiting-confirmation':
+        return 'Awaiting confirmation';
+      case 'completed':
+        return 'Progress note generated';
+      case 'error':
+        return 'Processing failed';
+      default:
+        return 'Pending';
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Clinical Document Processing</h3>
+        <h3 className="text-lg font-semibold mb-4">AI-Powered Clinical Document Processing</h3>
+        <p className="text-sm text-gray-600 mb-6">
+          Upload clinical documents and our AI will automatically extract client information and generate comprehensive progress notes.
+        </p>
         
-        {/* Client and Date Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div>
-            <label className="block text-sm font-medium mb-2">Select Client</label>
-            <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose client..." />
-              </SelectTrigger>
-              <SelectContent>
-                {clients?.map((client: Client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.firstName} {client.lastName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-2">Session Date</label>
-            <input
-              type="date"
-              value={sessionDate}
-              onChange={(e) => setSessionDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-therapy-primary"
-            />
-          </div>
-        </div>
-
         {/* Drop Zone */}
         <div
           {...getRootProps()}
@@ -219,7 +283,7 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
             <div>
               <p className="text-lg mb-2">Drag & drop clinical documents here, or click to select</p>
               <p className="text-sm text-gray-500">
-                Supports PDF, DOCX, images, transcripts, CSV/Excel files
+                AI will automatically extract client information and session details
               </p>
             </div>
           )}
@@ -248,89 +312,162 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
       {/* Uploaded Files */}
       {uploadedFiles.length > 0 && (
         <Card className="p-6">
-          <h4 className="text-lg font-semibold mb-4">Processing Queue</h4>
+          <h4 className="text-md font-semibold mb-4">Processing Status</h4>
           <div className="space-y-4">
             {uploadedFiles.map((uploadedFile) => (
-              <div key={uploadedFile.id} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-3">
-                    {getFileIcon(uploadedFile.file)}
-                    <div>
-                      <p className="font-medium">{uploadedFile.file.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {(uploadedFile.file.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    {uploadedFile.status === 'pending' && (
-                      <Button
-                        onClick={() => processFile(uploadedFile)}
-                        disabled={!selectedClientId || !sessionDate}
-                        size="sm"
-                      >
-                        Process
-                      </Button>
-                    )}
-                    
-                    {uploadedFile.status === 'processing' && (
-                      <div className="flex items-center space-x-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="text-sm">Processing...</span>
-                      </div>
-                    )}
-                    
-                    {uploadedFile.status === 'completed' && (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                    )}
-                    
-                    {uploadedFile.status === 'error' && (
-                      <AlertCircle className="w-5 h-5 text-red-600" />
-                    )}
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFile(uploadedFile.id)}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                </div>
-                
-                {uploadedFile.status === 'processing' && uploadedFile.progress > 0 && (
-                  <Progress value={uploadedFile.progress} className="mb-2" />
-                )}
-                
-                {uploadedFile.status === 'error' && uploadedFile.error && (
-                  <Alert className="mt-2">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{uploadedFile.error}</AlertDescription>
-                  </Alert>
-                )}
-                
-                {uploadedFile.status === 'completed' && uploadedFile.extractedData && (
-                  <div className="mt-2 p-3 bg-green-50 rounded-md">
-                    <p className="text-sm font-medium text-green-800">
-                      Progress note generated successfully!
-                    </p>
-                    {uploadedFile.extractedData.clientName && (
-                      <p className="text-sm text-green-700">
-                        Detected client: {uploadedFile.extractedData.clientName}
-                      </p>
-                    )}
-                    {uploadedFile.extractedData.sessionDate && (
-                      <p className="text-sm text-green-700">
-                        Detected date: {uploadedFile.extractedData.sessionDate}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
+              <FileProcessingCard
+                key={uploadedFile.id}
+                uploadedFile={uploadedFile}
+                onConfirm={confirmAndGenerateProgressNote}
+                onRemove={removeFile}
+                getFileIcon={getFileIcon}
+                getStatusIcon={getStatusIcon}
+                getStatusText={getStatusText}
+              />
             ))}
           </div>
         </Card>
+      )}
+    </div>
+  );
+}
+
+interface FileProcessingCardProps {
+  uploadedFile: UploadedFile;
+  onConfirm: (file: UploadedFile, clientName?: string, sessionDate?: string) => void;
+  onRemove: (fileId: string) => void;
+  getFileIcon: (file: File) => React.ReactNode;
+  getStatusIcon: (status: UploadedFile['status']) => React.ReactNode;
+  getStatusText: (status: UploadedFile['status']) => string;
+}
+
+function FileProcessingCard({ 
+  uploadedFile, 
+  onConfirm, 
+  onRemove, 
+  getFileIcon, 
+  getStatusIcon, 
+  getStatusText 
+}: FileProcessingCardProps) {
+  const [editingClientName, setEditingClientName] = useState('');
+  const [editingSessionDate, setEditingSessionDate] = useState('');
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  const handleConfirmClick = () => {
+    if (uploadedFile.status === 'awaiting-confirmation') {
+      setEditingClientName(uploadedFile.extractedData?.detectedClientName || '');
+      setEditingSessionDate(uploadedFile.extractedData?.detectedSessionDate || '');
+      setShowConfirmation(true);
+    }
+  };
+
+  const handleSubmitConfirmation = () => {
+    onConfirm(uploadedFile, editingClientName, editingSessionDate);
+    setShowConfirmation(false);
+  };
+
+  return (
+    <div className="border rounded-lg p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {getFileIcon(uploadedFile.file)}
+          <div className="flex-1">
+            <p className="font-medium text-sm">{uploadedFile.file.name}</p>
+            <p className="text-xs text-gray-500">
+              {(uploadedFile.file.size / 1024 / 1024).toFixed(2)} MB
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {getStatusIcon(uploadedFile.status)}
+          <span className="text-sm text-gray-600">
+            {getStatusText(uploadedFile.status)}
+          </span>
+        </div>
+      </div>
+
+      {uploadedFile.status === 'processing' && (
+        <Progress value={uploadedFile.progress} className="w-full" />
+      )}
+
+      {uploadedFile.status === 'error' && uploadedFile.error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{uploadedFile.error}</AlertDescription>
+        </Alert>
+      )}
+
+      {uploadedFile.status === 'awaiting-confirmation' && uploadedFile.extractedData && (
+        <div className="space-y-3 bg-orange-50 p-3 rounded-md">
+          <p className="text-sm font-medium text-orange-800">AI Extracted Information:</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div>
+              <strong>Client Name:</strong> {uploadedFile.extractedData.detectedClientName || 'Not detected'}
+            </div>
+            <div>
+              <strong>Session Date:</strong> {uploadedFile.extractedData.detectedSessionDate || 'Not detected'}
+            </div>
+          </div>
+          <div className="text-sm">
+            <strong>Content Preview:</strong>
+            <p className="text-gray-600 mt-1 line-clamp-3">
+              {uploadedFile.extractedData.extractedText}
+            </p>
+          </div>
+          
+          {!showConfirmation ? (
+            <div className="flex gap-2">
+              <Button onClick={handleConfirmClick} size="sm">
+                <Edit className="w-4 h-4 mr-2" />
+                Confirm & Generate Progress Note
+              </Button>
+              <Button onClick={() => onRemove(uploadedFile.id)} variant="outline" size="sm">
+                Remove
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3 border-t pt-3">
+              <p className="text-sm font-medium">Confirm or edit the extracted information:</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium mb-1">Client Name</label>
+                  <Input
+                    value={editingClientName}
+                    onChange={(e) => setEditingClientName(e.target.value)}
+                    placeholder="Enter client name"
+                    size="sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium mb-1">Session Date</label>
+                  <Input
+                    type="date"
+                    value={editingSessionDate}
+                    onChange={(e) => setEditingSessionDate(e.target.value)}
+                    size="sm"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={handleSubmitConfirmation} size="sm">
+                  Generate Progress Note
+                </Button>
+                <Button onClick={() => setShowConfirmation(false)} variant="outline" size="sm">
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {uploadedFile.status === 'completed' && (
+        <Alert>
+          <CheckCircle className="h-4 w-4" />
+          <AlertDescription>
+            Progress note successfully generated and saved to your records.
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   );
