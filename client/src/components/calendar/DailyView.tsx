@@ -96,6 +96,85 @@ export const DailyView = ({
     setAiInsights(null);
   };
 
+  const saveSessionNotes = async () => {
+    if (!selectedEvent) return;
+
+    try {
+      const response = await fetch('/api/session-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: selectedEvent.id,
+          notes: sessionNotes,
+          date: date.toISOString(),
+          clientName: selectedEvent.clientName
+        })
+      });
+
+      if (response.ok) {
+        // Update the event locally
+        const updatedEvent = { ...selectedEvent, notes: sessionNotes };
+        setSelectedEvent(updatedEvent);
+        // Could also trigger a refresh of the events list here
+      }
+    } catch (error) {
+      console.error('Failed to save session notes:', error);
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, event: CalendarEvent) => {
+    e.dataTransfer.setData('application/json', JSON.stringify(event));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetTime: string) => {
+    e.preventDefault();
+    
+    try {
+      const eventData = JSON.parse(e.dataTransfer.getData('application/json'));
+      const [hours, minutes] = targetTime.split(':').map(Number);
+      
+      const newStartTime = new Date(date);
+      newStartTime.setHours(hours, minutes, 0, 0);
+      
+      // Calculate duration from original event
+      const originalStart = new Date(eventData.startTime);
+      const originalEnd = new Date(eventData.endTime);
+      const duration = originalEnd.getTime() - originalStart.getTime();
+      
+      const newEndTime = new Date(newStartTime.getTime() + duration);
+
+      // Update Google Calendar
+      const response = await fetch(`/api/calendar/events/${eventData.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          calendarId: eventData.calendarId || 'primary',
+          summary: eventData.title,
+          start: {
+            dateTime: newStartTime.toISOString()
+          },
+          end: {
+            dateTime: newEndTime.toISOString()
+          },
+          location: eventData.location
+        })
+      });
+
+      if (response.ok) {
+        // Trigger events refresh
+        window.location.reload(); // Simple refresh - could be more sophisticated
+      }
+    } catch (error) {
+      console.error('Failed to move appointment:', error);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'confirmed': return 'bg-blue-100 text-blue-800';
@@ -222,6 +301,8 @@ export const DailyView = ({
                       key={time} 
                       className="h-12 border-b border-gray-100 hover:bg-blue-50 cursor-pointer relative"
                       onClick={() => onTimeSlotClick?.(date, time)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, time)}
                     >
                       {slotEvents.map((event) => {
                         const duration = event.endTime && event.startTime ? 
@@ -231,12 +312,14 @@ export const DailyView = ({
                         return (
                           <div
                             key={event.id}
-                            className="absolute inset-x-1 bg-white border border-gray-300 rounded-sm cursor-pointer hover:shadow-md transition-shadow p-1"
+                            className="absolute inset-x-1 bg-white border border-gray-300 rounded-sm cursor-move hover:shadow-md transition-shadow p-1"
                             style={{
                               height: `${slots * 48 - 4}px`,
                               top: '2px',
                               zIndex: 10
                             }}
+                            draggable={true}
+                            onDragStart={(e) => handleDragStart(e, event)}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleEventClick(event);
@@ -385,7 +468,7 @@ export const DailyView = ({
                   Close
                 </Button>
                 <div className="flex gap-2">
-                  <Button variant="outline">
+                  <Button variant="outline" onClick={saveSessionNotes}>
                     <FileText className="w-4 h-4 mr-2" />
                     Save Notes
                   </Button>

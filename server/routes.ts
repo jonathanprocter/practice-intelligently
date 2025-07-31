@@ -482,6 +482,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Session Notes endpoints
+  app.post('/api/session-notes', async (req, res) => {
+    try {
+      const { eventId, notes, date, clientName } = req.body;
+      
+      // Save to database
+      const sessionNote = await storage.createSessionNote({
+        eventId,
+        therapistId: 'therapist-1', // Should be from auth context
+        clientId: 'client-1', // Should be derived from client name
+        content: notes
+      });
+      
+      res.json(sessionNote);
+    } catch (error: any) {
+      console.error('Error saving session notes:', error);
+      res.status(500).json({ error: 'Failed to save session notes' });
+    }
+  });
+
+  app.get('/api/session-notes/:eventId', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const notes = await storage.getSessionNotesByEventId(eventId);
+      res.json(notes);
+    } catch (error: any) {
+      console.error('Error fetching session notes:', error);
+      res.status(500).json({ error: 'Failed to fetch session notes' });
+    }
+  });
+
   app.post('/api/calendar/events', async (req, res) => {
     try {
       const { calendarId = 'primary', ...eventData } = req.body;

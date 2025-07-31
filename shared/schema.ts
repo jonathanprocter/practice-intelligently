@@ -95,7 +95,8 @@ export const appointments = pgTable("appointments", {
 
 export const sessionNotes = pgTable("session_notes", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  appointmentId: uuid("appointment_id").references(() => appointments.id).notNull(),
+  appointmentId: uuid("appointment_id").references(() => appointments.id),
+  eventId: text("event_id"), // For Google Calendar event ID
   clientId: uuid("client_id").references(() => clients.id).notNull(),
   therapistId: uuid("therapist_id").references(() => users.id).notNull(),
   content: text("content").notNull(),

@@ -38,6 +38,7 @@ export interface IStorage {
   // Session notes methods
   getSessionNotes(clientId: string): Promise<SessionNote[]>;
   getSessionNote(id: string): Promise<SessionNote | undefined>;
+  getSessionNotesByEventId(eventId: string): Promise<SessionNote[]>;
   createSessionNote(note: InsertSessionNote): Promise<SessionNote>;
   updateSessionNote(id: string, note: Partial<SessionNote>): Promise<SessionNote>;
 
@@ -281,6 +282,14 @@ export class DatabaseStorage implements IStorage {
   async getSessionNote(id: string): Promise<SessionNote | undefined> {
     const [note] = await db.select().from(sessionNotes).where(eq(sessionNotes.id, id));
     return note || undefined;
+  }
+
+  async getSessionNotesByEventId(eventId: string): Promise<SessionNote[]> {
+    return await db
+      .select()
+      .from(sessionNotes)
+      .where(eq(sessionNotes.eventId, eventId))
+      .orderBy(desc(sessionNotes.createdAt));
   }
 
   async createSessionNote(note: InsertSessionNote): Promise<SessionNote> {
