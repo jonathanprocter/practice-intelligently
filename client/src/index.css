@@ -80,6 +80,29 @@
   
   .sidebar-nav {
     background: linear-gradient(135deg, var(--therapy-success) 0%, hsl(212, 31%, 50%) 100%);
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+  
+  .sidebar-nav * {
+    pointer-events: auto;
+  }
+  
+  .sidebar-nav a {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 10;
+  }
+  
+  .sidebar-nav a:hover {
+    text-decoration: none;
   }
   
   .status-indicator {
@@ -220,4 +243,25 @@
   .sidebar-nav.mobile-open {
     transform: translateX(0);
   }
+}
+
+/* Fix for blurred or unclickable navigation items */
+nav a, .sidebar-nav a {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  filter: none !important;
+  opacity: 1 !important;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Ensure navigation links are always clickable */
+.sidebar-nav nav a:hover,
+.sidebar-nav nav a:focus,
+.sidebar-nav nav a:active {
+  pointer-events: auto !important;
+  filter: none !important;
+  opacity: 1 !important;
 }

@@ -44,7 +44,7 @@ export default function Sidebar() {
       </Button>
 
       {/* Sidebar */}
-      <div className={`sidebar-nav w-64 shadow-xl fixed h-full z-30 lg:relative lg:translate-x-0 transition-transform duration-300 ${
+      <div className={`sidebar-nav w-64 shadow-xl fixed h-full z-50 lg:relative lg:translate-x-0 transition-transform duration-300 ${
         isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
         <div className="p-6 border-b border-white/20">
@@ -64,17 +64,24 @@ export default function Sidebar() {
             <Link
               key={item.path}
               href={item.path}
-              className={`flex items-center space-x-3 p-3 rounded-lg transition-all group ${
+              className={`flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 cursor-pointer select-none ${
                 isActive(item.path)
-                  ? 'bg-white/20 text-white'
-                  : 'text-white/80 hover:bg-white/10 hover:text-white'
+                  ? 'bg-white/20 text-white shadow-sm'
+                  : 'text-white/90 hover:bg-white/15 hover:text-white hover:shadow-sm'
               }`}
               onClick={() => setIsMobileOpen(false)}
+              style={{ 
+                pointerEvents: 'auto',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                MozUserSelect: 'none',
+                msUserSelect: 'none'
+              }}
             >
-              <item.icon className="w-5 h-5" />
-              <span className="font-medium">{item.label}</span>
+              <item.icon className="w-5 h-5 flex-shrink-0" />
+              <span className="font-medium flex-1">{item.label}</span>
               {item.badge && (
-                <span className={`ml-auto text-white text-xs px-2 py-1 rounded-full ${
+                <span className={`text-white text-xs px-2 py-1 rounded-full font-medium ${
                   item.badgeColor || 'bg-therapy-primary'
                 }`}>
                   {item.badge}
@@ -86,11 +93,18 @@ export default function Sidebar() {
           <div className="pt-4 border-t border-white/20 mt-4">
             <Link
               href="/settings"
-              className="flex items-center space-x-3 p-3 rounded-lg text-white/80 hover:bg-white/10 hover:text-white transition-all"
+              className="flex items-center space-x-3 p-3 rounded-lg text-white/90 hover:bg-white/15 hover:text-white hover:shadow-sm transition-all duration-200 cursor-pointer select-none"
               onClick={() => setIsMobileOpen(false)}
+              style={{ 
+                pointerEvents: 'auto',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                MozUserSelect: 'none',
+                msUserSelect: 'none'
+              }}
             >
-              <Settings className="w-5 h-5" />
-              <span className="font-medium">Settings</span>
+              <Settings className="w-5 h-5 flex-shrink-0" />
+              <span className="font-medium flex-1">Settings</span>
             </Link>
           </div>
         </nav>
