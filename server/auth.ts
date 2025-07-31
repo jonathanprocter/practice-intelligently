@@ -114,29 +114,51 @@ export class GoogleCalendarService {
   async getEvents(calendarId: string = 'primary', timeMin?: string, timeMax?: string): Promise<GoogleCalendarEvent[]> {
     this.ensureAuthenticated();
     try {
-      // Use broad time range if not specified
-      const defaultTimeMin = new Date('2023-01-01T00:00:00.000Z').toISOString();
-      const defaultTimeMax = new Date('2025-12-31T23:59:59.999Z').toISOString();
+      // Use very broad time range if not specified to capture all events
+      const defaultTimeMin = new Date('2020-01-01T00:00:00.000Z').toISOString();
+      const defaultTimeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
       
       const finalTimeMin = timeMin || defaultTimeMin;
       const finalTimeMax = timeMax || defaultTimeMax;
       
-      console.log(`Fetching events for calendar: ${calendarId}, timeMin: ${finalTimeMin}, timeMax: ${finalTimeMax}`);
+      console.log(`Fetching ALL events for calendar: ${calendarId}, timeMin: ${finalTimeMin}, timeMax: ${finalTimeMax}`);
       
-      const response = await calendar.events.list({
-        calendarId,
-        timeMin: finalTimeMin,
-        timeMax: finalTimeMax,
-        singleEvents: true,
-        orderBy: 'startTime',
-        maxResults: 250,
-        showDeleted: false
-      });
+      let allEvents: any[] = [];
+      let pageToken: string | undefined = undefined;
+      let pageCount = 0;
+      
+      // Paginate through all events
+      do {
+        pageCount++;
+        console.log(`Fetching page ${pageCount} for calendar ${calendarId}${pageToken ? ` (token: ${pageToken.substring(0, 20)}...)` : ''}`);
+        
+        const response = await calendar.events.list({
+          calendarId,
+          timeMin: finalTimeMin,
+          timeMax: finalTimeMax,
+          singleEvents: true,
+          orderBy: 'startTime',
+          maxResults: 2500,
+          showDeleted: false,
+          pageToken
+        });
 
-      const events = response.data.items || [];
-      console.log(`Found ${events.length} events in calendar ${calendarId}`);
+        const events = response.data.items || [];
+        allEvents.push(...events);
+        pageToken = response.data.nextPageToken;
+        
+        console.log(`Page ${pageCount}: Found ${events.length} events. Total so far: ${allEvents.length}`);
+        
+        // Safety break to prevent infinite loops
+        if (pageCount > 50) {
+          console.warn(`Reached maximum page limit (${pageCount}) for calendar ${calendarId}`);
+          break;
+        }
+      } while (pageToken);
+
+      console.log(`TOTAL: Found ${allEvents.length} events in calendar ${calendarId} across ${pageCount} pages`);
       
-      return events.map((event: any): GoogleCalendarEvent => {
+      return allEvents.map((event: any): GoogleCalendarEvent => {
         const attendees = event.attendees?.map((attendee: any) => ({
           email: attendee.email || '',
           displayName: attendee.displayName || undefined,

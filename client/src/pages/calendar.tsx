@@ -45,9 +45,9 @@ export default function Calendar() {
         throw new Error('Google Calendar not connected');
       }
       
-      // Fetch all events from 2023 to end of 2025
-      const timeMin = new Date('2023-01-01T00:00:00.000Z').toISOString();
-      const timeMax = new Date('2025-12-31T23:59:59.999Z').toISOString();
+      // Fetch all events with a much broader range to ensure we get everything
+      const timeMin = new Date('2020-01-01T00:00:00.000Z').toISOString();
+      const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
       const calendarParam = selectedCalendarId === 'all' ? 'all' : selectedCalendarId;
       
       const response = await fetch(`/api/calendar/events/dr-procter-id?timeMin=${timeMin}&timeMax=${timeMax}&calendarId=${calendarParam}`);
@@ -64,7 +64,9 @@ export default function Calendar() {
     },
     retry: false,
     refetchOnWindowFocus: false,
-    refetchOnMount: true
+    refetchOnMount: true,
+    staleTime: 5 * 60 * 1000, // Consider data stale after 5 minutes
+    cacheTime: 15 * 60 * 1000 // Keep in cache for 15 minutes
   });
 
   // Fetch available calendars
@@ -308,9 +310,15 @@ export default function Calendar() {
                 <span className="text-sm text-gray-600">Google Calendar Connected</span>
               </div>
               <span className="text-sm text-gray-600">
-                {calendarEvents.length} events loaded • 
+                {calendarEvents.length} events loaded (2020-2030) • 
                 {calendars?.length > 0 ? ` ${calendars.length} calendars` : ' Loading calendars...'}
               </span>
+              {calendarEvents.length > 0 && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Earliest: {new Date(Math.min(...calendarEvents.map(e => new Date(e.startTime).getTime()))).toLocaleDateString()} • 
+                  Latest: {new Date(Math.max(...calendarEvents.map(e => new Date(e.startTime).getTime()))).toLocaleDateString()}
+                </div>
+              )}
             </div>
             
             {/* Calendar Selector */}
