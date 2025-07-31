@@ -9,7 +9,7 @@ import {
   type CommunicationLog, type InsertCommunicationLog, type Document, type InsertDocument,
   type AuditLog, type InsertAuditLog
 } from "@shared/schema";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, desc, and, gte, lte, count } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
@@ -285,11 +285,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSessionNotesByEventId(eventId: string): Promise<SessionNote[]> {
-    return await db
-      .select()
-      .from(sessionNotes)
-      .where(eq(sessionNotes.eventId, eventId))
-      .orderBy(desc(sessionNotes.createdAt));
+    try {
+      // Direct PostgreSQL query using the pool connection
+      const result = await pool.query('SELECT * FROM session_notes WHERE event_id = $1 ORDER BY created_at DESC', [eventId]);
+      
+      // Map raw results to our SessionNote type structure
+      const mappedResults = result.rows.map((row: any) => ({
+        id: row.id,
+        appointmentId: row.appointment_id,
+        eventId: row.event_id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        content: row.content,
+        transcript: row.transcript,
+        aiSummary: row.ai_summary,
+        tags: row.tags,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      }));
+      
+      return mappedResults;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async createSessionNote(note: InsertSessionNote): Promise<SessionNote> {

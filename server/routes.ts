@@ -476,7 +476,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/session-notes/:eventId', async (req, res) => {
     try {
       const { eventId } = req.params;
-      const notes = await storage.getSessionNotesByEventId(eventId);
+      
+      // Debug: log what we're searching for
+      console.log('Searching for eventId:', JSON.stringify(eventId), 'length:', eventId.length);
+      
+      // Direct PostgreSQL query with debugging
+      const { Pool } = require('@neondatabase/serverless');
+      const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+      
+      // First, get all event_ids to debug
+      const allEvents = await pool.query('SELECT DISTINCT event_id FROM session_notes LIMIT 10');
+      console.log('All eventIds in database:', allEvents.rows.map((r: any) => `"${r.event_id}" (len: ${r.event_id?.length || 0})`));
+      
+      const result = await pool.query('SELECT * FROM session_notes WHERE event_id = $1 ORDER BY created_at DESC', [eventId]);
+      console.log('Query result rows:', result.rows.length);
+      
+      const notes = result.rows.map((row: any) => ({
+        id: row.id,
+        appointmentId: row.appointment_id,
+        eventId: row.event_id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        content: row.content,
+        transcript: row.transcript,
+        aiSummary: row.ai_summary,
+        tags: row.tags,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      }));
+      
       res.json(notes);
     } catch (error: any) {
       console.error('Error fetching session notes:', error);
