@@ -4,7 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { Alert, AlertCircle, AlertTriangle, CheckCircle, Brain, Target, TrendingUp, FileText, Users, Calendar, AlertCircle as AlertIcon } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle, AlertTriangle, CheckCircle, Brain, Target, TrendingUp, FileText, Users, Calendar } from 'lucide-react';
 
 interface EnhancedInsightsProps {
   insights: {
@@ -111,12 +112,12 @@ export function EnhancedInsightsPanel({
         {insights.riskAssessment.level !== 'low' && (
           <Alert className={`border ${insights.riskAssessment.level === 'high' ? 'border-red-500 bg-red-50' : 'border-yellow-500 bg-yellow-50'}`}>
             <AlertTriangle className="h-4 w-4" />
-            <div>
+            <AlertDescription>
               <p className="font-medium">Risk Assessment: {insights.riskAssessment.level.toUpperCase()}</p>
               <p className="text-sm mt-1">
                 {insights.riskAssessment.factors.length > 0 && insights.riskAssessment.factors[0]}
               </p>
-            </div>
+            </AlertDescription>
           </Alert>
         )}
 

@@ -430,9 +430,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Generated auth URL length:', authUrl.length);
       console.log('Auth URL domain:', authUrl.substring(0, 50) + '...');
       res.redirect(authUrl);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating Google auth URL:', error);
-      res.status(500).json({ error: 'Failed to initiate Google authentication', details: error.message });
+      res.status(500).json({ error: 'Failed to initiate Google authentication', details: error?.message || 'Unknown error' });
     }
   });
 
