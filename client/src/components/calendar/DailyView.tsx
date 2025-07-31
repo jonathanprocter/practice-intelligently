@@ -47,12 +47,12 @@ export const DailyView = ({
   // Filter and sort events for the selected date
   const dayEvents = events
     .filter(event => {
-      const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+      const eventStart = typeof event.startTime === 'string' ? new Date(event.startTime) : event.startTime;
       return eventStart.toDateString() === date.toDateString();
     })
     .sort((a, b) => {
-      const aTime = a.startTime instanceof Date ? a.startTime : new Date(a.startTime);
-      const bTime = b.startTime instanceof Date ? b.startTime : new Date(b.startTime);
+      const aTime = typeof a.startTime === 'string' ? new Date(a.startTime) : a.startTime;
+      const bTime = typeof b.startTime === 'string' ? new Date(b.startTime) : b.startTime;
       return aTime.getTime() - bTime.getTime();
     });
 
@@ -212,7 +212,7 @@ export const DailyView = ({
               <div className="relative">
                 {timeSlots.map((time, index) => {
                   const slotEvents = dayEvents.filter(event => {
-                    const eventStart = new Date(event.startTime);
+                    const eventStart = typeof event.startTime === 'string' ? new Date(event.startTime) : event.startTime;
                     const slotTime = `${eventStart.getHours().toString().padStart(2, '0')}:${eventStart.getMinutes().toString().padStart(2, '0')}`;
                     return slotTime === time;
                   });

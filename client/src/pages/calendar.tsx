@@ -159,8 +159,11 @@ export default function Calendar() {
       calendarName: event.calendarName || 'Google Calendar'
     };
   }).filter(event => {
-    // Filter out invalid events
-    const isValid = event.startTime instanceof Date && !isNaN(event.startTime.getTime());
+    // Filter out invalid events - check if we have valid date strings
+    const hasValidStart = event.startTime && typeof event.startTime === 'string';
+    const hasValidEnd = event.endTime && typeof event.endTime === 'string';
+    const isValid = hasValidStart && hasValidEnd;
+    
     if (!isValid) {
       console.warn('Filtering out invalid event:', event);
     }
