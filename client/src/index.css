@@ -157,6 +157,12 @@
 
 .calendar-time-slot {
   overflow: visible !important;
+  position: relative !important;
+}
+
+.calendar-event {
+  line-height: 1.2 !important;
+  font-size: 11px !important;
 }
 
 .calendar-event-cancelled {

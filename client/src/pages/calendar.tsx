@@ -39,6 +39,24 @@ export default function Calendar() {
     window.location.href = '/api/auth/google';
   };
 
+  // Function to get default location based on day of week
+  const getDefaultLocationForDate = (date: Date) => {
+    if (!date || isNaN(date.getTime())) return 'Remote/Office';
+    const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    switch (dayOfWeek) {
+      case 1: // Monday
+        return 'Woodbury';
+      case 2: // Tuesday
+        return 'Telehealth';
+      case 3: // Wednesday
+      case 4: // Thursday
+      case 5: // Friday
+        return 'Rockville Centre';
+      default:
+        return 'Remote/Office';
+    }
+  };
+
   const { data: googleEvents = [], isLoading, error, refetch } = useQuery({
     queryKey: ['google-calendar-events', selectedCalendarId],
     queryFn: async () => {
@@ -130,9 +148,8 @@ export default function Calendar() {
       clientName: event.summary || 'Google Calendar Event',
       type: 'individual' as CalendarEvent['type'],
       status: (event.status === 'confirmed' ? 'scheduled' : 'pending') as CalendarEvent['status'],
-      location: event.location || 'Remote/Office',
+      location: event.location || getDefaultLocationForDate(new Date(event.start?.dateTime || event.start?.date)),
       notes: event.description || '',
-      // Remove hardcoded therapist ID for Google Calendar events
       source: 'google' as CalendarEvent['source'],
       attendees: event.attendees?.map((a: any) => a.email).join(', ') || '',
       calendarName: event.calendarName || 'Google Calendar'

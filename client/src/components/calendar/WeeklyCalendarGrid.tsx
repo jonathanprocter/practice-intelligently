@@ -222,7 +222,13 @@ export const WeeklyCalendarGrid = ({
                   ((timeSlot.minute === 0 && eventMinute < 30) || 
                    (timeSlot.minute === 30 && eventMinute >= 30));
                 
-                return startsInSlot;
+                // Exclude all-day events from timed slots
+                const isMarkedAllDay = (event as any).isAllDay;
+                const isHolidayOrWeather = event.title?.includes('Forecast') || 
+                                          event.title?.includes('Holiday') || 
+                                          event.calendarName?.includes('Holiday');
+                
+                return startsInSlot && !isMarkedAllDay && !isHolidayOrWeather;
               });
               
               // Calculate how many 30-minute slots each event should span
@@ -262,11 +268,11 @@ export const WeeklyCalendarGrid = ({
                         draggedEventId === event.id && "opacity-50"
                       )}
                       style={{
-                        height: `${event.slotsToSpan * 40 - 4}px`, // 40px per slot minus border/padding
-                        width: 'calc(100% - 4px)',
+                        height: `${Math.max(event.slotsToSpan * 40 - 8, 32)}px`, // Ensure minimum height
+                        width: 'calc(100% - 8px)',
                         position: 'absolute',
-                        top: '2px',
-                        left: '2px',
+                        top: '4px',
+                        left: '4px',
                         zIndex: 10,
                         backgroundColor: event.status === 'confirmed' ? '#dcfce7' : 
                                        event.status === 'pending' ? '#fef3c7' : 
@@ -276,7 +282,9 @@ export const WeeklyCalendarGrid = ({
                                             event.status === 'cancelled' ? '#ef4444' : '#3b82f6'}`,
                         borderLeft: `4px solid ${event.status === 'confirmed' ? '#16a34a' : 
                                                  event.status === 'pending' ? '#d97706' : 
-                                                 event.status === 'cancelled' ? '#dc2626' : '#2563eb'}`
+                                                 event.status === 'cancelled' ? '#dc2626' : '#2563eb'}`,
+                        overflow: 'hidden',
+                        wordWrap: 'break-word'
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -286,13 +294,13 @@ export const WeeklyCalendarGrid = ({
                       onDragStart={(e) => handleDragStart(e, event)}
                       onDragEnd={handleDragEnd}
                     >
-                      <div className="text-xs font-medium text-gray-900 mb-1">
-                        {event.clientName || wrapText(cleanEventTitle(event.title || 'Event'), 15)[0]}
+                      <div className="text-xs font-medium text-gray-900 leading-tight" style={{ marginBottom: '2px' }}>
+                        {(event.clientName || wrapText(cleanEventTitle(event.title || 'Event'), 12)[0]).substring(0, 20)}
                       </div>
-                      <div className="text-xs text-gray-600">
-                        {getLocationDisplay(event.location) || getDefaultLocation(new Date(event.startTime))}
+                      <div className="text-xs text-gray-600 leading-tight" style={{ marginBottom: '2px' }}>
+                        {(getLocationDisplay(event.location) || getDefaultLocation(new Date(event.startTime))).substring(0, 15)}
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs text-gray-500 leading-tight">
                         {new Date(event.startTime).toLocaleTimeString('en-US', { 
                           hour: 'numeric', 
                           minute: '2-digit',
