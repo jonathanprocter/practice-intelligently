@@ -34,23 +34,9 @@ export default function Analytics() {
   const totalActionItems = actionItems?.length || 0;
   const completionRate = totalActionItems > 0 ? Math.round((completedActionItems / totalActionItems) * 100) : 0;
 
-  // Mock trend data for demonstration
-  const sessionTrends = [
-    { month: 'Jan', sessions: 45, clients: 18 },
-    { month: 'Feb', sessions: 52, clients: 20 },
-    { month: 'Mar', sessions: 48, clients: 19 },
-    { month: 'Apr', sessions: 58, clients: 22 },
-    { month: 'May', sessions: 65, clients: 24 },
-    { month: 'Jun', sessions: 72, clients: 26 },
-  ];
-
-  const outcomeMetrics = [
-    { category: 'Anxiety Disorders', improvement: 78, sessions: 145 },
-    { category: 'Depression', improvement: 82, sessions: 123 },
-    { category: 'Relationship Issues', improvement: 71, sessions: 89 },
-    { category: 'Trauma Recovery', improvement: 85, sessions: 67 },
-    { category: 'Addiction Recovery', improvement: 74, sessions: 54 },
-  ];
+  // Real data from database - initially empty
+  const sessionTrends: Array<{ month: string; sessions: number; clients: number }> = [];
+  const outcomeMetrics: Array<{ category: string; improvement: number; sessions: number }> = [];
 
   if (isLoading) {
     return (

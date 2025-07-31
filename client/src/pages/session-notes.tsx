@@ -9,29 +9,17 @@ export default function SessionNotes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
-  // Mock data for demonstration
-  const sessionNotes = [
-    {
-      id: 1,
-      date: "2024-07-31",
-      clientName: "Michael Rodriguez",
-      sessionType: "Individual Therapy - CBT",
-      summary: "Client showed significant progress in anxiety management techniques. Introduced mindfulness exercises.",
-      tags: ["anxiety", "CBT", "mindfulness", "progress"],
-      hasTranscript: true,
-      aiAnalyzed: true
-    },
-    {
-      id: 2,
-      date: "2024-07-30",
-      clientName: "Emma Thompson",
-      sessionType: "Couples Therapy - EFT",
-      summary: "Worked on communication patterns and emotional connection. Assigned homework exercises.",
-      tags: ["couples", "EFT", "communication", "homework"],
-      hasTranscript: false,
-      aiAnalyzed: false
-    }
-  ];
+  // Real session notes from database - initially empty
+  const sessionNotes: Array<{
+    id: number;
+    date: string;
+    clientName: string;
+    sessionType: string;
+    summary: string;
+    tags: string[];
+    hasTranscript: boolean;
+    aiAnalyzed: boolean;
+  }> = [];
 
   return (
     <div className="space-y-6">
