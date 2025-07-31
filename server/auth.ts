@@ -48,15 +48,16 @@ export class GoogleCalendarService {
   generateAuthUrl(): string {
     const scopes = [
       'https://www.googleapis.com/auth/calendar.readonly',
-      'https://www.googleapis.com/auth/calendar.events',
-      'https://www.googleapis.com/auth/calendar'
+      'https://www.googleapis.com/auth/calendar.events'
     ];
+
+    console.log('Generating OAuth URL with redirect URI:', getRedirectUri());
+    console.log('Using Client ID:', process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
 
     return this.auth.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
-      prompt: 'consent',
-      include_granted_scopes: true
+      prompt: 'consent'
     });
   }
 
