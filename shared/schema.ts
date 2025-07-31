@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, boolean, jsonb, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, boolean, jsonb, uuid, decimal, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -11,36 +11,87 @@ export const users = pgTable("users", {
   fullName: text("full_name").notNull(),
   role: text("role").notNull().default("therapist"),
   email: text("email").notNull().unique(),
+  phone: text("phone"),
+  licenseNumber: text("license_number"),
+  licenseType: text("license_type"),
+  licenseExpiry: timestamp("license_expiry"),
+  qualifications: jsonb("qualifications"),
+  specializations: jsonb("specializations"),
+  profilePicture: text("profile_picture"),
+  address: jsonb("address"),
+  preferences: jsonb("preferences"),
+  isActive: boolean("is_active").default(true),
+  lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  emailIdx: index("users_email_idx").on(table.email),
+  usernameIdx: index("users_username_idx").on(table.username),
+}));
 
 export const clients = pgTable("clients", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientNumber: text("client_number").unique(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
+  preferredName: text("preferred_name"),
+  pronouns: text("pronouns"),
   email: text("email"),
   phone: text("phone"),
+  alternatePhone: text("alternate_phone"),
   dateOfBirth: timestamp("date_of_birth"),
+  gender: text("gender"),
+  address: jsonb("address"),
   emergencyContact: jsonb("emergency_contact"),
   insuranceInfo: jsonb("insurance_info"),
-  therapistId: uuid("therapist_id").references(() => users.id),
+  medicalHistory: jsonb("medical_history"),
+  medications: jsonb("medications"),
+  allergies: jsonb("allergies"),
+  referralSource: text("referral_source"),
+  primaryConcerns: jsonb("primary_concerns"),
+  therapistId: uuid("therapist_id").references(() => users.id, { onDelete: "cascade" }),
   status: text("status").notNull().default("active"),
+  riskLevel: text("risk_level").default("low"),
+  consentStatus: jsonb("consent_status"),
+  hipaaSignedDate: timestamp("hipaa_signed_date"),
+  lastContact: timestamp("last_contact"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  therapistIdx: index("clients_therapist_idx").on(table.therapistId),
+  statusIdx: index("clients_status_idx").on(table.status),
+  nameIdx: index("clients_name_idx").on(table.firstName, table.lastName),
+}));
 
 export const appointments = pgTable("appointments", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  clientId: uuid("client_id").references(() => clients.id).notNull(),
-  therapistId: uuid("therapist_id").references(() => users.id).notNull(),
+  appointmentNumber: text("appointment_number").unique(),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }).notNull(),
+  therapistId: uuid("therapist_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   startTime: timestamp("start_time").notNull(),
   endTime: timestamp("end_time").notNull(),
   type: text("type").notNull(),
   status: text("status").notNull().default("scheduled"),
+  location: text("location"),
+  isVirtual: boolean("is_virtual").default(false),
+  meetingLink: text("meeting_link"),
   notes: text("notes"),
+  cancellationReason: text("cancellation_reason"),
+  noShowReason: text("no_show_reason"),
+  reminderSent: boolean("reminder_sent").default(false),
+  reminderSentAt: timestamp("reminder_sent_at"),
+  checkedInAt: timestamp("checked_in_at"),
+  completedAt: timestamp("completed_at"),
+  fee: decimal("fee", { precision: 10, scale: 2 }),
+  insuranceClaim: jsonb("insurance_claim"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  clientIdx: index("appointments_client_idx").on(table.clientId),
+  therapistIdx: index("appointments_therapist_idx").on(table.therapistId),
+  dateIdx: index("appointments_date_idx").on(table.startTime),
+  statusIdx: index("appointments_status_idx").on(table.status),
+}));
 
 export const sessionNotes = pgTable("session_notes", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -85,8 +136,8 @@ export const treatmentPlans = pgTable("treatment_plans", {
 
 export const aiInsights = pgTable("ai_insights", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  clientId: uuid("client_id").references(() => clients.id),
-  therapistId: uuid("therapist_id").references(() => users.id).notNull(),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }),
+  therapistId: uuid("therapist_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   type: text("type").notNull(),
   title: text("title").notNull(),
   content: text("content").notNull(),
@@ -94,7 +145,160 @@ export const aiInsights = pgTable("ai_insights", {
   metadata: jsonb("metadata"),
   isRead: boolean("is_read").default(false),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  therapistIdx: index("ai_insights_therapist_idx").on(table.therapistId),
+  clientIdx: index("ai_insights_client_idx").on(table.clientId),
+}));
+
+// Additional comprehensive tables for robust therapy practice management
+
+export const billingRecords = pgTable("billing_records", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }).notNull(),
+  therapistId: uuid("therapist_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  appointmentId: uuid("appointment_id").references(() => appointments.id, { onDelete: "cascade" }),
+  invoiceNumber: text("invoice_number").unique(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  serviceDate: timestamp("service_date").notNull(),
+  billingDate: timestamp("billing_date").defaultNow(),
+  dueDate: timestamp("due_date"),
+  status: text("status").notNull().default("pending"),
+  paymentMethod: text("payment_method"),
+  transactionId: text("transaction_id"),
+  paidAt: timestamp("paid_at"),
+  insuranceClaimId: text("insurance_claim_id"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  clientIdx: index("billing_records_client_idx").on(table.clientId),
+  statusIdx: index("billing_records_status_idx").on(table.status),
+  dueDateIdx: index("billing_records_due_date_idx").on(table.dueDate),
+}));
+
+export const assessments = pgTable("assessments", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }).notNull(),
+  therapistId: uuid("therapist_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  appointmentId: uuid("appointment_id").references(() => appointments.id, { onDelete: "set null" }),
+  assessmentType: text("assessment_type").notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  questions: jsonb("questions").notNull(),
+  responses: jsonb("responses"),
+  scores: jsonb("scores"),
+  interpretation: text("interpretation"),
+  recommendations: jsonb("recommendations"),
+  status: text("status").notNull().default("draft"),
+  completedAt: timestamp("completed_at"),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  clientIdx: index("assessments_client_idx").on(table.clientId),
+  typeIdx: index("assessments_type_idx").on(table.assessmentType),
+}));
+
+export const progressNotes = pgTable("progress_notes", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }).notNull(),
+  therapistId: uuid("therapist_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  appointmentId: uuid("appointment_id").references(() => appointments.id, { onDelete: "cascade" }),
+  treatmentPlanId: uuid("treatment_plan_id").references(() => treatmentPlans.id, { onDelete: "set null" }),
+  progressSummary: text("progress_summary").notNull(),
+  currentMood: text("current_mood"),
+  behavioralObservations: text("behavioral_observations"),
+  interventionsUsed: jsonb("interventions_used"),
+  clientResponse: text("client_response"),
+  homeworkAssigned: text("homework_assigned"),
+  riskAssessment: jsonb("risk_assessment"),
+  nextSteps: text("next_steps"),
+  goals: jsonb("goals"),
+  goalsProgress: jsonb("goals_progress"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  clientIdx: index("progress_notes_client_idx").on(table.clientId),
+  appointmentIdx: index("progress_notes_appointment_idx").on(table.appointmentId),
+}));
+
+export const medications = pgTable("medications", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }).notNull(),
+  name: text("name").notNull(),
+  dosage: text("dosage"),
+  frequency: text("frequency"),
+  prescribedBy: text("prescribed_by"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  purpose: text("purpose"),
+  sideEffects: jsonb("side_effects"),
+  effectiveness: text("effectiveness"),
+  status: text("status").notNull().default("active"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  clientIdx: index("medications_client_idx").on(table.clientId),
+  statusIdx: index("medications_status_idx").on(table.status),
+}));
+
+export const communicationLogs = pgTable("communication_logs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }).notNull(),
+  therapistId: uuid("therapist_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  type: text("type").notNull(), // email, phone, text, in-person
+  direction: text("direction").notNull(), // incoming, outgoing
+  subject: text("subject"),
+  content: text("content").notNull(),
+  priority: text("priority").default("normal"),
+  isUrgent: boolean("is_urgent").default(false),
+  readAt: timestamp("read_at"),
+  respondedAt: timestamp("responded_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  clientIdx: index("communication_logs_client_idx").on(table.clientId),
+  typeIdx: index("communication_logs_type_idx").on(table.type),
+  urgentIdx: index("communication_logs_urgent_idx").on(table.isUrgent),
+}));
+
+export const documents = pgTable("documents", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }),
+  therapistId: uuid("therapist_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  fileName: text("file_name").notNull(),
+  originalName: text("original_name").notNull(),
+  fileType: text("file_type").notNull(),
+  fileSize: integer("file_size"),
+  documentType: text("document_type").notNull(), // intake-form, consent, assessment, report, etc.
+  description: text("description"),
+  filePath: text("file_path").notNull(),
+  isConfidential: boolean("is_confidential").default(true),
+  tags: jsonb("tags"),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  lastAccessedAt: timestamp("last_accessed_at"),
+}, (table) => ({
+  clientIdx: index("documents_client_idx").on(table.clientId),
+  typeIdx: index("documents_type_idx").on(table.documentType),
+}));
+
+export const auditLogs = pgTable("audit_logs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  entityType: text("entity_type").notNull(),
+  entityId: uuid("entity_id").notNull(),
+  action: text("action").notNull(), // create, read, update, delete
+  changes: jsonb("changes"), // what changed
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  timestamp: timestamp("timestamp").defaultNow(),
+}, (table) => ({
+  userIdx: index("audit_logs_user_idx").on(table.userId),
+  entityIdx: index("audit_logs_entity_idx").on(table.entityType, table.entityId),
+  timestampIdx: index("audit_logs_timestamp_idx").on(table.timestamp),
+}));
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
@@ -104,6 +308,12 @@ export const usersRelations = relations(users, ({ many }) => ({
   actionItems: many(actionItems),
   treatmentPlans: many(treatmentPlans),
   aiInsights: many(aiInsights),
+  billingRecords: many(billingRecords),
+  assessments: many(assessments),
+  progressNotes: many(progressNotes),
+  communicationLogs: many(communicationLogs),
+  documents: many(documents),
+  auditLogs: many(auditLogs),
 }));
 
 export const clientsRelations = relations(clients, ({ one, many }) => ({
@@ -116,6 +326,12 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   actionItems: many(actionItems),
   treatmentPlans: many(treatmentPlans),
   aiInsights: many(aiInsights),
+  billingRecords: many(billingRecords),
+  assessments: many(assessments),
+  progressNotes: many(progressNotes),
+  medications: many(medications),
+  communicationLogs: many(communicationLogs),
+  documents: many(documents),
 }));
 
 export const appointmentsRelations = relations(appointments, ({ one, many }) => ({
@@ -128,6 +344,9 @@ export const appointmentsRelations = relations(appointments, ({ one, many }) => 
     references: [users.id],
   }),
   sessionNotes: many(sessionNotes),
+  billingRecords: many(billingRecords),
+  assessments: many(assessments),
+  progressNotes: many(progressNotes),
 }));
 
 export const sessionNotesRelations = relations(sessionNotes, ({ one }) => ({
@@ -178,6 +397,92 @@ export const aiInsightsRelations = relations(aiInsights, ({ one }) => ({
   }),
 }));
 
+// New table relations
+export const billingRecordsRelations = relations(billingRecords, ({ one }) => ({
+  client: one(clients, {
+    fields: [billingRecords.clientId],
+    references: [clients.id],
+  }),
+  therapist: one(users, {
+    fields: [billingRecords.therapistId],
+    references: [users.id],
+  }),
+  appointment: one(appointments, {
+    fields: [billingRecords.appointmentId],
+    references: [appointments.id],
+  }),
+}));
+
+export const assessmentsRelations = relations(assessments, ({ one }) => ({
+  client: one(clients, {
+    fields: [assessments.clientId],
+    references: [clients.id],
+  }),
+  therapist: one(users, {
+    fields: [assessments.therapistId],
+    references: [users.id],
+  }),
+  appointment: one(appointments, {
+    fields: [assessments.appointmentId],
+    references: [appointments.id],
+  }),
+}));
+
+export const progressNotesRelations = relations(progressNotes, ({ one }) => ({
+  client: one(clients, {
+    fields: [progressNotes.clientId],
+    references: [clients.id],
+  }),
+  therapist: one(users, {
+    fields: [progressNotes.therapistId],
+    references: [users.id],
+  }),
+  appointment: one(appointments, {
+    fields: [progressNotes.appointmentId],
+    references: [appointments.id],
+  }),
+  treatmentPlan: one(treatmentPlans, {
+    fields: [progressNotes.treatmentPlanId],
+    references: [treatmentPlans.id],
+  }),
+}));
+
+export const medicationsRelations = relations(medications, ({ one }) => ({
+  client: one(clients, {
+    fields: [medications.clientId],
+    references: [clients.id],
+  }),
+}));
+
+export const communicationLogsRelations = relations(communicationLogs, ({ one }) => ({
+  client: one(clients, {
+    fields: [communicationLogs.clientId],
+    references: [clients.id],
+  }),
+  therapist: one(users, {
+    fields: [communicationLogs.therapistId],
+    references: [users.id],
+  }),
+}));
+
+export const documentsRelations = relations(documents, ({ one }) => ({
+  client: one(clients, {
+    fields: [documents.clientId],
+    references: [clients.id],
+  }),
+  therapist: one(users, {
+    fields: [documents.therapistId],
+    references: [users.id],
+  }),
+}));
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [auditLogs.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -222,6 +527,47 @@ export const insertAiInsightSchema = createInsertSchema(aiInsights).omit({
   createdAt: true,
 });
 
+// New table insert schemas
+export const insertBillingRecordSchema = createInsertSchema(billingRecords).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAssessmentSchema = createInsertSchema(assessments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertProgressNoteSchema = createInsertSchema(progressNotes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMedicationSchema = createInsertSchema(medications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCommunicationLogSchema = createInsertSchema(communicationLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertDocumentSchema = createInsertSchema(documents).omit({
+  id: true,
+  uploadedAt: true,
+  lastAccessedAt: true,
+});
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
+  id: true,
+  timestamp: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -237,3 +583,19 @@ export type TreatmentPlan = typeof treatmentPlans.$inferSelect;
 export type InsertTreatmentPlan = z.infer<typeof insertTreatmentPlanSchema>;
 export type AiInsight = typeof aiInsights.$inferSelect;
 export type InsertAiInsight = z.infer<typeof insertAiInsightSchema>;
+
+// New table types
+export type BillingRecord = typeof billingRecords.$inferSelect;
+export type InsertBillingRecord = z.infer<typeof insertBillingRecordSchema>;
+export type Assessment = typeof assessments.$inferSelect;
+export type InsertAssessment = z.infer<typeof insertAssessmentSchema>;
+export type ProgressNote = typeof progressNotes.$inferSelect;
+export type InsertProgressNote = z.infer<typeof insertProgressNoteSchema>;
+export type Medication = typeof medications.$inferSelect;
+export type InsertMedication = z.infer<typeof insertMedicationSchema>;
+export type CommunicationLog = typeof communicationLogs.$inferSelect;
+export type InsertCommunicationLog = z.infer<typeof insertCommunicationLogSchema>;
+export type Document = typeof documents.$inferSelect;
+export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;

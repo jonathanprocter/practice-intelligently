@@ -48,7 +48,10 @@ export interface AiInsight {
 }
 
 export class ApiClient {
-  private static therapistId = "demo-therapist-id"; // In real app, get from auth
+  private static getTherapistId(): string {
+    // TODO: Get from authenticated user session
+    throw new Error('Authentication required - therapist ID not available');
+  }
 
   static async getDashboardStats(): Promise<DashboardStats> {
     const response = await apiRequest('GET', `/api/dashboard/stats/${this.therapistId}`);
