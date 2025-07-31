@@ -5,9 +5,7 @@ import mammoth from 'mammoth';
 import xlsx from 'xlsx';
 import csv from 'csv-parser';
 import sharp from 'sharp';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { multiModelAI } from './ai-multi-model';
 
 export interface ProcessedDocument {
   extractedText: string;
@@ -111,31 +109,14 @@ export class DocumentProcessor {
     const base64Image = imageBuffer.toString('base64');
 
     try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: "Extract all text content from this image. If this appears to be a clinical document, therapy session notes, or mental health related content, preserve the clinical language and structure. Return the extracted text exactly as it appears in the image."
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:image/jpeg;base64,${base64Image}`
-                }
-              }
-            ],
-          },
-        ],
-        max_tokens: 2000,
-      });
+      const result = await multiModelAI.analyzeMultimodalContent(
+        `Extract all text content from this image. If this appears to be a clinical document, therapy session notes, or mental health related content, preserve the clinical language and structure. Return the extracted text exactly as it appears in the image. Image data: data:image/jpeg;base64,${base64Image}`,
+        'image'
+      );
 
-      return response.choices[0].message.content || '';
+      return result.content;
     } catch (error) {
-      console.error('Error processing image with OpenAI:', error);
+      console.error('Error processing image with AI:', error);
       throw new Error('Failed to extract text from image');
     }
   }
@@ -184,26 +165,27 @@ export class DocumentProcessor {
 
   private async extractMetadata(content: string): Promise<{ clientName?: string; sessionDate?: string }> {
     try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert at extracting metadata from clinical documents. Analyze the provided text and extract the client name and session date if present. Return JSON format with 'clientName' and 'sessionDate' fields. If not found, return null for those fields."
-          },
-          {
-            role: "user",
-            content: `Extract client name and session date from this clinical document:\n\n${content.substring(0, 2000)}`
-          }
-        ],
-        response_format: { type: "json_object" },
-      });
+      const result = await multiModelAI.generateDetailedInsights(
+        `Extract client name and session date from this clinical document. Return JSON format with 'clientName' and 'sessionDate' fields. If not found, return null for those fields.\n\nDocument content:\n${content.substring(0, 2000)}`,
+        'metadata extraction'
+      );
 
-      const result = JSON.parse(response.choices[0].message.content || '{}');
-      return {
-        clientName: result.clientName || undefined,
-        sessionDate: result.sessionDate || undefined,
-      };
+      try {
+        const parsed = JSON.parse(result.content);
+        return {
+          clientName: parsed.clientName || undefined,
+          sessionDate: parsed.sessionDate || undefined,
+        };
+      } catch {
+        // If not valid JSON, try to extract from text
+        const clientMatch = result.content.match(/client.*?name.*?[:"]\s*([^"\n]+)/i);
+        const dateMatch = result.content.match(/session.*?date.*?[:"]\s*([^"\n]+)/i);
+        
+        return {
+          clientName: clientMatch?.[1]?.trim() || undefined,
+          sessionDate: dateMatch?.[1]?.trim() || undefined,
+        };
+      }
     } catch (error) {
       console.error('Error extracting metadata:', error);
       return {};
@@ -267,18 +249,13 @@ Client ID: ${clientId}
 Session Date: ${sessionDate}`;
 
     try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        max_tokens: 4000,
-      });
+      // Use ensemble approach for the most comprehensive clinical analysis
+      const result = await multiModelAI.generateEnsembleAnalysis(
+        prompt,
+        'comprehensive clinical progress note generation'
+      );
 
-      const progressNoteContent = response.choices[0].message.content || '';
+      const progressNoteContent = result.content;
       
       // Parse the generated content into structured sections
       return this.parseProgressNote(progressNoteContent, clientId, sessionDate);

@@ -1212,7 +1212,7 @@ export class DatabaseStorage implements IStorage {
          FROM progress_notes pn 
          LEFT JOIN clients c ON pn.client_id::text = c.id::text 
          WHERE pn.therapist_id::text = $1 
-         ORDER BY pn.session_date DESC, pn.created_at DESC`,
+         ORDER BY pn.created_at DESC`,
         [therapistId]
       );
 

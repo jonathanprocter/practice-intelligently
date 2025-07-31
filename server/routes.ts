@@ -2,6 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { analyzeContent, analyzeSessionTranscript } from "./ai-services";
+import { multiModelAI } from './ai-multi-model';
+import { perplexityClient } from './perplexity';
+import { documentProcessor } from './document-processor';
 import { googleCalendarService } from "./auth";
 import { generateAppointmentInsights } from "./ai-insights";
 import { pool } from "./db";
@@ -23,6 +26,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       integrations: {
         openai: !!process.env.OPENAI_API_KEY,
         anthropic: !!process.env.ANTHROPIC_API_KEY,
+        gemini: !!process.env.GEMINI_API_KEY,
+        perplexity: !!process.env.PERPLEXITY_API_KEY,
         database: !!process.env.DATABASE_URL,
       }
     });
@@ -1041,6 +1046,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error getting next appointment summary:', error);
       res.status(500).json({ error: 'Failed to get summary' });
+    }
+  });
+
+  // Multi-Model AI Endpoints for Enhanced Clinical Intelligence
+  
+  // Clinical Analysis using Claude (primary)
+  app.post('/api/ai/clinical-analysis', async (req, res) => {
+    try {
+      const { content, context } = req.body;
+      
+      if (!content) {
+        return res.status(400).json({ error: 'Content is required' });
+      }
+      
+      const result = await multiModelAI.generateClinicalAnalysis(content, context);
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error in clinical analysis:', error);
+      res.status(500).json({ error: 'Failed to generate clinical analysis', details: error.message });
+    }
+  });
+
+  // Detailed Insights using OpenAI
+  app.post('/api/ai/detailed-insights', async (req, res) => {
+    try {
+      const { content, analysisType } = req.body;
+      
+      if (!content || !analysisType) {
+        return res.status(400).json({ error: 'Content and analysis type are required' });
+      }
+      
+      const result = await multiModelAI.generateDetailedInsights(content, analysisType);
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error generating detailed insights:', error);
+      res.status(500).json({ error: 'Failed to generate detailed insights', details: error.message });
+    }
+  });
+
+  // Evidence-Based Recommendations using Perplexity
+  app.post('/api/ai/evidence-recommendations', async (req, res) => {
+    try {
+      const { query, domain } = req.body;
+      
+      if (!query || !domain) {
+        return res.status(400).json({ error: 'Query and domain are required' });
+      }
+      
+      if (!['clinical', 'treatment', 'education'].includes(domain)) {
+        return res.status(400).json({ error: 'Domain must be clinical, treatment, or education' });
+      }
+      
+      const result = await multiModelAI.getEvidenceBasedRecommendations(query, domain);
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error getting evidence-based recommendations:', error);
+      res.status(500).json({ error: 'Failed to get evidence-based recommendations', details: error.message });
+    }
+  });
+
+  // Multimodal Analysis using Gemini
+  app.post('/api/ai/multimodal-analysis', async (req, res) => {
+    try {
+      const { content, mediaType } = req.body;
+      
+      if (!content) {
+        return res.status(400).json({ error: 'Content is required' });
+      }
+      
+      const result = await multiModelAI.analyzeMultimodalContent(content, mediaType);
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error in multimodal analysis:', error);
+      res.status(500).json({ error: 'Failed to perform multimodal analysis', details: error.message });
+    }
+  });
+
+  // Ensemble Analysis combining all models
+  app.post('/api/ai/ensemble-analysis', async (req, res) => {
+    try {
+      const { content, analysisType } = req.body;
+      
+      if (!content || !analysisType) {
+        return res.status(400).json({ error: 'Content and analysis type are required' });
+      }
+      
+      const result = await multiModelAI.generateEnsembleAnalysis(content, analysisType);
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error in ensemble analysis:', error);
+      res.status(500).json({ error: 'Failed to generate ensemble analysis', details: error.message });
+    }
+  });
+
+  // Clinical Research using Perplexity directly
+  app.post('/api/ai/clinical-research', async (req, res) => {
+    try {
+      const { query } = req.body;
+      
+      if (!query) {
+        return res.status(400).json({ error: 'Research query is required' });
+      }
+      
+      const research = await perplexityClient.getClinicalResearch(query);
+      res.json({ content: research, model: 'perplexity-research' });
+    } catch (error: any) {
+      console.error('Error getting clinical research:', error);
+      res.status(500).json({ error: 'Failed to get clinical research', details: error.message });
+    }
+  });
+
+  // Treatment Protocols using Perplexity
+  app.post('/api/ai/treatment-protocols', async (req, res) => {
+    try {
+      const { condition, clientProfile } = req.body;
+      
+      if (!condition) {
+        return res.status(400).json({ error: 'Condition is required' });
+      }
+      
+      const protocols = await perplexityClient.getTreatmentProtocols(condition, clientProfile || {});
+      res.json({ content: protocols, model: 'perplexity-protocols' });
+    } catch (error: any) {
+      console.error('Error getting treatment protocols:', error);
+      res.status(500).json({ error: 'Failed to get treatment protocols', details: error.message });
+    }
+  });
+
+  // Continuing Education using Perplexity
+  app.post('/api/ai/continuing-education-research', async (req, res) => {
+    try {
+      const { therapistProfile, clientMix } = req.body;
+      
+      const education = await perplexityClient.getContinuingEducation(therapistProfile || {}, clientMix || {});
+      res.json({ content: education, model: 'perplexity-education' });
+    } catch (error: any) {
+      console.error('Error getting continuing education:', error);
+      res.status(500).json({ error: 'Failed to get continuing education recommendations', details: error.message });
     }
   });
 
