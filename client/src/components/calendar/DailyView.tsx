@@ -90,10 +90,30 @@ export const DailyView = ({
     }
   };
 
-  const handleEventClick = (event: CalendarEvent) => {
+  const handleEventClick = async (event: CalendarEvent) => {
     setSelectedEvent(event);
-    setSessionNotes(event.notes || '');
     setAiInsights(null);
+    
+    // Try to load existing session notes from database
+    try {
+      const response = await fetch(`/api/session-notes/${event.id}`);
+      if (response.ok) {
+        const existingNotes = await response.json();
+        if (existingNotes.length > 0) {
+          // Use the most recent note
+          const latestNote = existingNotes[0];
+          setSessionNotes(latestNote.content);
+          console.log('Loaded existing session notes:', latestNote.content);
+        } else {
+          setSessionNotes(event.notes || '');
+        }
+      } else {
+        setSessionNotes(event.notes || '');
+      }
+    } catch (error) {
+      console.error('Error loading session notes:', error);
+      setSessionNotes(event.notes || '');
+    }
   };
 
   const saveSessionNotes = async () => {
@@ -117,14 +137,21 @@ export const DailyView = ({
       if (response.ok) {
         const result = await response.json();
         console.log('Session notes saved successfully:', result);
-        // Update the event locally
+        
+        // Update the event locally to show it has notes
         const updatedEvent = { ...selectedEvent, notes: sessionNotes };
         setSelectedEvent(updatedEvent);
-        alert('Session notes saved successfully!');
+        
+        // Show success feedback with timestamp
+        const timestamp = new Date().toLocaleTimeString();
+        alert(`✅ Session notes saved successfully to database at ${timestamp}!`);
+        
+        // Update the visual state to show notes are saved
+        console.log('Notes saved and UI updated');
       } else {
         const errorText = await response.text();
         console.error('Failed to save session notes:', response.status, errorText);
-        alert(`Failed to save session notes: ${response.status} ${errorText}`);
+        alert(`❌ Failed to save session notes: ${response.status} ${errorText}`);
       }
     } catch (error) {
       console.error('Network error saving session notes:', error);
@@ -487,6 +514,14 @@ export const DailyView = ({
                     Add Action Item
                   </Button>
                 </div>
+                
+                {/* Save Status Indicator */}
+                {sessionNotes.trim() && (
+                  <div className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                    <FileText className="w-3 h-3" />
+                    Notes ready to save ({sessionNotes.length} characters)
+                  </div>
+                )}
               </div>
             </div>
           </ScrollArea>
