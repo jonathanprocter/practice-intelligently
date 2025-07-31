@@ -13,6 +13,7 @@ import Analytics from "@/pages/analytics";
 import AiInsights from "@/pages/ai-insights";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
+import { ProgressNotesPage } from "@/pages/progress-notes";
 import { lazy, Suspense } from "react";
 
 const OAuthDebug = lazy(() => import("./pages/oauth-debug"));
@@ -44,6 +45,7 @@ function Router() {
       <Route path="/appointments" component={Appointments} />
       <Route path="/calendar" component={Calendar} />
       <Route path="/session-notes" component={SessionNotes} />
+      <Route path="/progress-notes" component={ProgressNotesPage} />
       <Route path="/action-items" component={ActionItems} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/ai-insights" component={AiInsights} />

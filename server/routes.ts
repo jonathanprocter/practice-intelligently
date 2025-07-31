@@ -11,6 +11,8 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { randomUUID } from 'crypto';
+import multer from 'multer';
+import fs from 'fs';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check
@@ -47,6 +49,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching clients:", error);
       res.status(500).json({ error: "Failed to fetch clients" });
+    }
+  });
+
+  // Get all clients (for dropdowns and selections)
+  app.get("/api/clients", async (req, res) => {
+    try {
+      const clients = await storage.getClients('therapist-1'); // Default therapist for now
+      res.json(clients);
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+      res.status(500).json({ error: "Failed to fetch clients" });
+    }
+  });
+
+  // Progress Notes endpoints
+  app.get("/api/progress-notes/:therapistId", async (req, res) => {
+    try {
+      const { therapistId } = req.params;
+      const notes = await storage.getProgressNotes(therapistId);
+      res.json(notes);
+    } catch (error) {
+      console.error("Error fetching progress notes:", error);
+      res.status(500).json({ error: "Failed to fetch progress notes" });
     }
   });
 
@@ -631,6 +656,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error analyzing therapist strengths:', error);
       res.status(500).json({ error: 'Failed to analyze therapist strengths' });
+    }
+  });
+
+  // Configure multer for file uploads
+  const upload = multer({
+    dest: 'uploads/',
+    limits: {
+      fileSize: 50 * 1024 * 1024, // 50MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = [
+        'application/pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword',
+        'text/plain',
+        'text/markdown',
+        'image/png',
+        'image/jpeg',
+        'image/jpg',
+        'image/gif',
+        'image/bmp',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/csv'
+      ];
+      
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error(`Unsupported file type: ${file.mimetype}`));
+      }
+    }
+  });
+
+  // Document processing endpoint
+  app.post('/api/documents/process-clinical', upload.single('document'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const { clientId, sessionDate } = req.body;
+      
+      if (!clientId || !sessionDate) {
+        return res.status(400).json({ error: 'Client ID and session date are required' });
+      }
+
+      // Import document processor
+      const { documentProcessor } = await import('./document-processor');
+      
+      // Process the uploaded document
+      const processedDoc = await documentProcessor.processDocument(
+        req.file.path,
+        req.file.originalname
+      );
+
+      // Generate progress note using AI
+      const progressNote = await documentProcessor.generateProgressNote(
+        processedDoc.extractedText,
+        clientId,
+        sessionDate
+      );
+
+      // Save progress note to database
+      const savedNote = await storage.createProgressNote({
+        clientId,
+        therapistId: req.body.therapistId || 'therapist-1', // Default therapist for now
+        title: progressNote.title,
+        subjective: progressNote.subjective,
+        objective: progressNote.objective,
+        assessment: progressNote.assessment,
+        plan: progressNote.plan,
+        tonalAnalysis: progressNote.tonalAnalysis,
+        keyPoints: progressNote.keyPoints,
+        significantQuotes: progressNote.significantQuotes,
+        narrativeSummary: progressNote.narrativeSummary,
+        sessionDate: new Date(sessionDate),
+      });
+
+      // Clean up uploaded file
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (cleanupError) {
+        console.warn('Failed to cleanup uploaded file:', cleanupError);
+      }
+
+      res.json({
+        success: true,
+        extractedText: processedDoc.extractedText.substring(0, 500) + '...', // Return preview
+        detectedClientName: processedDoc.detectedClientName,
+        detectedSessionDate: processedDoc.detectedSessionDate,
+        progressNote: savedNote,
+        message: 'Document processed and progress note generated successfully'
+      });
+
+    } catch (error: any) {
+      console.error('Error processing clinical document:', error);
+      
+      // Clean up uploaded file in case of error
+      if (req.file?.path) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (cleanupError) {
+          console.warn('Failed to cleanup uploaded file after error:', cleanupError);
+        }
+      }
+      
+      res.status(500).json({ 
+        error: 'Failed to process document',
+        details: error.message 
+      });
     }
   });
 

@@ -9,6 +9,7 @@ const navigationItems = [
   { path: "/appointments", label: "Appointments", icon: Calendar },
   { path: "/calendar", label: "Calendar", icon: Calendar },
   { path: "/session-notes", label: "Session Notes", icon: FileText },
+  { path: "/progress-notes", label: "Progress Notes", icon: FileText },
   { path: "/action-items", label: "Action Items", icon: CheckSquare, badge: "3", badgeColor: "bg-red-500" },
   { path: "/analytics", label: "Analytics", icon: BarChart },
   { path: "/ai-insights", label: "AI Intelligence", icon: Brain },

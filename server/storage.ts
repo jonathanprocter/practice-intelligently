@@ -1144,6 +1144,101 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
   }
+
+  async createProgressNote(data: {
+    clientId: string;
+    therapistId: string;
+    title: string;
+    subjective: string;
+    objective: string;
+    assessment: string;
+    plan: string;
+    tonalAnalysis: string;
+    keyPoints: string[];
+    significantQuotes: string[];
+    narrativeSummary: string;
+    sessionDate: Date;
+  }): Promise<any> {
+    try {
+      const result = await pool.query(
+        `INSERT INTO progress_notes 
+         (client_id, therapist_id, title, subjective, objective, assessment, plan, 
+          tonal_analysis, key_points, significant_quotes, narrative_summary, session_date, created_at, updated_at) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()) 
+         RETURNING *`,
+        [
+          data.clientId,
+          data.therapistId,
+          data.title,
+          data.subjective,
+          data.objective,
+          data.assessment,
+          data.plan,
+          data.tonalAnalysis,
+          JSON.stringify(data.keyPoints),
+          JSON.stringify(data.significantQuotes),
+          data.narrativeSummary,
+          data.sessionDate
+        ]
+      );
+
+      return {
+        id: result.rows[0].id,
+        clientId: result.rows[0].client_id,
+        therapistId: result.rows[0].therapist_id,
+        title: result.rows[0].title,
+        subjective: result.rows[0].subjective,
+        objective: result.rows[0].objective,
+        assessment: result.rows[0].assessment,
+        plan: result.rows[0].plan,
+        tonalAnalysis: result.rows[0].tonal_analysis,
+        keyPoints: JSON.parse(result.rows[0].key_points || '[]'),
+        significantQuotes: JSON.parse(result.rows[0].significant_quotes || '[]'),
+        narrativeSummary: result.rows[0].narrative_summary,
+        sessionDate: new Date(result.rows[0].session_date),
+        createdAt: new Date(result.rows[0].created_at),
+        updatedAt: new Date(result.rows[0].updated_at)
+      };
+    } catch (error) {
+      console.error('Error creating progress note:', error);
+      throw error;
+    }
+  }
+
+  async getProgressNotes(therapistId: string): Promise<any[]> {
+    try {
+      const result = await pool.query(
+        `SELECT pn.*, c.first_name, c.last_name 
+         FROM progress_notes pn 
+         LEFT JOIN clients c ON pn.client_id::text = c.id::text 
+         WHERE pn.therapist_id::text = $1 
+         ORDER BY pn.session_date DESC, pn.created_at DESC`,
+        [therapistId]
+      );
+
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        title: row.title,
+        subjective: row.subjective,
+        objective: row.objective,
+        assessment: row.assessment,
+        plan: row.plan,
+        tonalAnalysis: row.tonal_analysis,
+        keyPoints: JSON.parse(row.key_points || '[]'),
+        significantQuotes: JSON.parse(row.significant_quotes || '[]'),
+        narrativeSummary: row.narrative_summary,
+        sessionDate: new Date(row.session_date),
+        clientName: row.first_name && row.last_name ? `${row.first_name} ${row.last_name}` : 'Unknown Client',
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      }));
+    } catch (error) {
+      console.error('Error fetching progress notes:', error);
+      return [];
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
