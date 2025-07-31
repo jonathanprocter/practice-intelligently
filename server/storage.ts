@@ -1117,6 +1117,33 @@ export class DatabaseStorage implements IStorage {
     if (status === 'active' && sessionCount > 6) return 'moderate';
     return 'early';
   }
+
+  async getActionItemsByEventId(eventId: string): Promise<ActionItem[]> {
+    try {
+      const result = await pool.query(
+        'SELECT * FROM action_items WHERE event_id = $1 ORDER BY created_at DESC',
+        [eventId]
+      );
+      
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        title: row.title,
+        description: row.description,
+        priority: row.priority as 'low' | 'medium' | 'high',
+        status: row.status as 'pending' | 'in-progress' | 'completed',
+        dueDate: row.due_date ? new Date(row.due_date) : null,
+        completedAt: row.completed_at ? new Date(row.completed_at) : null,
+        eventId: row.event_id,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      }));
+    } catch (error) {
+      console.error('Error in getActionItemsByEventId:', error);
+      return [];
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();

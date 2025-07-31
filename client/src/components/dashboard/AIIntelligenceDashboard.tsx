@@ -217,7 +217,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
         const efficiency = await efficiencyResponse.json();
         let retention = null;
         
-        if (retentionResponse.ok) {
+        if (retentionResponse && 'json' in retentionResponse && retentionResponse.ok) {
           retention = await retentionResponse.json();
         }
         
@@ -292,7 +292,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
       </div>
 
       {/* Risk Alerts */}
-      {predictiveInsights?.riskEscalationAlerts?.riskLevel !== 'low' && (
+      {predictiveInsights?.riskEscalationAlerts?.riskLevel !== 'low' && predictiveInsights && (
         <Alert className={`border ${predictiveInsights.riskEscalationAlerts.riskLevel === 'high' ? 'border-red-500 bg-red-50' : 'border-yellow-500 bg-yellow-50'}`}>
           <AlertTriangle className="h-4 w-4" />
           <div>

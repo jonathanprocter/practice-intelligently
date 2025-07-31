@@ -86,6 +86,12 @@ export default function AiInsights() {
     return 'text-red-600';
   };
 
+  // Get clients for selection - moved before conditional returns
+  const { data: clients } = useQuery({
+    queryKey: ['clients'],
+    queryFn: ApiClient.getClients,
+  });
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -114,12 +120,6 @@ export default function AiInsights() {
     );
   }
 
-  // Get clients for selection
-  const { data: clients } = useQuery({
-    queryKey: ['clients'],
-    queryFn: ApiClient.getClients,
-  });
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -139,7 +139,7 @@ export default function AiInsights() {
               <SelectItem value="">All Clients</SelectItem>
               {clients?.map((client) => (
                 <SelectItem key={client.id} value={client.id}>
-                  {client.name}
+                  {(client as any).name || `Client ${client.id}`}
                 </SelectItem>
               ))}
             </SelectContent>
