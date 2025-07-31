@@ -311,8 +311,10 @@ export const WeeklyCalendarGrid = ({
                         style={{ 
                           fontSize: event.slotsToSpan >= 3 ? '10px' : '9px',
                           lineHeight: '1.1',
-                          marginBottom: '1px',
-                          fontWeight: '500'
+                          marginBottom: '2px',
+                          fontWeight: '500',
+                          paddingBottom: '2px',
+                          borderBottom: '1px solid #e2e8f0'
                         }}
                       >
                         {event.calendarName?.includes('Simple Practice') ? 'SimplePractice' : 
@@ -324,7 +326,8 @@ export const WeeklyCalendarGrid = ({
                         style={{ 
                           fontSize: event.slotsToSpan >= 3 ? '10px' : '9px',
                           lineHeight: '1.1',
-                          fontWeight: '500'
+                          fontWeight: '500',
+                          paddingTop: '2px'
                         }}
                       >
                         {new Date(event.startTime).toLocaleTimeString('en-US', { 
