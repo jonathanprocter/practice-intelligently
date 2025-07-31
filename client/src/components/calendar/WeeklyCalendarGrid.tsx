@@ -107,10 +107,13 @@ export const WeeklyCalendarGrid = ({
 
       const eventDate = startTime;
 
-      // Check if backend marked it as all-day
+      // Check if backend marked it as all-day OR if it's a holiday/weather event (these are typically all-day)
       const isMarkedAllDay = (event as any).isAllDay;
+      const isHolidayOrWeather = event.title?.includes('Forecast') || 
+                                event.title?.includes('Holiday') || 
+                                event.calendarName?.includes('Holiday');
       
-      return eventDate.toDateString() === date.toDateString() && isMarkedAllDay;
+      return eventDate.toDateString() === date.toDateString() && (isMarkedAllDay || isHolidayOrWeather);
     });
   };
 
@@ -126,6 +129,34 @@ export const WeeklyCalendarGrid = ({
 
   return (
     <div className="weekly-calendar-container">
+      {/* All-day events section */}
+      <div className="mb-4">
+        <div className="grid grid-cols-8 border border-gray-200 bg-gray-50">
+          <div className="border-r border-gray-200 p-2 font-medium text-sm">
+            All Day
+          </div>
+          {week.map((day) => {
+            const allDayEvents = getAllDayEventsForDate(day.date);
+            return (
+              <div
+                key={`allday-${day.date.toISOString()}`}
+                className="border-r border-gray-200 p-2 min-h-[60px]"
+              >
+                {allDayEvents.map((event) => (
+                  <div
+                    key={`allday-${event.id}`}
+                    className="text-xs p-1 mb-1 bg-blue-100 rounded cursor-pointer hover:bg-blue-200"
+                    onClick={() => onEventClick(event)}
+                  >
+                    {event.clientName || event.title || 'All Day Event'}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="grid grid-cols-8 border border-gray-200">
         {/* Time column header */}
         <div className="border-r border-gray-200 p-2 bg-gray-50 font-medium text-sm">
@@ -157,17 +188,35 @@ export const WeeklyCalendarGrid = ({
             
             {/* Day columns */}
             {week.map((day) => {
-              const dayEvents = events.filter(event => {
+              // Get all events for this day
+              const allDayEvents = events.filter(event => {
                 const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
-                const dateMatches = eventStart.toDateString() === day.date.toDateString();
-                const timeMatches = isEventInTimeSlot(event, timeSlot);
+                return eventStart.toDateString() === day.date.toDateString();
+              });
+              
+              // Filter events that START in this specific time slot (not span through it)
+              const slotStartEvents = allDayEvents.filter(event => {
+                const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+                const eventHour = eventStart.getHours();
+                const eventMinute = eventStart.getMinutes();
                 
-                // Debug logging for the current week
-                if (dateMatches) {
-                  console.log(`Event "${event.clientName || event.title}" on ${day.date.toDateString()}: timeSlot=${timeSlot.display}, matches=${timeMatches}`);
-                }
+                // Check if event starts in this exact time slot
+                const startsInSlot = eventHour === timeSlot.hour && 
+                  ((timeSlot.minute === 0 && eventMinute < 30) || 
+                   (timeSlot.minute === 30 && eventMinute >= 30));
                 
-                return dateMatches && timeMatches;
+                return startsInSlot;
+              });
+              
+              // Calculate how many 30-minute slots each event should span
+              const eventsWithSpan = slotStartEvents.map(event => {
+                const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+                const eventEnd = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+                const durationMs = eventEnd.getTime() - eventStart.getTime();
+                const durationMinutes = durationMs / (1000 * 60);
+                const slotsToSpan = Math.max(1, Math.ceil(durationMinutes / 30));
+                
+                return { ...event, slotsToSpan };
               });
               
               const isDropTarget = dropZone && 
@@ -186,7 +235,7 @@ export const WeeklyCalendarGrid = ({
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, day.date, timeSlot)}
                 >
-                  {dayEvents.map((event) => (
+                  {eventsWithSpan.map((event) => (
                     <div
                       key={event.id}
                       className={cn(
@@ -194,6 +243,11 @@ export const WeeklyCalendarGrid = ({
                         `calendar-event-${event.status?.toLowerCase() || 'confirmed'}`,
                         draggedEventId === event.id && "opacity-50"
                       )}
+                      style={{
+                        height: `${event.slotsToSpan * 40 - 4}px`, // 40px per slot minus border/padding
+                        zIndex: 10,
+                        position: 'relative'
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
                         onEventClick(event);
@@ -215,6 +269,13 @@ export const WeeklyCalendarGrid = ({
                           {getLocationDisplay(event.location)}
                         </div>
                       )}
+                      <div className="text-xs text-gray-500">
+                        {new Date(event.startTime).toLocaleTimeString('en-US', { 
+                          hour: 'numeric', 
+                          minute: '2-digit',
+                          hour12: true 
+                        })}
+                      </div>
                     </div>
                   ))}
                 </div>
