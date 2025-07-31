@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { generateTimeSlots, getEventDurationInSlots, isEventInTimeSlot } from '../../utils/timeSlots';
 import { formatDateShort } from '../../utils/dateUtils';
 import { cleanEventTitle } from '../../utils/textCleaner';
