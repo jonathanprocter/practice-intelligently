@@ -4,6 +4,8 @@
 
 This is a comprehensive therapy practice management system built as a full-stack web application. The system helps therapists manage clients, appointments, session notes, action items, and leverages AI for insights and analysis. It features a modern React frontend with shadcn/ui components and an Express.js backend with PostgreSQL database using Drizzle ORM.
 
+**Latest Update**: Added comprehensive calendar system with weekly/daily views, appointment management, drag-and-drop rescheduling, and PDF export functionality optimized for reMarkable Paper Pro and therapy practice workflows.
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

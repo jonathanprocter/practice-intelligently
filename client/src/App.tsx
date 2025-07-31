@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Dashboard from "@/pages/dashboard";
 import Clients from "@/pages/clients";
 import Appointments from "@/pages/appointments";
+import Calendar from "@/pages/calendar";
 import SessionNotes from "@/pages/session-notes";
 import ActionItems from "@/pages/action-items";
 import Analytics from "@/pages/analytics";
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/clients" component={Clients} />
       <Route path="/appointments" component={Appointments} />
+      <Route path="/calendar" component={Calendar} />
       <Route path="/session-notes" component={SessionNotes} />
       <Route path="/action-items" component={ActionItems} />
       <Route path="/analytics" component={Analytics} />
