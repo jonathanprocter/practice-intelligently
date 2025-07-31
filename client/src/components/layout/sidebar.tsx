@@ -53,8 +53,7 @@ export default function Sidebar() {
               <Brain className="text-white text-lg" />
             </div>
             <div>
-              <h1 className="text-white font-bold text-lg">Remarkable</h1>
-              <p className="text-white/70 text-sm">Practice Intelligence</p>
+              <h1 className="text-white font-bold text-lg">Practice Intelligence</h1>
             </div>
           </div>
         </div>

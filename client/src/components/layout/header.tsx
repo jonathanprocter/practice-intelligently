@@ -34,12 +34,12 @@ export default function Header() {
           
           <div className="flex items-center space-x-3">
             <img 
-              src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=100" 
-              alt="Dr. Sarah Chen" 
-              className="w-10 h-10 rounded-full"
+              src="/attached_assets/generated-image (1)_1753977205405.png" 
+              alt="Dr. Jonathan Procter" 
+              className="w-10 h-10 rounded-full object-cover"
             />
             <div className="hidden md:block">
-              <p className="font-medium text-therapy-text">Dr. Sarah Chen</p>
+              <p className="font-medium text-therapy-text">Dr. Jonathan Procter</p>
               <p className="text-sm text-therapy-text/60">Licensed Therapist</p>
             </div>
           </div>

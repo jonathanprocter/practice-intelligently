@@ -11,6 +11,7 @@ import SessionNotes from "@/pages/session-notes";
 import ActionItems from "@/pages/action-items";
 import Analytics from "@/pages/analytics";
 import AiInsights from "@/pages/ai-insights";
+import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
@@ -40,6 +41,7 @@ function Router() {
       <Route path="/action-items" component={ActionItems} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/ai-insights" component={AiInsights} />
+      <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
   );

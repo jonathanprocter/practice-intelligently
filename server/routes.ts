@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { analyzeContent, analyzeSessionTranscript } from "./ai-services";
+import { googleCalendarService } from "./auth";
 import { 
   insertClientSchema, insertAppointmentSchema, insertSessionNoteSchema, 
   insertActionItemSchema, insertTreatmentPlanSchema 
@@ -324,6 +325,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating AI insights:", error);
       res.status(500).json({ error: "Failed to generate AI insights" });
+    }
+  });
+
+  // Google Calendar OAuth Routes
+  app.get('/api/auth/google', (req, res) => {
+    const authUrl = googleCalendarService.generateAuthUrl();
+    res.redirect(authUrl);
+  });
+
+  app.get('/api/auth/google/callback', async (req, res) => {
+    try {
+      const { code } = req.query;
+      if (!code) {
+        return res.status(400).json({ error: 'Authorization code is required' });
+      }
+      
+      await googleCalendarService.getAccessToken(code as string);
+      res.redirect('/?connected=true');
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      res.redirect('/?error=auth_failed');
+    }
+  });
+
+  // Google Calendar Integration
+  app.get('/api/calendar/events/:therapistId', async (req, res) => {
+    try {
+      const { timeMin, timeMax, calendarId } = req.query;
+      const events = await googleCalendarService.getEvents(
+        calendarId as string || 'primary',
+        timeMin as string,
+        timeMax as string
+      );
+      res.json(events);
+    } catch (error) {
+      console.error('Error fetching calendar events:', error);
+      res.status(500).json({ error: 'Failed to fetch calendar events' });
+    }
+  });
+
+  app.get('/api/calendar/calendars', async (req, res) => {
+    try {
+      const calendars = await googleCalendarService.listCalendars();
+      res.json(calendars);
+    } catch (error) {
+      console.error('Error fetching calendars:', error);
+      res.status(500).json({ error: 'Failed to fetch calendars' });
+    }
+  });
+
+  app.post('/api/calendar/events', async (req, res) => {
+    try {
+      const { calendarId = 'primary', ...eventData } = req.body;
+      const event = await googleCalendarService.createEvent(calendarId, eventData);
+      res.json(event);
+    } catch (error) {
+      console.error('Error creating calendar event:', error);
+      res.status(500).json({ error: 'Failed to create calendar event' });
+    }
+  });
+
+  app.put('/api/calendar/events/:eventId', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const { calendarId = 'primary', ...eventData } = req.body;
+      const event = await googleCalendarService.updateEvent(calendarId, eventId, eventData);
+      res.json(event);
+    } catch (error) {
+      console.error('Error updating calendar event:', error);
+      res.status(500).json({ error: 'Failed to update calendar event' });
+    }
+  });
+
+  app.delete('/api/calendar/events/:eventId', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const { calendarId = 'primary' } = req.query;
+      await googleCalendarService.deleteEvent(calendarId as string, eventId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting calendar event:', error);
+      res.status(500).json({ error: 'Failed to delete calendar event' });
     }
   });
 

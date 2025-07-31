@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ApiClient } from '@/lib/api';
 import { CalendarEvent, CalendarDay } from '../types/calendar';
 import { getWeekStart, getWeekEnd, getWeekDays, addWeeks, isCurrentWeek, getWeekRangeString } from '../utils/dateUtils';
-import { exportWeeklyCalendar, exportDailyCalendar, exportAppointmentList } from '../utils/calendarExport';
+// Removed export imports - using direct PDF export now
 import { WeeklyCalendarGrid } from '../components/calendar/WeeklyCalendarGrid';
 import { CalendarHeader } from '../components/calendar/CalendarHeader';
 import { DailyView } from '../components/calendar/DailyView';
@@ -13,39 +13,69 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 
 export default function Calendar() {
   const [currentWeek, setCurrentWeek] = useState(() => getWeekStart(new Date()));
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState('week');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedCalendarId, setSelectedCalendarId] = useState<string>('primary');
 
   // Get week range
   const weekEnd = getWeekEnd(currentWeek);
   const weekDays = getWeekDays(currentWeek);
   const weekRangeString = getWeekRangeString(currentWeek, weekEnd);
 
-  // Fetch appointments for current week
-  const { data: appointments = [], isLoading, error } = useQuery({
-    queryKey: ['appointments', currentWeek.toISOString()],
-    queryFn: () => ApiClient.getAppointments(currentWeek.toISOString().split('T')[0]),
+  // Fetch Google Calendar events instead of mock appointments
+  // Add Connect Google Calendar functionality
+  const connectGoogleCalendar = () => {
+    window.location.href = '/api/auth/google';
+  };
+
+  const { data: googleEvents, isLoading, error } = useQuery({
+    queryKey: ['google-calendar-events', 'dr-procter-id', currentWeek.toISOString(), selectedCalendarId],
+    queryFn: async () => {
+      const response = await fetch(`/api/calendar/events/dr-procter-id?timeMin=${currentWeek.toISOString()}&timeMax=${weekEnd.toISOString()}&calendarId=${selectedCalendarId}`);
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('Google Calendar not connected');
+        }
+        throw new Error('Failed to fetch calendar events');
+      }
+      return response.json();
+    },
+    retry: false,
+    refetchOnWindowFocus: false
   });
 
-  // Convert appointments to calendar events
-  const calendarEvents: CalendarEvent[] = appointments.map(apt => ({
-    id: apt.id,
-    title: apt.notes || `${apt.type} Session`,
-    startTime: new Date(apt.startTime),
-    endTime: new Date(apt.endTime),
-    clientId: apt.clientId,
-    clientName: `Client ${apt.clientId.slice(-4)}`, // Would normally come from a join with client data
-    type: (apt.type as CalendarEvent['type']) || 'individual',
-    status: (apt.status as CalendarEvent['status']) || 'scheduled',
-    location: 'Therapy Office - Room 1', // Would come from appointment data
-    notes: apt.notes,
-    therapistId: 'demo-therapist-id',
-    source: 'system'
+  // Fetch available calendars
+  const { data: calendars } = useQuery({
+    queryKey: ['google-calendars'],
+    queryFn: async () => {
+      const response = await fetch('/api/calendar/calendars');
+      if (!response.ok) return [];
+      return response.json();
+    },
+    retry: false,
+    refetchOnWindowFocus: false
+  });
+
+  // Convert Google Calendar events to calendar events  
+  const calendarEvents: CalendarEvent[] = (googleEvents || []).map((event: any) => ({
+    id: event.id,
+    title: event.summary || 'Untitled Event',
+    startTime: new Date(event.start.dateTime),
+    endTime: new Date(event.end.dateTime),
+    clientId: `google-${event.id}`,
+    clientName: event.summary || 'Google Calendar Event',
+    type: 'individual' as CalendarEvent['type'],
+    status: (event.status === 'confirmed' ? 'scheduled' : 'pending') as CalendarEvent['status'],
+    location: event.location || 'Dr. Jonathan Procter\'s Office',
+    notes: event.description || '',
+    therapistId: 'dr-procter-id',
+    source: 'google' as CalendarEvent['source'],
+    attendees: event.attendees?.map((a: any) => a.email).join(', ') || ''
   }));
 
   // Create calendar days with events
@@ -100,17 +130,41 @@ export default function Calendar() {
     console.log('Creating new appointment');
   };
 
-  const handleExportCalendar = (type: 'weekly' | 'daily' | 'appointments') => {
-    switch (type) {
-      case 'weekly':
-        exportWeeklyCalendar(calendarEvents, currentWeek, weekEnd);
-        break;
-      case 'daily':
-        exportDailyCalendar(calendarEvents, selectedDate);
-        break;
-      case 'appointments':
-        exportAppointmentList(calendarEvents, currentWeek, weekEnd);
-        break;
+  const handleExportCalendar = async (type: 'weekly' | 'daily' | 'appointments') => {
+    const { exportToPDF, exportDailyToPDF } = await import('@/utils/pdfExport');
+    
+    // Convert calendar events to appointment format for PDF export
+    const appointmentData = calendarEvents.map(event => ({
+      id: event.id,
+      clientName: event.clientName,
+      type: event.type,
+      startTime: event.startTime.toISOString(),
+      endTime: event.endTime.toISOString(),
+      status: event.status,
+      notes: event.notes || '',
+      attendees: event.attendees || ''
+    }));
+
+    try {
+      switch (type) {
+        case 'weekly':
+        case 'appointments':
+          await exportToPDF({
+            appointments: appointmentData,
+            weekStart: currentWeek,
+            therapistName: 'Dr. Jonathan Procter'
+          });
+          break;
+        case 'daily':
+          await exportDailyToPDF({
+            appointments: appointmentData,
+            date: selectedDate,
+            therapistName: 'Dr. Jonathan Procter'
+          });
+          break;
+      }
+    } catch (error) {
+      console.error('Export failed:', error);
     }
   };
 
@@ -133,16 +187,22 @@ export default function Calendar() {
   if (error) {
     return (
       <div className="p-6">
-        <Card className="therapy-card border-therapy-error">
+        <Card className="therapy-card border-therapy-primary">
           <CardContent className="p-6 text-center">
-            <p className="text-therapy-error">Failed to load calendar data</p>
+            <h2 className="text-xl font-bold text-therapy-text mb-4">Google Calendar Connection Required</h2>
+            <p className="text-therapy-text/70 mb-6">
+              To view and manage your appointments, please connect your Google Calendar account.
+              This will sync your existing events and allow you to manage your schedule directly from Practice Intelligence.
+            </p>
             <Button 
-              variant="outline" 
-              onClick={() => window.location.reload()}
-              className="mt-4"
+              onClick={connectGoogleCalendar}
+              className="bg-blue-600 hover:bg-blue-700 text-white mb-4"
             >
-              Retry
+              Connect Google Calendar
             </Button>
+            <p className="text-sm text-therapy-text/50">
+              Your calendar data will remain private and secure.
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -172,7 +232,7 @@ export default function Calendar() {
               onClick={handleNewAppointment}
               className="bg-therapy-primary hover:bg-therapy-primary/80 text-white flex items-center gap-2"
             >
-              <Calendar className="w-4 h-4" />
+              <CalendarIcon className="w-4 h-4" />
               New Appointment
             </Button>
             
