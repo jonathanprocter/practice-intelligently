@@ -4,7 +4,7 @@
 
 This is a comprehensive therapy practice management system built as a full-stack web application. The system helps therapists manage clients, appointments, session notes, action items, and leverages AI for insights and analysis. It features a modern React frontend with shadcn/ui components and an Express.js backend with PostgreSQL database using Drizzle ORM.
 
-**Latest Update**: Added comprehensive calendar system with weekly/daily views, appointment management, drag-and-drop rescheduling, and PDF export functionality optimized for reMarkable Paper Pro and therapy practice workflows.
+**Latest Update**: Completed full system integration with real Google Calendar OAuth, removed all mock data, updated branding to "Practice Intelligence", changed therapist name to "Dr. Jonathan Procter", and implemented PDF export functionality optimized for reMarkable Paper Pro.
 
 ## User Preferences
 
@@ -121,6 +121,13 @@ Required environment variables:
 - `DATABASE_URL`: PostgreSQL connection string
 - `ANTHROPIC_API_KEY`: For Claude API access
 - `OPENAI_API_KEY`: For GPT API access
+- `GOOGLE_CLIENT_ID`: Google Calendar OAuth client ID
+- `GOOGLE_CLIENT_SECRET`: Google Calendar OAuth client secret
 - `NODE_ENV`: Environment specification
+
+**Google Cloud Console Setup Required:**
+- App name: RemarkablePlanner
+- JavaScript Origins: https://remarkableplanner.replit.app, https://remarkableplanner.replit.dev
+- Redirect URIs: https://remarkableplanner.replit.app/api/auth/google/callback, https://remarkableplanner.replit.dev/api/auth/google/callback
 
 The system is designed for scalability with serverless-ready architecture and modern deployment practices. The separation of concerns allows for independent scaling of frontend and backend components while maintaining type safety throughout the application.
