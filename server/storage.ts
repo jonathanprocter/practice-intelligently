@@ -1043,7 +1043,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       const result = await pool.query(
-        'SELECT * FROM appointments WHERE therapist_id = $1 AND appointment_date >= $2 ORDER BY appointment_date DESC',
+        'SELECT * FROM appointments WHERE therapist_id = $1 AND start_time >= $2 ORDER BY start_time DESC',
         [therapistId, dateThreshold]
       );
       
@@ -1051,7 +1051,7 @@ export class DatabaseStorage implements IStorage {
         id: row.id,
         clientId: row.client_id,
         therapistId: row.therapist_id,
-        appointmentDate: new Date(row.appointment_date),
+        appointmentDate: new Date(row.start_time),
         status: row.status,
         type: row.type,
         duration: row.duration,
@@ -1068,7 +1068,7 @@ export class DatabaseStorage implements IStorage {
   async getAppointmentsByClientId(clientId: string): Promise<any[]> {
     try {
       const result = await pool.query(
-        'SELECT * FROM appointments WHERE client_id = $1 ORDER BY appointment_date DESC',
+        'SELECT * FROM appointments WHERE client_id = $1 ORDER BY start_time DESC',
         [clientId]
       );
       
@@ -1076,7 +1076,7 @@ export class DatabaseStorage implements IStorage {
         id: row.id,
         clientId: row.client_id,
         therapistId: row.therapist_id,
-        appointmentDate: new Date(row.appointment_date),
+        appointmentDate: new Date(row.start_time),
         status: row.status,
         type: row.type,
         duration: row.duration,
@@ -1093,7 +1093,7 @@ export class DatabaseStorage implements IStorage {
   async getClientOutcomesByTherapist(therapistId: string): Promise<any[]> {
     try {
       const result = await pool.query(
-        'SELECT c.*, COUNT(sn.id) as session_count FROM clients c LEFT JOIN session_notes sn ON c.id = sn.client_id WHERE c.therapist_id = $1 GROUP BY c.id ORDER BY c.created_at DESC',
+        'SELECT c.*, COUNT(sn.id) as session_count FROM clients c LEFT JOIN session_notes sn ON c.id::text = sn.client_id WHERE c.therapist_id::text = $1 GROUP BY c.id ORDER BY c.created_at DESC',
         [therapistId]
       );
       

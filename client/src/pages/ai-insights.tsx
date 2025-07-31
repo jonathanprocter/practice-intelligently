@@ -131,12 +131,12 @@ export default function AiInsights() {
           <p className="text-therapy-text/60">Advanced AI-powered clinical analytics and predictive insights</p>
         </div>
         <div className="flex items-center gap-3">
-          <Select value={selectedClientId || ""} onValueChange={(value) => setSelectedClientId(value || undefined)}>
+          <Select value={selectedClientId || "all"} onValueChange={(value) => setSelectedClientId(value === "all" ? undefined : value)}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Select client for analysis" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Clients</SelectItem>
+              <SelectItem value="all">All Clients</SelectItem>
               {clients?.map((client) => (
                 <SelectItem key={client.id} value={client.id}>
                   {(client as any).name || `Client ${client.id}`}
