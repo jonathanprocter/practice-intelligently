@@ -3,7 +3,8 @@ import { OAuth2Client } from 'google-auth-library';
 
 // Get the correct redirect URI based on environment
 const getRedirectUri = () => {
-  if (process.env.NODE_ENV === 'production') {
+  // Check if we're running on Replit
+  if (process.env.REPLIT_SLUG || process.env.REPL_SLUG) {
     return 'https://remarkableplanner.replit.app/api/auth/google/callback';
   }
   return 'http://localhost:5000/api/auth/google/callback';
