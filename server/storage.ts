@@ -935,6 +935,188 @@ export class DatabaseStorage implements IStorage {
       overdueAmount: Math.round(overdueAmount * 100) / 100,
     };
   }
+
+  async getSessionNotesByClientId(clientId: string): Promise<SessionNote[]> {
+    try {
+      const result = await pool.query(
+        'SELECT * FROM session_notes WHERE client_id = $1 ORDER BY created_at DESC',
+        [clientId]
+      );
+      
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        appointmentId: row.appointment_id || null,
+        eventId: row.event_id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        content: row.content,
+        transcript: row.transcript || null,
+        aiSummary: row.ai_summary || null,
+        tags: row.tags || [],
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      }));
+    } catch (error) {
+      console.error('Error in getSessionNotesByClientId:', error);
+      return [];
+    }
+  }
+
+  async getAllSessionNotesByTherapist(therapistId: string): Promise<SessionNote[]> {
+    try {
+      const result = await pool.query(
+        'SELECT * FROM session_notes WHERE therapist_id = $1 ORDER BY created_at DESC',
+        [therapistId]
+      );
+      
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        appointmentId: row.appointment_id || null,
+        eventId: row.event_id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        content: row.content,
+        transcript: row.transcript || null,
+        aiSummary: row.ai_summary || null,
+        tags: row.tags || [],
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      }));
+    } catch (error) {
+      console.error('Error in getAllSessionNotesByTherapist:', error);
+      return [];
+    }
+  }
+
+  async getSessionNotesByTherapistTimeframe(therapistId: string, timeframe: 'week' | 'month' | 'quarter'): Promise<SessionNote[]> {
+    try {
+      let dateThreshold = new Date();
+      switch (timeframe) {
+        case 'week':
+          dateThreshold.setDate(dateThreshold.getDate() - 7);
+          break;
+        case 'month':
+          dateThreshold.setMonth(dateThreshold.getMonth() - 1);
+          break;
+        case 'quarter':
+          dateThreshold.setMonth(dateThreshold.getMonth() - 3);
+          break;
+      }
+
+      const result = await pool.query(
+        'SELECT * FROM session_notes WHERE therapist_id = $1 AND created_at >= $2 ORDER BY created_at DESC',
+        [therapistId, dateThreshold]
+      );
+      
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        appointmentId: row.appointment_id || null,
+        eventId: row.event_id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        content: row.content,
+        transcript: row.transcript || null,
+        aiSummary: row.ai_summary || null,
+        tags: row.tags || [],
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      }));
+    } catch (error) {
+      console.error('Error in getSessionNotesByTherapistTimeframe:', error);
+      return [];
+    }
+  }
+
+  async getAppointmentsByTherapistTimeframe(therapistId: string, timeframe: 'week' | 'month' | 'quarter'): Promise<any[]> {
+    try {
+      let dateThreshold = new Date();
+      switch (timeframe) {
+        case 'week':
+          dateThreshold.setDate(dateThreshold.getDate() - 7);
+          break;
+        case 'month':
+          dateThreshold.setMonth(dateThreshold.getMonth() - 1);
+          break;
+        case 'quarter':
+          dateThreshold.setMonth(dateThreshold.getMonth() - 3);
+          break;
+      }
+
+      const result = await pool.query(
+        'SELECT * FROM appointments WHERE therapist_id = $1 AND appointment_date >= $2 ORDER BY appointment_date DESC',
+        [therapistId, dateThreshold]
+      );
+      
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        appointmentDate: new Date(row.appointment_date),
+        status: row.status,
+        type: row.type,
+        duration: row.duration,
+        notes: row.notes,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      }));
+    } catch (error) {
+      console.error('Error in getAppointmentsByTherapistTimeframe:', error);
+      return [];
+    }
+  }
+
+  async getAppointmentsByClientId(clientId: string): Promise<any[]> {
+    try {
+      const result = await pool.query(
+        'SELECT * FROM appointments WHERE client_id = $1 ORDER BY appointment_date DESC',
+        [clientId]
+      );
+      
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        appointmentDate: new Date(row.appointment_date),
+        status: row.status,
+        type: row.type,
+        duration: row.duration,
+        notes: row.notes,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      }));
+    } catch (error) {
+      console.error('Error in getAppointmentsByClientId:', error);
+      return [];
+    }
+  }
+
+  async getClientOutcomesByTherapist(therapistId: string): Promise<any[]> {
+    try {
+      const result = await pool.query(
+        'SELECT c.*, COUNT(sn.id) as session_count FROM clients c LEFT JOIN session_notes sn ON c.id = sn.client_id WHERE c.therapist_id = $1 GROUP BY c.id ORDER BY c.created_at DESC',
+        [therapistId]
+      );
+      
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        name: row.name,
+        status: row.status,
+        sessionCount: parseInt(row.session_count) || 0,
+        progressLevel: this.assessClientProgress(row.status, parseInt(row.session_count) || 0),
+        createdAt: new Date(row.created_at)
+      }));
+    } catch (error) {
+      console.error('Error in getClientOutcomesByTherapist:', error);
+      return [];
+    }
+  }
+
+  private assessClientProgress(status: string, sessionCount: number): string {
+    if (status === 'completed' && sessionCount > 8) return 'excellent';
+    if (status === 'active' && sessionCount > 12) return 'good';
+    if (status === 'active' && sessionCount > 6) return 'moderate';
+    return 'early';
+  }
 }
 
 export const storage = new DatabaseStorage();

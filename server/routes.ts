@@ -485,6 +485,167 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Predictive Models endpoints (#2)
+  app.post('/api/ai/predict-treatment-outcome', async (req, res) => {
+    try {
+      const { clientId, currentSessionCount } = req.body;
+      const { predictTreatmentOutcome } = await import('./ai-predictive-models');
+      const prediction = await predictTreatmentOutcome(clientId, currentSessionCount);
+      res.json(prediction);
+    } catch (error: any) {
+      console.error('Error predicting treatment outcome:', error);
+      res.status(500).json({ error: 'Failed to predict treatment outcome' });
+    }
+  });
+
+  app.post('/api/ai/risk-escalation-alert', async (req, res) => {
+    try {
+      const { clientId, sessionContent } = req.body;
+      const { generateRiskEscalationAlert } = await import('./ai-predictive-models');
+      const alert = await generateRiskEscalationAlert(clientId, sessionContent);
+      res.json(alert);
+    } catch (error: any) {
+      console.error('Error generating risk escalation alert:', error);
+      res.status(500).json({ error: 'Failed to generate risk escalation alert' });
+    }
+  });
+
+  app.post('/api/ai/optimal-intervention-timing', async (req, res) => {
+    try {
+      const { clientId, potentialInterventions } = req.body;
+      const { determineOptimalInterventionTiming } = await import('./ai-predictive-models');
+      const timing = await determineOptimalInterventionTiming(clientId, potentialInterventions);
+      res.json(timing);
+    } catch (error: any) {
+      console.error('Error determining optimal intervention timing:', error);
+      res.status(500).json({ error: 'Failed to determine optimal intervention timing' });
+    }
+  });
+
+  // Pattern Recognition endpoints (#3)
+  app.post('/api/ai/cross-client-patterns', async (req, res) => {
+    try {
+      const { therapistId } = req.body;
+      const { analyzeCrossClientPatterns } = await import('./ai-pattern-recognition');
+      const patterns = await analyzeCrossClientPatterns(therapistId);
+      res.json(patterns);
+    } catch (error: any) {
+      console.error('Error analyzing cross-client patterns:', error);
+      res.status(500).json({ error: 'Failed to analyze cross-client patterns' });
+    }
+  });
+
+  app.post('/api/ai/seasonal-patterns', async (req, res) => {
+    try {
+      const { clientId } = req.body;
+      const { detectSeasonalCyclicalPatterns } = await import('./ai-pattern-recognition');
+      const patterns = await detectSeasonalCyclicalPatterns(clientId);
+      res.json(patterns);
+    } catch (error: any) {
+      console.error('Error detecting seasonal patterns:', error);
+      res.status(500).json({ error: 'Failed to detect seasonal patterns' });
+    }
+  });
+
+  app.post('/api/ai/therapeutic-relationship', async (req, res) => {
+    try {
+      const { clientId, therapistId } = req.body;
+      const { mapTherapeuticRelationship } = await import('./ai-pattern-recognition');
+      const relationship = await mapTherapeuticRelationship(clientId, therapistId);
+      res.json(relationship);
+    } catch (error: any) {
+      console.error('Error mapping therapeutic relationship:', error);
+      res.status(500).json({ error: 'Failed to map therapeutic relationship' });
+    }
+  });
+
+  // Personalized Therapy endpoints (#5)
+  app.post('/api/ai/evidence-based-interventions', async (req, res) => {
+    try {
+      const { clientProfile, sessionHistory } = req.body;
+      const { generateEvidenceBasedInterventions } = await import('./ai-personalized-therapy');
+      const interventions = await generateEvidenceBasedInterventions(clientProfile, sessionHistory);
+      res.json(interventions);
+    } catch (error: any) {
+      console.error('Error generating evidence-based interventions:', error);
+      res.status(500).json({ error: 'Failed to generate evidence-based interventions' });
+    }
+  });
+
+  app.post('/api/ai/personalized-homework', async (req, res) => {
+    try {
+      const { clientId, sessionContent, clientPreferences } = req.body;
+      const { createPersonalizedHomework } = await import('./ai-personalized-therapy');
+      const homework = await createPersonalizedHomework(clientId, sessionContent, clientPreferences);
+      res.json(homework);
+    } catch (error: any) {
+      console.error('Error creating personalized homework:', error);
+      res.status(500).json({ error: 'Failed to create personalized homework' });
+    }
+  });
+
+  app.post('/api/ai/curate-resources', async (req, res) => {
+    try {
+      const { clientProfile, currentChallenges } = req.body;
+      const { curateTherapeuticResources } = await import('./ai-personalized-therapy');
+      const resources = await curateTherapeuticResources(clientProfile, currentChallenges);
+      res.json(resources);
+    } catch (error: any) {
+      console.error('Error curating therapeutic resources:', error);
+      res.status(500).json({ error: 'Failed to curate therapeutic resources' });
+    }
+  });
+
+  // Practice Intelligence endpoints (#7)
+  app.post('/api/ai/session-efficiency', async (req, res) => {
+    try {
+      const { therapistId, timeframe } = req.body;
+      const { analyzeSessionEfficiency } = await import('./ai-practice-intelligence');
+      const efficiency = await analyzeSessionEfficiency(therapistId, timeframe);
+      res.json(efficiency);
+    } catch (error: any) {
+      console.error('Error analyzing session efficiency:', error);
+      res.status(500).json({ error: 'Failed to analyze session efficiency' });
+    }
+  });
+
+  app.post('/api/ai/client-retention', async (req, res) => {
+    try {
+      const { clientId } = req.body;
+      const { predictClientRetention } = await import('./ai-practice-intelligence');
+      const retention = await predictClientRetention(clientId);
+      res.json(retention);
+    } catch (error: any) {
+      console.error('Error predicting client retention:', error);
+      res.status(500).json({ error: 'Failed to predict client retention' });
+    }
+  });
+
+  // Personal Practice Insights endpoints (#10)
+  app.post('/api/ai/therapist-strengths', async (req, res) => {
+    try {
+      const { therapistId } = req.body;
+      const { analyzeTherapistStrengths } = await import('./ai-practice-intelligence');
+      const strengths = await analyzeTherapistStrengths(therapistId);
+      res.json(strengths);
+    } catch (error: any) {
+      console.error('Error analyzing therapist strengths:', error);
+      res.status(500).json({ error: 'Failed to analyze therapist strengths' });
+    }
+  });
+
+  app.post('/api/ai/continuing-education', async (req, res) => {
+    try {
+      const { therapistId, clientMix } = req.body;
+      const { generateContinuingEducationRecommendations } = await import('./ai-practice-intelligence');
+      const recommendations = await generateContinuingEducationRecommendations(therapistId, clientMix);
+      res.json(recommendations);
+    } catch (error: any) {
+      console.error('Error generating continuing education recommendations:', error);
+      res.status(500).json({ error: 'Failed to generate continuing education recommendations' });
+    }
+  });
+
   // Session Notes endpoints
   app.post('/api/session-notes', async (req, res) => {
     try {
