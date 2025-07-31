@@ -114,6 +114,16 @@ export const WeeklyCalendarGrid = ({
     });
   };
 
+  console.log('WeeklyCalendarGrid rendering with:', {
+    totalEvents: events.length,
+    weekDates: week.map(d => d.date.toDateString()),
+    sampleEvents: events.slice(0, 3).map(e => ({
+      title: e.clientName || e.title,
+      start: e.startTime,
+      startStr: e.startTime instanceof Date ? e.startTime.toISOString() : e.startTime
+    }))
+  });
+
   return (
     <div className="weekly-calendar-container">
       <div className="grid grid-cols-8 border border-gray-200">
@@ -149,8 +159,15 @@ export const WeeklyCalendarGrid = ({
             {week.map((day) => {
               const dayEvents = events.filter(event => {
                 const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
-                return eventStart.toDateString() === day.date.toDateString() && 
-                       isEventInTimeSlot(event, timeSlot);
+                const dateMatches = eventStart.toDateString() === day.date.toDateString();
+                const timeMatches = isEventInTimeSlot(event, timeSlot);
+                
+                // Debug logging for the current week
+                if (dateMatches) {
+                  console.log(`Event "${event.clientName || event.title}" on ${day.date.toDateString()}: timeSlot=${timeSlot.display}, matches=${timeMatches}`);
+                }
+                
+                return dateMatches && timeMatches;
               });
               
               const isDropTarget = dropZone && 
@@ -186,11 +203,11 @@ export const WeeklyCalendarGrid = ({
                       onDragEnd={handleDragEnd}
                     >
                       <div className="text-xs font-medium">
-                        {wrapText(cleanEventTitle(event.title), 15)[0]}
+                        {event.clientName || wrapText(cleanEventTitle(event.title || 'Event'), 15)[0]}
                       </div>
-                      {event.clientName && (
+                      {event.clientName && event.title && event.title !== event.clientName && (
                         <div className="text-xs text-gray-600">
-                          {event.clientName}
+                          {wrapText(cleanEventTitle(event.title), 15)[0]}
                         </div>
                       )}
                       {getLocationDisplay(event.location) && (

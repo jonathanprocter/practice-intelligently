@@ -33,7 +33,38 @@ export function getEventDurationInSlots(startTime: Date, endTime: Date): number 
   return Math.ceil(durationMinutes / 30); // 30-minute slots
 }
 
-export function isEventInTimeSlot(eventStart: Date, eventEnd: Date, slotHour: number, slotMinute: number): boolean {
+export function isEventInTimeSlot(event: any, timeSlot: TimeSlot): boolean {
+  const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+  const eventEnd = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+  
+  // Handle invalid dates
+  if (isNaN(eventStart.getTime()) || isNaN(eventEnd.getTime())) {
+    return false;
+  }
+  
+  const slotStart = new Date(eventStart);
+  slotStart.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
+  
+  const slotEnd = new Date(slotStart);
+  slotEnd.setMinutes(slotEnd.getMinutes() + 30);
+  
+  const matches = (eventStart < slotEnd) && (eventEnd > slotStart);
+  
+  // Debug log for troubleshooting
+  if (matches) {
+    console.log(`Event "${event.clientName || event.title}" matches time slot ${timeSlot.display}:`, {
+      eventStart: eventStart.toISOString(),
+      eventEnd: eventEnd.toISOString(),
+      slotStart: slotStart.toISOString(),
+      slotEnd: slotEnd.toISOString()
+    });
+  }
+  
+  return matches;
+}
+
+// Keep the old function for backwards compatibility
+export function isEventInTimeSlotLegacy(eventStart: Date, eventEnd: Date, slotHour: number, slotMinute: number): boolean {
   const slotStart = new Date(eventStart);
   slotStart.setHours(slotHour, slotMinute, 0, 0);
   
