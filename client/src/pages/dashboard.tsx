@@ -7,6 +7,7 @@ import UrgentActionItems from "@/components/dashboard/urgent-action-items";
 import RecentActivity from "@/components/dashboard/recent-activity";
 import ProgressOverview from "@/components/dashboard/progress-overview";
 import ApiStatusIndicators from "@/components/dashboard/api-status-indicators";
+import TodaysSessions from "@/components/dashboard/todays-sessions";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -55,11 +56,15 @@ export default function Dashboard() {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TodaysSessions />
         <UrgentActionItems />
-        <RecentActivity />
       </div>
       
-      <ProgressOverview />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RecentActivity />
+        <ProgressOverview />
+      </div>
+
       
       {/* Floating Action Button */}
       <div className="fixed bottom-6 right-6 z-50">

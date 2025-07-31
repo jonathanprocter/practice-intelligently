@@ -324,6 +324,24 @@ export class DatabaseStorage implements IStorage {
     return newNote;
   }
 
+  async getTodaysSessionNotes(therapistId: string): Promise<SessionNote[]> {
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+
+    return await db
+      .select()
+      .from(sessionNotes)
+      .where(
+        and(
+          eq(sessionNotes.therapistId, therapistId),
+          gte(sessionNotes.createdAt, startOfDay),
+          lte(sessionNotes.createdAt, endOfDay)
+        )
+      )
+      .orderBy(desc(sessionNotes.createdAt));
+  }
+
   async updateSessionNote(id: string, note: Partial<SessionNote>): Promise<SessionNote> {
     const [updatedNote] = await db
       .update(sessionNotes)

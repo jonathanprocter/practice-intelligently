@@ -47,6 +47,20 @@ export interface AiInsight {
   createdAt: string;
 }
 
+export interface SessionNote {
+  id: string;
+  appointmentId?: string;
+  eventId?: string;
+  clientId: string;
+  therapistId: string;
+  content: string;
+  transcript?: string;
+  aiSummary?: string;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ApiStatus {
   service: string;
   status: 'online' | 'offline' | 'checking';
@@ -56,8 +70,8 @@ export interface ApiStatus {
 
 export class ApiClient {
   private static get therapistId(): string {
-    // Return empty string - no user exists yet
-    return '';
+    // Use the demo therapist ID for live data
+    return 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
   }
 
   static async getDashboardStats(): Promise<DashboardStats> {
@@ -152,6 +166,11 @@ export class ApiClient {
 
   static async getApiStatuses(): Promise<ApiStatus[]> {
     const response = await apiRequest('GET', '/api/health/ai-services');
+    return response.json();
+  }
+
+  static async getTodaysSessionNotes(): Promise<SessionNote[]> {
+    const response = await apiRequest('GET', `/api/session-notes/today/${this.therapistId}`);
     return response.json();
   }
 }
