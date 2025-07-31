@@ -143,16 +143,14 @@
 }
 
 .calendar-event {
-  @apply rounded cursor-pointer text-xs;
-  min-height: 36px;
-  padding: 4px 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .calendar-event:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transform: translateY(-1px);
+  border-color: #1d4ed8 !important;
 }
 
 .calendar-time-slot {
@@ -160,9 +158,22 @@
   position: relative !important;
 }
 
-.calendar-event {
-  line-height: 1.2 !important;
-  font-size: 11px !important;
+.appointment-client-name {
+  font-weight: 600;
+  color: #1f2937;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.appointment-source {
+  color: #3b82f6;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.appointment-time {
+  color: #6b7280;
+  font-weight: 500;
 }
 
 .calendar-event-cancelled {

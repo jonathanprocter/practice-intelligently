@@ -257,7 +257,7 @@ export const WeeklyCalendarGrid = ({
                   onDragOver={(e) => handleDragOver(e, day.date, timeSlot)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, day.date, timeSlot)}
-                  style={{ position: 'relative', overflow: 'visible' }}
+                  style={{ position: 'relative', overflow: 'visible', minHeight: '40px' }}
                 >
                   {eventsWithSpan.map((event) => (
                     <div
@@ -268,23 +268,22 @@ export const WeeklyCalendarGrid = ({
                         draggedEventId === event.id && "opacity-50"
                       )}
                       style={{
-                        height: `${Math.max(event.slotsToSpan * 40 - 8, 32)}px`, // Ensure minimum height
-                        width: 'calc(100% - 8px)',
+                        height: `${Math.max(event.slotsToSpan * 40 - 6, 36)}px`, // Better height calculation
+                        width: 'calc(100% - 6px)',
                         position: 'absolute',
-                        top: '4px',
-                        left: '4px',
+                        top: '3px',
+                        left: '3px',
                         zIndex: 10,
-                        backgroundColor: event.status === 'confirmed' ? '#dcfce7' : 
-                                       event.status === 'pending' ? '#fef3c7' : 
-                                       event.status === 'cancelled' ? '#fecaca' : '#dbeafe',
-                        border: `1px solid ${event.status === 'confirmed' ? '#22c55e' : 
-                                            event.status === 'pending' ? '#f59e0b' : 
-                                            event.status === 'cancelled' ? '#ef4444' : '#3b82f6'}`,
-                        borderLeft: `4px solid ${event.status === 'confirmed' ? '#16a34a' : 
-                                                 event.status === 'pending' ? '#d97706' : 
-                                                 event.status === 'cancelled' ? '#dc2626' : '#2563eb'}`,
+                        backgroundColor: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        borderLeft: '3px solid #3b82f6',
+                        borderRadius: '4px',
+                        padding: event.slotsToSpan >= 3 ? '6px' : event.slotsToSpan >= 2 ? '4px' : '3px',
                         overflow: 'hidden',
-                        wordWrap: 'break-word'
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'flex-start'
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -294,21 +293,48 @@ export const WeeklyCalendarGrid = ({
                       onDragStart={(e) => handleDragStart(e, event)}
                       onDragEnd={handleDragEnd}
                     >
-                      <div className="text-xs font-medium text-gray-900 leading-tight" style={{ marginBottom: '2px' }}>
-                        {(event.clientName || wrapText(cleanEventTitle(event.title || 'Event'), 12)[0]).substring(0, 20)}
+                      <div 
+                        className="appointment-client-name font-semibold text-gray-900"
+                        style={{ 
+                          fontSize: event.slotsToSpan >= 3 ? '12px' : event.slotsToSpan >= 2 ? '11px' : '10px',
+                          lineHeight: '1.2',
+                          marginBottom: '1px',
+                          wordWrap: 'break-word',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {event.clientName || cleanEventTitle(event.title || 'Event')}
                       </div>
-                      <div className="text-xs text-gray-600 leading-tight" style={{ marginBottom: '2px' }}>
-                        {(getLocationDisplay(event.location) || getDefaultLocation(new Date(event.startTime))).substring(0, 15)}
+                      <div 
+                        className="appointment-source text-blue-600"
+                        style={{ 
+                          fontSize: event.slotsToSpan >= 3 ? '10px' : '9px',
+                          lineHeight: '1.1',
+                          marginBottom: '1px',
+                          fontWeight: '500'
+                        }}
+                      >
+                        {event.calendarName?.includes('Simple Practice') ? 'SimplePractice' : 
+                         event.calendarName?.includes('Google') ? 'Google Calendar' : 
+                         event.source === 'google' ? 'Google Calendar' : 'SimplePractice'} | {(getLocationDisplay(event.location) || getDefaultLocation(new Date(event.startTime)))}
                       </div>
-                      <div className="text-xs text-gray-500 leading-tight">
+                      <div 
+                        className="appointment-time text-gray-600"
+                        style={{ 
+                          fontSize: event.slotsToSpan >= 3 ? '10px' : '9px',
+                          lineHeight: '1.1',
+                          fontWeight: '500'
+                        }}
+                      >
                         {new Date(event.startTime).toLocaleTimeString('en-US', { 
-                          hour: 'numeric', 
+                          hour: '2-digit', 
                           minute: '2-digit',
-                          hour12: true 
+                          hour12: false 
                         })} - {new Date(event.endTime).toLocaleTimeString('en-US', { 
-                          hour: 'numeric', 
+                          hour: '2-digit', 
                           minute: '2-digit',
-                          hour12: true 
+                          hour12: false 
                         })}
                       </div>
                     </div>
