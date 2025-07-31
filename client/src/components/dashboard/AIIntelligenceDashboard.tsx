@@ -4,7 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { Alert, AlertCircle, AlertTriangle, CheckCircle, Brain, Target, TrendingUp, Users, Clock, Star, BookOpen, Shield } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle, Brain, Target, TrendingUp, Users, Clock, Star, BookOpen, Shield } from 'lucide-react';
+import { Alert } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 
 interface AIIntelligenceDashboardProps {

@@ -11,7 +11,7 @@ const navigationItems = [
   { path: "/session-notes", label: "Session Notes", icon: FileText },
   { path: "/action-items", label: "Action Items", icon: CheckSquare, badge: "3", badgeColor: "bg-red-500" },
   { path: "/analytics", label: "Analytics", icon: BarChart },
-  { path: "/ai-insights", label: "AI Insights", icon: Bot },
+  { path: "/ai-insights", label: "AI Intelligence", icon: Brain },
 ];
 
 export default function Sidebar() {

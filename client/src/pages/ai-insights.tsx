@@ -1,19 +1,26 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ApiClient, type AiInsight } from "@/lib/api";
-import { Bot, Lightbulb, TrendingUp, FileText, AlertTriangle, Sparkles, RefreshCw, Eye, X } from "lucide-react";
+import { Bot, Lightbulb, TrendingUp, FileText, AlertTriangle, Sparkles, RefreshCw, Eye, X, Brain, Users, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { AIIntelligenceDashboard } from "@/components/dashboard/AIIntelligenceDashboard";
 
 export default function AiInsights() {
   const [filterType, setFilterType] = useState("all");
   const [selectedInsight, setSelectedInsight] = useState<AiInsight | null>(null);
+  const [activeView, setActiveView] = useState<'intelligence' | 'legacy'>('intelligence');
+  const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined);
   
   const { toast } = useToast();
+
+  // Mock therapist ID - in a real app, this would come from auth context
+  const therapistId = "therapist-1";
 
   const { data: insights, isLoading } = useQuery({
     queryKey: ['ai-insights'],
@@ -107,22 +114,75 @@ export default function AiInsights() {
     );
   }
 
+  // Get clients for selection
+  const { data: clients } = useQuery({
+    queryKey: ['clients'],
+    queryFn: ApiClient.getClients,
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-therapy-text">AI Insights</h1>
-          <p className="text-therapy-text/60">AI-powered analysis and recommendations for your practice</p>
+          <h1 className="text-2xl font-bold text-therapy-text flex items-center gap-3">
+            <Brain className="w-8 h-8 text-blue-600" />
+            AI Clinical Intelligence
+          </h1>
+          <p className="text-therapy-text/60">Advanced AI-powered clinical analytics and predictive insights</p>
         </div>
-        <Button 
-          onClick={() => generateMutation.mutate()}
-          disabled={generateMutation.isPending}
-          className="bg-therapy-primary hover:bg-therapy-primary/90"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${generateMutation.isPending ? 'animate-spin' : ''}`} />
-          {generateMutation.isPending ? 'Generating...' : 'Generate Insights'}
-        </Button>
+        <div className="flex items-center gap-3">
+          <Select value={selectedClientId || ""} onValueChange={(value) => setSelectedClientId(value || undefined)}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Select client for analysis" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Clients</SelectItem>
+              {clients?.map((client) => (
+                <SelectItem key={client.id} value={client.id}>
+                  {client.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+
+      {/* Advanced AI Intelligence Dashboard */}
+      <Tabs value={activeView} onValueChange={(value) => setActiveView(value as 'intelligence' | 'legacy')}>
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="intelligence" className="flex items-center gap-2">
+            <Brain className="w-4 h-4" />
+            AI Intelligence
+          </TabsTrigger>
+          <TabsTrigger value="legacy" className="flex items-center gap-2">
+            <Bot className="w-4 h-4" />
+            Basic Insights
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="intelligence" className="mt-6">
+          <AIIntelligenceDashboard 
+            therapistId={therapistId}
+            clientId={selectedClientId}
+          />
+        </TabsContent>
+
+        <TabsContent value="legacy" className="mt-6">
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-semibold text-therapy-text">Basic AI Insights</h2>
+                <p className="text-therapy-text/60">Traditional AI analysis and recommendations</p>
+              </div>
+              <Button 
+                onClick={() => generateMutation.mutate()}
+                disabled={generateMutation.isPending}
+                className="bg-therapy-primary hover:bg-therapy-primary/90"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${generateMutation.isPending ? 'animate-spin' : ''}`} />
+                {generateMutation.isPending ? 'Generating...' : 'Generate Insights'}
+              </Button>
+            </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -278,77 +338,80 @@ export default function AiInsights() {
         )}
       </div>
 
-      {/* Insight Detail Modal */}
-      {selectedInsight && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="therapy-card max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex items-start space-x-4">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${getInsightColor(selectedInsight.type)}`}>
-                    {(() => {
-                      const IconComponent = getInsightIcon(selectedInsight.type);
-                      return <IconComponent className="h-6 w-6" />;
-                    })()}
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-therapy-text mb-2">
-                      {selectedInsight.title}
-                    </h2>
-                    <div className="flex items-center space-x-3">
-                      <Badge className={getTypeBadgeColor(selectedInsight.type)}>
-                        {selectedInsight.type.charAt(0).toUpperCase() + selectedInsight.type.slice(1)}
-                      </Badge>
-                      {selectedInsight.confidence && (
-                        <Badge variant="outline" className={getConfidenceColor(selectedInsight.confidence)}>
-                          {getConfidenceLevel(selectedInsight.confidence)} Confidence ({selectedInsight.confidence}%)
-                        </Badge>
-                      )}
+          {/* Insight Detail Modal */}
+          {selectedInsight && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="therapy-card max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="flex items-start space-x-4">
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${getInsightColor(selectedInsight.type)}`}>
+                        {(() => {
+                          const IconComponent = getInsightIcon(selectedInsight.type);
+                          return <IconComponent className="h-6 w-6" />;
+                        })()}
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-therapy-text mb-2">
+                          {selectedInsight.title}
+                        </h2>
+                        <div className="flex items-center space-x-3">
+                          <Badge className={getTypeBadgeColor(selectedInsight.type)}>
+                            {selectedInsight.type.charAt(0).toUpperCase() + selectedInsight.type.slice(1)}
+                          </Badge>
+                          {selectedInsight.confidence && (
+                            <Badge variant="outline" className={getConfidenceColor(selectedInsight.confidence)}>
+                              {getConfidenceLevel(selectedInsight.confidence)} Confidence ({selectedInsight.confidence}%)
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => setSelectedInsight(null)}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-therapy-text mb-2">Analysis Details</h3>
-                  <p className="text-therapy-text/80 whitespace-pre-wrap">
-                    {selectedInsight.content}
-                  </p>
-                </div>
-                
-                <div className="flex items-center justify-between pt-4 border-t border-therapy-border">
-                  <div className="text-sm text-therapy-text/50">
-                    Generated on {new Date(selectedInsight.createdAt).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" onClick={() => setSelectedInsight(null)}>
-                      Close
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => setSelectedInsight(null)}
+                    >
+                      <X className="w-4 h-4" />
                     </Button>
-                    <Button className="bg-therapy-primary hover:bg-therapy-primary/90">
-                      Mark as Reviewed
-                    </Button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-therapy-text mb-2">Analysis Details</h3>
+                      <p className="text-therapy-text/80 whitespace-pre-wrap">
+                        {selectedInsight.content}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center justify-between pt-4 border-t border-therapy-border">
+                      <div className="text-sm text-therapy-text/50">
+                        Generated on {new Date(selectedInsight.createdAt).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button variant="outline" onClick={() => setSelectedInsight(null)}>
+                          Close
+                        </Button>
+                        <Button className="bg-therapy-primary hover:bg-therapy-primary/90">
+                          Mark as Reviewed
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+          )}
           </div>
-        </div>
-      )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
