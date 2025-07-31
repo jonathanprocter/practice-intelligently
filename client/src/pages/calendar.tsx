@@ -302,6 +302,13 @@ export default function Calendar() {
               >
                 Retry Connection
               </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => window.open('/oauth-test', '_blank')} 
+                className="w-full text-xs"
+              >
+                Debug OAuth Issues
+              </Button>
             </div>
           </CardContent>
         </Card>

@@ -43,6 +43,7 @@ function Router() {
       <Route path="/ai-insights" component={AiInsights} />
       <Route path="/settings" component={Settings} />
       <Route path="/oauth-debug" component={() => import('./pages/oauth-debug').then(m => m.default)} />
+      <Route path="/oauth-test" component={() => import('./pages/oauth-test').then(m => m.default)} />
       <Route component={NotFound} />
     </Switch>
   );

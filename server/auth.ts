@@ -64,15 +64,18 @@ export class GoogleCalendarService {
       'https://www.googleapis.com/auth/calendar.events'
     ];
 
-    // Debug logging can be removed in production
-    // console.log('Generating OAuth URL with redirect URI:', getRedirectUri());
-    // console.log('Using Client ID:', process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
+    console.log('Generating OAuth URL with redirect URI:', getRedirectUri());
+    console.log('Using Client ID:', process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
 
-    return this.auth.generateAuthUrl({
+    const authUrl = this.auth.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
-      prompt: 'consent'
+      prompt: 'consent',
+      include_granted_scopes: true
     });
+
+    console.log('Generated OAuth URL:', authUrl);
+    return authUrl;
   }
 
   async getAccessToken(code: string): Promise<void> {

@@ -330,8 +330,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Google Calendar OAuth Routes
   app.get('/api/auth/google', (req, res) => {
-    const authUrl = googleCalendarService.generateAuthUrl();
-    res.redirect(authUrl);
+    try {
+      console.log('Google OAuth initiation requested');
+      const authUrl = googleCalendarService.generateAuthUrl();
+      console.log('Generated auth URL length:', authUrl.length);
+      console.log('Auth URL domain:', authUrl.substring(0, 50) + '...');
+      res.redirect(authUrl);
+    } catch (error) {
+      console.error('Error generating Google auth URL:', error);
+      res.status(500).json({ error: 'Failed to initiate Google authentication', details: error.message });
+    }
   });
 
   // Check Google Calendar connection status
