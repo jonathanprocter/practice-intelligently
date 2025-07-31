@@ -143,20 +143,20 @@
 }
 
 .calendar-event {
-  @apply bg-blue-100 border border-blue-200 rounded p-1 mb-1 cursor-pointer text-xs overflow-hidden;
+  @apply rounded cursor-pointer text-xs;
   min-height: 36px;
+  padding: 4px 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
 }
 
 .calendar-event:hover {
-  @apply bg-blue-200;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
 }
 
-.calendar-event-confirmed {
-  @apply bg-green-100 border-green-200;
-}
-
-.calendar-event-pending {
-  @apply bg-yellow-100 border-yellow-200;
+.calendar-time-slot {
+  overflow: visible !important;
 }
 
 .calendar-event-cancelled {

@@ -6,6 +6,8 @@ This is a comprehensive therapy practice management system built as a full-stack
 
 **Latest Update**: Successfully implemented comprehensive database enhancement with 13 robust tables for complete therapy practice management. Added 65+ storage methods supporting billing, assessments, medications, communications, documents, and audit trails. Completely removed all demo data as requested and built authentic data architecture for real-world therapy practice operations.
 
+**Recent Calendar Enhancement (2025-01-31)**: Fixed Google Calendar integration with full OAuth authentication working for 4,129 events across 4 calendars. Redesigned weekly calendar view with proper event spanning (no more split blocks), all-day events section, and location defaults: Monday=Woodbury, Tuesday=Telehealth, Wed/Thu/Fri=Rockville Centre.
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

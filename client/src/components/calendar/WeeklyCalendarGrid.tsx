@@ -94,6 +94,23 @@ export const WeeklyCalendarGrid = ({
     }
   };
 
+  // Function to get default location based on day of week
+  const getDefaultLocation = (date: Date) => {
+    const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    switch (dayOfWeek) {
+      case 1: // Monday
+        return 'Woodbury';
+      case 2: // Tuesday
+        return 'Telehealth';
+      case 3: // Wednesday
+      case 4: // Thursday
+      case 5: // Friday
+        return 'Rockville Centre';
+      default:
+        return 'Remote/Office';
+    }
+  };
+
   const getAllDayEventsForDate = (date: Date) => {
     return events.filter(event => {
       // Ensure dates are properly parsed
@@ -234,6 +251,7 @@ export const WeeklyCalendarGrid = ({
                   onDragOver={(e) => handleDragOver(e, day.date, timeSlot)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, day.date, timeSlot)}
+                  style={{ position: 'relative', overflow: 'visible' }}
                 >
                   {eventsWithSpan.map((event) => (
                     <div
@@ -245,8 +263,20 @@ export const WeeklyCalendarGrid = ({
                       )}
                       style={{
                         height: `${event.slotsToSpan * 40 - 4}px`, // 40px per slot minus border/padding
+                        width: 'calc(100% - 4px)',
+                        position: 'absolute',
+                        top: '2px',
+                        left: '2px',
                         zIndex: 10,
-                        position: 'relative'
+                        backgroundColor: event.status === 'confirmed' ? '#dcfce7' : 
+                                       event.status === 'pending' ? '#fef3c7' : 
+                                       event.status === 'cancelled' ? '#fecaca' : '#dbeafe',
+                        border: `1px solid ${event.status === 'confirmed' ? '#22c55e' : 
+                                            event.status === 'pending' ? '#f59e0b' : 
+                                            event.status === 'cancelled' ? '#ef4444' : '#3b82f6'}`,
+                        borderLeft: `4px solid ${event.status === 'confirmed' ? '#16a34a' : 
+                                                 event.status === 'pending' ? '#d97706' : 
+                                                 event.status === 'cancelled' ? '#dc2626' : '#2563eb'}`
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -256,21 +286,18 @@ export const WeeklyCalendarGrid = ({
                       onDragStart={(e) => handleDragStart(e, event)}
                       onDragEnd={handleDragEnd}
                     >
-                      <div className="text-xs font-medium">
+                      <div className="text-xs font-medium text-gray-900 mb-1">
                         {event.clientName || wrapText(cleanEventTitle(event.title || 'Event'), 15)[0]}
                       </div>
-                      {event.clientName && event.title && event.title !== event.clientName && (
-                        <div className="text-xs text-gray-600">
-                          {wrapText(cleanEventTitle(event.title), 15)[0]}
-                        </div>
-                      )}
-                      {getLocationDisplay(event.location) && (
-                        <div className="text-xs text-gray-500">
-                          {getLocationDisplay(event.location)}
-                        </div>
-                      )}
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-600">
+                        {getLocationDisplay(event.location) || getDefaultLocation(new Date(event.startTime))}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
                         {new Date(event.startTime).toLocaleTimeString('en-US', { 
+                          hour: 'numeric', 
+                          minute: '2-digit',
+                          hour12: true 
+                        })} - {new Date(event.endTime).toLocaleTimeString('en-US', { 
                           hour: 'numeric', 
                           minute: '2-digit',
                           hour12: true 
