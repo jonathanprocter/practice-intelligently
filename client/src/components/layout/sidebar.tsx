@@ -1,0 +1,99 @@
+import { Link, useLocation } from "wouter";
+import { Brain, Users, Calendar, FileText, CheckSquare, BarChart, Bot, Settings, Menu } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+
+const navigationItems = [
+  { path: "/", label: "Dashboard", icon: BarChart },
+  { path: "/clients", label: "Clients", icon: Users, badge: "24" },
+  { path: "/appointments", label: "Appointments", icon: Calendar },
+  { path: "/session-notes", label: "Session Notes", icon: FileText },
+  { path: "/action-items", label: "Action Items", icon: CheckSquare, badge: "3", badgeColor: "bg-red-500" },
+  { path: "/analytics", label: "Analytics", icon: BarChart },
+  { path: "/ai-insights", label: "AI Insights", icon: Bot },
+];
+
+export default function Sidebar() {
+  const [location] = useLocation();
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  const isActive = (path: string) => {
+    if (path === "/") return location === "/";
+    return location.startsWith(path);
+  };
+
+  return (
+    <>
+      {/* Mobile overlay */}
+      {isMobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+      
+      {/* Mobile menu button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-4 left-4 z-50 lg:hidden"
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+      >
+        <Menu className="h-6 w-6" />
+      </Button>
+
+      {/* Sidebar */}
+      <div className={`sidebar-nav w-64 shadow-xl fixed h-full z-30 lg:relative lg:translate-x-0 transition-transform duration-300 ${
+        isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      }`}>
+        <div className="p-6 border-b border-white/20">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <Brain className="text-white text-lg" />
+            </div>
+            <div>
+              <h1 className="text-white font-bold text-lg">Remarkable</h1>
+              <p className="text-white/70 text-sm">Practice Intelligence</p>
+            </div>
+          </div>
+        </div>
+        
+        <nav className="p-4 space-y-2">
+          {navigationItems.map((item) => (
+            <Link
+              key={item.path}
+              href={item.path}
+              className={`flex items-center space-x-3 p-3 rounded-lg transition-all group ${
+                isActive(item.path)
+                  ? 'bg-white/20 text-white'
+                  : 'text-white/80 hover:bg-white/10 hover:text-white'
+              }`}
+              onClick={() => setIsMobileOpen(false)}
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="font-medium">{item.label}</span>
+              {item.badge && (
+                <span className={`ml-auto text-white text-xs px-2 py-1 rounded-full ${
+                  item.badgeColor || 'bg-therapy-primary'
+                }`}>
+                  {item.badge}
+                </span>
+              )}
+            </Link>
+          ))}
+          
+          <div className="pt-4 border-t border-white/20 mt-4">
+            <Link
+              href="/settings"
+              className="flex items-center space-x-3 p-3 rounded-lg text-white/80 hover:bg-white/10 hover:text-white transition-all"
+              onClick={() => setIsMobileOpen(false)}
+            >
+              <Settings className="w-5 h-5" />
+              <span className="font-medium">Settings</span>
+            </Link>
+          </div>
+        </nav>
+      </div>
+    </>
+  );
+}

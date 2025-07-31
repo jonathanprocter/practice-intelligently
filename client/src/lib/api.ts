@@ -1,0 +1,142 @@
+import { apiRequest } from "./queryClient";
+
+export interface DashboardStats {
+  todaysSessions: number;
+  activeClients: number;
+  urgentActionItems: number;
+  completionRate: number;
+}
+
+export interface Client {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface Appointment {
+  id: string;
+  clientId: string;
+  startTime: string;
+  endTime: string;
+  type: string;
+  status: string;
+  notes?: string;
+}
+
+export interface ActionItem {
+  id: string;
+  title: string;
+  description?: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'pending' | 'in_progress' | 'completed';
+  dueDate?: string;
+  clientId?: string;
+}
+
+export interface AiInsight {
+  id: string;
+  type: string;
+  title: string;
+  content: string;
+  confidence?: number;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export class ApiClient {
+  private static therapistId = "demo-therapist-id"; // In real app, get from auth
+
+  static async getDashboardStats(): Promise<DashboardStats> {
+    const response = await apiRequest('GET', `/api/dashboard/stats/${this.therapistId}`);
+    return response.json();
+  }
+
+  static async getClients(): Promise<Client[]> {
+    const response = await apiRequest('GET', `/api/clients/${this.therapistId}`);
+    return response.json();
+  }
+
+  static async getClient(id: string): Promise<Client> {
+    const response = await apiRequest('GET', `/api/clients/detail/${id}`);
+    return response.json();
+  }
+
+  static async createClient(client: Omit<Client, 'id' | 'createdAt'>): Promise<Client> {
+    const response = await apiRequest('POST', '/api/clients', {
+      ...client,
+      therapistId: this.therapistId
+    });
+    return response.json();
+  }
+
+  static async getTodaysAppointments(): Promise<Appointment[]> {
+    const response = await apiRequest('GET', `/api/appointments/today/${this.therapistId}`);
+    return response.json();
+  }
+
+  static async getAppointments(date?: string): Promise<Appointment[]> {
+    const url = date 
+      ? `/api/appointments/${this.therapistId}?date=${date}`
+      : `/api/appointments/${this.therapistId}`;
+    const response = await apiRequest('GET', url);
+    return response.json();
+  }
+
+  static async createAppointment(appointment: Omit<Appointment, 'id'>): Promise<Appointment> {
+    const response = await apiRequest('POST', '/api/appointments', {
+      ...appointment,
+      therapistId: this.therapistId
+    });
+    return response.json();
+  }
+
+  static async getActionItems(): Promise<ActionItem[]> {
+    const response = await apiRequest('GET', `/api/action-items/${this.therapistId}`);
+    return response.json();
+  }
+
+  static async getUrgentActionItems(): Promise<ActionItem[]> {
+    const response = await apiRequest('GET', `/api/action-items/urgent/${this.therapistId}`);
+    return response.json();
+  }
+
+  static async createActionItem(item: Omit<ActionItem, 'id'>): Promise<ActionItem> {
+    const response = await apiRequest('POST', '/api/action-items', {
+      ...item,
+      therapistId: this.therapistId
+    });
+    return response.json();
+  }
+
+  static async updateActionItem(id: string, updates: Partial<ActionItem>): Promise<ActionItem> {
+    const response = await apiRequest('PATCH', `/api/action-items/${id}`, updates);
+    return response.json();
+  }
+
+  static async getAiInsights(): Promise<AiInsight[]> {
+    const response = await apiRequest('GET', `/api/ai-insights/${this.therapistId}`);
+    return response.json();
+  }
+
+  static async generateAiInsights(): Promise<AiInsight[]> {
+    const response = await apiRequest('POST', `/api/ai/generate-insights/${this.therapistId}`);
+    return response.json();
+  }
+
+  static async createSessionNote(note: {
+    appointmentId: string;
+    clientId: string;
+    content: string;
+    transcript?: string;
+  }): Promise<any> {
+    const response = await apiRequest('POST', '/api/session-notes', {
+      ...note,
+      therapistId: this.therapistId
+    });
+    return response.json();
+  }
+}

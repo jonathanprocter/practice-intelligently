@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 98%);
+  --foreground: hsl(0, 0%, 10%);
+  --muted: hsl(210, 13%, 96%);
+  --muted-foreground: hsl(0, 0%, 45%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(0, 0%, 10%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(0, 0%, 10%);
+  --border: hsl(214, 32%, 91%);
+  --input: hsl(214, 32%, 91%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(210, 13%, 96%);
+  --secondary-foreground: hsl(215, 25%, 27%);
+  --accent: hsl(210, 13%, 96%);
+  --accent-foreground: hsl(215, 25%, 27%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --ring: hsl(215, 20%, 65%);
+  --radius: 0.5rem;
+
+  /* Custom therapy colors */
+  --therapy-primary: hsl(28, 43%, 70%);
+  --therapy-success: hsl(212, 31%, 40%);
+  --therapy-warning: hsl(82, 26%, 64%);
+  --therapy-error: hsl(0, 23%, 56%);
+  --therapy-border: hsl(0, 0%, 87%);
+  --therapy-text: hsl(0, 0%, 10%);
+  --therapy-bg: hsl(0, 0%, 98%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 4%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 4%, 16%);
+  --muted-foreground: hsl(240, 5%, 65%);
+  --popover: hsl(240, 10%, 4%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 4%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 4%, 16%);
+  --input: hsl(240, 4%, 16%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(240, 4%, 16%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 4%, 16%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 63%, 31%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 5%, 84%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+}
+
+@layer components {
+  .therapy-card {
+    @apply bg-white border-2 border-solid rounded-xl shadow-sm transition-all duration-200;
+    border-color: var(--therapy-border);
+  }
+  
+  .therapy-card:hover {
+    @apply shadow-md;
+    border-color: var(--therapy-primary);
+  }
+  
+  .sidebar-nav {
+    background: linear-gradient(135deg, var(--therapy-success) 0%, hsl(212, 31%, 50%) 100%);
+  }
+  
+  .status-indicator {
+    @apply w-2 h-2 rounded-full inline-block mr-2;
+  }
+  
+  .status-online {
+    background-color: var(--therapy-warning);
+  }
+  
+  .status-offline {
+    background-color: var(--therapy-error);
+  }
+  
+  .status-pending {
+    background-color: var(--therapy-primary);
+  }
+  
+  .progress-bar {
+    background: linear-gradient(90deg, var(--therapy-primary) 0%, var(--therapy-success) 100%);
+    @apply h-1.5 rounded-full transition-all duration-300;
+  }
+  
+  .ai-insight {
+    background: linear-gradient(135deg, hsla(28, 43%, 70%, 0.1) 0%, hsla(212, 31%, 40%, 0.1) 100%);
+    border-left: 4px solid var(--therapy-primary);
+  }
+}
+
+@layer utilities {
+  .text-therapy-primary {
+    color: var(--therapy-primary);
+  }
+  
+  .text-therapy-success {
+    color: var(--therapy-success);
+  }
+  
+  .text-therapy-warning {
+    color: var(--therapy-warning);
+  }
+  
+  .text-therapy-error {
+    color: var(--therapy-error);
+  }
+  
+  .text-therapy-text {
+    color: var(--therapy-text);
+  }
+  
+  .bg-therapy-bg {
+    background-color: var(--therapy-bg);
+  }
+  
+  .bg-therapy-primary {
+    background-color: var(--therapy-primary);
+  }
+  
+  .bg-therapy-success {
+    background-color: var(--therapy-success);
+  }
+  
+  .bg-therapy-warning {
+    background-color: var(--therapy-warning);
+  }
+  
+  .bg-therapy-error {
+    background-color: var(--therapy-error);
+  }
+  
+  .border-therapy-border {
+    border-color: var(--therapy-border);
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar-nav {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar-nav.mobile-open {
+    transform: translateX(0);
+  }
+}
