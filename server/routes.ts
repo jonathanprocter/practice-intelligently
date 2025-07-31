@@ -16,6 +16,7 @@ import { z } from "zod";
 import { randomUUID } from 'crypto';
 import multer from 'multer';
 import fs from 'fs';
+import { getAllApiStatuses } from "./health-check";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check
@@ -31,6 +32,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         database: !!process.env.DATABASE_URL,
       }
     });
+  });
+
+  // AI Services health check
+  app.get("/api/health/ai-services", async (req, res) => {
+    try {
+      const statuses = await getAllApiStatuses();
+      res.json(statuses);
+    } catch (error) {
+      console.error("Error checking AI service statuses:", error);
+      res.status(500).json({ error: "Failed to check AI service statuses" });
+    }
   });
 
   // Dashboard stats

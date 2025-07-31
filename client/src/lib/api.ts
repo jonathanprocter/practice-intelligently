@@ -47,6 +47,13 @@ export interface AiInsight {
   createdAt: string;
 }
 
+export interface ApiStatus {
+  service: string;
+  status: 'online' | 'offline' | 'checking';
+  lastChecked?: string;
+  error?: string;
+}
+
 export class ApiClient {
   private static get therapistId(): string {
     // Return empty string - no user exists yet
@@ -140,6 +147,11 @@ export class ApiClient {
       ...note,
       therapistId: this.therapistId
     });
+    return response.json();
+  }
+
+  static async getApiStatuses(): Promise<ApiStatus[]> {
+    const response = await apiRequest('GET', '/api/health/ai-services');
     return response.json();
   }
 }

@@ -2,20 +2,20 @@ const progressMetrics = [
   {
     title: "Goal Achievement",
     description: "Clients meeting treatment objectives",
-    percentage: 70,
-    progress: 70
+    percentage: 0,
+    progress: 0
   },
   {
     title: "Session Attendance",
     description: "Client engagement rate",
-    percentage: 85,
-    progress: 85
+    percentage: 0,
+    progress: 0
   },
   {
     title: "Documentation",
     description: "Notes completion rate",
-    percentage: 90,
-    progress: 90
+    percentage: 0,
+    progress: 0
   }
 ];
 
@@ -57,8 +57,8 @@ export default function ProgressOverview() {
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xl font-bold text-therapy-text">
-                    {metric.percentage}%
+                  <span className="text-xl font-bold text-therapy-text/30">
+                    --%
                   </span>
                 </div>
               </div>

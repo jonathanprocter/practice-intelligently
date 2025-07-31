@@ -86,7 +86,7 @@ export default function Analytics() {
               <div className="w-12 h-12 bg-therapy-primary/10 rounded-lg flex items-center justify-center">
                 <Calendar className="text-therapy-primary text-xl" />
               </div>
-              <Badge variant="secondary" className="text-therapy-success">+12%</Badge>
+
             </div>
             <h3 className="text-2xl font-bold text-therapy-text mb-1">
               {stats?.todaysSessions || 0}
@@ -101,7 +101,7 @@ export default function Analytics() {
               <div className="w-12 h-12 bg-therapy-success/10 rounded-lg flex items-center justify-center">
                 <Users className="text-therapy-success text-xl" />
               </div>
-              <Badge variant="secondary" className="text-therapy-success">+8%</Badge>
+
             </div>
             <h3 className="text-2xl font-bold text-therapy-text mb-1">
               {activeClients}
@@ -116,7 +116,7 @@ export default function Analytics() {
               <div className="w-12 h-12 bg-therapy-warning/10 rounded-lg flex items-center justify-center">
                 <Target className="text-therapy-warning text-xl" />
               </div>
-              <Badge variant="secondary" className="text-therapy-success">+15%</Badge>
+
             </div>
             <h3 className="text-2xl font-bold text-therapy-text mb-1">
               {completionRate}%

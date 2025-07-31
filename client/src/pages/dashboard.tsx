@@ -6,6 +6,7 @@ import AiInsightsPanel from "@/components/dashboard/ai-insights-panel";
 import UrgentActionItems from "@/components/dashboard/urgent-action-items";
 import RecentActivity from "@/components/dashboard/recent-activity";
 import ProgressOverview from "@/components/dashboard/progress-overview";
+import ApiStatusIndicators from "@/components/dashboard/api-status-indicators";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -33,6 +34,15 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Header with API Status */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-therapy-text">Dashboard</h1>
+          <p className="text-therapy-text/60">Overview of your therapy practice</p>
+        </div>
+        <ApiStatusIndicators />
+      </div>
+      
       <QuickStats stats={stats} />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
