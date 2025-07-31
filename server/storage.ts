@@ -286,26 +286,32 @@ export class DatabaseStorage implements IStorage {
 
   async getSessionNotesByEventId(eventId: string): Promise<SessionNote[]> {
     try {
-      // Direct PostgreSQL query using the pool connection
-      const result = await pool.query('SELECT * FROM session_notes WHERE event_id = $1 ORDER BY created_at DESC', [eventId]);
+      console.log('Querying for eventId:', eventId);
+      const result = await pool.query(
+        'SELECT * FROM session_notes WHERE event_id = $1 ORDER BY created_at DESC',
+        [eventId]
+      );
       
-      // Map raw results to our SessionNote type structure
-      const mappedResults = result.rows.map((row: any) => ({
+      console.log('Database returned', result.rows.length, 'rows for eventId:', eventId);
+      if (result.rows.length > 0) {
+        console.log('Sample row:', result.rows[0]);
+      }
+      
+      return result.rows.map((row: any) => ({
         id: row.id,
-        appointmentId: row.appointment_id,
+        appointmentId: row.appointment_id || null,
         eventId: row.event_id,
         clientId: row.client_id,
         therapistId: row.therapist_id,
         content: row.content,
-        transcript: row.transcript,
-        aiSummary: row.ai_summary,
-        tags: row.tags,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
+        transcript: row.transcript || null,
+        aiSummary: row.ai_summary || null,
+        tags: row.tags || [],
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
       }));
-      
-      return mappedResults;
     } catch (error) {
+      console.error('Error in getSessionNotesByEventId:', error);
       throw error;
     }
   }

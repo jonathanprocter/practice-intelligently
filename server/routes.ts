@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { analyzeContent, analyzeSessionTranscript } from "./ai-services";
 import { googleCalendarService } from "./auth";
 import { generateAppointmentInsights } from "./ai-insights";
+import { pool } from "./db";
 import { 
   insertClientSchema, insertAppointmentSchema, insertSessionNoteSchema, 
   insertActionItemSchema, insertTreatmentPlanSchema 
@@ -449,20 +450,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Session Notes endpoints
   app.post('/api/session-notes', async (req, res) => {
     try {
-      const { eventId, notes, date, clientName } = req.body;
+      const { eventId, notes, content, date, clientName, clientId, therapistId } = req.body;
       
-      console.log('Received session notes request:', { eventId, notes, date, clientName });
+      console.log('Received session notes request:', { eventId, notes, content, date, clientName });
       
-      // Generate UUIDs for required fields since we don't have auth yet
-      const therapistId = randomUUID();
-      const clientId = randomUUID();
+      // Get content from either field
+      const sessionContent = content || notes;
       
+      if (!eventId || !sessionContent) {
+        return res.status(400).json({ error: 'Missing required fields: eventId and content/notes' });
+      }
+
+      // Generate UUIDs for required fields if not provided
+      const finalTherapistId = therapistId || randomUUID();
+      const finalClientId = clientId || randomUUID();
+
       // Save to database
       const sessionNote = await storage.createSessionNote({
         eventId,
-        therapistId,
-        clientId,
-        content: notes
+        therapistId: finalTherapistId,
+        clientId: finalClientId,
+        content: sessionContent
       });
       
       console.log('Session note saved successfully:', sessionNote.id);
@@ -476,39 +484,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/session-notes/:eventId', async (req, res) => {
     try {
       const { eventId } = req.params;
-      
-      // Debug: log what we're searching for
-      console.log('Searching for eventId:', JSON.stringify(eventId), 'length:', eventId.length);
-      
-      // Direct PostgreSQL query with debugging
-      const { Pool } = require('@neondatabase/serverless');
-      const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-      
-      // First, get all event_ids to debug
-      const allEvents = await pool.query('SELECT DISTINCT event_id FROM session_notes LIMIT 10');
-      console.log('All eventIds in database:', allEvents.rows.map((r: any) => `"${r.event_id}" (len: ${r.event_id?.length || 0})`));
-      
-      const result = await pool.query('SELECT * FROM session_notes WHERE event_id = $1 ORDER BY created_at DESC', [eventId]);
-      console.log('Query result rows:', result.rows.length);
-      
-      const notes = result.rows.map((row: any) => ({
-        id: row.id,
-        appointmentId: row.appointment_id,
-        eventId: row.event_id,
-        clientId: row.client_id,
-        therapistId: row.therapist_id,
-        content: row.content,
-        transcript: row.transcript,
-        aiSummary: row.ai_summary,
-        tags: row.tags,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
-      }));
-      
+      const notes = await storage.getSessionNotesByEventId(eventId);
       res.json(notes);
     } catch (error: any) {
       console.error('Error fetching session notes:', error);
       res.status(500).json({ error: 'Failed to fetch session notes' });
+    }
+  });
+
+  // AI Insights Save endpoint
+  app.post('/api/ai-insights/:eventId/save', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const { insights, clientId, therapistId } = req.body;
+      
+      if (!insights) {
+        return res.status(400).json({ error: 'Missing AI insights content' });
+      }
+
+      const sessionNote = await storage.createSessionNote({
+        eventId,
+        therapistId: therapistId || randomUUID(),
+        clientId: clientId || randomUUID(),
+        content: `AI Insights:\n\n${insights}`,
+        aiSummary: insights
+      });
+
+      res.json(sessionNote);
+    } catch (error: any) {
+      console.error('Error saving AI insights:', error);
+      res.status(500).json({ error: 'Failed to save AI insights', details: error.message });
+    }
+  });
+
+  // Appointment Summary endpoint
+  app.get('/api/appointments/:eventId/next-summary', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      
+      // Get session notes for this appointment
+      const notes = await storage.getSessionNotesByEventId(eventId);
+      
+      // Get action items for this client/appointment (stub for now)
+      const actionItems = await storage.getActionItemsByEventId(eventId);
+      
+      // Find next appointment (stub for now - would integrate with calendar)
+      const nextAppointment = null; // Would query calendar for next appointment
+      
+      const summary = {
+        notes: notes.map(note => ({
+          content: note.content,
+          aiSummary: note.aiSummary,
+          createdAt: note.createdAt
+        })),
+        actionItems: actionItems.map(item => ({
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          priority: item.priority,
+          dueDate: item.dueDate,
+          status: item.status
+        })),
+        nextAppointment
+      };
+      
+      res.json(summary);
+    } catch (error: any) {
+      console.error('Error fetching appointment summary:', error);
+      res.status(500).json({ error: 'Failed to fetch appointment summary' });
     }
   });
 
@@ -571,6 +614,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ error: "Failed to create treatment plan" });
       }
+    }
+  });
+
+  // Save AI insights as session note
+  app.post('/api/ai-insights/:eventId/save', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const { insights, clientId, therapistId } = req.body;
+      
+      if (!insights || !clientId || !therapistId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const sessionNote = await storage.createSessionNote({
+        eventId,
+        clientId,
+        therapistId,
+        content: `AI Insights:\n\n${insights}`,
+        aiSummary: insights
+      });
+
+      res.json({ success: true, noteId: sessionNote.id });
+    } catch (error: any) {
+      console.error('Error saving AI insights:', error);
+      res.status(500).json({ error: 'Failed to save insights' });
+    }
+  });
+
+  // Get next appointment summary with notes and action items
+  app.get('/api/appointments/:eventId/next-summary', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      
+      // Get current appointment details
+      const currentNotes = await storage.getSessionNotesByEventId(eventId);
+      
+      if (currentNotes.length === 0) {
+        return res.json({ notes: [], actionItems: [], nextAppointment: null });
+      }
+
+      const currentNote = currentNotes[0];
+      const clientId = currentNote.clientId;
+
+      // Find next scheduled appointment for this client
+      const client = await pool.connect();
+      try {
+        const nextApptResult = await client.query(`
+          SELECT event_id, summary, start_time, end_time, location 
+          FROM appointments 
+          WHERE client_id = $1 AND start_time > NOW() 
+          ORDER BY start_time ASC 
+          LIMIT 1
+        `, [clientId]);
+
+        // Get all action items for this client
+        const actionItemsResult = await client.query(`
+          SELECT * FROM action_items 
+          WHERE client_id = $1 AND status != 'completed'
+          ORDER BY priority DESC, due_date ASC
+        `, [clientId]);
+
+        // Compile comprehensive summary
+        const summary = {
+          notes: currentNotes.map(note => ({
+            content: note.content,
+            aiSummary: note.aiSummary,
+            createdAt: note.createdAt
+          })),
+          actionItems: actionItemsResult.rows.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            priority: item.priority,
+            dueDate: item.due_date,
+            status: item.status
+          })),
+          nextAppointment: nextApptResult.rows.length > 0 ? {
+            eventId: nextApptResult.rows[0].event_id,
+            summary: nextApptResult.rows[0].summary,
+            startTime: nextApptResult.rows[0].start_time,
+            endTime: nextApptResult.rows[0].end_time,
+            location: nextApptResult.rows[0].location
+          } : null
+        };
+
+        res.json(summary);
+      } finally {
+        client.release();
+      }
+    } catch (error: any) {
+      console.error('Error getting next appointment summary:', error);
+      res.status(500).json({ error: 'Failed to get summary' });
     }
   });
 

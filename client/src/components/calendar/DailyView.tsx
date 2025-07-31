@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Clock, MapPin, User, FileText, Brain, Calendar, ChevronLeft, ChevronRight, Plus, Sparkles, MessageSquare, Target, TrendingUp } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { AppointmentSummary } from './AppointmentSummary';
 
 interface DailyViewProps {
   date: Date;
@@ -43,6 +45,7 @@ export const DailyView = ({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiInsights, setAiInsights] = useState<AIInsight | null>(null);
   const [sessionNotes, setSessionNotes] = useState('');
+  const { toast } = useToast();
 
   // Filter and sort events for the selected date
   const dayEvents = events
@@ -126,7 +129,7 @@ export const DailyView = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           eventId: selectedEvent.id,
-          notes: sessionNotes,
+          content: sessionNotes,
           date: date.toISOString(),
           clientName: selectedEvent.clientName
         })
@@ -144,18 +147,50 @@ export const DailyView = ({
         
         // Show success feedback with timestamp
         const timestamp = new Date().toLocaleTimeString();
-        alert(`✅ Session notes saved successfully to database at ${timestamp}!`);
+        toast({ title: "Session notes saved successfully" });
         
         // Update the visual state to show notes are saved
         console.log('Notes saved and UI updated');
       } else {
         const errorText = await response.text();
         console.error('Failed to save session notes:', response.status, errorText);
-        alert(`❌ Failed to save session notes: ${response.status} ${errorText}`);
+        toast({ title: "Failed to save session notes", variant: "destructive" });
       }
     } catch (error) {
       console.error('Network error saving session notes:', error);
-      alert('Network error: Unable to save session notes');
+      toast({ title: "Network error saving session notes", variant: "destructive" });
+    }
+  };
+
+  const saveAIInsights = async () => {
+    if (!selectedEvent || !aiInsights) return;
+
+    try {
+      const insightsText = [
+        aiInsights.summary && `Summary: ${aiInsights.summary}`,
+        aiInsights.suggestedQuestions?.length && `Suggested Questions:\n${aiInsights.suggestedQuestions.map(q => `• ${q}`).join('\n')}`,
+        aiInsights.progressIndicators?.length && `Progress Indicators:\n${aiInsights.progressIndicators.map(p => `✓ ${p}`).join('\n')}`,
+        aiInsights.recommendedFollowUp?.length && `Follow-up Actions:\n${aiInsights.recommendedFollowUp.map(a => `→ ${a}`).join('\n')}`
+      ].filter(Boolean).join('\n\n');
+
+      const response = await fetch(`/api/ai-insights/${selectedEvent.id}/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          insights: insightsText,
+          clientId: selectedEvent.clientId || 'default-client',
+          therapistId: 'default-therapist'
+        })
+      });
+
+      if (response.ok) {
+        toast({ title: "AI insights saved as session note" });
+      } else {
+        throw new Error('Failed to save AI insights');
+      }
+    } catch (error) {
+      console.error('Error saving AI insights:', error);
+      toast({ title: "Failed to save AI insights", variant: "destructive" });
     }
   };
 
@@ -509,6 +544,12 @@ export const DailyView = ({
                     <FileText className="w-4 h-4 mr-2" />
                     Save Notes
                   </Button>
+                  {aiInsights && (
+                    <Button variant="outline" onClick={saveAIInsights}>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Save AI Insights
+                    </Button>
+                  )}
                   <Button>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Action Item
@@ -527,6 +568,11 @@ export const DailyView = ({
           </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      {/* Appointment Summary Dialog */}
+      {selectedEvent && (
+        <AppointmentSummary eventId={selectedEvent.id} />
+      )}
     </div>
   );
 };
