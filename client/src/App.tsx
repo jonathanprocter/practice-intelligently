@@ -17,6 +17,7 @@ import { lazy, Suspense } from "react";
 
 const OAuthDebug = lazy(() => import("./pages/oauth-debug"));
 const OAuthTest = lazy(() => import("./pages/oauth-test"));
+const OAuthSimple = lazy(() => import("./pages/oauth-simple"));
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 
@@ -54,6 +55,11 @@ function Router() {
       <Route path="/oauth-test">
         <Suspense fallback={<div className="p-6">Loading...</div>}>
           <OAuthTest />
+        </Suspense>
+      </Route>
+      <Route path="/oauth-simple">
+        <Suspense fallback={<div className="p-6">Loading...</div>}>
+          <OAuthSimple />
         </Suspense>
       </Route>
       <Route component={NotFound} />

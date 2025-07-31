@@ -95,7 +95,9 @@ export class GoogleCalendarService {
   }
 
   isConnected(): boolean {
-    return this.isAuthenticated && this.tokens !== null;
+    const connected = this.isAuthenticated && this.tokens !== null;
+    console.log(`Google Calendar connection status: ${connected}, authenticated: ${this.isAuthenticated}, has tokens: ${this.tokens !== null}`);
+    return connected;
   }
 
   private ensureAuthenticated(): void {
