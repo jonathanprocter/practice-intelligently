@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { aiServices } from "./ai-services";
+import { analyzeContent, analyzeSessionTranscript } from "./ai-services";
 import { 
   insertClientSchema, insertAppointmentSchema, insertSessionNoteSchema, 
   insertActionItemSchema, insertTreatmentPlanSchema 
@@ -138,15 +138,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Process transcript if provided
       if (validatedData.transcript) {
         try {
-          const analysis = await aiServices.analyzeTranscript(validatedData.transcript);
+          const analysis = await analyzeSessionTranscript(validatedData.transcript);
           validatedData.aiSummary = analysis.summary;
           
-          // Generate tags
-          const tags = await aiServices.generateTags(validatedData.content);
-          validatedData.tags = tags;
-          
-          // Extract action items and create them
-          const actionItems = await aiServices.extractActionItems(validatedData.content);
+          // Generate action items from analysis
+          const actionItems = analysis.actionItems || [];
           for (const item of actionItems) {
             await storage.createActionItem({
               therapistId: validatedData.therapistId,
@@ -229,6 +225,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Analysis endpoints
+  app.post('/api/ai/analyze', async (req, res) => {
+    try {
+      const { content, type, provider } = req.body;
+      
+      if (!content) {
+        return res.status(400).json({ error: 'Content is required' });
+      }
+      
+      const result = await analyzeContent(content, type || 'session');
+      res.json(result);
+    } catch (error) {
+      console.error('AI analysis error:', error);
+      res.status(500).json({ 
+        error: 'Analysis failed',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.post('/api/ai/analyze-transcript', async (req, res) => {
+    try {
+      const { transcript } = req.body;
+      
+      if (!transcript) {
+        return res.status(400).json({ error: 'Transcript is required' });
+      }
+      
+      const result = await analyzeSessionTranscript(transcript);
+      res.json(result);
+    } catch (error) {
+      console.error('Transcript analysis error:', error);
+      res.status(500).json({ 
+        error: 'Transcript analysis failed',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // AI Insights
   app.get("/api/ai-insights/:therapistId", async (req, res) => {
     try {
@@ -251,11 +286,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const appointments = await storage.getAppointments(therapistId);
       
       // Generate insights using AI
-      const insights = await aiServices.generateInsights(
-        clients,
-        actionItems.slice(0, 20), // Recent activities
-        appointments.slice(0, 50) // Session patterns
-      );
+      const analysisContent = `
+        Practice Analytics:
+        - Total Clients: ${clients.length}
+        - Recent Action Items: ${actionItems.slice(0, 20).length}
+        - Recent Appointments: ${appointments.slice(0, 50).length}
+        
+        Client Summary: ${JSON.stringify(clients.slice(0, 5), null, 2)}
+        Action Items: ${JSON.stringify(actionItems.slice(0, 10), null, 2)}
+        Appointments: ${JSON.stringify(appointments.slice(0, 10), null, 2)}
+      `;
+      
+      const rawInsights = await analyzeContent(analysisContent, 'progress');
+      
+      // Transform AI response into insight format
+      const insights = rawInsights.insights.map((insight, index) => ({
+        type: rawInsights.priority === 'high' ? 'urgent' : 'general',
+        title: `Insight ${index + 1}`,
+        description: insight,
+        confidence: 0.8,
+        actionable: rawInsights.nextSteps.length > 0
+      }));
       
       // Store insights in database
       for (const insight of insights) {

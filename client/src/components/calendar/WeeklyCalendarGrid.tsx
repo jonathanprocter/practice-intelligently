@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { generateTimeSlots, getEventDurationInSlots, isEventInTimeSlot } from '../../utils/timeSlots';
-import { formatDateShort, isToday, isSameDay } from '../../utils/dateUtils';
-import { cleanEventTitle, formatClientName } from '../../utils/textCleaner';
-import { getLocationDisplay, getLocationIcon } from '../../utils/locationUtils';
+import { formatDateShort } from '../../utils/dateUtils';
+import { cleanEventTitle } from '../../utils/textCleaner';
+import { wrapText } from '../../utils/textWrappers';
 import { CalendarEvent, CalendarDay } from '../../types/calendar';
 import { cn } from '@/lib/utils';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { getLocationDisplay } from '../../utils/locationUtils';
 
 interface WeeklyCalendarGridProps {
   week: CalendarDay[];
@@ -30,15 +29,19 @@ export const WeeklyCalendarGrid = ({
   const [dropZone, setDropZone] = useState<{date: Date, time: string} | null>(null);
 
   const handleDragStart = (e: React.DragEvent, event: CalendarEvent) => {
+    // Ensure dates are properly parsed
     const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
     const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
 
+    // Skip invalid dates
     if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
       return;
     }
 
+    // Set visual state
     setDraggedEventId(event.id);
 
+    // Set drag data
     e.dataTransfer.setData('text/plain', JSON.stringify({
       eventId: event.id,
       originalStartTime: startTime.toISOString(),
@@ -46,24 +49,26 @@ export const WeeklyCalendarGrid = ({
       duration: endTime.getTime() - startTime.getTime()
     }));
 
+    // Set drag effect
     e.dataTransfer.effectAllowed = 'move';
+    // Add some visual feedback
     e.dataTransfer.setDragImage(e.currentTarget as HTMLElement, 10, 10);
   };
 
   const handleDragOver = (e: React.DragEvent, date: Date, timeSlot: { hour: number; minute: number }) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    setDropZone({ 
-      date, 
-      time: `${timeSlot.hour.toString().padStart(2, '0')}:${timeSlot.minute.toString().padStart(2, '0')}` 
-    });
+    // Set drop zone for visual feedback
+    setDropZone({ date, time: `${timeSlot.hour.toString().padStart(2, '0')}:${timeSlot.minute.toString().padStart(2, '0')}` });
   };
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Clear drop zone when leaving
     setDropZone(null);
   };
 
-  const handleDragEnd = () => {
+  const handleDragEnd = (e: React.DragEvent) => {
+    // Clear drag state
     setDraggedEventId(null);
     setDropZone(null);
   };
@@ -83,177 +88,122 @@ export const WeeklyCalendarGrid = ({
     } catch (error) {
       console.error('Error handling drop:', error);
     } finally {
+      // Clear drag state
       setDraggedEventId(null);
       setDropZone(null);
     }
   };
 
-  const getEventsForTimeSlot = (date: Date, timeSlot: { hour: number; minute: number }) => {
+  const getAllDayEventsForDate = (date: Date) => {
     return events.filter(event => {
+      // Ensure dates are properly parsed
       const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
       const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
 
-      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) return false;
+      // Skip invalid dates
+      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+        return false;
+      }
 
-      return isSameDay(startTime, date) && 
-             isEventInTimeSlot(startTime, endTime, timeSlot.hour, timeSlot.minute);
+      const eventDate = startTime;
+
+      // Check if backend marked it as all-day
+      const isMarkedAllDay = (event as any).isAllDay;
+      
+      return eventDate.toDateString() === date.toDateString() && isMarkedAllDay;
     });
   };
 
-  const getEventColor = (event: CalendarEvent) => {
-    switch (event.status) {
-      case 'confirmed':
-        return 'bg-therapy-success/20 border-therapy-success hover:border-therapy-success/80';
-      case 'completed':
-        return 'bg-therapy-primary/20 border-therapy-primary hover:border-therapy-primary/80';
-      case 'cancelled':
-        return 'bg-therapy-error/20 border-therapy-error hover:border-therapy-error/80';
-      case 'no-show':
-        return 'bg-gray-200 border-gray-400 hover:border-gray-500';
-      default:
-        return 'bg-therapy-warning/20 border-therapy-warning hover:border-therapy-warning/80';
-    }
-  };
-
-  const getEventTypeIcon = (type: CalendarEvent['type']) => {
-    switch (type) {
-      case 'individual': return '👤';
-      case 'group': return '👥';
-      case 'intake': return '📋';
-      case 'consultation': return '💬';
-      case 'assessment': return '📊';
-      case 'follow-up': return '🔄';
-      default: return '📅';
-    }
-  };
-
   return (
-    <div className="therapy-card overflow-hidden">
-      {/* Header with day names */}
-      <div className="grid grid-cols-8 bg-therapy-bg border-b-2 border-therapy-border">
-        <div className="p-3 text-sm font-medium text-therapy-text">Time</div>
-        {week.map((day, index) => (
-          <div 
-            key={index}
+    <div className="weekly-calendar-container">
+      <div className="grid grid-cols-8 border border-gray-200">
+        {/* Time column header */}
+        <div className="border-r border-gray-200 p-2 bg-gray-50 font-medium text-sm">
+          Time
+        </div>
+        
+        {/* Day headers */}
+        {week.map((day) => (
+          <div
+            key={day.date.toISOString()}
             className={cn(
-              "p-3 text-center cursor-pointer transition-colors",
-              isToday(day.date) 
-                ? "bg-therapy-primary/10 border-therapy-primary border-b-2" 
-                : "hover:bg-therapy-primary/5"
+              "calendar-day-header border-r border-gray-200",
+              day.isToday && "calendar-day-today"
             )}
             onClick={() => onDayClick(day.date)}
           >
-            <div className="text-xs text-therapy-text/70 uppercase tracking-wide">
-              {day.date.toLocaleDateString('en-US', { weekday: 'short' })}
-            </div>
-            <div className={cn(
-              "text-lg font-semibold",
-              isToday(day.date) ? "text-therapy-primary" : "text-therapy-text"
-            )}>
-              {formatDateShort(day.date)}
-            </div>
+            <div>{formatDateShort(day.date)}</div>
+            <div className="text-xs text-gray-500">{day.date.getDate()}</div>
           </div>
         ))}
-      </div>
 
-      {/* Time slots grid */}
-      <div className="max-h-96 overflow-y-auto">
-        {timeSlots.map((timeSlot, timeIndex) => (
-          <div key={timeIndex} className="grid grid-cols-8 border-b border-therapy-border/50">
-            {/* Time column */}
-            <div className="p-2 text-xs text-therapy-text/70 bg-therapy-bg/50 border-r border-therapy-border/50 flex items-center justify-end pr-3">
+        {/* Time slots */}
+        {timeSlots.map((timeSlot) => (
+          <React.Fragment key={`${timeSlot.hour}-${timeSlot.minute}`}>
+            {/* Time label */}
+            <div className="border-r border-b border-gray-200 p-2 text-xs text-gray-600 bg-gray-50">
               {timeSlot.display}
             </div>
-
+            
             {/* Day columns */}
-            {week.map((day, dayIndex) => {
-              const dayEvents = getEventsForTimeSlot(day.date, timeSlot);
+            {week.map((day) => {
+              const dayEvents = events.filter(event => {
+                const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+                return eventStart.toDateString() === day.date.toDateString() && 
+                       isEventInTimeSlot(event, timeSlot);
+              });
+              
               const isDropTarget = dropZone && 
-                isSameDay(dropZone.date, day.date) && 
-                dropZone.time === timeSlot.display;
-
+                dropZone.date.toDateString() === day.date.toDateString() &&
+                dropZone.time === `${timeSlot.hour.toString().padStart(2, '0')}:${timeSlot.minute.toString().padStart(2, '0')}`;
+              
               return (
                 <div
-                  key={dayIndex}
+                  key={`${day.date.toISOString()}-${timeSlot.hour}-${timeSlot.minute}`}
                   className={cn(
-                    "min-h-12 p-1 border-r border-therapy-border/50 relative cursor-pointer",
-                    "hover:bg-therapy-primary/5 transition-colors",
-                    isDropTarget && "bg-therapy-primary/20 border-therapy-primary border-2"
+                    "calendar-time-slot border-r border-b border-gray-200 p-1 min-h-[40px] relative",
+                    isDropTarget && "drag-over-target"
                   )}
+                  onClick={() => onTimeSlotClick(day.date, timeSlot.display)}
                   onDragOver={(e) => handleDragOver(e, day.date, timeSlot)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, day.date, timeSlot)}
-                  onClick={() => onTimeSlotClick(day.date, timeSlot.display)}
                 >
-                  {dayEvents.map((event, eventIndex) => {
-                    const isBeingDragged = draggedEventId === event.id;
-                    const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
-                    const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
-                    
-                    return (
-                      <Card
-                        key={eventIndex}
-                        className={cn(
-                          "p-1 mb-1 text-xs cursor-pointer border transition-all duration-200",
-                          getEventColor(event),
-                          isBeingDragged && "opacity-50 rotate-3"
-                        )}
-                        draggable={!!onEventMove}
-                        onDragStart={(e) => handleDragStart(e, event)}
-                        onDragEnd={handleDragEnd}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEventClick(event);
-                        }}
-                      >
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs">{getEventTypeIcon(event.type)}</span>
-                          <span className="font-medium text-therapy-text truncate">
-                            {cleanEventTitle(event.title)}
-                          </span>
+                  {dayEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className={cn(
+                        "calendar-event",
+                        `calendar-event-${event.status?.toLowerCase() || 'confirmed'}`,
+                        draggedEventId === event.id && "opacity-50"
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEventClick(event);
+                      }}
+                      draggable={!!onEventMove}
+                      onDragStart={(e) => handleDragStart(e, event)}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <div className="text-xs font-medium">
+                        {wrapText(cleanEventTitle(event.title), 15)[0]}
+                      </div>
+                      {event.clientName && (
+                        <div className="text-xs text-gray-600">
+                          {event.clientName}
                         </div>
-                        
-                        {event.clientName && (
-                          <div className="text-therapy-text/70 truncate">
-                            {event.clientName}
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="text-therapy-text/60">
-                            {startTime.toLocaleTimeString('en-US', { 
-                              hour: 'numeric', 
-                              minute: '2-digit',
-                              hour12: true 
-                            })}
-                          </span>
-                          
-                          <Badge 
-                            variant="outline" 
-                            className={cn(
-                              "text-xs px-1 py-0",
-                              event.status === 'confirmed' && "border-therapy-success text-therapy-success",
-                              event.status === 'completed' && "border-therapy-primary text-therapy-primary",
-                              event.status === 'cancelled' && "border-therapy-error text-therapy-error"
-                            )}
-                          >
-                            {event.status}
-                          </Badge>
+                      )}
+                      {getLocationDisplay(event.location) && (
+                        <div className="text-xs text-gray-500">
+                          {getLocationDisplay(event.location)}
                         </div>
-                        
-                        {event.location && (
-                          <div className="text-therapy-text/60 text-xs truncate flex items-center gap-1">
-                            {getLocationIcon(event.location)}
-                            {getLocationDisplay(event.location)}
-                          </div>
-                        )}
-                      </Card>
-                    );
-                  })}
+                      )}
+                    </div>
+                  ))}
                 </div>
               );
             })}
-          </div>
+          </React.Fragment>
         ))}
       </div>
     </div>

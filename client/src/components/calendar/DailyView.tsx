@@ -1,296 +1,270 @@
 import { useState } from 'react';
-import { generateTimeSlots } from '../../utils/timeSlots';
-import { formatDateLong, isToday } from '../../utils/dateUtils';
-import { cleanEventTitle } from '../../utils/textCleaner';
-import { getLocationDisplay, getLocationIcon } from '../../utils/locationUtils';
 import { CalendarEvent } from '../../types/calendar';
+import { cleanEventTitle, formatClientName } from '../../utils/textCleaner';
+import { analyzeContent } from '../../utils/aiServices';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronLeft, ChevronRight, Plus, FileText } from 'lucide-react';
+import { Clock, MapPin, User, FileText, Brain, Calendar } from 'lucide-react';
 
 interface DailyViewProps {
   date: Date;
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
-  onTimeSlotClick: (time: string) => void;
-  onPreviousDay: () => void;
-  onNextDay: () => void;
-  onNewAppointment?: () => void;
-  onSessionNotes?: (event: CalendarEvent) => void;
+  onEventUpdate: (eventId: string, updates: Partial<CalendarEvent>) => void;
 }
 
-export const DailyView = ({
-  date,
-  events,
-  onEventClick,
-  onTimeSlotClick,
-  onPreviousDay,
-  onNextDay,
-  onNewAppointment,
-  onSessionNotes
-}: DailyViewProps) => {
-  const timeSlots = generateTimeSlots();
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
+export const DailyView = ({ date, events, onEventClick, onEventUpdate }: DailyViewProps) => {
+  const [analyzingEvent, setAnalyzingEvent] = useState<string | null>(null);
+  const [insights, setInsights] = useState<Record<string, any>>({});
 
-  // Filter events for the selected date
-  const dayEvents = events.filter(event => {
-    const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
-    return eventStart.toDateString() === date.toDateString();
-  }).sort((a, b) => {
-    const aTime = a.startTime instanceof Date ? a.startTime : new Date(a.startTime);
-    const bTime = b.startTime instanceof Date ? b.startTime : new Date(b.startTime);
-    return aTime.getTime() - bTime.getTime();
-  });
-
-  const getEventsForTimeSlot = (timeSlot: { hour: number; minute: number }) => {
-    return dayEvents.filter(event => {
-      const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
-      const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
-      
-      const slotTime = new Date(date);
-      slotTime.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
-      
-      return startTime <= slotTime && endTime > slotTime;
+  // Filter and sort events for the selected date
+  const dayEvents = events
+    .filter(event => {
+      const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+      return eventStart.toDateString() === date.toDateString();
+    })
+    .sort((a, b) => {
+      const aTime = a.startTime instanceof Date ? a.startTime : new Date(a.startTime);
+      const bTime = b.startTime instanceof Date ? b.startTime : new Date(b.startTime);
+      return aTime.getTime() - bTime.getTime();
     });
-  };
 
-  const getEventColor = (event: CalendarEvent) => {
-    switch (event.status) {
-      case 'confirmed':
-        return 'bg-therapy-success/10 border-therapy-success text-therapy-success';
-      case 'completed':
-        return 'bg-therapy-primary/10 border-therapy-primary text-therapy-primary';
-      case 'cancelled':
-        return 'bg-therapy-error/10 border-therapy-error text-therapy-error';
-      case 'no-show':
-        return 'bg-gray-100 border-gray-400 text-gray-600';
-      default:
-        return 'bg-therapy-warning/10 border-therapy-warning text-therapy-warning';
+  // Generate AI insights for an event
+  const handleAnalyzeEvent = async (event: CalendarEvent) => {
+    if (analyzingEvent) return;
+    
+    setAnalyzingEvent(event.id);
+    
+    try {
+      const analysisContent = `
+        Appointment Details:
+        Title: ${event.title}
+        Client: ${event.clientName}
+        Date: ${date.toDateString()}
+        Time: ${event.startTime instanceof Date ? event.startTime.toLocaleTimeString() : 'Unknown'}
+        Duration: ${event.endTime && event.startTime ? 
+          Math.round((new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60)) + ' minutes' : 'Unknown'}
+        Status: ${event.status}
+        Notes: ${event.notes || 'No notes available'}
+        Location: ${event.location || 'Not specified'}
+      `;
+      
+      const analysis = await analyzeContent(analysisContent, 'session');
+      setInsights(prev => ({ ...prev, [event.id]: analysis }));
+    } catch (error) {
+      console.error('Failed to analyze event:', error);
+    } finally {
+      setAnalyzingEvent(null);
     }
   };
 
-  const getEventTypeIcon = (type: CalendarEvent['type']) => {
-    switch (type) {
-      case 'individual': return '👤';
-      case 'group': return '👥';
-      case 'intake': return '📋';
-      case 'consultation': return '💬';
-      case 'assessment': return '📊';
-      case 'follow-up': return '🔄';
-      default: return '📅';
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'confirmed': return 'bg-blue-100 text-blue-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'no-show': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const formatTime = (time: Date | string) => {
-    const dateTime = time instanceof Date ? time : new Date(time);
-    return dateTime.toLocaleTimeString('en-US', { 
+  const formatTime = (dateTime: Date | string) => {
+    const date = dateTime instanceof Date ? dateTime : new Date(dateTime);
+    return date.toLocaleTimeString('en-US', { 
       hour: 'numeric', 
       minute: '2-digit', 
       hour12: true 
     });
   };
 
-  const getDayStats = () => {
-    const total = dayEvents.length;
-    const completed = dayEvents.filter(e => e.status === 'completed').length;
-    const confirmed = dayEvents.filter(e => e.status === 'confirmed').length;
-    const cancelled = dayEvents.filter(e => e.status === 'cancelled').length;
+  const getEventDuration = (event: CalendarEvent) => {
+    if (!event.endTime || !event.startTime) return 'Duration unknown';
     
-    return { total, completed, confirmed, cancelled };
+    const start = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+    const end = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+    const minutes = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+    
+    return `${minutes} minutes`;
   };
 
-  const stats = getDayStats();
-
   return (
-    <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="p-6 bg-therapy-bg border-b-2 border-therapy-border">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h1 className={cn(
-              "text-2xl font-bold",
-              isToday(date) ? "text-therapy-primary" : "text-therapy-text"
-            )}>
-              {formatDateLong(date)}
-            </h1>
-            {isToday(date) && (
-              <p className="text-therapy-primary/70 text-sm">Today's Schedule</p>
-            )}
-          </div>
-          
-          <div className="flex items-center space-x-3">
-            {onNewAppointment && (
-              <Button 
-                onClick={onNewAppointment}
-                className="bg-therapy-primary hover:bg-therapy-primary/80 text-white flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                New Appointment
-              </Button>
-            )}
-          </div>
+    <div className="daily-view-container space-y-6">
+      {/* Daily Header */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            {date.toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              month: 'long', 
+              day: 'numeric', 
+              year: 'numeric' 
+            })}
+          </h2>
+          <p className="text-gray-600 mt-1">
+            {dayEvents.length} {dayEvents.length === 1 ? 'appointment' : 'appointments'} scheduled
+          </p>
         </div>
-
-        {/* Navigation */}
-        <div className="flex justify-between items-center">
-          <Button 
-            variant="outline" 
-            onClick={onPreviousDay}
-            className="flex items-center px-4 py-2 bg-therapy-bg border-therapy-border hover:bg-therapy-primary/5"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Previous Day
-          </Button>
-
-          {/* Day stats */}
-          <div className="flex items-center space-x-4 text-sm">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="border-therapy-text/20">
-                {stats.total} Total
-              </Badge>
-              <Badge variant="outline" className="border-therapy-success text-therapy-success">
-                {stats.completed} Completed
-              </Badge>
-              <Badge variant="outline" className="border-therapy-primary text-therapy-primary">
-                {stats.confirmed} Confirmed
-              </Badge>
-              {stats.cancelled > 0 && (
-                <Badge variant="outline" className="border-therapy-error text-therapy-error">
-                  {stats.cancelled} Cancelled
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          <Button 
-            variant="outline" 
-            onClick={onNextDay}
-            className="flex items-center px-4 py-2 bg-therapy-bg border-therapy-border hover:bg-therapy-primary/5"
-          >
-            Next Day
-            <ChevronRight className="w-4 h-4 ml-2" />
-          </Button>
+        
+        <div className="flex gap-2">
+          <Badge variant="outline" className="bg-blue-50 text-blue-700">
+            Daily View
+          </Badge>
         </div>
       </div>
 
-      {/* Daily schedule */}
-      <div className="flex-1 flex">
-        {/* Time slots */}
-        <div className="w-20 border-r-2 border-therapy-border bg-therapy-bg/50">
-          <ScrollArea className="h-full">
-            {timeSlots.map((timeSlot, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "p-3 text-xs text-therapy-text/70 border-b border-therapy-border/30 cursor-pointer hover:bg-therapy-primary/5",
-                  selectedTimeSlot === timeSlot.display && "bg-therapy-primary/10 text-therapy-primary"
-                )}
-                onClick={() => {
-                  setSelectedTimeSlot(timeSlot.display);
-                  onTimeSlotClick(timeSlot.display);
-                }}
-              >
-                {timeSlot.display}
-              </div>
-            ))}
-          </ScrollArea>
-        </div>
+      {/* Daily Statistics */}
+      <div className="grid grid-cols-4 gap-4">
+        {[
+          { label: 'Total', value: dayEvents.length, color: 'bg-gray-100' },
+          { label: 'Confirmed', value: dayEvents.filter(e => e.status === 'confirmed').length, color: 'bg-blue-100' },
+          { label: 'Completed', value: dayEvents.filter(e => e.status === 'completed').length, color: 'bg-green-100' },
+          { label: 'Cancelled', value: dayEvents.filter(e => e.status === 'cancelled').length, color: 'bg-red-100' },
+        ].map((stat) => (
+          <div key={stat.label} className={`${stat.color} p-3 rounded-lg text-center`}>
+            <div className="text-2xl font-bold">{stat.value}</div>
+            <div className="text-sm text-gray-600">{stat.label}</div>
+          </div>
+        ))}
+      </div>
 
-        {/* Appointments */}
-        <div className="flex-1">
-          <ScrollArea className="h-full">
-            {timeSlots.map((timeSlot, index) => {
-              const slotEvents = getEventsForTimeSlot(timeSlot);
-              
-              return (
-                <div
-                  key={index}
-                  className={cn(
-                    "min-h-16 border-b border-therapy-border/30 p-3",
-                    selectedTimeSlot === timeSlot.display && "bg-therapy-primary/5"
-                  )}
-                >
-                  {slotEvents.length === 0 ? (
-                    <div className="h-full flex items-center justify-center text-therapy-text/30 text-sm">
-                      {/* Empty slot */}
+      {/* Events List */}
+      <div className="space-y-4">
+        {dayEvents.length === 0 ? (
+          <Card className="p-8 text-center">
+            <div className="text-gray-500">
+              <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg">No appointments scheduled for this day</p>
+              <p className="text-sm mt-2">Click on a time slot in the weekly view to schedule an appointment</p>
+            </div>
+          </Card>
+        ) : (
+          dayEvents.map((event) => (
+            <Card 
+              key={event.id} 
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => onEventClick(event)}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">
+                      {cleanEventTitle(event.title)}
+                    </CardTitle>
+                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        {formatTime(event.startTime)} - {event.endTime ? formatTime(event.endTime) : 'Open'}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <User className="w-4 h-4" />
+                        {getEventDuration(event)}
+                      </div>
                     </div>
-                  ) : (
-                    slotEvents.map((event, eventIndex) => {
-                      const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
-                      const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
-                      
-                      return (
-                        <Card
-                          key={eventIndex}
-                          className={cn(
-                            "mb-2 cursor-pointer transition-all duration-200 hover:shadow-md border-2",
-                            getEventColor(event)
-                          )}
-                          onClick={() => onEventClick(event)}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <span className="text-lg">{getEventTypeIcon(event.type)}</span>
-                                  <h3 className="font-semibold text-therapy-text">
-                                    {cleanEventTitle(event.title)}
-                                  </h3>
-                                  <Badge variant="outline" className="ml-auto">
-                                    {event.status}
-                                  </Badge>
-                                </div>
-                                
-                                {event.clientName && (
-                                  <p className="text-therapy-text/70 mb-2">
-                                    Client: {event.clientName}
-                                  </p>
-                                )}
-                                
-                                <div className="flex items-center gap-4 text-sm text-therapy-text/60 mb-2">
-                                  <span>🕒 {formatTime(startTime)} - {formatTime(endTime)}</span>
-                                  {event.location && (
-                                    <span className="flex items-center gap-1">
-                                      {getLocationIcon(event.location)}
-                                      {getLocationDisplay(event.location)}
-                                    </span>
-                                  )}
-                                </div>
-                                
-                                {event.notes && (
-                                  <p className="text-sm text-therapy-text/70 bg-therapy-bg/50 p-2 rounded mt-2">
-                                    {event.notes}
-                                  </p>
-                                )}
-                              </div>
-                              
-                              {onSessionNotes && event.status === 'completed' && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onSessionNotes(event);
-                                  }}
-                                  className="ml-2 text-therapy-primary hover:text-therapy-primary/80"
-                                >
-                                  <FileText className="w-4 h-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Badge className={getStatusColor(event.status || 'pending')}>
+                      {event.status || 'Pending'}
+                    </Badge>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAnalyzeEvent(event);
+                      }}
+                      disabled={analyzingEvent === event.id}
+                    >
+                      <Brain className="w-4 h-4 mr-1" />
+                      {analyzingEvent === event.id ? 'Analyzing...' : 'AI Insights'}
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Client Information */}
+                  {event.clientName && (
+                    <div>
+                      <div className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
+                        <User className="w-4 h-4" />
+                        Client
+                      </div>
+                      <p className="text-sm">{formatClientName(event.clientName)}</p>
+                    </div>
+                  )}
+
+                  {/* Location */}
+                  {event.location && (
+                    <div>
+                      <div className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
+                        <MapPin className="w-4 h-4" />
+                        Location
+                      </div>
+                      <p className="text-sm">{event.location}</p>
+                    </div>
+                  )}
+
+                  {/* Session Notes */}
+                  {event.notes && (
+                    <div className="col-span-2">
+                      <div className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
+                        <FileText className="w-4 h-4" />
+                        Notes
+                      </div>
+                      <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                        {event.notes}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* AI Insights */}
+                  {insights[event.id] && (
+                    <div className="col-span-2">
+                      <div className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-2">
+                        <Brain className="w-4 h-4" />
+                        AI Analysis
+                      </div>
+                      <div className="bg-blue-50 p-3 rounded-lg space-y-2">
+                        {insights[event.id].insights && insights[event.id].insights.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-blue-800 mb-1">Key Insights:</p>
+                            <ul className="text-xs text-blue-700 space-y-1">
+                              {insights[event.id].insights.slice(0, 2).map((insight: string, idx: number) => (
+                                <li key={idx} className="flex items-start gap-1">
+                                  <span className="text-blue-400 mt-1">•</span>
+                                  {insight}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        
+                        {insights[event.id].recommendations && insights[event.id].recommendations.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-blue-800 mb-1">Recommendations:</p>
+                            <ul className="text-xs text-blue-700 space-y-1">
+                              {insights[event.id].recommendations.slice(0, 2).map((rec: string, idx: number) => (
+                                <li key={idx} className="flex items-start gap-1">
+                                  <span className="text-blue-400 mt-1">→</span>
+                                  {rec}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </div>
-              );
-            })}
-          </ScrollArea>
-        </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );
