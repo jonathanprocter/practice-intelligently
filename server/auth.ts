@@ -53,8 +53,9 @@ export class GoogleCalendarService {
       'https://www.googleapis.com/auth/calendar.events'
     ];
 
-    console.log('Generating OAuth URL with redirect URI:', getRedirectUri());
-    console.log('Using Client ID:', process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
+    // Debug logging can be removed in production
+    // console.log('Generating OAuth URL with redirect URI:', getRedirectUri());
+    // console.log('Using Client ID:', process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
 
     return this.auth.generateAuthUrl({
       access_type: 'offline',
@@ -72,6 +73,10 @@ export class GoogleCalendarService {
       console.error('Error getting access token:', error);
       throw new Error('Failed to authenticate with Google Calendar');
     }
+  }
+
+  isAuthenticated(): boolean {
+    return !!(this.auth.credentials?.access_token);
   }
 
   async listCalendars() {

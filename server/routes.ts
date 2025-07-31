@@ -334,6 +334,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.redirect(authUrl);
   });
 
+  // Check Google Calendar connection status
+  app.get('/api/auth/google/status', (req, res) => {
+    const isConnected = googleCalendarService.isAuthenticated();
+    res.json({ connected: isConnected });
+  });
+
   app.get('/api/auth/google/callback', async (req, res) => {
     try {
       const { code } = req.query;
@@ -359,8 +365,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timeMax as string
       );
       res.json(events);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching calendar events:', error);
+      if (error.message?.includes('authentication required') || error.message?.includes('No valid credentials')) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
       res.status(500).json({ error: 'Failed to fetch calendar events' });
     }
   });
@@ -369,8 +378,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const calendars = await googleCalendarService.listCalendars();
       res.json(calendars);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching calendars:', error);
+      if (error.message?.includes('authentication required') || error.message?.includes('No valid credentials')) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
       res.status(500).json({ error: 'Failed to fetch calendars' });
     }
   });
