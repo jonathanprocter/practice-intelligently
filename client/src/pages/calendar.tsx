@@ -303,20 +303,29 @@ export default function Calendar() {
               >
                 Retry Connection
               </Button>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.location.href = '/oauth-simple'} 
+                    className="text-xs"
+                  >
+                    Simple Connect
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.location.href = '/oauth-test'} 
+                    className="text-xs"
+                  >
+                    Debug OAuth
+                  </Button>
+                </div>
                 <Button 
-                  variant="outline" 
-                  onClick={() => window.location.href = '/oauth-simple'} 
-                  className="text-xs"
+                  variant="destructive" 
+                  onClick={() => window.location.href = '/oauth-troubleshoot'} 
+                  className="w-full text-xs"
                 >
-                  Simple Connect
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => window.location.href = '/oauth-test'} 
-                  className="text-xs"
-                >
-                  Debug OAuth
+                  Fix 403 Error
                 </Button>
               </div>
             </div>
