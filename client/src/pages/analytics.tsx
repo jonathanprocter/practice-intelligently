@@ -131,9 +131,8 @@ export default function Analytics() {
               <div className="w-12 h-12 bg-therapy-primary/10 rounded-lg flex items-center justify-center">
                 <TrendingUp className="text-therapy-primary text-xl" />
               </div>
-              <Badge variant="secondary" className="text-therapy-success">+22%</Badge>
             </div>
-            <h3 className="text-2xl font-bold text-therapy-text mb-1">87%</h3>
+            <h3 className="text-2xl font-bold text-therapy-text mb-1">--%</h3>
             <p className="text-therapy-text/60 text-sm">Client Satisfaction</p>
           </CardContent>
         </Card>
@@ -149,26 +148,9 @@ export default function Analytics() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {sessionTrends.map((data, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-therapy-success/10 rounded text-therapy-success text-sm font-semibold flex items-center justify-center">
-                      {data.month}
-                    </div>
-                    <div>
-                      <p className="font-medium text-therapy-text">{data.sessions} sessions</p>
-                      <p className="text-sm text-therapy-text/60">{data.clients} clients</p>
-                    </div>
-                  </div>
-                  <div className="w-24">
-                    <Progress 
-                      value={(data.sessions / 80) * 100} 
-                      className="h-2"
-                    />
-                  </div>
-                </div>
-              ))}
+            <div className="text-center py-8">
+              <BarChart className="h-12 w-12 text-therapy-text/30 mx-auto mb-2" />
+              <p className="text-therapy-text/60 text-sm">No session data available yet</p>
             </div>
           </CardContent>
         </Card>
@@ -182,28 +164,9 @@ export default function Analytics() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {outcomeMetrics.map((outcome, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-therapy-text text-sm">
-                      {outcome.category}
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-semibold text-therapy-success">
-                        {outcome.improvement}%
-                      </span>
-                      <span className="text-xs text-therapy-text/50">
-                        ({outcome.sessions} sessions)
-                      </span>
-                    </div>
-                  </div>
-                  <Progress 
-                    value={outcome.improvement} 
-                    className="h-2"
-                  />
-                </div>
-              ))}
+            <div className="text-center py-8">
+              <Activity className="h-12 w-12 text-therapy-text/30 mx-auto mb-2" />
+              <p className="text-therapy-text/60 text-sm">No treatment outcome data available yet</p>
             </div>
           </CardContent>
         </Card>
@@ -220,34 +183,9 @@ export default function Analytics() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-therapy-text">Individual Therapy</span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-16 bg-therapy-bg rounded-full h-2">
-                    <div className="bg-therapy-primary h-2 rounded-full" style={{width: '65%'}}></div>
-                  </div>
-                  <span className="text-sm font-semibold">65%</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-therapy-text">Couples Therapy</span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-16 bg-therapy-bg rounded-full h-2">
-                    <div className="bg-therapy-success h-2 rounded-full" style={{width: '25%'}}></div>
-                  </div>
-                  <span className="text-sm font-semibold">25%</span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-therapy-text">Family Therapy</span>
-                <div className="flex items-center space-x-2">
-                  <div className="w-16 bg-therapy-bg rounded-full h-2">
-                    <div className="bg-therapy-warning h-2 rounded-full" style={{width: '10%'}}></div>
-                  </div>
-                  <span className="text-sm font-semibold">10%</span>
-                </div>
-              </div>
+            <div className="text-center py-8">
+              <Clock className="h-12 w-12 text-therapy-text/30 mx-auto mb-2" />
+              <p className="text-therapy-text/60 text-sm">No session distribution data available yet</p>
             </div>
           </CardContent>
         </Card>
@@ -261,29 +199,19 @@ export default function Analytics() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm text-therapy-text">Age 18-30</span>
-                  <span className="text-sm font-semibold">32%</span>
+            {totalClients > 0 ? (
+              <div className="space-y-4">
+                <div className="text-center py-8">
+                  <Users className="h-12 w-12 text-therapy-text/30 mx-auto mb-2" />
+                  <p className="text-therapy-text/60 text-sm">Demographics analysis available with more client data</p>
                 </div>
-                <Progress value={32} className="h-2" />
               </div>
-              <div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm text-therapy-text">Age 31-45</span>
-                  <span className="text-sm font-semibold">45%</span>
-                </div>
-                <Progress value={45} className="h-2" />
+            ) : (
+              <div className="text-center py-8">
+                <Users className="h-12 w-12 text-therapy-text/30 mx-auto mb-2" />
+                <p className="text-therapy-text/60 text-sm">No client data available yet</p>
               </div>
-              <div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm text-therapy-text">Age 46+</span>
-                  <span className="text-sm font-semibold">23%</span>
-                </div>
-                <Progress value={23} className="h-2" />
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -296,37 +224,9 @@ export default function Analytics() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-therapy-bg rounded-lg">
-                <div>
-                  <p className="font-medium text-therapy-text text-sm">Documentation Rate</p>
-                  <p className="text-xs text-therapy-text/60">Notes completed on time</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-therapy-success">94%</p>
-                  <p className="text-xs text-therapy-success">+5%</p>
-                </div>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-therapy-bg rounded-lg">
-                <div>
-                  <p className="font-medium text-therapy-text text-sm">Show-up Rate</p>
-                  <p className="text-xs text-therapy-text/60">Client attendance</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-therapy-warning">87%</p>
-                  <p className="text-xs text-therapy-warning">+2%</p>
-                </div>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-therapy-bg rounded-lg">
-                <div>
-                  <p className="font-medium text-therapy-text text-sm">Response Time</p>
-                  <p className="text-xs text-therapy-text/60">Average email response</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-therapy-primary">2.3h</p>
-                  <p className="text-xs text-therapy-success">-0.5h</p>
-                </div>
-              </div>
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-therapy-text/30 mx-auto mb-2" />
+              <p className="text-therapy-text/60 text-sm">No performance data available yet</p>
             </div>
           </CardContent>
         </Card>
