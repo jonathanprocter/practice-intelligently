@@ -83,6 +83,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { therapistId } = req.params;
       const { date } = req.query;
       
+      // Validate therapistId is not undefined and is a valid UUID format
+      if (!therapistId || therapistId === 'undefined') {
+        return res.status(400).json({ error: 'Valid therapist ID is required' });
+      }
+      
+      // Basic UUID format validation
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(therapistId)) {
+        return res.status(400).json({ error: 'Invalid therapist ID format' });
+      }
+      
       const appointments = date 
         ? await storage.getAppointments(therapistId, new Date(date as string))
         : await storage.getAppointments(therapistId);
@@ -372,7 +383,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Google Calendar Integration
+  // Google Calendar Integration - new route without therapist ID parameter
+  app.get('/api/calendar/events', async (req, res) => {
+    try {
+      const { timeMin, timeMax, calendarId } = req.query;
+      
+      if (!googleCalendarService.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
+      let events;
+      if (!calendarId || calendarId === 'all') {
+        // Fetch from all calendars
+        events = await googleCalendarService.getAllEvents(
+          timeMin as string,
+          timeMax as string
+        );
+      } else {
+        // Fetch from specific calendar
+        events = await googleCalendarService.getEvents(
+          calendarId as string,
+          timeMin as string,
+          timeMax as string
+        );
+      }
+      
+      res.json(events);
+    } catch (error: any) {
+      console.error('Error fetching calendar events:', error);
+      if (error.message?.includes('authentication required')) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      res.status(500).json({ error: 'Failed to fetch calendar events' });
+    }
+  });
+
+  // Legacy Google Calendar route with therapist ID (for backwards compatibility)
   app.get('/api/calendar/events/:therapistId', async (req, res) => {
     try {
       const { timeMin, timeMax, calendarId } = req.query;

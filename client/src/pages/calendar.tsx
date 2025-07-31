@@ -40,7 +40,7 @@ export default function Calendar() {
   };
 
   const { data: googleEvents = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['google-calendar-events', 'dr-procter-id', selectedCalendarId],
+    queryKey: ['google-calendar-events', selectedCalendarId],
     queryFn: async () => {
       // First check if Google Calendar is connected
       const statusResponse = await fetch('/api/auth/google/status');
@@ -55,7 +55,8 @@ export default function Calendar() {
       const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
       const calendarParam = selectedCalendarId === 'all' ? 'all' : selectedCalendarId;
       
-      const response = await fetch(`/api/calendar/events/dr-procter-id?timeMin=${timeMin}&timeMax=${timeMax}&calendarId=${calendarParam}`);
+      // Use the new route without therapist ID since we're using Google Calendar directly
+      const response = await fetch(`/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}&calendarId=${calendarParam}`);
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -131,7 +132,7 @@ export default function Calendar() {
       status: (event.status === 'confirmed' ? 'scheduled' : 'pending') as CalendarEvent['status'],
       location: event.location || 'Remote/Office',
       notes: event.description || '',
-      therapistId: 'dr-procter-id',
+      // Remove hardcoded therapist ID for Google Calendar events
       source: 'google' as CalendarEvent['source'],
       attendees: event.attendees?.map((a: any) => a.email).join(', ') || '',
       calendarName: event.calendarName || 'Google Calendar'
