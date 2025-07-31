@@ -100,6 +100,7 @@ export const DailyView = ({
     if (!selectedEvent) return;
 
     try {
+      console.log('Saving session notes for event:', selectedEvent.id);
       const response = await fetch('/api/session-notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -111,14 +112,23 @@ export const DailyView = ({
         })
       });
 
+      console.log('Save response status:', response.status);
+      
       if (response.ok) {
+        const result = await response.json();
+        console.log('Session notes saved successfully:', result);
         // Update the event locally
         const updatedEvent = { ...selectedEvent, notes: sessionNotes };
         setSelectedEvent(updatedEvent);
-        // Could also trigger a refresh of the events list here
+        alert('Session notes saved successfully!');
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to save session notes:', response.status, errorText);
+        alert(`Failed to save session notes: ${response.status} ${errorText}`);
       }
     } catch (error) {
-      console.error('Failed to save session notes:', error);
+      console.error('Network error saving session notes:', error);
+      alert('Network error: Unable to save session notes');
     }
   };
 

@@ -97,8 +97,8 @@ export const sessionNotes = pgTable("session_notes", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   appointmentId: uuid("appointment_id").references(() => appointments.id),
   eventId: text("event_id"), // For Google Calendar event ID
-  clientId: uuid("client_id").references(() => clients.id).notNull(),
-  therapistId: uuid("therapist_id").references(() => users.id).notNull(),
+  clientId: text("client_id"), // Simplified - no foreign key constraint for Google Calendar integration
+  therapistId: text("therapist_id"), // Simplified - no foreign key constraint for Google Calendar integration
   content: text("content").notNull(),
   transcript: text("transcript"),
   aiSummary: text("ai_summary"),

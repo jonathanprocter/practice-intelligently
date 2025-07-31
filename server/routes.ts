@@ -9,6 +9,7 @@ import {
   insertActionItemSchema, insertTreatmentPlanSchema 
 } from "@shared/schema";
 import { z } from "zod";
+import { randomUUID } from 'crypto';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check
@@ -144,44 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/session-notes", async (req, res) => {
-    try {
-      const validatedData = insertSessionNoteSchema.parse(req.body);
-      
-      // Process transcript if provided
-      if (validatedData.transcript) {
-        try {
-          const analysis = await analyzeSessionTranscript(validatedData.transcript);
-          validatedData.aiSummary = analysis.summary;
-          
-          // Generate action items from analysis
-          const actionItems = analysis.actionItems || [];
-          for (const item of actionItems) {
-            await storage.createActionItem({
-              therapistId: validatedData.therapistId,
-              clientId: validatedData.clientId,
-              title: item,
-              priority: 'medium',
-              status: 'pending'
-            });
-          }
-        } catch (aiError) {
-          console.error("AI processing failed:", aiError);
-          // Continue without AI processing
-        }
-      }
-      
-      const note = await storage.createSessionNote(validatedData);
-      res.json(note);
-    } catch (error) {
-      console.error("Error creating session note:", error);
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Invalid session note data", details: error.errors });
-      } else {
-        res.status(500).json({ error: "Failed to create session note" });
-      }
-    }
-  });
+  // Legacy session notes endpoint - disabled in favor of calendar-specific endpoint below
 
   // Action Items
   app.get("/api/action-items/:therapistId", async (req, res) => {
@@ -487,18 +451,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { eventId, notes, date, clientName } = req.body;
       
+      console.log('Received session notes request:', { eventId, notes, date, clientName });
+      
+      // Generate UUIDs for required fields since we don't have auth yet
+      const therapistId = randomUUID();
+      const clientId = randomUUID();
+      
       // Save to database
       const sessionNote = await storage.createSessionNote({
         eventId,
-        therapistId: 'therapist-1', // Should be from auth context
-        clientId: 'client-1', // Should be derived from client name
+        therapistId,
+        clientId,
         content: notes
       });
       
+      console.log('Session note saved successfully:', sessionNote.id);
       res.json(sessionNote);
     } catch (error: any) {
       console.error('Error saving session notes:', error);
-      res.status(500).json({ error: 'Failed to save session notes' });
+      res.status(500).json({ error: 'Failed to save session notes', details: error.message });
     }
   });
 
