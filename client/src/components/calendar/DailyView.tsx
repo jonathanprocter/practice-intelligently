@@ -1,23 +1,48 @@
 import { useState } from 'react';
 import { CalendarEvent } from '../../types/calendar';
 import { cleanEventTitle, formatClientName } from '../../utils/textCleaner';
-import { analyzeContent } from '../../utils/aiServices';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, MapPin, User, FileText, Brain, Calendar } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Clock, MapPin, User, FileText, Brain, Calendar, ChevronLeft, ChevronRight, Plus, Sparkles, MessageSquare, Target, TrendingUp } from 'lucide-react';
 
 interface DailyViewProps {
   date: Date;
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
-  onEventUpdate: (eventId: string, updates: Partial<CalendarEvent>) => void;
+  onTimeSlotClick?: (date: Date, time: string) => void;
+  onPreviousDay: () => void;
+  onNextDay: () => void;
+  onNewAppointment: () => void;
+  onSessionNotes?: (event: CalendarEvent) => void;
 }
 
-export const DailyView = ({ date, events, onEventClick, onEventUpdate }: DailyViewProps) => {
-  const [analyzingEvent, setAnalyzingEvent] = useState<string | null>(null);
-  const [insights, setInsights] = useState<Record<string, any>>({});
+interface AIInsight {
+  summary: string;
+  keyPoints: string[];
+  suggestedQuestions: string[];
+  recommendedFollowUp: string[];
+  progressIndicators: string[];
+}
+
+export const DailyView = ({ 
+  date, 
+  events, 
+  onEventClick, 
+  onTimeSlotClick,
+  onPreviousDay,
+  onNextDay,
+  onNewAppointment,
+  onSessionNotes 
+}: DailyViewProps) => {
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiInsights, setAiInsights] = useState<AIInsight | null>(null);
+  const [sessionNotes, setSessionNotes] = useState('');
 
   // Filter and sort events for the selected date
   const dayEvents = events
@@ -31,33 +56,44 @@ export const DailyView = ({ date, events, onEventClick, onEventUpdate }: DailyVi
       return aTime.getTime() - bTime.getTime();
     });
 
-  // Generate AI insights for an event
-  const handleAnalyzeEvent = async (event: CalendarEvent) => {
-    if (analyzingEvent) return;
-    
-    setAnalyzingEvent(event.id);
+  // Generate AI insights for an appointment
+  const generateAIInsights = async (event: CalendarEvent) => {
+    setIsAnalyzing(true);
     
     try {
-      const analysisContent = `
-        Appointment Details:
-        Title: ${event.title}
-        Client: ${event.clientName}
-        Date: ${date.toDateString()}
-        Time: ${event.startTime instanceof Date ? event.startTime.toLocaleTimeString() : 'Unknown'}
-        Duration: ${event.endTime && event.startTime ? 
-          Math.round((new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60)) + ' minutes' : 'Unknown'}
-        Status: ${event.status}
-        Notes: ${event.notes || 'No notes available'}
-        Location: ${event.location || 'Not specified'}
-      `;
-      
-      const analysis = await analyzeContent(analysisContent, 'session');
-      setInsights(prev => ({ ...prev, [event.id]: analysis }));
+      const response = await fetch('/api/ai/appointment-insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appointment: {
+            title: event.title,
+            clientName: event.clientName,
+            date: date.toISOString(),
+            startTime: event.startTime,
+            endTime: event.endTime,
+            status: event.status,
+            notes: event.notes,
+            location: event.location,
+            sessionNotes
+          }
+        })
+      });
+
+      if (response.ok) {
+        const insights = await response.json();
+        setAiInsights(insights);
+      }
     } catch (error) {
-      console.error('Failed to analyze event:', error);
+      console.error('Failed to generate AI insights:', error);
     } finally {
-      setAnalyzingEvent(null);
+      setIsAnalyzing(false);
     }
+  };
+
+  const handleEventClick = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setSessionNotes(event.notes || '');
+    setAiInsights(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -89,183 +125,280 @@ export const DailyView = ({ date, events, onEventClick, onEventUpdate }: DailyVi
     return `${minutes} minutes`;
   };
 
+  // Get location default based on day of week
+  const getDefaultLocationForDate = (date: Date) => {
+    const dayOfWeek = date.getDay();
+    switch (dayOfWeek) {
+      case 1: return 'Woodbury';
+      case 2: return 'Telehealth';
+      case 3:
+      case 4:
+      case 5: return 'Rockville Centre';
+      default: return 'Remote/Office';
+    }
+  };
+
+  // Generate time slots from 6:00 AM to 11:30 PM
+  const generateTimeSlots = () => {
+    const slots = [];
+    for (let hour = 6; hour < 24; hour++) {
+      slots.push(`${hour.toString().padStart(2, '0')}:00`);
+      if (hour < 23) {
+        slots.push(`${hour.toString().padStart(2, '0')}:30`);
+      }
+    }
+    return slots;
+  };
+
+  const timeSlots = generateTimeSlots();
+
   return (
-    <div className="daily-view-container space-y-6">
+    <div className="daily-view-container h-full flex flex-col">
       {/* Daily Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            {date.toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              month: 'long', 
-              day: 'numeric', 
-              year: 'numeric' 
-            })}
-          </h2>
-          <p className="text-gray-600 mt-1">
-            {dayEvents.length} {dayEvents.length === 1 ? 'appointment' : 'appointments'} scheduled
-          </p>
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={onPreviousDay} size="sm">
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900">
+              {date.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                month: 'long', 
+                day: 'numeric', 
+                year: 'numeric' 
+              })}
+            </h2>
+            <p className="text-sm text-gray-600">
+              {dayEvents.length} appointments • {getDefaultLocationForDate(date)}
+            </p>
+          </div>
+          
+          <Button variant="outline" onClick={onNextDay} size="sm">
+            <ChevronRight className="w-4 h-4" />
+          </Button>
         </div>
         
-        <div className="flex gap-2">
-          <Badge variant="outline" className="bg-blue-50 text-blue-700">
-            Daily View
-          </Badge>
+        <Button onClick={onNewAppointment} className="bg-blue-600 hover:bg-blue-700 text-white">
+          <Plus className="w-4 h-4 mr-2" />
+          New Appointment
+        </Button>
+      </div>
+
+      {/* Daily Schedule Grid */}
+      <div className="flex-1 bg-white border rounded-lg overflow-hidden">
+        <div className="grid grid-cols-[60px_1fr] h-full">
+          {/* Time Column */}
+          <div className="bg-gray-50 border-r">
+            <div className="h-12 border-b bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600">
+              TIME
+            </div>
+            <ScrollArea className="h-[calc(100%-48px)]">
+              {timeSlots.map((time) => (
+                <div key={time} className="h-12 border-b border-gray-200 flex items-center justify-center text-xs text-gray-600 font-mono">
+                  {time}
+                </div>
+              ))}
+            </ScrollArea>
+          </div>
+
+          {/* Appointments Column */}
+          <div className="relative">
+            <div className="h-12 border-b bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-700">
+              {date.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric', year: 'numeric' })}
+            </div>
+            <ScrollArea className="h-[calc(100%-48px)]">
+              <div className="relative">
+                {timeSlots.map((time, index) => {
+                  const slotEvents = dayEvents.filter(event => {
+                    const eventStart = new Date(event.startTime);
+                    const slotTime = `${eventStart.getHours().toString().padStart(2, '0')}:${eventStart.getMinutes().toString().padStart(2, '0')}`;
+                    return slotTime === time;
+                  });
+
+                  return (
+                    <div 
+                      key={time} 
+                      className="h-12 border-b border-gray-100 hover:bg-blue-50 cursor-pointer relative"
+                      onClick={() => onTimeSlotClick?.(date, time)}
+                    >
+                      {slotEvents.map((event) => {
+                        const duration = event.endTime && event.startTime ? 
+                          Math.round((new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / (1000 * 60)) : 60;
+                        const slots = Math.max(1, Math.round(duration / 30));
+                        
+                        return (
+                          <div
+                            key={event.id}
+                            className="absolute inset-x-1 bg-white border border-gray-300 rounded-sm cursor-pointer hover:shadow-md transition-shadow p-1"
+                            style={{
+                              height: `${slots * 48 - 4}px`,
+                              top: '2px',
+                              zIndex: 10
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEventClick(event);
+                            }}
+                          >
+                            <div className="h-full flex flex-col justify-between text-xs">
+                              <div className="font-semibold text-gray-900 leading-tight">
+                                {event.clientName || cleanEventTitle(event.title)}
+                              </div>
+                              <div className="text-blue-600 text-xs leading-tight">
+                                {event.calendarName?.includes('Simple Practice') ? 'SimplePractice' : 'Google Calendar'} | {event.location || getDefaultLocationForDate(date)}
+                              </div>
+                              <div className="text-gray-600 text-xs leading-tight">
+                                {formatTime(event.startTime)} - {event.endTime ? formatTime(event.endTime) : 'Open'}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          </div>
         </div>
       </div>
 
-      {/* Daily Statistics */}
-      <div className="grid grid-cols-4 gap-4">
-        {[
-          { label: 'Total', value: dayEvents.length, color: 'bg-gray-100' },
-          { label: 'Confirmed', value: dayEvents.filter(e => e.status === 'confirmed').length, color: 'bg-blue-100' },
-          { label: 'Completed', value: dayEvents.filter(e => e.status === 'completed').length, color: 'bg-green-100' },
-          { label: 'Cancelled', value: dayEvents.filter(e => e.status === 'cancelled').length, color: 'bg-red-100' },
-        ].map((stat) => (
-          <div key={stat.label} className={`${stat.color} p-3 rounded-lg text-center`}>
-            <div className="text-2xl font-bold">{stat.value}</div>
-            <div className="text-sm text-gray-600">{stat.label}</div>
-          </div>
-        ))}
-      </div>
+      {/* Enhanced Appointment Modal with AI Integration */}
+      <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              {selectedEvent?.clientName || cleanEventTitle(selectedEvent?.title || '')}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedEvent && formatTime(selectedEvent.startTime)} - {selectedEvent?.endTime && formatTime(selectedEvent.endTime)} • {selectedEvent?.location || getDefaultLocationForDate(date)}
+            </DialogDescription>
+          </DialogHeader>
 
-      {/* Events List */}
-      <div className="space-y-4">
-        {dayEvents.length === 0 ? (
-          <Card className="p-8 text-center">
-            <div className="text-gray-500">
-              <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg">No appointments scheduled for this day</p>
-              <p className="text-sm mt-2">Click on a time slot in the weekly view to schedule an appointment</p>
+          <ScrollArea className="max-h-[70vh] pr-4">
+            <div className="space-y-6">
+              {/* Session Notes */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Session Notes</label>
+                <Textarea
+                  value={sessionNotes}
+                  onChange={(e) => setSessionNotes(e.target.value)}
+                  placeholder="Add your session notes here..."
+                  className="min-h-[120px]"
+                />
+              </div>
+
+              {/* AI Insights Section */}
+              <div className="border-t pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-blue-600" />
+                    AI Therapy Assistant
+                  </h3>
+                  <Button
+                    onClick={() => generateAIInsights(selectedEvent!)}
+                    disabled={isAnalyzing}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Brain className="w-4 h-4 mr-2" />
+                    {isAnalyzing ? 'Analyzing...' : 'Generate Insights'}
+                  </Button>
+                </div>
+
+                {aiInsights && (
+                  <div className="space-y-4">
+                    {/* Session Summary */}
+                    {aiInsights.summary && (
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+                          <FileText className="w-4 h-4" />
+                          Session Summary
+                        </h4>
+                        <p className="text-blue-800 text-sm">{aiInsights.summary}</p>
+                      </div>
+                    )}
+
+                    {/* Suggested Questions */}
+                    {aiInsights.suggestedQuestions?.length > 0 && (
+                      <div className="bg-purple-50 p-4 rounded-lg">
+                        <h4 className="font-medium text-purple-900 mb-2 flex items-center gap-2">
+                          <MessageSquare className="w-4 h-4" />
+                          Suggested Questions for Next Session
+                        </h4>
+                        <ul className="space-y-1">
+                          {aiInsights.suggestedQuestions.map((question, index) => (
+                            <li key={index} className="text-purple-800 text-sm flex items-start gap-2">
+                              <span className="text-purple-400 mt-1">•</span>
+                              {question}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Progress Indicators */}
+                    {aiInsights.progressIndicators?.length > 0 && (
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <h4 className="font-medium text-green-900 mb-2 flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4" />
+                          Progress Indicators
+                        </h4>
+                        <ul className="space-y-1">
+                          {aiInsights.progressIndicators.map((indicator, index) => (
+                            <li key={index} className="text-green-800 text-sm flex items-start gap-2">
+                              <span className="text-green-400 mt-1">✓</span>
+                              {indicator}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Follow-up Recommendations */}
+                    {aiInsights.recommendedFollowUp?.length > 0 && (
+                      <div className="bg-orange-50 p-4 rounded-lg">
+                        <h4 className="font-medium text-orange-900 mb-2 flex items-center gap-2">
+                          <Target className="w-4 h-4" />
+                          Recommended Follow-up Actions
+                        </h4>
+                        <ul className="space-y-1">
+                          {aiInsights.recommendedFollowUp.map((action, index) => (
+                            <li key={index} className="text-orange-800 text-sm flex items-start gap-2">
+                              <span className="text-orange-400 mt-1">→</span>
+                              {action}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-between pt-4 border-t">
+                <Button variant="outline" onClick={() => setSelectedEvent(null)}>
+                  Close
+                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Save Notes
+                  </Button>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Action Item
+                  </Button>
+                </div>
+              </div>
             </div>
-          </Card>
-        ) : (
-          dayEvents.map((event) => (
-            <Card 
-              key={event.id} 
-              className="cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => onEventClick(event)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">
-                      {cleanEventTitle(event.title)}
-                    </CardTitle>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        {formatTime(event.startTime)} - {event.endTime ? formatTime(event.endTime) : 'Open'}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <User className="w-4 h-4" />
-                        {getEventDuration(event)}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Badge className={getStatusColor(event.status || 'pending')}>
-                      {event.status || 'Pending'}
-                    </Badge>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAnalyzeEvent(event);
-                      }}
-                      disabled={analyzingEvent === event.id}
-                    >
-                      <Brain className="w-4 h-4 mr-1" />
-                      {analyzingEvent === event.id ? 'Analyzing...' : 'AI Insights'}
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="pt-0">
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Client Information */}
-                  {event.clientName && (
-                    <div>
-                      <div className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
-                        <User className="w-4 h-4" />
-                        Client
-                      </div>
-                      <p className="text-sm">{formatClientName(event.clientName)}</p>
-                    </div>
-                  )}
-
-                  {/* Location */}
-                  {event.location && (
-                    <div>
-                      <div className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
-                        <MapPin className="w-4 h-4" />
-                        Location
-                      </div>
-                      <p className="text-sm">{event.location}</p>
-                    </div>
-                  )}
-
-                  {/* Session Notes */}
-                  {event.notes && (
-                    <div className="col-span-2">
-                      <div className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
-                        <FileText className="w-4 h-4" />
-                        Notes
-                      </div>
-                      <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                        {event.notes}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* AI Insights */}
-                  {insights[event.id] && (
-                    <div className="col-span-2">
-                      <div className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-2">
-                        <Brain className="w-4 h-4" />
-                        AI Analysis
-                      </div>
-                      <div className="bg-blue-50 p-3 rounded-lg space-y-2">
-                        {insights[event.id].insights && insights[event.id].insights.length > 0 && (
-                          <div>
-                            <p className="text-xs font-medium text-blue-800 mb-1">Key Insights:</p>
-                            <ul className="text-xs text-blue-700 space-y-1">
-                              {insights[event.id].insights.slice(0, 2).map((insight: string, idx: number) => (
-                                <li key={idx} className="flex items-start gap-1">
-                                  <span className="text-blue-400 mt-1">•</span>
-                                  {insight}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        
-                        {insights[event.id].recommendations && insights[event.id].recommendations.length > 0 && (
-                          <div>
-                            <p className="text-xs font-medium text-blue-800 mb-1">Recommendations:</p>
-                            <ul className="text-xs text-blue-700 space-y-1">
-                              {insights[event.id].recommendations.slice(0, 2).map((rec: string, idx: number) => (
-                                <li key={idx} className="flex items-start gap-1">
-                                  <span className="text-blue-400 mt-1">→</span>
-                                  {rec}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -90,7 +90,7 @@ export default function Calendar() {
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     staleTime: 5 * 60 * 1000, // Consider data stale after 5 minutes
-    cacheTime: 15 * 60 * 1000 // Keep in cache for 15 minutes
+    gcTime: 15 * 60 * 1000 // Keep in cache for 15 minutes
   });
 
   // Fetch available calendars
@@ -139,16 +139,20 @@ export default function Calendar() {
       endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
     }
     
+    const startDateForLocation = event.start?.dateTime ? 
+      new Date(event.start.dateTime) : 
+      event.start?.date ? new Date(event.start.date) : new Date();
+
     return {
       id: event.id || `event-${Math.random()}`,
       title: event.summary || 'Untitled Event',
-      startTime,
-      endTime,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
       clientId: `google-${event.id}`,
       clientName: event.summary || 'Google Calendar Event',
       type: 'individual' as CalendarEvent['type'],
       status: (event.status === 'confirmed' ? 'scheduled' : 'pending') as CalendarEvent['status'],
-      location: event.location || getDefaultLocationForDate(new Date(event.start?.dateTime || event.start?.date)),
+      location: event.location || getDefaultLocationForDate(startDateForLocation),
       notes: event.description || '',
       source: 'google' as CalendarEvent['source'],
       attendees: event.attendees?.map((a: any) => a.email).join(', ') || '',

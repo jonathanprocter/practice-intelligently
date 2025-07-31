@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { analyzeContent, analyzeSessionTranscript } from "./ai-services";
 import { googleCalendarService } from "./auth";
+import { generateAppointmentInsights } from "./ai-insights";
 import { 
   insertClientSchema, insertAppointmentSchema, insertSessionNoteSchema, 
   insertActionItemSchema, insertTreatmentPlanSchema 
@@ -466,6 +467,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
       res.status(500).json({ error: 'Failed to fetch calendars' });
+    }
+  });
+
+  // AI Appointment Insights endpoint
+  app.post('/api/ai/appointment-insights', async (req, res) => {
+    try {
+      const { appointment } = req.body;
+      const insights = await generateAppointmentInsights(appointment);
+      res.json(insights);
+    } catch (error: any) {
+      console.error('Error generating AI insights:', error);
+      res.status(500).json({ error: 'Failed to generate insights' });
     }
   });
 
