@@ -1,4 +1,6 @@
+// @ts-ignore
 import { google } from 'googleapis';
+// @ts-ignore  
 import { OAuth2Client } from 'google-auth-library';
 
 // Get the correct redirect URI based on environment
@@ -63,8 +65,12 @@ export class GoogleCalendarService {
     try {
       const { tokens } = await this.auth.getToken(code);
       this.auth.setCredentials(tokens);
+      
+      // Store tokens securely (implement your storage logic)
+      // For demo purposes, we'll use memory storage
+      // In production, store in database with user association
       console.log('Successfully authenticated with Google Calendar');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error getting access token:', error);
       throw new Error('Failed to authenticate with Google Calendar');
     }
@@ -101,12 +107,12 @@ export class GoogleCalendarService {
       const response = await calendar.events.list({
         calendarId,
         timeMin: timeMin || new Date().toISOString(),
-        timeMax: timeMax || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        timeMax: timeMax || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
         singleEvents: true,
         orderBy: 'startTime',
       });
 
-      return (response.data.items || []).map((event: any): GoogleCalendarEvent => {
+      return (response.data.items || []).map((event: any) => {
         const attendees = event.attendees?.map((attendee: any) => ({
           email: attendee.email || '',
           displayName: attendee.displayName || undefined,
@@ -114,22 +120,22 @@ export class GoogleCalendarService {
         }));
         
         return {
-          id: event.id || '',
-          summary: event.summary || 'Untitled Event',
-          description: event.description || undefined,
-          start: {
-            dateTime: event.start?.dateTime || (event.start?.date ? event.start.date + 'T00:00:00' : ''),
-            timeZone: event.start?.timeZone
-          },
-          end: {
-            dateTime: event.end?.dateTime || (event.end?.date ? event.end.date + 'T23:59:59' : ''),
-            timeZone: event.end?.timeZone
-          },
-          status: event.status || 'confirmed',
-          attendees
+        id: event.id || '',
+        summary: event.summary || 'Untitled Event',
+        description: event.description || undefined,
+        start: {
+          dateTime: event.start?.dateTime || (event.start?.date ? event.start.date + 'T00:00:00' : ''),
+          timeZone: event.start?.timeZone
+        },
+        end: {
+          dateTime: event.end?.dateTime || (event.end?.date ? event.end.date + 'T23:59:59' : ''),
+          timeZone: event.end?.timeZone
+        },
+        status: event.status || 'confirmed',
+        attendees
         };
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching events:', error);
       throw new Error('Failed to fetch calendar events');
     }
@@ -149,25 +155,25 @@ export class GoogleCalendarService {
       });
 
       return {
-        id: response.data.id || '',
-        summary: response.data.summary || 'Untitled Event',
-        description: response.data.description || undefined,
+        id: response.data.id!,
+        summary: response.data.summary!,
+        description: response.data.description,
         start: {
-          dateTime: response.data.start?.dateTime || '',
+          dateTime: response.data.start?.dateTime!,
           timeZone: response.data.start?.timeZone
         },
         end: {
-          dateTime: response.data.end?.dateTime || '',
+          dateTime: response.data.end?.dateTime!,
           timeZone: response.data.end?.timeZone
         },
-        status: response.data.status || 'confirmed',
+        status: response.data.status!,
         attendees: response.data.attendees?.map(attendee => ({
-          email: attendee.email || '',
-          displayName: attendee.displayName || undefined,
+          email: attendee.email!,
+          displayName: attendee.displayName,
           responseStatus: attendee.responseStatus || 'needsAction'
         }))
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating event:', error);
       throw new Error('Failed to create calendar event');
     }
@@ -182,25 +188,25 @@ export class GoogleCalendarService {
       });
 
       return {
-        id: response.data.id || '',
-        summary: response.data.summary || 'Untitled Event',
-        description: response.data.description || undefined,
+        id: response.data.id!,
+        summary: response.data.summary!,
+        description: response.data.description,
         start: {
-          dateTime: response.data.start?.dateTime || '',
+          dateTime: response.data.start?.dateTime!,
           timeZone: response.data.start?.timeZone
         },
         end: {
-          dateTime: response.data.end?.dateTime || '',
+          dateTime: response.data.end?.dateTime!,
           timeZone: response.data.end?.timeZone
         },
-        status: response.data.status || 'confirmed',
+        status: response.data.status!,
         attendees: response.data.attendees?.map(attendee => ({
-          email: attendee.email || '',
-          displayName: attendee.displayName || undefined,
+          email: attendee.email!,
+          displayName: attendee.displayName,
           responseStatus: attendee.responseStatus || 'needsAction'
         }))
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating event:', error);
       throw new Error('Failed to update calendar event');
     }
@@ -212,7 +218,7 @@ export class GoogleCalendarService {
         calendarId,
         eventId
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting event:', error);
       throw new Error('Failed to delete calendar event');
     }
