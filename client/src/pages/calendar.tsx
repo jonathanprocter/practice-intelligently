@@ -17,7 +17,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 
 export default function Calendar() {
-  const [currentWeek, setCurrentWeek] = useState(() => getWeekStart(new Date()));
+  const [currentWeek, setCurrentWeek] = useState(() => {
+    // Start with a week that might have events - let's try January 2025
+    const startDate = new Date('2025-01-27'); // Monday of this week
+    return getWeekStart(startDate);
+  });
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState('week');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -98,6 +102,7 @@ export default function Calendar() {
       } else if (event.start?.date) {
         startTime = new Date(event.start.date + 'T00:00:00');
       } else {
+        console.warn('Event missing start time:', event);
         startTime = new Date();
       }
       
@@ -132,19 +137,61 @@ export default function Calendar() {
     };
   }).filter(event => {
     // Filter out invalid events
-    return event.startTime instanceof Date && !isNaN(event.startTime.getTime());
+    const isValid = event.startTime instanceof Date && !isNaN(event.startTime.getTime());
+    if (!isValid) {
+      console.warn('Filtering out invalid event:', event);
+    }
+    return isValid;
   });
 
-  // Create calendar days with events
-  const calendarDays: CalendarDay[] = weekDays.map(date => ({
-    date,
-    isToday: date.toDateString() === new Date().toDateString(),
-    isCurrentMonth: date.getMonth() === new Date().getMonth(),
-    events: calendarEvents.filter(event => {
+  // Add debug logging for event filtering
+  console.log(`Total events after conversion: ${calendarEvents.length}`);
+  console.log(`Current week: ${currentWeek.toDateString()} to ${weekEnd.toDateString()}`);
+  
+  // Show sample of events for debugging
+  if (calendarEvents.length > 0) {
+    console.log('Sample events:', calendarEvents.slice(0, 3).map(e => ({
+      title: e.title,
+      startTime: e.startTime,
+      dateString: e.startTime instanceof Date ? e.startTime.toDateString() : 'Invalid Date'
+    })));
+    
+    // Show events for different weeks to help debug
+    const eventsByWeek = calendarEvents.reduce((acc, event) => {
       const eventDate = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
-      return eventDate.toDateString() === date.toDateString();
-    })
-  }));
+      const weekStart = getWeekStart(eventDate).toDateString();
+      if (!acc[weekStart]) acc[weekStart] = [];
+      acc[weekStart].push(event.title);
+      return acc;
+    }, {} as Record<string, string[]>);
+    
+    console.log('Events by week (showing first 5 weeks):', Object.entries(eventsByWeek).slice(0, 5));
+  }
+
+  // Create calendar days with events
+  const calendarDays: CalendarDay[] = weekDays.map(date => {
+    const dayEvents = calendarEvents.filter(event => {
+      const eventDate = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+      const matches = eventDate.toDateString() === date.toDateString();
+      return matches;
+    });
+    
+    // Debug logging for each day
+    if (dayEvents.length > 0) {
+      console.log(`${date.toDateString()}: ${dayEvents.length} events`, dayEvents.map(e => e.title));
+    }
+    
+    return {
+      date,
+      isToday: date.toDateString() === new Date().toDateString(),
+      isCurrentMonth: date.getMonth() === new Date().getMonth(),
+      events: dayEvents
+    };
+  });
+  
+  // Log total events for the current week
+  const weekEventCount = calendarDays.reduce((total, day) => total + day.events.length, 0);
+  console.log(`Events for current week (${currentWeek.toDateString()} - ${weekEnd.toDateString()}): ${weekEventCount}`);
 
   // Navigation handlers
   const handlePreviousWeek = () => {
