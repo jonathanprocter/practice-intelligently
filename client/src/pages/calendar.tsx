@@ -59,6 +59,8 @@ export default function Calendar() {
 
   const { data: googleEvents = [], isLoading, error, refetch } = useQuery({
     queryKey: ['google-calendar-events', currentWeek.toISOString()],
+    staleTime: 0, // Always consider data stale
+    gcTime: 0, // Don't cache data
     queryFn: async () => {
       console.log('Starting calendar fetch for week:', getWeekRangeString(currentWeek, weekEnd));
       try {
@@ -66,9 +68,11 @@ export default function Calendar() {
         const weekStart = currentWeek.toISOString();
         const weekEndISO = weekEnd.toISOString();
         
+        console.log('Fetching events for week range:', weekStart, 'to', weekEndISO);
+        
         // First try to get calendar events for the week range
-        const weekResponse = await fetch(`/api/calendar/events?start=${weekStart}&end=${weekEndISO}`);
-        console.log('Week response status:', weekResponse.status);
+        const weekResponse = await fetch(`/api/calendar/events?start=${encodeURIComponent(weekStart)}&end=${encodeURIComponent(weekEndISO)}`);
+        console.log('Week response status:', weekResponse.status, 'for range:', weekStart, 'to', weekEndISO);
         
         if (weekResponse.ok) {
           const weekEvents = await weekResponse.json();
