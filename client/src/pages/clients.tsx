@@ -29,10 +29,7 @@ export default function Clients() {
     console.error('Clients API error:', error);
   }
   
-  // Debug: log first client to see actual data structure
-  if (clients && clients.length > 0) {
-    console.log('First client data:', clients[0]);
-  }
+
 
   const filteredClients = clients?.filter(client =>
     `${client.firstName} ${client.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -274,8 +271,13 @@ export default function Clients() {
                       <Edit2 className="w-4 h-4 mr-1" />
                       Edit
                     </Button>
-                    <Button variant="outline" size="sm">
-                      Profile
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => window.open(`tel:${client.phone}`, '_self')}
+                      disabled={!client.phone}
+                    >
+                      Call
                     </Button>
                   </div>
                 </div>
