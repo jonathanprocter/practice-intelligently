@@ -6,6 +6,14 @@ This is a comprehensive therapy practice management system designed as a full-st
 
 ## Recent Changes (August 1, 2025)
 
+✅ **Google Calendar Real-Time Integration Completed**
+- Fixed OAuth endpoints returning HTML instead of JSON data
+- Added proper OAuth API routes: `/api/oauth/is-connected`, `/api/oauth/calendars`, `/api/oauth/events/today`
+- Updated dashboard stats to integrate Google Calendar events with database appointments
+- Modified `getTodaysAppointments()` to combine calendar events with database appointments
+- Added real-time dashboard updates with 30-second refresh intervals
+- **Status**: Dashboard now shows real-time Google Calendar appointments connected to sub-calendars
+
 ✅ **Comprehensive Codebase Audit & Fixes Completed**
 - Conducted complete Python audit identifying 304 issues (13 critical, 291 medium)
 - Fixed all critical database UUID format issues (replaced 'therapist-1' with proper UUIDs)

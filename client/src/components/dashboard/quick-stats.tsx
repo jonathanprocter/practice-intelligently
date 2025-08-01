@@ -1,4 +1,4 @@
-import { Calendar, Users, CheckSquare, TrendingUp } from "lucide-react";
+import { Calendar, Users, CheckSquare, TrendingUp, CheckCircle2 } from "lucide-react";
 import type { DashboardStats } from "@/lib/api";
 
 interface QuickStatsProps {

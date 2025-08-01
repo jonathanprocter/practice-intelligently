@@ -45,11 +45,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Dashboard stats
+  // Dashboard stats with Google Calendar integration
   app.get("/api/dashboard/stats/:therapistId", async (req, res) => {
     try {
       const { therapistId } = req.params;
+      
+      // Get base stats from database
       const stats = await storage.getDashboardStats(therapistId);
+      
+      // Try to add Google Calendar data for today's sessions
+      try {
+        const { simpleOAuth } = await import('./oauth-simple');
+        
+        if (simpleOAuth.isConnected()) {
+          // Get today's events from Google Calendar
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+
+          const events = await simpleOAuth.getEvents(
+            'primary',
+            today.toISOString(),
+            tomorrow.toISOString()
+          );
+          
+          // Add calendar events to today's sessions count
+          stats.todaysSessions = (stats.todaysSessions || 0) + events.length;
+          
+          // Add a flag to indicate calendar integration is active
+          stats.calendarIntegrated = true;
+          stats.calendarEvents = events.length;
+        } else {
+          stats.calendarIntegrated = false;
+        }
+      } catch (calendarError) {
+        console.warn('Could not fetch calendar data for dashboard stats:', calendarError.message);
+        stats.calendarIntegrated = false;
+      }
+      
       res.json(stats);
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);

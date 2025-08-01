@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient, type Appointment } from "@/lib/api";
-import { Play, Pause, MoreHorizontal } from "lucide-react";
+import { Play, Pause, MoreHorizontal, Calendar, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -8,6 +8,7 @@ export default function TodaysSchedule() {
   const { data: appointments, isLoading } = useQuery({
     queryKey: ['todays-appointments'],
     queryFn: ApiClient.getTodaysAppointments,
+    refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
   });
 
   if (isLoading) {
@@ -69,13 +70,26 @@ export default function TodaysSchedule() {
                 <span className="text-sm">{formatTime(appointment.startTime)}</span>
               </div>
               <div className="flex-1">
-                <h4 className="font-semibold text-therapy-text">Client Session</h4>
-                <p className="text-therapy-text/60 text-sm">{appointment.type}</p>
+                <h4 className="font-semibold text-therapy-text flex items-center gap-2">
+                  {appointment.clientId === 'calendar-event' ? (
+                    <>
+                      <Calendar className="h-4 w-4 text-therapy-primary" />
+                      {appointment.type}
+                    </>
+                  ) : (
+                    'Client Session'
+                  )}
+                </h4>
+                <p className="text-therapy-text/60 text-sm">
+                  {appointment.clientId === 'calendar-event' ? 'Google Calendar' : appointment.type}
+                </p>
                 <div className="flex items-center space-x-2 mt-1">
                   <Badge className={getStatusColor(appointment.status)}>
                     {appointment.status.replace('_', ' ')}
                   </Badge>
-                  <span className="text-xs text-therapy-text/50">50 min</span>
+                  <span className="text-xs text-therapy-text/50">
+                    {appointment.clientId === 'calendar-event' ? 'Calendar Event' : '50 min'}
+                  </span>
                 </div>
               </div>
               <div className="flex space-x-2">

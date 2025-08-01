@@ -5,6 +5,8 @@ export interface DashboardStats {
   activeClients: number;
   urgentActionItems: number;
   completionRate: number;
+  calendarIntegrated?: boolean;
+  calendarEvents?: number;
 }
 
 export interface Client {
@@ -123,6 +125,53 @@ export class ApiClient {
   }
 
   static async getTodaysAppointments(): Promise<Appointment[]> {
+    try {
+      // First try to get Google Calendar events for today
+      const calendarResponse = await fetch('/api/oauth/events/today');
+      
+      if (calendarResponse.ok) {
+        const calendarEvents = await calendarResponse.json();
+        
+        // Convert Google Calendar events to appointment format
+        const calendarAppointments: Appointment[] = calendarEvents.map((event: any) => ({
+          id: event.id || `calendar-${Date.now()}`,
+          clientId: 'calendar-event',
+          startTime: event.start?.dateTime || event.start?.date,
+          endTime: event.end?.dateTime || event.end?.date,
+          type: event.summary || 'Calendar Event',
+          status: 'confirmed',
+          notes: event.description || ''
+        }));
+
+        // Also get database appointments
+        try {
+          const dbResponse = await apiRequest('GET', `/api/appointments/${this.therapistId}`);
+          const dbAppointments = await dbResponse.json();
+          
+          // Combine and return both
+          return [...calendarAppointments, ...dbAppointments];
+        } catch (dbError) {
+          // If database fails, return just calendar events
+          return calendarAppointments;
+        }
+      } else {
+        // Fallback to database appointments only
+        const response = await apiRequest('GET', `/api/appointments/${this.therapistId}`);
+        return response.json();
+      }
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      // Final fallback to database
+      try {
+        const response = await apiRequest('GET', `/api/appointments/${this.therapistId}`);
+        return response.json();
+      } catch (dbError) {
+        return [];
+      }
+    }
+  }
+
+  static async getGoogleCalendarEvents(): Promise<any[]> {
     const response = await apiRequest('GET', `/api/appointments/today/${this.therapistId}`);
     return response.json();
   }
