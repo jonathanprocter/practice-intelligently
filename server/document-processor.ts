@@ -56,6 +56,15 @@ export interface ProgressNote {
 
 export class DocumentProcessor {
   
+  private async _fileExists(path: string): Promise<boolean> {
+    try {
+      await fs.promises.access(path);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  
   async processDocument(filePath: string, originalName: string): Promise<ProcessedDocument> {
     const fileExtension = path.extname(originalName).toLowerCase();
     let extractedText = '';
