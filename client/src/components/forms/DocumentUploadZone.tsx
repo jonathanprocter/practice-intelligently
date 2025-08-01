@@ -51,7 +51,14 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
           if (errorData) {
             try {
               const parsedError = JSON.parse(errorData);
-              errorMessage = parsedError.error || parsedError.details || errorData;
+              // Try to extract the most helpful error message
+              if (parsedError.details) {
+                errorMessage = parsedError.details;
+              } else if (parsedError.error) {
+                errorMessage = parsedError.error;
+              } else {
+                errorMessage = errorData;
+              }
             } catch {
               errorMessage = errorData;
             }
@@ -61,7 +68,11 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
         } catch {
           errorMessage = `Request failed with status ${response.status}`;
         }
-        throw new Error(errorMessage);
+        
+        // Create a proper error object with the message
+        const error = new Error(errorMessage);
+        error.name = 'DocumentProcessingError';
+        throw error;
       }
 
       let result;
@@ -95,17 +106,25 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
     onError: (error, file) => {
       console.error('Document processing error:', error);
       
-      // Handle error objects that might be empty or malformed
+      // Extract the error message properly
       let errorMessage = 'Document processing failed';
-      if (error && typeof error === 'object') {
+      
+      // Check if it's an Error object with a message
+      if (error instanceof Error && error.message) {
+        errorMessage = error.message;
+      }
+      // Check if it's an object with error properties
+      else if (error && typeof error === 'object') {
         if (error.message) {
           errorMessage = error.message;
         } else if (error.details) {
           errorMessage = error.details;
-        } else if (typeof error === 'string') {
-          errorMessage = error;
+        } else if (error.error) {
+          errorMessage = error.error;
         }
-      } else if (typeof error === 'string') {
+      }
+      // Check if it's a string
+      else if (typeof error === 'string') {
         errorMessage = error;
       }
       
