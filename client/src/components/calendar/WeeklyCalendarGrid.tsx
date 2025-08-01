@@ -200,7 +200,7 @@ export const WeeklyCalendarGrid = ({
 
         {/* Time slots */}
         {timeSlots.map((timeSlot) => (
-          <React.Fragment key={`${timeSlot.hour}-${timeSlot.minute}`}>
+          <React.Fragment key={`timeslot-${timeSlot.hour}-${timeSlot.minute}`}>
             {/* Time label */}
             <div className="border-r border-b border-gray-200 p-2 text-xs text-gray-600 bg-gray-50">
               {timeSlot.display}
