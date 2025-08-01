@@ -103,8 +103,8 @@ export class DocumentProcessor {
           throw new Error(`Unsupported file type: ${fileExtension}`);
       }
 
-      // Extract potential client name and session date from content
-      const detectedInfo = await this.extractMetadata(extractedText);
+      // Extract potential client name and session date from content and filename
+      const detectedInfo = await this.extractMetadata(extractedText, originalName);
 
       return {
         extractedText,
@@ -314,91 +314,164 @@ export class DocumentProcessor {
     });
   }
 
-  private async extractMetadata(content: string): Promise<{ clientName?: string; sessionDate?: string }> {
+  private async extractMetadata(content: string, filename?: string): Promise<{ clientName?: string; sessionDate?: string }> {
     try {
-      if (!content || content.trim().length === 0) {
-        return {};
+      // First, try to extract from filename - this is often more reliable
+      const filenameData = this.extractFromFilename(filename || '');
+      
+      // Then analyze content for missing information
+      let contentData: { clientName?: string; sessionDate?: string } = {};
+      
+      if (content && content.trim().length > 0) {
+        const analysisPrompt = `Extract client name and session date from this clinical document. 
+
+RESPOND WITH ONLY VALID JSON in this exact format:
+{"clientName": "First Last", "sessionDate": "YYYY-MM-DD"}
+
+If information is not found, use null:
+{"clientName": null, "sessionDate": null}
+
+Look for:
+- Client names in patterns like "Client: [Name]", "Patient: [Name]", or direct name mentions
+- Dates in patterns like "Date: [Date]", "Session Date: [Date]", timestamps, or text like "January 20, 2025"
+
+Document content:
+${content.substring(0, 3000)}`;
+
+        const result = await multiModelAI.generateDetailedInsights(analysisPrompt, 'metadata extraction');
+
+        try {
+          // Clean the AI response first
+          let cleanResponse = result.content.trim();
+          
+          // Remove any markdown formatting
+          cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+          
+          // Try to parse as JSON first
+          const parsed = JSON.parse(cleanResponse);
+          contentData = {
+            clientName: parsed.clientName || undefined,
+            sessionDate: parsed.sessionDate || undefined,
+          };
+        } catch (jsonError) {
+          // Fallback: extract using regex patterns from AI response
+          const clientMatch = result.content.match(/(?:client.*?name|name).*?[:"]\s*([^"\n,]+)/i);
+          const dateMatch = result.content.match(/(?:session.*?date|date).*?[:"]\s*([^"\n,]+)/i);
+          
+          contentData = {
+            clientName: clientMatch?.[1]?.trim().replace(/['"]/g, '') || undefined,
+            sessionDate: dateMatch?.[1]?.trim().replace(/['"]/g, '') || undefined,
+          };
+        }
       }
 
-      const result = await multiModelAI.generateDetailedInsights(
-        `Extract client name and session date from this clinical document. Return JSON format with 'clientName' and 'sessionDate' fields. If not found, return null for those fields.\n\nDocument content:\n${content.substring(0, 2000)}`,
-        'metadata extraction'
-      );
-
-      try {
-        const parsed = JSON.parse(result.content);
-        return {
-          clientName: parsed.clientName || undefined,
-          sessionDate: parsed.sessionDate || undefined,
-        };
-      } catch {
-        // If not valid JSON, try to extract from text
-        const clientMatch = result.content.match(/client.*?name.*?[:"]\s*([^"\n]+)/i);
-        const dateMatch = result.content.match(/session.*?date.*?[:"]\s*([^"\n]+)/i);
-        
-        return {
-          clientName: clientMatch?.[1]?.trim() || undefined,
-          sessionDate: dateMatch?.[1]?.trim() || undefined,
-        };
-      }
+      // Combine filename and content data, prioritizing filename for names and content for dates
+      return {
+        clientName: filenameData.clientName || contentData.clientName,
+        sessionDate: contentData.sessionDate || filenameData.sessionDate,
+      };
     } catch (error) {
       console.error('Error extracting metadata:', error);
       return {};
     }
   }
 
+  private extractFromFilename(filename: string): { clientName?: string; sessionDate?: string } {
+    if (!filename) return {};
+    
+    // Remove file extension and common prefixes
+    let cleanName = filename
+      .replace(/\.(pdf|txt|docx?|xlsx?|csv)$/i, '')
+      .replace(/^(session|note|transcript|clinical|therapy)[-_\s]*/i, '');
+    
+    // Extract dates from filename (various formats)
+    const datePatterns = [
+      /(\d{4}[-/]\d{1,2}[-/]\d{1,2})/,           // 2025-01-15 or 2025/01/15
+      /(\d{1,2}[-/]\d{1,2}[-/]\d{4})/,           // 01-15-2025 or 01/15/2025
+      /(\d{1,2}[-/]\d{1,2}[-/]\d{2})/,           // 01-15-25 or 01/15/25
+      /((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[-_\s]*\d{1,2}[-_\s]*\d{4})/i, // Jan-15-2025, jan_15_2025
+      /(\d{1,2}[-_\s]*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[-_\s]*\d{4})/i, // 15-Jan-2025
+      /((jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[-_\s]*\d{1,2}[-_\s]*\d{4})/i, // jan-20-2025
+      /(\b\d{4}\b)/,                             // Just year as fallback
+    ];
+    
+    let extractedDate: string | undefined;
+    for (const pattern of datePatterns) {
+      const match = cleanName.match(pattern);
+      if (match) {
+        extractedDate = match[1];
+        // Remove date from filename for name extraction
+        cleanName = cleanName.replace(match[0], '').trim();
+        break;
+      }
+    }
+    
+    // Extract client name from remaining filename
+    let clientName: string | undefined;
+    if (cleanName.length > 0) {
+      // Remove common separators and clean up
+      clientName = cleanName
+        .replace(/[-_]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      // Filter out common clinical terms that might be in filename
+      const clinicalTerms = /^(notes?|session|therapy|clinical|transcript|progress|soap|treatment)$/i;
+      if (!clinicalTerms.test(clientName) && clientName.length > 1) {
+        // Capitalize name properly
+        clientName = clientName
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
+      } else {
+        clientName = undefined;
+      }
+    }
+    
+    return {
+      clientName,
+      sessionDate: extractedDate,
+    };
+  }
+
   async generateProgressNote(extractedText: string, clientId: string, sessionDate: string): Promise<ProgressNote> {
     if (!extractedText || extractedText.trim().length === 0) {
       throw new Error('No content provided for progress note generation');
     }
-    const prompt = `Comprehensive Clinical Progress Note Generation Prompt
+    // Use the comprehensive clinical prompt provided in the attached file
+    const comprehensivePrompt = `You are an expert clinical therapist with extensive training in psychotherapy, clinical documentation, and therapeutic modalities including ACT, DBT, Narrative Therapy, and Existentialism. Your task is to create a comprehensive clinical progress note from the provided therapy session content that demonstrates the depth, clinical sophistication, and analytical rigor of an experienced mental health professional.
 
-Overview
-You are an expert clinical therapist with extensive training in psychotherapy, clinical documentation, and therapeutic modalities including ACT, DBT, Narrative Therapy, and Existentialism. Your task is to create a comprehensive clinical progress note from the provided therapy session content that demonstrates the depth, clinical sophistication, and analytical rigor of an experienced mental health professional.
+CRITICAL FORMATTING REQUIREMENT: Return PLAIN TEXT with NO MARKDOWN syntax. Do not use asterisks, hashtags, or any markdown formatting. Use plain text with clear section headers.
 
-Document Formatting Requirements
-1. Return rich text format (NO MARKDOWN)
-2. Use proper formatting with clear section headers
-3. Bold important clinical terms and section headers
-4. Use italics for emphasis on key therapeutic concepts
+Title Format: Comprehensive Clinical Progress Note for [Client's Full Name]'s Therapy Session on [Date]
 
-Required Document Structure
-Create a progress note with the following precise structure:
+Required Document Structure:
 
-1. **Title**: "Comprehensive Clinical Progress Note for [Client's Name] - Session Date: [Date]"
+Subjective Section:
+Client's reported experience, direct quotes, emotional state, and presenting concerns. Include specific statements that reveal psychological themes. Example format: "Carlos attended today's session expressing significant distress about his recent job loss. He appeared visibly agitated when describing the termination meeting, stating, 'They didn't even give me a chance to explain my side of things.'"
 
-2. **Subjective Section**: 
-Client's reported experience, direct quotes, emotional state, and presenting concerns. Include specific statements that reveal psychological themes.
+Objective Section:
+Observable behaviors, appearance, affect, mental status observations, therapeutic engagement level, and clinical presentation. Example format: "Carlos presented to the session casually dressed but well-groomed. He was alert and oriented, with clear speech and logical thought progression."
 
-3. **Objective Section**: 
-Observable behaviors, appearance, affect, mental status observations, therapeutic engagement level, and clinical presentation.
+Assessment Section:
+Clinical formulation, diagnostic considerations, treatment progress, identified patterns, therapeutic alliance quality, and risk assessment. Example format: "Carlos continues to meet criteria for Major Depressive Disorder as evidenced by persistent low mood, anhedonia, sleep disturbance, fatigue, and feelings of worthlessness."
 
-4. **Assessment Section**: 
-Clinical formulation, diagnostic considerations, treatment progress, identified patterns, therapeutic alliance quality, and risk assessment.
+Plan Section:
+Specific interventions used, therapeutic modalities applied, homework assignments, goals for next session, and treatment plan modifications. Use ACT, DBT, Narrative Therapy approaches as appropriate.
 
-5. **Plan Section**: 
-Specific interventions used, therapeutic modalities applied, homework assignments, goals for next session, and treatment plan modifications.
+Supplemental Analyses:
+Tonal Analysis: Significant shifts in client's emotional tone, voice, or presentation during session
+Key Points: Critical therapeutic insights, breakthroughs, or clinical observations
+Significant Quotes: Important client statements with clinical interpretation  
+Comprehensive Narrative Summary: Overall session synthesis and therapeutic significance
 
-6. **Supplemental Analyses**:
-   - **Tonal Analysis**: Significant shifts in client's emotional tone, voice, or presentation during session
-   - **Key Points**: Critical therapeutic insights, breakthroughs, or clinical observations (bullet points)
-   - **Significant Quotes**: Important client statements with clinical interpretation
-   - **Comprehensive Narrative Summary**: Overall session synthesis and therapeutic significance
+Clinical Approach Requirements:
+- Demonstrate depth of clinical thinking beyond surface observations
+- Apply evidence-based therapeutic frameworks appropriately
+- Integrate multiple therapeutic approaches
+- Show advanced understanding of psychotherapeutic processes
 
-Clinical Approach Requirements
-Your analysis must demonstrate:
-1. **Depth of Clinical Thinking**: Move beyond surface observations to underlying psychological dynamics
-2. **Therapeutic Perspective**: Apply evidence-based therapeutic frameworks appropriately
-3. **Integration of Therapeutic Frameworks**: Weave together multiple therapeutic approaches
-4. **Clinical Sophistication**: Demonstrate advanced understanding of psychotherapeutic processes
-
-Writing Style Requirements
-1. **Professional Clinical Voice**: Authoritative yet compassionate clinical documentation style
-2. **Structural Integrity**: Clear organization with logical flow between sections
-3. **Depth and Detail**: Comprehensive analysis that captures therapeutic nuance
-4. **Narrative Cohesion**: Unified clinical narrative throughout the document
-
-The final product should be a clinically sophisticated, detailed, and comprehensive progress note that would meet the highest standards of professional documentation in a mental health setting.
+REMEMBER: Use PLAIN TEXT formatting only. No asterisks, hashtags, or markdown syntax in the final output.
 
 Session Content to Analyze:
 ${extractedText}
@@ -409,7 +482,7 @@ Session Date: ${sessionDate}`;
     try {
       // Use ensemble approach for the most comprehensive clinical analysis
       const result = await multiModelAI.generateEnsembleAnalysis(
-        prompt,
+        comprehensivePrompt,
         'comprehensive clinical progress note generation'
       );
 
@@ -470,8 +543,13 @@ Session Date: ${sessionDate}`;
       .replace(/\*\*/g, '') // Remove markdown bold
       .replace(/\*/g, '') // Remove markdown italic
       .replace(/#{1,6}\s/g, '') // Remove markdown headers
+      .replace(/`{1,3}[^`]*`{1,3}/g, '') // Remove code blocks
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert links to plain text
+      .replace(/^\s*[-*+]\s+/gm, '') // Remove bullet points
+      .replace(/^\s*\d+\.\s+/gm, '') // Remove numbered lists
       .replace(/^\s+|\s+$/g, '') // Trim whitespace
-      .replace(/\n\s*\n/g, '\n\n'); // Normalize line breaks
+      .replace(/\n\s*\n\s*\n/g, '\n\n') // Normalize multiple line breaks
+      .trim();
   }
 }
 

@@ -451,7 +451,23 @@ function FileProcessingCard({
   const handleConfirmClick = () => {
     if (uploadedFile.status === 'awaiting-confirmation') {
       setEditingClientName(uploadedFile.extractedData?.detectedClientName || '');
-      setEditingSessionDate(uploadedFile.extractedData?.detectedSessionDate || '');
+      
+      // Format detected date for HTML date input or use today's date
+      let formattedDate = '';
+      if (uploadedFile.extractedData?.detectedSessionDate) {
+        // Try to parse various date formats and convert to YYYY-MM-DD
+        const detectedDate = new Date(uploadedFile.extractedData.detectedSessionDate);
+        if (!isNaN(detectedDate.getTime())) {
+          formattedDate = detectedDate.toISOString().split('T')[0];
+        }
+      }
+      
+      // Default to today's date if no valid date detected
+      if (!formattedDate) {
+        formattedDate = new Date().toISOString().split('T')[0];
+      }
+      
+      setEditingSessionDate(formattedDate);
       setShowConfirmation(true);
     }
   };
@@ -540,7 +556,11 @@ function FileProcessingCard({
                     value={editingSessionDate}
                     onChange={(e) => setEditingSessionDate(e.target.value)}
                     size="sm"
+                    max={new Date().toISOString().split('T')[0]} // Don't allow future dates
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Defaults to today if not detected from document
+                  </p>
                 </div>
               </div>
               <div className="flex gap-2">
