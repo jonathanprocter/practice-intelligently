@@ -1,0 +1,14 @@
+[vite] connecting...
+[vite] connected.
+Error fetching session notes: 
+TypeError {}
+message: "Cannot read properties of undefined (reading 'therapistId')"
+stack: "TypeError: Cannot read properties of undefined (reading 'therapistId')↵ at getSessionNotes (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/src/lib/api.ts:24:73)↵ at Object.fetchFn [as fn] (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=d35dd0df:840:14)↵ at run (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=d35dd0df:494:49)↵ at Object.start (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=d35dd0df:536:9)↵ at _a4.fetch (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=d35dd0df:926:41)↵ at _a9.executeFetch_fn (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=d35dd0df:2211:51)↵ at _a9.onSubscribe (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=d35dd0df:1898:74)↵ at _a9.subscribe (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=d35dd0df:24:10)↵ at https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=d35dd0df:3022:60↵ at subscribeToStore (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=d35dd0df:11984:18)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+
+at t.value (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400

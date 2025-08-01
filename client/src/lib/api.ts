@@ -126,7 +126,8 @@ export class ApiClient {
 
   static async getSessionNotes(): Promise<SessionNote[]> {
     try {
-      const response = await fetch(`/api/session-notes/therapist/${this.therapistId}`);
+      const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'; // Use the demo therapist ID
+      const response = await fetch(`/api/session-notes/therapist/${therapistId}`);
       if (response.ok) {
         return response.json();
       }
