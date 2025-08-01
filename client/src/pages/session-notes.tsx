@@ -1,4 +1,4 @@
-import { FileText, Plus, Search, Filter, Mic, Bot, Eye, Edit, Trash2, X, Save } from "lucide-react";
+import { FileText, Plus, Search, Filter, Mic, Bot, Eye, Edit, Trash2, X, Save, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ export default function SessionNotes() {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
   const [editTags, setEditTags] = useState("");
+  const [editDate, setEditDate] = useState("");
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -80,6 +81,7 @@ export default function SessionNotes() {
     setSelectedNote(note);
     setEditContent(note.content);
     setEditTags(note.tags ? note.tags.join(", ") : "");
+    setEditDate(new Date(note.createdAt).toISOString().split('T')[0]);
     setIsEditing(true);
   };
 
@@ -87,12 +89,14 @@ export default function SessionNotes() {
     if (!selectedNote) return;
     
     const tagsArray = editTags.split(",").map(tag => tag.trim()).filter(tag => tag.length > 0);
+    const updatedDate = new Date(editDate);
     
     updateNoteMutation.mutate({
       id: selectedNote.id,
       updates: {
         content: editContent,
-        tags: tagsArray
+        tags: tagsArray,
+        createdAt: updatedDate
       }
     });
   };
@@ -101,6 +105,32 @@ export default function SessionNotes() {
     if (confirm("Are you sure you want to delete this session note? This action cannot be undone.")) {
       deleteNoteMutation.mutate(note.id);
     }
+  };
+
+  // Mutation for generating session prep
+  const sessionPrepMutation = useMutation({
+    mutationFn: ({ sessionNoteId, clientId }: { sessionNoteId: string; clientId: string }) =>
+      ApiClient.generateSessionPrep(sessionNoteId, clientId),
+    onSuccess: (result) => {
+      toast({ 
+        title: "Session prep generated successfully",
+        description: `Applied to ${result.appointmentsUpdated} upcoming appointment(s)`
+      });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error generating session prep", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const handleGenerateSessionPrep = (note: SessionNote) => {
+    sessionPrepMutation.mutate({
+      sessionNoteId: note.id,
+      clientId: note.clientId
+    });
   };
 
   return (
@@ -294,6 +324,16 @@ export default function SessionNotes() {
                   <Button 
                     variant="ghost" 
                     size="sm"
+                    onClick={() => handleGenerateSessionPrep(note)}
+                    disabled={sessionPrepMutation.isPending}
+                    className="text-blue-600 hover:text-blue-700"
+                  >
+                    <Brain className="w-4 h-4 mr-1" />
+                    Generate Session Prep
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
                     onClick={() => handleDelete(note)}
                     className="text-red-600 hover:text-red-700"
                   >
@@ -353,6 +393,16 @@ export default function SessionNotes() {
                     >
                       <Edit className="w-4 h-4 mr-1" />
                       Edit
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleGenerateSessionPrep(selectedNote)}
+                      disabled={sessionPrepMutation.isPending}
+                      className="text-blue-600 hover:text-blue-700"
+                    >
+                      <Brain className="w-4 h-4 mr-1" />
+                      {sessionPrepMutation.isPending ? "Generating..." : "Generate Session Prep"}
                     </Button>
                     <Button 
                       variant="outline" 
@@ -417,6 +467,29 @@ export default function SessionNotes() {
                   </div>
                 </div>
               )}
+
+              {/* Date of Service */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Date of Service
+                </label>
+                {isEditing ? (
+                  <Input
+                    type="date"
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                  />
+                ) : (
+                  <p className="text-sm text-gray-600">
+                    {new Date(selectedNote.createdAt).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                )}
+              </div>
 
               {/* Tags */}
               <div>

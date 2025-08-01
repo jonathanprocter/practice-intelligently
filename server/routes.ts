@@ -20,6 +20,48 @@ import { getAllApiStatuses } from "./health-check";
 import { simpleOAuth } from "./oauth-simple";
 import { googleCalendarService } from "./auth";
 import { generateUSHolidays, getHolidaysForYear, getHolidaysInRange, isUSHoliday } from "./us-holidays";
+import OpenAI from 'openai';
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// Helper function to generate session prep summary
+async function generateSessionPrepSummary(sessionContent: string, aiSummary: string): Promise<string> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert clinical therapist creating session prep notes. Based on the previous session content and AI summary, create a concise summary that will help the therapist prepare for the next appointment with this client.
+
+Focus on:
+- Key themes and progress from the last session
+- Important insights or breakthroughs
+- Areas that need follow-up
+- Specific techniques or interventions that worked well
+- Any homework or action items discussed
+- Client's current emotional state and needs
+
+Keep the summary concise (3-4 sentences) but actionable for session preparation.`
+        },
+        {
+          role: "user",
+          content: `Previous Session Content:\n${sessionContent}\n\nPrevious AI Summary:\n${aiSummary}\n\nPlease create a session prep summary for the next appointment.`
+        }
+      ],
+      max_tokens: 300,
+      temperature: 0.7
+    });
+
+    return response.choices[0].message.content || "No summary generated";
+  } catch (error) {
+    console.error("Error generating session prep summary:", error);
+    return "Error generating session prep summary";
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check
@@ -505,6 +547,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting session note:", error);
       res.status(500).json({ error: "Failed to delete session note" });
+    }
+  });
+
+  // AI Session Prep Generation
+  app.post("/api/ai/session-prep-from-note", async (req, res) => {
+    try {
+      const { sessionNoteId, clientId } = req.body;
+      
+      // Get the session note
+      const sessionNote = await storage.getSessionNoteById(sessionNoteId);
+      if (!sessionNote) {
+        return res.status(404).json({ error: "Session note not found" });
+      }
+
+      // Get upcoming appointments for this client
+      const upcomingAppointments = await storage.getUpcomingAppointmentsByClient(clientId);
+      
+      if (upcomingAppointments.length === 0) {
+        return res.status(404).json({ error: "No upcoming appointments found for this client" });
+      }
+
+      // Generate AI summary using OpenAI
+      const aiSummary = await generateSessionPrepSummary(sessionNote.content, sessionNote.aiSummary || "");
+      
+      // Update session prep for upcoming appointments
+      let appointmentsUpdated = 0;
+      for (const appointment of upcomingAppointments) {
+        try {
+          await storage.updateAppointmentSessionPrep(appointment.id, aiSummary);
+          appointmentsUpdated++;
+        } catch (error) {
+          console.error(`Error updating session prep for appointment ${appointment.id}:`, error);
+        }
+      }
+
+      res.json({
+        success: true,
+        appointmentsUpdated,
+        summary: aiSummary,
+        message: `Session prep applied to ${appointmentsUpdated} upcoming appointment(s)`
+      });
+
+    } catch (error) {
+      console.error("Error generating session prep:", error);
+      res.status(500).json({ error: "Failed to generate session prep" });
     }
   });
 

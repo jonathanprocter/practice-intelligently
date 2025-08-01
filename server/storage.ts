@@ -408,6 +408,41 @@ export class DatabaseStorage implements IStorage {
       .where(eq(sessionNotes.id, id));
   }
 
+  async getSessionNoteById(id: string): Promise<SessionNote | null> {
+    const [note] = await db
+      .select()
+      .from(sessionNotes)
+      .where(eq(sessionNotes.id, id))
+      .limit(1);
+    return note || null;
+  }
+
+  async getUpcomingAppointmentsByClient(clientId: string): Promise<Appointment[]> {
+    const now = new Date();
+    return await db
+      .select()
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.clientId, clientId),
+          gte(appointments.startTime, now),
+          eq(appointments.status, 'scheduled')
+        )
+      )
+      .orderBy(appointments.startTime)
+      .limit(5); // Limit to next 5 appointments
+  }
+
+  async updateAppointmentSessionPrep(appointmentId: string, sessionPrep: string): Promise<void> {
+    await db
+      .update(appointments)
+      .set({ 
+        sessionPrep: sessionPrep,
+        updatedAt: new Date()
+      })
+      .where(eq(appointments.id, appointmentId));
+  }
+
   async getActionItems(therapistId: string): Promise<ActionItem[]> {
     return await db
       .select()

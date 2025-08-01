@@ -147,6 +147,14 @@ export class ApiClient {
     await apiRequest('DELETE', `/api/session-notes/${id}`);
   }
 
+  static async generateSessionPrep(sessionNoteId: string, clientId: string): Promise<any> {
+    const response = await apiRequest('POST', '/api/ai/session-prep-from-note', {
+      sessionNoteId,
+      clientId
+    });
+    return response.json();
+  }
+
   static async getClients(): Promise<Client[]> {
     const response = await apiRequest('GET', `/api/clients/${this.therapistId}`);
     return response.json();
