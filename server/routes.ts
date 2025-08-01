@@ -506,6 +506,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // OAuth API endpoints for dashboard integration
+  app.get('/api/oauth/is-connected', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+      const isConnected = simpleOAuth.isConnected();
+      res.json({ connected: isConnected });
+    } catch (error: any) {
+      console.error('Error checking OAuth connection:', error);
+      res.json({ connected: false, error: error.message });
+    }
+  });
+
+  app.get('/api/oauth/calendars', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
+      const calendars = await simpleOAuth.getCalendars();
+      res.json(calendars);
+    } catch (error: any) {
+      console.error('Error fetching OAuth calendars:', error);
+      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      res.status(500).json({ error: 'Failed to fetch calendars', details: error.message });
+    }
+  });
+
+  app.get('/api/oauth/events/today', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+
+      // Get today's date range
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const events = await simpleOAuth.getEvents(
+        'primary',
+        today.toISOString(),
+        tomorrow.toISOString()
+      );
+      
+      res.json(events);
+    } catch (error: any) {
+      console.error('Error fetching today\'s events:', error);
+      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      res.status(500).json({ error: 'Failed to fetch today\'s events', details: error.message });
+    }
+  });
+
   // Disconnect Google Calendar
   app.post('/api/auth/google/disconnect', async (req, res) => {
     try {
