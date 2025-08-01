@@ -6,12 +6,11 @@ import { perplexityClient } from './perplexity';
 // Initialize AI clients
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const gemini = new GoogleGenAI({ 
-  apiKey: process.env.GEMINI_API_KEY || (() => {
-    console.warn('GEMINI_API_KEY not configured');
-    return '';
-  })()
-});
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+if (!GEMINI_API_KEY) {
+  console.warn('GEMINI_API_KEY not configured');
+}
+const gemini = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
 
 export interface AIResponse {
   content: string;
@@ -81,7 +80,7 @@ export class MultiModelAI {
   async getEvidenceBasedRecommendations(query: string, domain: 'clinical' | 'treatment' | 'education'): Promise<AIResponse> {
     try {
       let content: string;
-      
+
       switch (domain) {
         case 'clinical':
           content = await perplexityClient.getClinicalResearch(query);
@@ -111,6 +110,14 @@ export class MultiModelAI {
   // Gemini for multimodal analysis (images, complex data)
   async analyzeMultimodalContent(content: string, mediaType?: 'image' | 'document'): Promise<AIResponse> {
     try {
+      if (!gemini) {
+        console.warn('Gemini is not initialized, cannot analyze multimodal content.');
+        return {
+          content: 'Gemini is not initialized.',
+          model: 'gemini-not-initialized',
+          confidence: 0
+        };
+      }
       const response = await gemini.models.generateContent({
         model: "gemini-2.5-pro", // Latest Gemini model
         contents: content,
@@ -138,7 +145,7 @@ export class MultiModelAI {
 
       // Combine successful results
       const results: AIResponse[] = [];
-      
+
       if (claudeResult.status === 'fulfilled') results.push(claudeResult.value);
       if (openaiResult.status === 'fulfilled') results.push(openaiResult.value);
       if (perplexityResult.status === 'fulfilled') results.push(perplexityResult.value);
@@ -149,7 +156,7 @@ export class MultiModelAI {
 
       // Synthesize the best insights
       const combinedContent = await this.synthesizeInsights(results, analysisType);
-      
+
       return {
         content: combinedContent,
         model: 'ensemble',
@@ -183,6 +190,14 @@ export class MultiModelAI {
   }
 
   private async fallbackToGemini(content: string, context?: string): Promise<AIResponse> {
+    if (!gemini) {
+      console.warn('Gemini is not initialized, cannot fallback to Gemini.');
+      return {
+        content: 'Gemini is not initialized.',
+        model: 'gemini-not-initialized',
+        confidence: 0
+      };
+    }
     const response = await gemini.models.generateContent({
       model: "gemini-2.5-pro",
       contents: `${context ? `Context: ${context}\n\n` : ''}${content}`,
@@ -197,7 +212,7 @@ export class MultiModelAI {
 
   private async synthesizeInsights(results: AIResponse[], analysisType: string): Promise<string> {
     const combinedInsights = results.map((r, i) => `**${r.model} Analysis:**\n${r.content}`).join('\n\n---\n\n');
-    
+
     // Use Claude to synthesize the combined insights
     try {
       const synthesis = await anthropic.messages.create({

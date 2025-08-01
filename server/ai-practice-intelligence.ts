@@ -237,7 +237,25 @@ Format as JSON:
   }
 }
 
-export async function generateContinuingEducationRecommendations(therapistId: string, clientMix: any[]): Promise<any> {
+interface ClientMixData {
+  diagnoses: string[];
+  ageRanges: string[];
+  treatmentModalities: string[];
+  [key: string]: unknown;
+}
+
+interface EducationRecommendation {
+  courses: string[];
+  certifications: string[];
+  workshops: string[];
+  priority: 'high' | 'medium' | 'low';
+  timeline: string;
+}
+
+export async function generateContinuingEducationRecommendations(
+  therapistId: string, 
+  clientMix: ClientMixData[]
+): Promise<EducationRecommendation> {
   try {
     const prompt = `Generate personalized continuing education recommendations based on practice needs:
 
@@ -320,7 +338,7 @@ Format as JSON:
 }
 
 // Helper functions
-function calculateAverageSessionLength(sessions: any[]): number {
+function calculateAverageSessionLength(sessions: SessionData[]): number {
   return sessions.reduce((total, session) => total + (session.duration || 50), 0) / sessions.length;
 }
 
@@ -350,7 +368,7 @@ function assessProgressLevel(content: string): string {
   }
 }
 
-function calculateSessionFrequency(sessions: any[]): string {
+function calculateSessionFrequency(sessions: SessionData[]): string {
   if (sessions.length < 2) return 'insufficient data';
   
   const dates = sessions.map(s => new Date(s.createdAt)).sort((a, b) => a.getTime() - b.getTime());
@@ -364,13 +382,19 @@ function calculateSessionFrequency(sessions: any[]): string {
   return 'monthly or less';
 }
 
-function calculateAppointmentConsistency(appointments: any[]): number {
+interface AppointmentData {
+  date: string;
+  status: string;
+  [key: string]: unknown;
+}
+
+function calculateAppointmentConsistency(appointments: AppointmentData[]): number {
   const scheduled = appointments.length;
   const attended = appointments.filter(apt => apt.status === 'completed').length;
   return (attended / scheduled) * 100;
 }
 
-function analyzeRecentEngagement(sessions: any[]): string {
+function analyzeRecentEngagement(sessions: SessionData[]): string {
   const recentSessions = sessions.slice(0, 3);
   const engagementScores = recentSessions.map(session => assessEngagementScore(session.content));
   const avgEngagement = engagementScores.reduce((a, b) => a + b, 0) / engagementScores.length;
@@ -426,7 +450,7 @@ function identifyResistancePatterns(content: string): string {
   }
 }
 
-function getActiveClientCount(sessions: any[]): number {
+function getActiveClientCount(sessions: SessionData[]): number {
   const uniqueClients = new Set(sessions.map(s => s.clientId));
   return uniqueClients.size;
 }

@@ -4,7 +4,33 @@ import { storage } from './storage';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Personalized Therapeutic Recommendations (#5)
-export async function generateEvidenceBasedInterventions(clientProfile: any, sessionHistory: any[]): Promise<any> {
+interface ClientProfile {
+  id: string;
+  name: string;
+  demographics?: Record<string, unknown>;
+  diagnoses?: string[];
+  treatmentGoals?: string[];
+  [key: string]: unknown;
+}
+
+interface SessionHistoryItem {
+  date: string;
+  notes: string;
+  progress?: string;
+  [key: string]: unknown;
+}
+
+interface EvidenceBasedInterventions {
+  interventions: string[];
+  rationale: string[];
+  expectedOutcomes: string[];
+  timeline: string;
+}
+
+export async function generateEvidenceBasedInterventions(
+  clientProfile: ClientProfile, 
+  sessionHistory: SessionHistoryItem[]
+): Promise<EvidenceBasedInterventions> {
   try {
     const prompt = `Generate evidence-based therapeutic interventions personalized to this specific client:
 

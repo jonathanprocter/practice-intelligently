@@ -24,7 +24,7 @@ export async function analyzeCrossClientPatterns(therapistId: string): Promise<a
   try {
     // Get anonymized patterns across all clients for this therapist
     const allSessions = await storage.getAllSessionNotesByTherapist(therapistId);
-    
+
     // Anonymize data for pattern analysis
     const anonymizedPatterns = allSessions.map(session => ({
       sessionNumber: Math.floor(Math.random() * 20) + 1, // Randomize to protect privacy
@@ -92,7 +92,7 @@ Format as JSON:
 export async function detectSeasonalCyclicalPatterns(clientId: string): Promise<any> {
   try {
     const sessionHistory = await storage.getSessionNotesByClientId(clientId);
-    
+
     // Organize sessions by date patterns
     const sessionsByMonth = groupSessionsByTimePattern(sessionHistory, 'month');
     const sessionsByDayOfWeek = groupSessionsByTimePattern(sessionHistory, 'dayOfWeek');
@@ -157,7 +157,7 @@ Format as JSON:
 export async function mapTherapeuticRelationship(clientId: string, therapistId: string): Promise<any> {
   try {
     const sessionHistory = await storage.getSessionNotesByClientId(clientId);
-    
+
     const prompt = `Analyze therapeutic relationship dynamics and interaction patterns:
 
 THERAPEUTIC INTERACTION DATA:
@@ -225,70 +225,86 @@ Format as JSON:
 function extractKeyThemes(content: string): string[] {
   const themes = [];
   const lowerContent = content.toLowerCase();
-  
+
   // Basic theme detection - could be enhanced with NLP
   if (lowerContent.includes('anxiety') || lowerContent.includes('worry')) themes.push('anxiety');
   if (lowerContent.includes('depress') || lowerContent.includes('sad')) themes.push('depression');
   if (lowerContent.includes('relationship') || lowerContent.includes('family')) themes.push('relationships');
   if (lowerContent.includes('work') || lowerContent.includes('job')) themes.push('work-stress');
   if (lowerContent.includes('trauma') || lowerContent.includes('ptsd')) themes.push('trauma');
-  
+
   return themes;
 }
 
 function extractProgressMarkers(content: string): string[] {
   const markers = [];
   const lowerContent = content.toLowerCase();
-  
+
   if (lowerContent.includes('better') || lowerContent.includes('improv')) markers.push('improvement');
   if (lowerContent.includes('breakthrough') || lowerContent.includes('insight')) markers.push('breakthrough');
   if (lowerContent.includes('setback') || lowerContent.includes('difficult')) markers.push('setback');
   if (lowerContent.includes('goal') || lowerContent.includes('progress')) markers.push('goal-oriented');
-  
+
   return markers;
 }
 
 function extractMoodIndicators(content: string): string[] {
   const moods = [];
   const lowerContent = content.toLowerCase();
-  
+
   if (lowerContent.includes('happy') || lowerContent.includes('joy')) moods.push('positive');
   if (lowerContent.includes('sad') || lowerContent.includes('down')) moods.push('low');
   if (lowerContent.includes('angry') || lowerContent.includes('frustrated')) moods.push('irritable');
   if (lowerContent.includes('calm') || lowerContent.includes('peaceful')) moods.push('stable');
-  
+
   return moods;
 }
 
-function groupSessionsByTimePattern(sessions: SessionData[], pattern: 'month' | 'dayOfWeek'): Record<string, SessionData[]> {
+interface SessionData {
+  date: string;
+  clientId: string;
+  [key: string]: unknown;
+}
+
+interface GroupedSessions {
+  [key: string]: SessionData[];
+}
+
+function groupSessionsByTimePattern(sessions: SessionData[], pattern: 'month' | 'dayOfWeek'): GroupedSessions {
   const grouped: any = {};
-  
+
   sessions.forEach(session => {
-    const date = new Date(session.createdAt);
+    const date = new Date(session.date);
     let key: string;
-    
+
     if (pattern === 'month') {
       key = date.toLocaleDateString('en-US', { month: 'long' });
     } else {
       key = date.toLocaleDateString('en-US', { weekday: 'long' });
     }
-    
-    if (!grouped[key]) grouped[key] = 0;
-    grouped[key]++;
+
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(session);
   });
-  
+
   return grouped;
+}
+
+interface EventAnalysis {
+  patterns: string[];
+  events: unknown[];
+  insights: string[];
 }
 
 function analyzeAroundMajorEvents(sessions: SessionData[]): EventAnalysis {
   const events = ['holiday', 'birthday', 'anniversary', 'seasonal'];
   const eventAnalysis: any = {};
-  
+
   // Basic event correlation - could be enhanced with calendar integration
   sessions.forEach(session => {
-    const date = new Date(session.createdAt);
+    const date = new Date(session.date);
     const month = date.getMonth();
-    
+
     // Holiday seasons
     if (month === 11 || month === 0) { // December/January
       eventAnalysis['winter-holidays'] = (eventAnalysis['winter-holidays'] || 0) + 1;
@@ -297,6 +313,6 @@ function analyzeAroundMajorEvents(sessions: SessionData[]): EventAnalysis {
       eventAnalysis['halloween'] = (eventAnalysis['halloween'] || 0) + 1;
     }
   });
-  
+
   return eventAnalysis;
 }

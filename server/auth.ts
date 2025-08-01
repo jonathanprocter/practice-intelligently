@@ -37,7 +37,7 @@ const getRedirectUri = () => {
   // Check if we're running on Replit
   if (process.env.REPLIT_DEV_DOMAIN) {
     const uri = `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/google/callback`;
-    // Using REPLIT_DEV_DOMAIN redirect URI: ${uri}
+    // Using REPLIT_DEV_DOMAIN redirect URI
     // Debug logging removed for production
     return uri;
   }
