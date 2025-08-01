@@ -1374,7 +1374,16 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async generateAIInsightsForSession(eventId: string, clientId: string): Promise<string> {
+  async generateAIInsightsForSession(eventId: string, clientId: string): Promise<{
+    insights: string;
+    followUpQuestions: string[];
+    psychoeducationalMaterials: Array<{
+      title: string;
+      description: string;
+      type: 'handout' | 'worksheet' | 'reading' | 'video' | 'app';
+      url?: string;
+    }>;
+  }> {
     try {
       // Get previous session notes for this client
       const previousNotes = await this.getSessionNotesByClientId(clientId);
@@ -1383,45 +1392,81 @@ export class DatabaseStorage implements IStorage {
       // Get current client information
       const client = await this.getClient(clientId);
       
-      // Generate AI insights using OpenAI
-      const context = {
-        clientInfo: client,
-        previousSessions: previousNotes.slice(0, 5), // Last 5 sessions
-        progressNotes: progressNotes.slice(0, 3), // Last 3 progress notes
-        eventId
-      };
+      if (!client) {
+        return this.getDefaultSessionPrepInsights();
+      }
 
-      const prompt = `Based on the following client information and session history, provide clinical insights and recommendations for the upcoming therapy session:
+      // Use AI to generate comprehensive session prep
+      const { generateClinicalAnalysis } = await import('./ai-services');
+      
+      const sessionContext = previousNotes.slice(0, 3).map(note => ({
+        date: note.createdAt,
+        content: note.content,
+        duration: note.duration
+      }));
 
-Client Information: ${JSON.stringify(context.clientInfo)}
-Recent Session Notes: ${JSON.stringify(context.previousSessions)}
-Recent Progress Notes: ${JSON.stringify(context.progressNotes)}
+      const prompt = `As an expert clinical therapist, analyze the following client information and recent session notes to provide comprehensive session preparation guidance:
+
+Client: ${client.firstName} ${client.lastName}
+Recent Sessions:
+${sessionContext.map((s, i) => `Session ${i + 1} (${new Date(s.date).toLocaleDateString()}): ${s.content}`).join('\n\n')}
 
 Please provide:
-1. Key focus areas for this session
-2. Suggested therapeutic interventions
-3. Any risk factors to monitor
-4. Session objectives
-5. Homework/action items to review from previous sessions
+1. Clinical insights and preparation notes
+2. 5-7 specific follow-up questions that continue where previous sessions left off
+3. 3-5 relevant psychoeducational materials/handouts appropriate for this client
 
-Respond in a professional, clinical tone suitable for a licensed therapist.`;
+Respond in JSON format:
+{
+  "insights": "Detailed clinical insights and session prep guidance...",
+  "followUpQuestions": [
+    "How has your anxiety been since we worked on breathing techniques?",
+    "Were you able to practice the homework assignment we discussed?"
+  ],
+  "psychoeducationalMaterials": [
+    {
+      "title": "Anxiety Management Techniques",
+      "description": "Practical strategies for managing anxiety symptoms",
+      "type": "handout"
+    }
+  ]
+}`;
 
-      // This would integrate with your AI service
-      // For now, return a structured response
-      return `AI-Generated Session Insights:
+      const analysis = await generateClinicalAnalysis(prompt);
+      
+      try {
+        const result = JSON.parse(analysis);
+        return {
+          insights: result.insights || this.getDefaultInsights(),
+          followUpQuestions: result.followUpQuestions || this.getDefaultQuestions(),
+          psychoeducationalMaterials: result.psychoeducationalMaterials || this.getDefaultMaterials()
+        };
+      } catch (parseError) {
+        console.error('Error parsing AI analysis:', parseError);
+        return this.getDefaultSessionPrepInsights();
+      }
+    } catch (error) {
+      console.error('Error generating AI insights:', error);
+      return this.getDefaultSessionPrepInsights();
+    }
+  }
 
-1. Key Focus Areas:
-   - Continue building on progress from previous sessions
-   - Address any emerging concerns or stressors
-   - Maintain therapeutic rapport and safety
+  private getDefaultSessionPrepInsights() {
+    return {
+      insights: `AI-Generated Session Preparation Insights:
 
-2. Suggested Interventions:
-   - Cognitive Behavioral Therapy techniques
-   - Mindfulness and grounding exercises
-   - Skill building based on client needs
+1. Previous Session Review:
+   - Review key themes from last session
+   - Check on homework assignments and progress
+   - Assess any risk factors or concerns
 
-3. Risk Factors:
-   - Monitor for any changes in mood or behavior
+2. Client Background Context:
+   - Consider current treatment goals
+   - Review any medication changes
+   - Note family/social dynamics
+
+3. Recommended Focus Areas:
+   - Continue working on coping strategies
    - Assess coping strategies effectiveness
    - Check medication compliance if applicable
 
@@ -1433,12 +1478,61 @@ Respond in a professional, clinical tone suitable for a licensed therapist.`;
 5. Homework Review:
    - Review completion of previous assignments
    - Discuss any challenges or successes
-   - Adjust future assignments as needed`;
+   - Adjust future assignments as needed`,
+      followUpQuestions: this.getDefaultQuestions(),
+      psychoeducationalMaterials: this.getDefaultMaterials()
+    };
+  }
 
-    } catch (error) {
-      console.error('Error generating AI insights:', error);
-      return 'Unable to generate AI insights at this time. Please refer to previous session notes and treatment plan.';
-    }
+  private getDefaultQuestions(): string[] {
+    return [
+      "How have you been feeling since our last session?",
+      "Were you able to practice the techniques we discussed?",
+      "What challenges did you face this week?",
+      "How did the homework assignment go?",
+      "Have you noticed any patterns in your thoughts or behaviors?",
+      "What would you like to focus on today?",
+      "How are your coping strategies working for you?"
+    ];
+  }
+
+  private getDefaultMaterials() {
+    return [
+      {
+        title: "Mindfulness and Relaxation Techniques",
+        description: "Practical guide to mindfulness exercises and breathing techniques",
+        type: "handout" as const
+      },
+      {
+        title: "Thought Record Worksheet",
+        description: "Tool for identifying and challenging negative thought patterns",
+        type: "worksheet" as const
+      },
+      {
+        title: "Anxiety Management Strategies",
+        description: "Evidence-based techniques for managing anxiety symptoms",
+        type: "handout" as const
+      },
+      {
+        title: "Daily Mood Tracker",
+        description: "Simple tool to track daily mood and identify patterns",
+        type: "worksheet" as const
+      }
+    ];
+  }
+
+  private getDefaultInsights(): string {
+    return `Session Preparation Insights:
+
+1. Previous Session Review:
+   - Review key themes from last session
+   - Check on homework assignments and progress
+   - Assess any risk factors or concerns
+
+2. Recommended Focus Areas:
+   - Continue working on coping strategies
+   - Assess current mental state and progress
+   - Plan next steps in treatment`;
   }
 
   // Client check-ins methods implementation

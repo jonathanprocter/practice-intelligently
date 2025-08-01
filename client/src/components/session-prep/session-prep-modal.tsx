@@ -24,6 +24,13 @@ interface SessionPrepNote {
   riskFactors: string[];
   homeworkReview?: string;
   aiGeneratedInsights?: string;
+  followUpQuestions?: string[];
+  psychoeducationalMaterials?: Array<{
+    title: string;
+    description: string;
+    type: 'handout' | 'worksheet' | 'reading' | 'video' | 'app';
+    url?: string;
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,6 +59,14 @@ export default function SessionPrepModal({
   const [newFocusArea, setNewFocusArea] = useState("");
   const [sessionObjectives, setSessionObjectives] = useState<string[]>([]);
   const [newObjective, setNewObjective] = useState("");
+  const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
+  const [newQuestion, setNewQuestion] = useState("");
+  const [psychoeducationalMaterials, setPsychoeducationalMaterials] = useState<Array<{
+    title: string;
+    description: string;
+    type: 'handout' | 'worksheet' | 'reading' | 'video' | 'app';
+    url?: string;
+  }>>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -70,12 +85,16 @@ export default function SessionPrepModal({
         setPrepContent(note.prepContent || "");
         setFocusAreas(note.keyFocusAreas || []);
         setSessionObjectives(note.sessionObjectives || []);
+        setFollowUpQuestions(note.followUpQuestions || []);
+        setPsychoeducationalMaterials(note.psychoeducationalMaterials || []);
       } else if (response.status === 404) {
         // No prep note exists yet
         setPrepNote(null);
         setPrepContent("");
         setFocusAreas([]);
         setSessionObjectives([]);
+        setFollowUpQuestions([]);
+        setPsychoeducationalMaterials([]);
       }
     } catch (error) {
       console.error('Error fetching prep note:', error);
@@ -93,7 +112,9 @@ export default function SessionPrepModal({
         therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', // Default therapist
         prepContent,
         keyFocusAreas: focusAreas,
-        sessionObjectives
+        sessionObjectives,
+        followUpQuestions,
+        psychoeducationalMaterials
       };
 
       let response;
@@ -143,11 +164,25 @@ export default function SessionPrepModal({
       });
 
       if (response.ok) {
-        const { insights } = await response.json();
-        setPrepNote(prev => prev ? { ...prev, aiGeneratedInsights: insights } : null);
+        const result = await response.json();
+        setPrepNote(prev => prev ? { 
+          ...prev, 
+          aiGeneratedInsights: result.insights,
+          followUpQuestions: result.followUpQuestions,
+          psychoeducationalMaterials: result.psychoeducationalMaterials
+        } : null);
+        
+        // Update local state with new AI-generated content
+        if (result.followUpQuestions) {
+          setFollowUpQuestions(result.followUpQuestions);
+        }
+        if (result.psychoeducationalMaterials) {
+          setPsychoeducationalMaterials(result.psychoeducationalMaterials);
+        }
+        
         toast({
           title: "AI insights generated",
-          description: "Clinical insights have been generated based on client history.",
+          description: "Clinical insights, questions, and resources have been generated based on client history.",
         });
       } else {
         throw new Error('Failed to generate AI insights');
@@ -186,6 +221,30 @@ export default function SessionPrepModal({
     setSessionObjectives(sessionObjectives.filter(o => o !== objective));
   };
 
+  const addFollowUpQuestion = () => {
+    if (newQuestion.trim() && !followUpQuestions.includes(newQuestion.trim())) {
+      setFollowUpQuestions([...followUpQuestions, newQuestion.trim()]);
+      setNewQuestion("");
+    }
+  };
+
+  const removeFollowUpQuestion = (question: string) => {
+    setFollowUpQuestions(followUpQuestions.filter(q => q !== question));
+  };
+
+  const addPsychoeducationalMaterial = (material: {
+    title: string;
+    description: string;
+    type: 'handout' | 'worksheet' | 'reading' | 'video' | 'app';
+    url?: string;
+  }) => {
+    setPsychoeducationalMaterials([...psychoeducationalMaterials, material]);
+  };
+
+  const removePsychoeducationalMaterial = (index: number) => {
+    setPsychoeducationalMaterials(psychoeducationalMaterials.filter((_, i) => i !== index));
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -198,10 +257,12 @@ export default function SessionPrepModal({
         </DialogHeader>
 
         <Tabs defaultValue="prep" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="prep">Session Prep</TabsTrigger>
             <TabsTrigger value="insights">AI Insights</TabsTrigger>
             <TabsTrigger value="goals">Goals & Objectives</TabsTrigger>
+            <TabsTrigger value="questions">Follow-up Questions</TabsTrigger>
+            <TabsTrigger value="materials">Resources</TabsTrigger>
           </TabsList>
 
           <TabsContent value="prep" className="space-y-4">
@@ -261,6 +322,109 @@ export default function SessionPrepModal({
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="questions" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Follow-up Questions Based on Previous Sessions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Add Follow-up Question</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Input
+                      placeholder="e.g., How did the homework assignment go? Any progress with anxiety management?"
+                      value={newQuestion}
+                      onChange={(e) => setNewQuestion(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addFollowUpQuestion()}
+                    />
+                    <Button onClick={addFollowUpQuestion} variant="outline">Add</Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {followUpQuestions.map((question, index) => (
+                    <div key={index} className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-blue-900">Q{index + 1}:</p>
+                        <p className="text-sm text-blue-800">{question}</p>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => removeFollowUpQuestion(question)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+                  {followUpQuestions.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>Add follow-up questions to guide your session</p>
+                      <p className="text-xs mt-1">Questions that help continue where you left off</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="materials" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  Psychoeducational Materials & Handouts
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {psychoeducationalMaterials.map((material, index) => (
+                    <div key={index} className="border rounded-lg p-3 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <Badge variant="outline" className="mb-2">
+                            {material.type.charAt(0).toUpperCase() + material.type.slice(1)}
+                          </Badge>
+                          <h4 className="font-medium text-sm">{material.title}</h4>
+                          <p className="text-xs text-gray-600 mt-1">{material.description}</p>
+                          {material.url && (
+                            <a 
+                              href={material.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:underline"
+                            >
+                              View Resource →
+                            </a>
+                          )}
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => removePsychoeducationalMaterial(index)}
+                          className="text-gray-500 hover:text-red-600"
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {psychoeducationalMaterials.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>Psychoeducational materials will be suggested by AI</p>
+                    <p className="text-xs mt-1">Based on client needs and session focus areas</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="insights" className="space-y-4">

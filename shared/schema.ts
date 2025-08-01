@@ -128,6 +128,8 @@ export const sessionPrepNotes = pgTable("session_prep_notes", {
   homeworkReview: text("homework_review"),
   sessionObjectives: jsonb("session_objectives"),
   aiGeneratedInsights: text("ai_generated_insights"),
+  followUpQuestions: jsonb("follow_up_questions"),
+  psychoeducationalMaterials: jsonb("psychoeducational_materials"),
   lastUpdatedBy: uuid("last_updated_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

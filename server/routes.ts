@@ -1553,17 +1553,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Client ID is required' });
       }
 
-      const aiInsights = await storage.generateAIInsightsForSession(eventId, clientId);
+      const result = await storage.generateAIInsightsForSession(eventId, clientId);
       
-      // Update the prep note with AI insights
+      // Update the prep note with AI insights and new data
       const existingNote = await storage.getSessionPrepNoteByEventId(eventId);
       if (existingNote) {
         await storage.updateSessionPrepNote(existingNote.id, {
-          aiGeneratedInsights: aiInsights
+          aiGeneratedInsights: result.insights,
+          followUpQuestions: result.followUpQuestions,
+          psychoeducationalMaterials: result.psychoeducationalMaterials
         });
       }
 
-      res.json({ insights: aiInsights });
+      res.json(result);
     } catch (error: any) {
       console.error('Error generating AI insights:', error);
       res.status(500).json({ error: 'Failed to generate AI insights' });
