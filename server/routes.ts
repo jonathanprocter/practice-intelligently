@@ -495,35 +495,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/auth/google/callback', async (req, res) => {
     try {
-      const { code, error } = req.query;
+      const { code, error, state } = req.query;
       
       console.log('OAuth callback received with:', { 
         hasCode: !!code, 
         hasError: !!error, 
+        hasState: !!state,
         codeLength: code ? (code as string).length : 0,
-        fullUrl: req.url 
+        fullUrl: req.url,
+        headers: req.headers,
+        domain: req.get('host')
       });
       
       if (error) {
         console.error('OAuth authorization error:', error);
         if (error === 'access_denied') {
-          return res.redirect('/calendar/integration?error=permission_denied&message=' + encodeURIComponent('You need to grant permission to access your Google Calendar. Please try again and click "Allow" when prompted.'));
+          return res.redirect('/oauth-troubleshoot?error=permission_denied&message=' + encodeURIComponent('You denied permission to access your Google Calendar. Please try again and click "Allow" when prompted.'));
         }
-        return res.redirect('/calendar/integration?error=oauth_failed&message=' + encodeURIComponent(`OAuth error: ${error}`));
+        return res.redirect('/oauth-troubleshoot?error=oauth_failed&message=' + encodeURIComponent(`OAuth error: ${error}`));
       }
       
       if (!code || typeof code !== 'string' || code.trim() === '') {
         console.error('No valid authorization code received. Code:', code);
-        return res.redirect('/calendar/integration?error=no_code&message=' + encodeURIComponent('No authorization code received from Google. Please try the OAuth flow again.'));
+        return res.redirect('/oauth-troubleshoot?error=no_code&message=' + encodeURIComponent('No authorization code received from Google. Please try the OAuth flow again.'));
       }
       
       console.log('Processing OAuth callback with code:', (code as string).substring(0, 10) + '... (length: ' + code.length + ')');
+      console.log('Using redirect URI:', getRedirectUri());
+      
       await googleCalendarService.getAccessToken(code as string);
       console.log('Google Calendar authentication successful');
       res.redirect('/calendar?success=connected&message=' + encodeURIComponent('Successfully connected to Google Calendar! Your events are now loading.'));
     } catch (error: any) {
-      console.error('OAuth callback error:', error);
-      res.redirect('/calendar/integration?error=auth_failed&message=' + encodeURIComponent(error.message || 'Authentication failed. Please try again.'));
+      console.error('OAuth callback error details:', {
+        message: error.message,
+        stack: error.stack,
+        code: error.code,
+        response: error.response?.data
+      });
+      res.redirect('/oauth-troubleshoot?error=auth_failed&message=' + encodeURIComponent(error.message || 'Authentication failed. Please check the console logs for details.'));
     }
   });
 

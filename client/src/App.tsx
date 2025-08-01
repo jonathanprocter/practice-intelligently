@@ -25,6 +25,7 @@ const OAuthSimple = lazy(() => import("./pages/oauth-simple"));
 const OAuthTroubleshoot = lazy(() => import("./pages/oauth-troubleshoot"));
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
+import OAuthTestSimple from './pages/oauth-test-simple';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -65,6 +66,11 @@ function Router() {
       <Route path="/oauth-simple">
         <Suspense fallback={<div className="p-6">Loading...</div>}>
           <OAuthSimple />
+        </Suspense>
+      </Route>
+       <Route path="/oauth-test-simple">
+        <Suspense fallback={<div className="p-6">Loading...</div>}>
+          <OAuthTestSimple />
         </Suspense>
       </Route>
       <Route path="/oauth-troubleshoot">
