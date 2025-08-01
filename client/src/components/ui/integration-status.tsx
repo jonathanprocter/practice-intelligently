@@ -6,6 +6,8 @@ interface HealthStatus {
   integrations: {
     openai: boolean;
     anthropic: boolean;
+    gemini: boolean;
+    perplexity: boolean;
     database: boolean;
   };
 }
@@ -21,6 +23,8 @@ export default function IntegrationStatus() {
   const integrations = [
     { name: 'OpenAI', status: health.integrations.openai },
     { name: 'Anthropic', status: health.integrations.anthropic },
+    { name: 'Gemini', status: health.integrations.gemini },
+    { name: 'Perplexity', status: health.integrations.perplexity },
     { name: 'Database', status: health.integrations.database },
   ];
 

@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient } from "@/lib/api";
 
-const getNavigationItems = (clientCount: number) => [
+const getNavigationItems = (clientCount: number, urgentActionItemCount: number) => [
   { path: "/", label: "Dashboard", icon: BarChart },
   { path: "/clients", label: "Clients", icon: Users, badge: clientCount > 0 ? clientCount.toString() : undefined },
   { path: "/appointments", label: "Appointments", icon: Calendar },
   { path: "/calendar", label: "Calendar", icon: Calendar },
   { path: "/session-notes", label: "Session Notes", icon: FileText },
   { path: "/progress-notes", label: "Progress Notes", icon: FileText },
-  { path: "/action-items", label: "Action Items", icon: CheckSquare, badge: "3", badgeColor: "bg-red-500" },
+  { path: "/action-items", label: "Action Items", icon: CheckSquare, badge: urgentActionItemCount > 0 ? urgentActionItemCount.toString() : undefined, badgeColor: "bg-red-500" },
   { path: "/analytics", label: "Analytics", icon: BarChart },
   { path: "/ai-insights", label: "AI Intelligence", icon: Brain },
 ];
@@ -27,8 +27,15 @@ export default function Sidebar() {
     queryFn: () => ApiClient.getClients(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Get real urgent action items count
+  const { data: urgentActionItems } = useQuery({
+    queryKey: ['urgent-action-items'],
+    queryFn: ApiClient.getUrgentActionItems,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
   
-  const navigationItems = getNavigationItems(clients?.length || 0);
+  const navigationItems = getNavigationItems(clients?.length || 0, urgentActionItems?.length || 0);
 
   const isActive = (path: string) => {
     if (path === "/") return location === "/";

@@ -1,6 +1,8 @@
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import IntegrationStatus from "@/components/ui/integration-status";
+import { useQuery } from "@tanstack/react-query";
+import { ApiClient } from "@/lib/api";
 
 export default function Header() {
   const currentDate = new Date().toLocaleDateString('en-US', {
@@ -9,6 +11,15 @@ export default function Header() {
     month: 'long',
     day: 'numeric'
   });
+
+  // Get real notification count from urgent action items
+  const { data: urgentActionItems } = useQuery({
+    queryKey: ['urgent-action-items'],
+    queryFn: ApiClient.getUrgentActionItems,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+
+  const notificationCount = urgentActionItems?.length || 0;
 
   return (
     <header className="bg-white border-b border-therapy-border p-4 lg:p-6">
@@ -27,9 +38,11 @@ export default function Header() {
           
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-              5
-            </span>
+            {notificationCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                {notificationCount > 99 ? '99+' : notificationCount}
+              </span>
+            )}
           </Button>
           
           <div className="flex items-center space-x-3">

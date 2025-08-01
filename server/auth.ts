@@ -201,8 +201,8 @@ export class GoogleCalendarService {
   async getEvents(calendarId: string = 'primary', timeMin?: string, timeMax?: string): Promise<GoogleCalendarEvent[]> {
     this.ensureAuthenticated();
     try {
-      // Use very broad time range if not specified to capture all events
-      const defaultTimeMin = new Date('2020-01-01T00:00:00.000Z').toISOString();
+      // Use very broad time range if not specified to capture all events from 2019-2030
+      const defaultTimeMin = new Date('2019-01-01T00:00:00.000Z').toISOString();
       const defaultTimeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
 
       const finalTimeMin = timeMin || defaultTimeMin;

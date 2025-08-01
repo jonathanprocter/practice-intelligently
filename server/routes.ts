@@ -822,7 +822,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Google Calendar Integration - new route without therapist ID parameter
+  // Enhanced Google Calendar Integration - fetches from ALL calendars and subcalendars (2019-2030)
   app.get('/api/calendar/events', async (req,res) => {
     try {
       const { timeMin, timeMax, start, end, calendarId } = req.query;
@@ -833,16 +833,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
 
-      // Use start/end or timeMin/timeMax
-      const startTime = (start as string) || (timeMin as string);
-      const endTime = (end as string) || (timeMax as string);
+      // Enhanced default time range: 2019-2030 if not specified
+      const defaultStartTime = new Date('2019-01-01T00:00:00.000Z').toISOString();
+      const defaultEndTime = new Date('2030-12-31T23:59:59.999Z').toISOString();
+      
+      const startTime = (start as string) || (timeMin as string) || defaultStartTime;
+      const endTime = (end as string) || (timeMax as string) || defaultEndTime;
 
-      // Get events from all calendars if no specific calendar is requested
+      // Get events from ALL calendars and subcalendars if no specific calendar is requested
       if (!calendarId) {
         const calendars = await simpleOAuth.getCalendars();
         let allEvents = [];
+        let processedCalendars = 0;
+        let totalEventsFound = 0;
 
-        for (const calendar of calendars) {
+        // Process ALL calendars and subcalendars in parallel for better performance
+        const calendarPromises = calendars.map(async (calendar) => {
           try {
             const events = await simpleOAuth.getEvents(
               calendar.id,
@@ -850,24 +856,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
               endTime
             );
 
-            // Convert to standard format
-            const formattedEvents = events.map(event => ({
+            totalEventsFound += events.length;
+            processedCalendars++;
+
+            // Convert to standard format with enhanced metadata
+            return events.map((event: any) => ({
               id: event.id,
               title: event.summary || 'Untitled Event',
               startTime: new Date(event.start?.dateTime || event.start?.date),
               endTime: new Date(event.end?.dateTime || event.end?.date),
-              location: calendar.summary,
+              location: event.location || calendar.summary,
               description: event.description || '',
               calendarId: calendar.id,
-              calendarName: calendar.summary
+              calendarName: calendar.summary,
+              isPrimary: calendar.primary || false,
+              status: event.status || 'confirmed'
             }));
-
-            allEvents = allEvents.concat(formattedEvents);
           } catch (calError) {
             console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError.message);
+            return [];
           }
-        }
+        });
 
+        const results = await Promise.all(calendarPromises);
+        allEvents = results.flat();
+
+        // Sort events by start time
+        allEvents.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+        console.log(`Successfully fetched ${totalEventsFound} events from ${processedCalendars}/${calendars.length} calendars (${startTime.substring(0,4)}-${endTime.substring(0,4)})`);
+        
         res.json(allEvents);
       } else {
         // Get events from specific calendar
@@ -877,7 +895,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           endTime
         );
 
-        res.json(events);
+        const formattedEvents = events.map((event: any) => ({
+          id: event.id,
+          title: event.summary || 'Untitled Event',
+          startTime: new Date(event.start?.dateTime || event.start?.date),
+          endTime: new Date(event.end?.dateTime || event.end?.date),
+          location: event.location || 'Google Calendar',
+          description: event.description || '',
+          calendarId: calendarId as string,
+          calendarName: 'Specific Calendar',
+          status: event.status || 'confirmed'
+        }));
+
+        res.json(formattedEvents);
       }
     } catch (error: any) {
       console.error('Error fetching calendar events:', error);
@@ -1443,7 +1473,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Calendar sync endpoints  
+  // Enhanced Calendar sync endpoints - fetches from ALL calendars and subcalendars
   app.post('/api/calendar/sync', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
@@ -1452,13 +1482,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
 
-      // Get events and sync to database (simplified for now)
-      const events = await simpleOAuth.getEvents('primary');
+      // Get ALL calendars and subcalendars first
+      const calendars = await simpleOAuth.getCalendars();
+      let totalEvents = 0;
+      let syncedCalendars = 0;
+
+      // Enhanced time range: 2019-2030 to capture all historical and future events
+      const timeMin = new Date('2019-01-01T00:00:00.000Z').toISOString();
+      const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
+
+      // Sync events from ALL calendars and subcalendars in parallel
+      const syncPromises = calendars.map(async (calendar: any) => {
+        try {
+          const events = await simpleOAuth.getEvents(calendar.id, timeMin, timeMax);
+          totalEvents += events.length;
+          syncedCalendars++;
+          return {
+            calendarId: calendar.id,
+            calendarName: calendar.summary,
+            eventCount: events.length,
+            status: 'success'
+          };
+        } catch (error: any) {
+          console.warn(`Failed to sync calendar ${calendar.summary}:`, error);
+          return {
+            calendarId: calendar.id,
+            calendarName: calendar.summary,
+            eventCount: 0,
+            status: 'error',
+            error: error.message
+          };
+        }
+      });
+
+      const syncResults = await Promise.all(syncPromises);
 
       res.json({ 
         success: true, 
-        message: 'Calendar events retrieved successfully', 
-        eventCount: events.length 
+        message: `Successfully synced ${totalEvents} events from ${syncedCalendars}/${calendars.length} calendars (2019-2030)`, 
+        totalEventCount: totalEvents,
+        calendarsProcessed: calendars.length,
+        calendarsSuccessful: syncedCalendars,
+        timeRange: '2019-2030',
+        syncResults
       });
     } catch (error: any) {
       console.error('Error syncing calendar:', error);
