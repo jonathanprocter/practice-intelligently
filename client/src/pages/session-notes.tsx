@@ -1,15 +1,25 @@
-import { FileText, Plus, Search, Filter, Mic, Bot } from "lucide-react";
+import { FileText, Plus, Search, Filter, Mic, Bot, Eye, Edit, Trash2, X, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { ApiClient } from "@/lib/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ApiClient, SessionNote } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SessionNotes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedNote, setSelectedNote] = useState<SessionNote | null>(null);
+  const [isDetailView, setIsDetailView] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState("");
+  const [editTags, setEditTags] = useState("");
+  
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Fetch session notes from database
   const { data: sessionNotes = [], isLoading } = useQuery({
@@ -23,6 +33,75 @@ export default function SessionNotes() {
     note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (note.tags && note.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
   );
+
+  // Mutation for updating session notes
+  const updateNoteMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<SessionNote> }) =>
+      ApiClient.updateSessionNote(id, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['session-notes'] });
+      toast({ title: "Session note updated successfully" });
+      setIsEditing(false);
+      setIsDetailView(false);
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error updating session note", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Mutation for deleting session notes
+  const deleteNoteMutation = useMutation({
+    mutationFn: (id: string) => ApiClient.deleteSessionNote(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['session-notes'] });
+      toast({ title: "Session note deleted successfully" });
+      setIsDetailView(false);
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error deleting session note", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const handleViewDetails = (note: SessionNote) => {
+    setSelectedNote(note);
+    setIsDetailView(true);
+    setIsEditing(false);
+  };
+
+  const handleEdit = (note: SessionNote) => {
+    setSelectedNote(note);
+    setEditContent(note.content);
+    setEditTags(note.tags ? note.tags.join(", ") : "");
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!selectedNote) return;
+    
+    const tagsArray = editTags.split(",").map(tag => tag.trim()).filter(tag => tag.length > 0);
+    
+    updateNoteMutation.mutate({
+      id: selectedNote.id,
+      updates: {
+        content: editContent,
+        tags: tagsArray
+      }
+    });
+  };
+
+  const handleDelete = (note: SessionNote) => {
+    if (confirm("Are you sure you want to delete this session note? This action cannot be undone.")) {
+      deleteNoteMutation.mutate(note.id);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -196,11 +275,30 @@ export default function SessionNotes() {
                   ))}
                 </div>
                 <div className="flex space-x-2">
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleViewDetails(note)}
+                  >
+                    <Eye className="w-4 h-4 mr-1" />
+                    View Details
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleEdit(note)}
+                  >
+                    <Edit className="w-4 h-4 mr-1" />
                     Edit
                   </Button>
-                  <Button variant="ghost" size="sm">
-                    View Details
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleDelete(note)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Delete
                   </Button>
                 </div>
               </div>
@@ -230,6 +328,155 @@ export default function SessionNotes() {
           </div>
         )}
       </div>
+
+      {/* Detailed View Dialog */}
+      <Dialog open={isDetailView || isEditing} onOpenChange={(open) => {
+        if (!open) {
+          setIsDetailView(false);
+          setIsEditing(false);
+          setSelectedNote(null);
+        }
+      }}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>
+                {isEditing ? "Edit Session Note" : "Session Note Details"}
+              </span>
+              <div className="flex space-x-2">
+                {!isEditing && selectedNote && (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleEdit(selectedNote)}
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDelete(selectedNote)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Delete
+                    </Button>
+                  </>
+                )}
+              </div>
+            </DialogTitle>
+            {selectedNote && (
+              <DialogDescription>
+                Client: {selectedNote.clientId} • {new Date(selectedNote.createdAt).toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })} at {new Date(selectedNote.createdAt).toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false
+                })}
+              </DialogDescription>
+            )}
+          </DialogHeader>
+
+          {selectedNote && (
+            <div className="space-y-6">
+              {/* Session Content */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Session Content
+                </label>
+                {isEditing ? (
+                  <Textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="min-h-[300px] font-mono text-sm"
+                    placeholder="Session note content..."
+                  />
+                ) : (
+                  <div className="p-4 border rounded-lg bg-gray-50 max-h-96 overflow-y-auto">
+                    <pre className="whitespace-pre-wrap text-sm font-mono">
+                      {selectedNote.content}
+                    </pre>
+                  </div>
+                )}
+              </div>
+
+              {/* AI Summary */}
+              {selectedNote.aiSummary && !isEditing && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    AI Summary
+                  </label>
+                  <div className="p-4 border rounded-lg bg-blue-50">
+                    <p className="text-sm">{selectedNote.aiSummary}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Tags */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Tags
+                </label>
+                {isEditing ? (
+                  <Input
+                    value={editTags}
+                    onChange={(e) => setEditTags(e.target.value)}
+                    placeholder="Enter tags separated by commas (e.g., DBT, ACT, EMDR)"
+                  />
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedNote.tags && selectedNote.tags.length > 0 ? (
+                      selectedNote.tags.map((tag, index) => (
+                        <Badge key={index} variant="secondary">
+                          {tag}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="text-gray-500 text-sm">No tags</span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                {isEditing ? (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsEditing(false)}
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleSaveEdit}
+                      disabled={updateNoteMutation.isPending}
+                      className="bg-therapy-primary hover:bg-therapy-primary/90"
+                    >
+                      <Save className="w-4 h-4 mr-1" />
+                      {updateNoteMutation.isPending ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsDetailView(false)}
+                  >
+                    Close
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

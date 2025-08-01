@@ -138,6 +138,15 @@ export class ApiClient {
     }
   }
 
+  static async updateSessionNote(id: string, updates: Partial<SessionNote>): Promise<SessionNote> {
+    const response = await apiRequest('PUT', `/api/session-notes/${id}`, updates);
+    return response.json();
+  }
+
+  static async deleteSessionNote(id: string): Promise<void> {
+    await apiRequest('DELETE', `/api/session-notes/${id}`);
+  }
+
   static async getClients(): Promise<Client[]> {
     const response = await apiRequest('GET', `/api/clients/${this.therapistId}`);
     return response.json();

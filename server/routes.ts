@@ -485,6 +485,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/session-notes/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const updatedNote = await storage.updateSessionNote(id, updates);
+      res.json(updatedNote);
+    } catch (error) {
+      console.error("Error updating session note:", error);
+      res.status(500).json({ error: "Failed to update session note" });
+    }
+  });
+
+  app.delete("/api/session-notes/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteSessionNote(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting session note:", error);
+      res.status(500).json({ error: "Failed to delete session note" });
+    }
+  });
+
   // Legacy session notes endpoint - disabled in favor of calendar-specific endpoint below
 
   // Action Items

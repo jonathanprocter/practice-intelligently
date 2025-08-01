@@ -402,6 +402,12 @@ export class DatabaseStorage implements IStorage {
     return updatedNote;
   }
 
+  async deleteSessionNote(id: string): Promise<void> {
+    await db
+      .delete(sessionNotes)
+      .where(eq(sessionNotes.id, id));
+  }
+
   async getActionItems(therapistId: string): Promise<ActionItem[]> {
     return await db
       .select()
