@@ -6,6 +6,14 @@ This is a comprehensive therapy practice management system designed as a full-st
 
 ## Recent Changes (August 1, 2025)
 
+✅ **Follow-up Questions Enhancement & Database Error Fix Completed**
+- **Enhanced Session Prep**: Follow-up questions now support both AI-generated and manual entry capabilities
+- **Visual Source Tracking**: Added badges to distinguish between "AI Generated" vs "Manual Entry" questions
+- **Individual Question Management**: Questions can be removed individually regardless of source type
+- **Database Date Field Fix**: Resolved critical "toISOString is not a function" error in client/appointment updates
+- **Date Field Conversion**: Added automatic string-to-Date conversion for timestamp fields in API routes
+- **Status**: Session prep modal now fully functional with enhanced question management and database operations working correctly
+
 ✅ **AI-Powered Client Check-ins System Completed**
 - **Database & Schema**: Created client_checkins table with lifecycle management and comprehensive status tracking
 - **AI Analysis**: Implemented OpenAI-powered session analysis to determine when clients need check-ins (midweek, homework reminders, crisis support)

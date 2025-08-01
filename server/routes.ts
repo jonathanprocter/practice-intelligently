@@ -197,7 +197,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/clients", async (req, res) => {
     try {
-      const validatedData = insertClientSchema.parse(req.body);
+      const clientData = req.body;
+      
+      // Convert date string fields to Date objects if they exist
+      const dateFields = ['dateOfBirth', 'hipaaSignedDate', 'lastContact'];
+      dateFields.forEach(field => {
+        if (clientData[field] && typeof clientData[field] === 'string') {
+          clientData[field] = new Date(clientData[field]);
+        }
+      });
+      
+      const validatedData = insertClientSchema.parse(clientData);
       const client = await storage.createClient(validatedData);
       res.json(client);
     } catch (error) {
@@ -214,7 +224,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const updates = req.body;
-      const client = await storage.updateClient(id, updates);
+      
+      // Convert date string fields to Date objects if they exist
+      const processedUpdates = { ...updates };
+      const dateFields = ['dateOfBirth', 'hipaaSignedDate', 'lastContact'];
+      
+      dateFields.forEach(field => {
+        if (processedUpdates[field] && typeof processedUpdates[field] === 'string') {
+          processedUpdates[field] = new Date(processedUpdates[field]);
+        }
+      });
+      
+      const client = await storage.updateClient(id, processedUpdates);
       res.json(client);
     } catch (error) {
       console.error("Error updating client:", error);
@@ -334,7 +355,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const updateData = req.body;
-      const appointment = await storage.updateAppointment(id, updateData);
+      
+      // Convert date string fields to Date objects if they exist
+      const processedUpdates = { ...updateData };
+      const dateFields = ['startTime', 'endTime', 'lastGoogleSync', 'reminderSentAt', 'checkedInAt', 'completedAt'];
+      
+      dateFields.forEach(field => {
+        if (processedUpdates[field] && typeof processedUpdates[field] === 'string') {
+          processedUpdates[field] = new Date(processedUpdates[field]);
+        }
+      });
+      
+      const appointment = await storage.updateAppointment(id, processedUpdates);
       res.json(appointment);
     } catch (error) {
       console.error("Error updating appointment:", error);
