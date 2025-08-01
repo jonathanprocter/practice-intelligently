@@ -46,6 +46,7 @@ export interface IStorage {
   getActionItems(therapistId: string): Promise<ActionItem[]>;
   getUrgentActionItems(therapistId: string): Promise<ActionItem[]>;
   getClientActionItems(clientId: string): Promise<ActionItem[]>;
+  getActionItemsByEventId(eventId: string): Promise<ActionItem[]>;
   createActionItem(item: InsertActionItem): Promise<ActionItem>;
   updateActionItem(id: string, item: Partial<ActionItem>): Promise<ActionItem>;
   completeActionItem(id: string): Promise<ActionItem>;
@@ -334,30 +335,13 @@ export class DatabaseStorage implements IStorage {
 
   async getSessionNotesByEventId(eventId: string): Promise<SessionNote[]> {
     try {
-      console.log('Querying for eventId:', eventId);
-      const result = await pool.query(
-        'SELECT * FROM session_notes WHERE event_id = $1 ORDER BY created_at DESC',
-        [eventId]
-      );
+      const notes = await db
+        .select()
+        .from(sessionNotes)
+        .where(eq(sessionNotes.eventId, eventId))
+        .orderBy(desc(sessionNotes.createdAt));
       
-      console.log('Database returned', result.rows.length, 'rows for eventId:', eventId);
-      if (result.rows.length > 0) {
-        console.log('Sample row:', result.rows[0]);
-      }
-      
-      return result.rows.map((row: any) => ({
-        id: row.id,
-        appointmentId: row.appointment_id || null,
-        eventId: row.event_id,
-        clientId: row.client_id,
-        therapistId: row.therapist_id,
-        content: row.content,
-        transcript: row.transcript || null,
-        aiSummary: row.ai_summary || null,
-        tags: row.tags || [],
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
-      }));
+      return notes;
     } catch (error) {
       console.error('Error in getSessionNotesByEventId:', error);
       throw error;

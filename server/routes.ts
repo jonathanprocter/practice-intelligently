@@ -34,6 +34,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // User/Settings endpoints
+  app.get("/api/users/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      // Don't return password
+      const { password, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
+
+  app.patch("/api/users/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      
+      // Remove password field if it's empty or undefined
+      if (!updateData.password) {
+        delete updateData.password;
+      }
+      
+      const user = await storage.updateUser(id, updateData);
+      // Don't return password
+      const { password, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
   // AI Services health check
   app.get("/api/health/ai-services", async (req, res) => {
     try {
@@ -355,8 +392,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Session Notes
-  app.get("/api/session-notes/:clientId", async (req, res) => {
+  // Session Notes by client ID (more specific route)
+  app.get("/api/session-notes/client/:clientId", async (req, res) => {
     try {
       const { clientId } = req.params;
       const notes = await storage.getSessionNotes(clientId);
