@@ -167,20 +167,23 @@ class SimpleOAuth {
 
     try {
       const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
+      
+      // Use provided time range or comprehensive defaults for full historical data
+      const startTime = timeMin || new Date('2015-01-01T00:00:00.000Z').toISOString();
+      const endTime = timeMax || new Date('2035-12-31T23:59:59.999Z').toISOString();
+      
       const response = await calendar.events.list({
         calendarId,
-        timeMin: timeMin || new Date().toISOString(),
-        timeMax: timeMax || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        timeMin: startTime,
+        timeMax: endTime,
         singleEvents: true,
         orderBy: 'startTime',
-        maxResults: 2500, // Increase to ensure we get all events from each calendar/subcalendar
+        maxResults: 2500, // Google Calendar API limit
         showDeleted: false
       });
 
       const events = response.data.items || [];
-      if (events.length > 0) {
-        console.log(`  → Fetched ${events.length} events from calendar: ${calendarId}`);
-      }
+      console.log(`  → Fetched ${events.length} events from calendar: ${calendarId} (${startTime.substring(0,4)}-${endTime.substring(0,4)})`);
       
       return events;
     } catch (error: any) {

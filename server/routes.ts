@@ -871,9 +871,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
 
-      // Enhanced default time range: 2019-2030 if not specified
-      const defaultStartTime = new Date('2019-01-01T00:00:00.000Z').toISOString();
-      const defaultEndTime = new Date('2030-12-31T23:59:59.999Z').toISOString();
+      // Comprehensive default time range: 2015-2035 for complete historical data
+      const defaultStartTime = new Date('2015-01-01T00:00:00.000Z').toISOString();
+      const defaultEndTime = new Date('2035-12-31T23:59:59.999Z').toISOString();
       
       const startTime = (start as string) || (timeMin as string) || defaultStartTime;
       const endTime = (end as string) || (timeMax as string) || defaultEndTime;
