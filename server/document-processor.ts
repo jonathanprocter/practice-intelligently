@@ -19,15 +19,24 @@ async function getCsvParser() {
   return csvParser;
 }
 
-// Dynamic import for pdf-parse to handle ES module compatibility
+// Use dynamic import with better error handling for pdf-parse
 let pdfParse: any = null;
 async function getPdfParse() {
   if (!pdfParse) {
     try {
-      pdfParse = (await import('pdf-parse')).default;
+      // Try different import strategies for pdf-parse
+      const pdfParseModule = await import('pdf-parse');
+      pdfParse = pdfParseModule.default || pdfParseModule;
+      
+      // Test the function to ensure it works
+      if (typeof pdfParse !== 'function') {
+        throw new Error('pdf-parse module did not export a function');
+      }
     } catch (error) {
       console.error('Failed to import pdf-parse:', error);
-      throw new Error('PDF processing is not available');
+      // Instead of throwing, we'll fall back to a different approach
+      pdfParse = null;
+      return null;
     }
   }
   return pdfParse;
@@ -66,7 +75,13 @@ export class DocumentProcessor {
     try {
       switch (fileExtension) {
         case '.pdf':
-          extractedText = await this.processPDF(filePath);
+          try {
+            extractedText = await this.processPDF(filePath);
+          } catch (pdfError: any) {
+            // If PDF processing fails, suggest alternative approaches
+            console.warn('PDF processing failed, suggesting alternatives:', pdfError.message);
+            throw new Error(`PDF processing failed: ${pdfError.message} Please try converting your PDF to a text file or image format instead.`);
+          }
           break;
         case '.docx':
         case '.doc':
@@ -85,14 +100,15 @@ export class DocumentProcessor {
           break;
         case '.xlsx':
         case '.xls':
-          // Temporarily disable Excel processing to isolate the issue
-          throw new Error('Excel processing is temporarily disabled. Please use TXT or other supported formats.');
-          // extractedText = await this.processExcel(filePath);
+          extractedText = await this.processExcel(filePath);
           break;
         case '.csv':
-          // Temporarily disable CSV processing due to ES module compatibility issues
-          throw new Error('CSV processing is temporarily disabled. Please use TXT or other supported formats.');
-          // extractedText = await this.processCSV(filePath);
+          try {
+            extractedText = await this.processCSV(filePath);
+          } catch (csvError: any) {
+            console.warn('CSV processing failed:', csvError.message);
+            throw new Error(`CSV processing failed: ${csvError.message}. Please try converting your CSV to a text file instead.`);
+          }
           break;
         default:
           throw new Error(`Unsupported file type: ${fileExtension}`);
@@ -119,15 +135,29 @@ export class DocumentProcessor {
       if (!fs.existsSync(filePath)) {
         throw new Error('PDF file not found');
       }
+      
       const pdfParseModule = await getPdfParse();
+      if (!pdfParseModule) {
+        // Fallback: suggest converting PDF to text or using OCR
+        throw new Error('PDF processing is currently unavailable. Please convert your PDF to a text file or use an image format for OCR processing.');
+      }
+      
       const dataBuffer = fs.readFileSync(filePath);
       const data = await pdfParseModule(dataBuffer);
+      
       if (!data.text || data.text.trim().length === 0) {
-        throw new Error('No text content found in PDF');
+        throw new Error('No text content found in PDF. The PDF might be image-based - try converting it to an image format for OCR processing.');
       }
+      
       return data.text;
     } catch (error: any) {
       console.error('PDF processing error:', error);
+      
+      // If it's a PDF processing library issue, provide helpful guidance
+      if (error.message.includes('PDF processing is not available') || error.message.includes('ENOENT')) {
+        throw new Error('PDF processing is temporarily unavailable. Please try uploading your document as a text file (.txt) or image format (.jpg, .png) instead.');
+      }
+      
       throw new Error(`Failed to process PDF: ${error.message || 'Unknown error'}`);
     }
   }
