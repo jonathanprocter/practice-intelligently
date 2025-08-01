@@ -48,15 +48,30 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
         let errorMessage = 'Unknown error occurred';
         try {
           const errorData = await response.text();
-          const parsedError = JSON.parse(errorData);
-          errorMessage = parsedError.error || parsedError.details || errorData;
+          if (errorData) {
+            try {
+              const parsedError = JSON.parse(errorData);
+              errorMessage = parsedError.error || parsedError.details || errorData;
+            } catch {
+              errorMessage = errorData;
+            }
+          } else {
+            errorMessage = `Request failed with status ${response.status}`;
+          }
         } catch {
           errorMessage = `Request failed with status ${response.status}`;
         }
         throw new Error(errorMessage);
       }
 
-      return response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        console.error('Failed to parse JSON response:', jsonError);
+        throw new Error('Invalid response format from server');
+      }
+      return result;
     },
     onSuccess: (data, file) => {
       setUploadedFiles(prev => prev.map(f => 
@@ -120,15 +135,30 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
         let errorMessage = 'Failed to generate progress note';
         try {
           const errorData = await response.text();
-          const parsedError = JSON.parse(errorData);
-          errorMessage = parsedError.error || parsedError.details || errorData;
+          if (errorData) {
+            try {
+              const parsedError = JSON.parse(errorData);
+              errorMessage = parsedError.error || parsedError.details || errorData;
+            } catch {
+              errorMessage = errorData;
+            }
+          } else {
+            errorMessage = `Request failed with status ${response.status}`;
+          }
         } catch {
           errorMessage = `Request failed with status ${response.status}`;
         }
         throw new Error(errorMessage);
       }
 
-      return response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonError) {
+        console.error('Failed to parse JSON response:', jsonError);
+        throw new Error('Invalid response format from server');
+      }
+      return result;
     },
     onSuccess: (data, variables) => {
       // Update the file status to completed

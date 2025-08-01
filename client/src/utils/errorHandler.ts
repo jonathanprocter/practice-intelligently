@@ -7,8 +7,10 @@ export function setupGlobalErrorHandling() {
     // Prevent the default browser behavior (logging to console)
     event.preventDefault();
     
-    // You could show a user-friendly error message here
-    // For now, we'll just log it properly
+    // Show a user-friendly notification for critical errors
+    if (event.reason instanceof Error && event.reason.message) {
+      console.warn('Application error caught:', event.reason.message);
+    }
   });
 
   // Handle general errors
