@@ -116,7 +116,7 @@ export default function Clients() {
               <div className="overflow-y-auto">
                 <Tabs defaultValue="real-data" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="real-data">Your Real Clients (27)</TabsTrigger>
+                    <TabsTrigger value="real-data">Your Real Clients (65)</TabsTrigger>
                     <TabsTrigger value="manual-import">Manual Import</TabsTrigger>
                   </TabsList>
                   <TabsContent value="real-data" className="mt-4">

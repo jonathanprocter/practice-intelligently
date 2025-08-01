@@ -1,0 +1,25 @@
+Name,Date of Birth,Age,Phone,Email,Mailing Address,Employment
+William Aymami,07/01/1972,,(917) 495-9421,waymami@yahoo.com,"Hempstead, 115507716",Unemployed
+Christopher Balabanick,10/28/1998,,(516) 738-2550,pattonswarrior0777@gmail.com,"Port Saint Lucie, 34984-4454",Unemployed
+Paul N. Benjamin,09/04/1995,,(516) 297-7877,ssb95@aol.com,"Plainview, 11803",Part-Time
+John Best,06/01/1962,,(646) 208-3202,bestjm@gmail.com,"Malverne, 115651040",
+Nicholas Bonomi,05/22/1992,,(516) 816-6064,nick.bonomi22@gmail.com,"Syosset, 117913520",Unemployed
+Michael Bower,09/27/1962,,(516) 313-4616,mlbower1234@gmail.com,"Freeport, 115204939",Full-Time
+Brianna Brickman,09/19/1995,,(845) 826-2186,bbrickman1@gmail.com,"Oceanside, 115722424",Full-Time
+Mary Camarano,03/19/1995,,(516) 361-6960,mekc92016@gmail.com,,
+Bob Delmond,01/10/1963,,(516) 313-3962,mikenbob1@gmail.com,"Freeport, 115204939",Full-Time
+Steven Deluca,,,,(516) 477-1539,sdeluca25@yahoo.com,"Farmingdale, 11735",Full-Time
+Nick Dabreu,,,,(631) 793-5564,nick.dabreu@gmail.com,,
+Maryellen Dankenbrink,12/24/1991,,(516) 428-2797,Maryellendankenbrink@gmail.com,"Massapequa Park, 117621232",Self-employed
+Caitlin Dunn,07/21/1997,28,(516) 761-7775,caitlindunn0721@gmail.com,"Long Beach, 115612963",Unemployed
+Kenneth Doyle,02/23/1996,29,(516) 263-9242,kenjdoyleii@gmail.com,"New York, 10031",Unemployed
+Michael Cserenyi,03/27/1990,,(631) 449-0268,Kiuorno22@gmail.com,"Shirley, 11967",Full-Time
+Gavin Fisch,09/12/2006,,(631) 383-5781,gavindfisch@gmail.com,"Melville, 117471655",Unemployed
+Krista Flood,,,,(516) 468-0508,Krista.flood1@gmail.com,,
+Karen Foster,08/27/1993,,(646) 642-7582,karendenise93@gmail.com,"East Williston, 11596",Full-Time
+Zena Frey,,,,(516) 368-5468,Zena@ZenaFrey.com,,
+James Fusco,10/14/2004,,(516) 459-5960,,"Farmingdale, 117355104",
+Valentina Gjidoda,,,,(914) 299-9442,vgjidoda@gmail.com,"Lagrangeville, 12540",Full-Time
+David Grossman,01/03/1962,,(516) 521-8497,david100@optonline.net,"Woodbury, 11797",
+Nancy Grossman,11/24/1963,,(516) 521-7672,nancy100@optonline.net,"Woodbury, 11797",Part-Time
+Carlos F. Guerra,02/02/1989,,(347) 777-8930,solrac819@yahoo.com,"Astoria, 11105",Full-Time
