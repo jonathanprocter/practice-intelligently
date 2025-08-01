@@ -113,7 +113,7 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
       });
     },
     onError: (error, file) => {
-      // Extract the error message without logging the full error object
+      // Extract the error message without logging anything to console
       let errorMessage = 'Document processing failed';
       
       // Check if it's an Error object with a message
@@ -135,9 +135,7 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
         errorMessage = error;
       }
       
-      // Log only the error message, not the full error object
-      console.warn('Document processing failed:', errorMessage);
-      
+      // Update UI state without console logging
       setUploadedFiles(prev => prev.map(f => 
         f.file === file 
           ? { ...f, status: 'error', error: errorMessage }
