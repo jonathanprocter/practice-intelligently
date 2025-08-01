@@ -1,8 +1,27 @@
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
-import { db } from './db';
-import { calendarEvents, type CalendarEvent } from '../shared/schema';
-import { eq } from 'drizzle-orm';
+import { pool } from './db';
+
+// Local types for calendar functionality
+interface CalendarEvent {
+  id: string;
+  summary: string;
+  description?: string;
+  start: {
+    dateTime: string;
+    timeZone?: string;
+  };
+  end: {
+    dateTime: string;
+    timeZone?: string;
+  };
+  status?: string;
+  attendees?: any[];
+  calendarId?: string;
+  calendarName?: string;
+  location?: string;
+  isAllDay?: boolean;
+}
 
 interface GoogleCalendarInfo {
   id: string;
@@ -11,7 +30,7 @@ interface GoogleCalendarInfo {
   primary?: boolean;
 }
 
-interface GoogleCalendarEvent {
+interface GoogleCalendarEventBase {
   id: string;
   summary?: string;
   description?: string;
@@ -80,7 +99,7 @@ export interface GoogleCalendarEvent {
     dateTime: string;
     timeZone?: string;
   };
-  status: string;
+  status?: string;
   attendees?: Array<{
     email: string;
     displayName?: string;
@@ -163,7 +182,12 @@ export class GoogleCalendarService {
       const response = await calendar.calendarList.list();
       const calendars = response.data.items || [];
       console.log(`Found ${calendars.length} calendars:`, calendars.map(c => `${c.summary} (${c.id})`));
-      return calendars;
+      return calendars.map(cal => ({
+        id: cal.id || '',
+        summary: cal.summary || '',
+        description: cal.description,
+        primary: cal.primary
+      }));
     } catch (error: any) {
       console.error('Error listing calendars:', error);
       if (error.code === 401 || error.code === 403) {
