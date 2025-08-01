@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import pdfParse from 'pdf-parse';
+// Import pdf-parse in a way that avoids debug mode execution
+const pdfParse = require('pdf-parse');
 import mammoth from 'mammoth';
 import xlsx from 'xlsx';
 import csv from 'csv-parser';
