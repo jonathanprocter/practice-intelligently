@@ -16,7 +16,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings, Search, Filter, MapPin, User, X } from 'lucide-react';
 
 export default function Calendar() {
   const [currentWeek, setCurrentWeek] = useState(() => {
@@ -27,6 +30,16 @@ export default function Calendar() {
   const [activeTab, setActiveTab] = useState('week');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [selectedCalendarId, setSelectedCalendarId] = useState<string>('all');
+  
+  // Advanced filtering states for calendar
+  const [searchFilter, setSearchFilter] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [showAdvancedCalendarFilters, setShowAdvancedCalendarFilters] = useState(false);
+  const [dateRangeFilter, setDateRangeFilter] = useState<{start: string, end: string}>({
+    start: new Date().toISOString().split('T')[0],
+    end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  });
+  const [calendarTypeFilter, setCalendarTypeFilter] = useState<string[]>([]);
 
   // Get week range
   const weekEnd = getWeekEnd(currentWeek);
@@ -170,7 +183,26 @@ export default function Calendar() {
   });
 
   // Convert Google Calendar events to calendar events with proper error handling
-  const calendarEvents: CalendarEvent[] = googleEvents.map((event: any) => {
+  // Apply comprehensive filtering to calendar events
+  const filteredGoogleEvents = googleEvents.filter((event: any) => {
+    // Text search filter
+    const textMatch = searchFilter === "" || 
+      (event.title || event.summary || '').toLowerCase().includes(searchFilter.toLowerCase()) ||
+      (event.description || '').toLowerCase().includes(searchFilter.toLowerCase());
+    
+    // Location filter
+    const locationMatch = locationFilter === "" || 
+      (event.location || '').toLowerCase().includes(locationFilter.toLowerCase()) ||
+      (event.calendarName || '').toLowerCase().includes(locationFilter.toLowerCase());
+    
+    // Calendar type filter
+    const calendarMatch = calendarTypeFilter.length === 0 || 
+      calendarTypeFilter.includes(event.calendarName || event.calendarId || 'unknown');
+    
+    return textMatch && locationMatch && calendarMatch;
+  });
+
+  const calendarEvents: CalendarEvent[] = filteredGoogleEvents.map((event: any) => {
     // Handle both dateTime and date formats from Google Calendar
     let startTime: Date, endTime: Date;
 
@@ -341,6 +373,29 @@ export default function Calendar() {
   const handleSessionNotes = (event: CalendarEvent) => {
     // Navigate to session notes
     console.log(`Opening session notes for event ${event.id}`);
+  };
+
+  // Helper functions for calendar filtering
+  const clearCalendarFilters = () => {
+    setSearchFilter("");
+    setLocationFilter("");
+    setCalendarTypeFilter([]);
+  };
+
+  const toggleCalendarTypeFilter = (calendarName: string) => {
+    setCalendarTypeFilter(prev => 
+      prev.includes(calendarName) 
+        ? prev.filter(name => name !== calendarName)
+        : [...prev, calendarName]
+    );
+  };
+
+  // Get unique calendar types and locations for filtering
+  const uniqueCalendarTypes = [...new Set(googleEvents.map(event => event.calendarName).filter(Boolean))];
+  const uniqueLocations = [...new Set(googleEvents.map(event => event.location).filter(Boolean))];
+  
+  const getDefaultLocationForDate = (date: Date) => {
+    return getOfficeLocationByDay(date.getDay());
   };
 
   // Show connection error with connect button
@@ -563,6 +618,109 @@ export default function Calendar() {
             </Button>
           </div>
         </div>
+
+        {/* Advanced Filtering Bar for Calendar */}
+        <Card className="mt-4 border-0 shadow-sm bg-white">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4 mb-3">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search events, descriptions, or calendar names..."
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Filter by location..."
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                  className="pl-10 w-48"
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAdvancedCalendarFilters(!showAdvancedCalendarFilters)}
+                className={showAdvancedCalendarFilters ? "bg-therapy-primary text-white" : ""}
+              >
+                <Filter className="h-4 w-4 mr-1" />
+                Filters
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearCalendarFilters}
+                disabled={!searchFilter && !locationFilter && calendarTypeFilter.length === 0}
+              >
+                Clear
+              </Button>
+            </div>
+
+            {/* Advanced Filters Panel */}
+            {showAdvancedCalendarFilters && (
+              <div className="pt-4 border-t border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Calendar Type Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-therapy-text">Calendar Source</label>
+                    <div className="space-y-2">
+                      {uniqueCalendarTypes.map(calendarName => (
+                        <label key={calendarName} className="flex items-center space-x-2 text-sm">
+                          <Checkbox
+                            checked={calendarTypeFilter.includes(calendarName)}
+                            onCheckedChange={() => toggleCalendarTypeFilter(calendarName)}
+                          />
+                          <span>{calendarName}</span>
+                          <Badge 
+                            variant="secondary"
+                            className="text-xs"
+                          >
+                            {googleEvents.filter(event => event.calendarName === calendarName).length}
+                          </Badge>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Quick Location Filters */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-therapy-text">Quick Locations</label>
+                    <div className="space-y-1">
+                      {uniqueLocations.slice(0, 5).map(location => (
+                        <button
+                          key={location}
+                          onClick={() => setLocationFilter(location)}
+                          className="block w-full text-left px-2 py-1 text-xs hover:bg-therapy-primary/10 rounded"
+                        >
+                          {location}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Event Statistics */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-therapy-text">Calendar Stats</label>
+                    <div className="space-y-1 text-xs text-gray-600">
+                      <div>Total Events: {filteredGoogleEvents.length}</div>
+                      <div>This Week: {calendarDays.reduce((sum, day) => sum + day.events.length, 0)}</div>
+                      <div>Today: {calendarDays.find(day => day.isToday)?.events.length || 0}</div>
+                      {(searchFilter || locationFilter || calendarTypeFilter.length > 0) && (
+                        <Badge variant="outline" className="text-xs">
+                          Filtered View
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Calendar Content */}

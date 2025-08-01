@@ -48,16 +48,45 @@ export default function Appointments() {
   const [expandedAppointment, setExpandedAppointment] = useState<string | null>(null);
   const [sessionPrepModal, setSessionPrepModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<ExtendedAppointment | null>(null);
+  
+  // Advanced filtering states
+  const [dateRange, setDateRange] = useState<{start: string, end: string}>({
+    start: new Date().toISOString().split('T')[0],
+    end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  });
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [clientFilter, setClientFilter] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [quickFilterType, setQuickFilterType] = useState<'today' | 'week' | 'month' | 'custom'>('today');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Enhanced query for date range and comprehensive filtering
   const { data: appointmentsData, isLoading } = useQuery({
-    queryKey: ['appointments', selectedDate],
-    queryFn: () => {
-      if (selectedDate === new Date().toISOString().split('T')[0]) {
+    queryKey: ['appointments', quickFilterType, dateRange, selectedDate],
+    queryFn: async () => {
+      if (quickFilterType === 'today' || selectedDate === new Date().toISOString().split('T')[0]) {
         return ApiClient.getTodaysAppointments();
+      } else if (quickFilterType === 'custom' && dateRange.start && dateRange.end) {
+        // For date range queries, fetch appointments for each day and combine
+        const appointments = [];
+        const start = new Date(dateRange.start);
+        const end = new Date(dateRange.end);
+        
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          const dateStr = d.toISOString().split('T')[0];
+          try {
+            const dayAppointments = await ApiClient.getAppointments(dateStr);
+            appointments.push(...dayAppointments);
+          } catch (err) {
+            console.warn(`Could not fetch appointments for ${dateStr}`);
+          }
+        }
+        return appointments;
+      } else {
+        return ApiClient.getAppointments(selectedDate);
       }
-      return ApiClient.getAppointments(selectedDate);
     },
   });
 
@@ -77,13 +106,27 @@ export default function Appointments() {
     };
   });
 
-  // Enhanced filtering
-  const filteredAppointments = appointments.filter(apt => 
-    searchFilter === "" || 
-    apt.clientName?.toLowerCase().includes(searchFilter.toLowerCase()) ||
-    apt.type.toLowerCase().includes(searchFilter.toLowerCase()) ||
-    apt.notes?.toLowerCase().includes(searchFilter.toLowerCase())
-  );
+  // Comprehensive multi-criteria filtering
+  const filteredAppointments = appointments.filter(apt => {
+    // Text search filter
+    const textMatch = searchFilter === "" || 
+      apt.clientName?.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      apt.type.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      apt.notes?.toLowerCase().includes(searchFilter.toLowerCase());
+    
+    // Status filter
+    const statusMatch = statusFilter.length === 0 || statusFilter.includes(apt.status);
+    
+    // Client name filter
+    const clientMatch = clientFilter === "" || 
+      apt.clientName?.toLowerCase().includes(clientFilter.toLowerCase());
+    
+    // Location filter
+    const locationMatch = locationFilter === "" || 
+      apt.location?.toLowerCase().includes(locationFilter.toLowerCase());
+    
+    return textMatch && statusMatch && clientMatch && locationMatch;
+  });
 
   // Quick stats - based on actual displayed data
   const todayAppointments = filteredAppointments.length; // Show actual filtered count
@@ -123,6 +166,56 @@ export default function Appointments() {
     setSelectedAppointment(appointment);
     setSessionPrepModal(true);
   };
+
+  // Helper functions for advanced filtering
+  const setQuickFilter = (type: 'today' | 'week' | 'month' | 'custom') => {
+    setQuickFilterType(type);
+    const now = new Date();
+    
+    switch (type) {
+      case 'today':
+        setSelectedDate(now.toISOString().split('T')[0]);
+        break;
+      case 'week':
+        const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+        const weekEnd = new Date(now.setDate(weekStart.getDate() + 6));
+        setDateRange({
+          start: weekStart.toISOString().split('T')[0],
+          end: weekEnd.toISOString().split('T')[0]
+        });
+        break;
+      case 'month':
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        setDateRange({
+          start: monthStart.toISOString().split('T')[0],
+          end: monthEnd.toISOString().split('T')[0]
+        });
+        break;
+    }
+  };
+
+  const clearAllFilters = () => {
+    setSearchFilter("");
+    setClientFilter("");
+    setLocationFilter("");
+    setStatusFilter([]);
+    setQuickFilterType('today');
+    setSelectedDate(new Date().toISOString().split('T')[0]);
+  };
+
+  const toggleStatusFilter = (status: string) => {
+    setStatusFilter(prev => 
+      prev.includes(status) 
+        ? prev.filter(s => s !== status)
+        : [...prev, status]
+    );
+  };
+
+  // Get unique clients for filter dropdown
+  const uniqueClients = [...new Set(appointments.map(apt => apt.clientName).filter(Boolean))];
+  const uniqueLocations = [...new Set(appointments.map(apt => apt.location).filter(Boolean))];
+  const availableStatuses = ['confirmed', 'pending', 'completed', 'cancelled', 'no_show'];
 
   const handleMarkComplete = (appointmentId: string) => {
     // Implementation for marking appointment as complete
@@ -328,6 +421,23 @@ export default function Appointments() {
                   </Button>
                 </div>
               )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className={showAdvancedFilters ? "bg-therapy-primary text-white" : ""}
+              >
+                <Filter className="h-4 w-4 mr-1" />
+                Advanced
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearAllFilters}
+                disabled={!searchFilter && !clientFilter && statusFilter.length === 0}
+              >
+                Clear Filters
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
@@ -349,6 +459,181 @@ export default function Appointments() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Advanced Filters Panel */}
+      {showAdvancedFilters && (
+        <Card className="border-0 shadow-sm bg-blue-50/30">
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Quick Date Filters */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-therapy-text">Quick Date Filter</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant={quickFilterType === 'today' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setQuickFilter('today')}
+                    className="text-xs"
+                  >
+                    Today
+                  </Button>
+                  <Button
+                    variant={quickFilterType === 'week' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setQuickFilter('week')}
+                    className="text-xs"
+                  >
+                    This Week
+                  </Button>
+                  <Button
+                    variant={quickFilterType === 'month' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setQuickFilter('month')}
+                    className="text-xs"
+                  >
+                    This Month
+                  </Button>
+                  <Button
+                    variant={quickFilterType === 'custom' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setQuickFilter('custom')}
+                    className="text-xs"
+                  >
+                    Custom
+                  </Button>
+                </div>
+                {quickFilterType === 'custom' && (
+                  <div className="space-y-2 mt-2">
+                    <input
+                      type="date"
+                      value={dateRange.start}
+                      onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                      className="w-full border border-therapy-border rounded px-2 py-1 text-sm"
+                      placeholder="Start Date"
+                    />
+                    <input
+                      type="date"
+                      value={dateRange.end}
+                      onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                      className="w-full border border-therapy-border rounded px-2 py-1 text-sm"
+                      placeholder="End Date"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Client Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-therapy-text">Client</label>
+                <div className="relative">
+                  <User className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search by client name..."
+                    value={clientFilter}
+                    onChange={(e) => setClientFilter(e.target.value)}
+                    className="pl-8 text-sm"
+                  />
+                </div>
+                {uniqueClients.length > 0 && (
+                  <div className="max-h-32 overflow-y-auto space-y-1">
+                    {uniqueClients
+                      .filter(client => !clientFilter || client.toLowerCase().includes(clientFilter.toLowerCase()))
+                      .slice(0, 5)
+                      .map(client => (
+                        <button
+                          key={client}
+                          onClick={() => setClientFilter(client)}
+                          className="block w-full text-left px-2 py-1 text-xs hover:bg-therapy-primary/10 rounded"
+                        >
+                          {client}
+                        </button>
+                      ))
+                    }
+                  </div>
+                )}
+              </div>
+
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-therapy-text">Status</label>
+                <div className="space-y-2">
+                  {availableStatuses.map(status => (
+                    <label key={status} className="flex items-center space-x-2 text-sm">
+                      <Checkbox
+                        checked={statusFilter.includes(status)}
+                        onCheckedChange={() => toggleStatusFilter(status)}
+                      />
+                      <span className="capitalize">{status.replace('_', ' ')}</span>
+                      <Badge 
+                        className={getStatusColor(status) + ' text-xs'}
+                        variant="secondary"
+                      >
+                        {appointments.filter(apt => apt.status === status).length}
+                      </Badge>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Location Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-therapy-text">Location</label>
+                <div className="relative">
+                  <MapPin className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Filter by location..."
+                    value={locationFilter}
+                    onChange={(e) => setLocationFilter(e.target.value)}
+                    className="pl-8 text-sm"
+                  />
+                </div>
+                {uniqueLocations.length > 0 && (
+                  <div className="space-y-1">
+                    {uniqueLocations.map(location => (
+                      <button
+                        key={location}
+                        onClick={() => setLocationFilter(location)}
+                        className="block w-full text-left px-2 py-1 text-xs hover:bg-therapy-primary/10 rounded"
+                      >
+                        {location}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Filter Summary */}
+            <div className="mt-4 pt-4 border-t border-therapy-border/30">
+              <div className="flex items-center justify-between text-sm text-therapy-text/60">
+                <div>
+                  Showing {filteredAppointments.length} of {appointments.length} appointments
+                  {(searchFilter || clientFilter || statusFilter.length > 0 || locationFilter) && (
+                    <span className="ml-2 text-therapy-primary font-medium">
+                      (filtered)
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  {quickFilterType !== 'today' && (
+                    <Badge variant="outline" className="text-xs">
+                      {quickFilterType === 'custom' 
+                        ? `${dateRange.start} to ${dateRange.end}` 
+                        : quickFilterType
+                      }
+                    </Badge>
+                  )}
+                  {statusFilter.length > 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      {statusFilter.length} status{statusFilter.length > 1 ? 'es' : ''}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Appointments List/Grid */}
       <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-4'}>
