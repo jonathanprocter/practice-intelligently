@@ -561,8 +561,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Session note not found" });
       }
 
+      // Convert client name to client UUID if needed
+      let actualClientId = clientId;
+      if (!clientId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        // clientId is actually a client name, convert to UUID
+        actualClientId = await storage.getClientIdByName(clientId);
+        if (!actualClientId) {
+          return res.status(404).json({ error: "Client not found" });
+        }
+      }
+
       // Get upcoming appointments for this client
-      const upcomingAppointments = await storage.getUpcomingAppointmentsByClient(clientId);
+      const upcomingAppointments = await storage.getUpcomingAppointmentsByClient(actualClientId);
       
       if (upcomingAppointments.length === 0) {
         return res.status(404).json({ error: "No upcoming appointments found for this client" });

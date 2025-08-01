@@ -11,7 +11,7 @@ import {
   type AuditLog, type InsertAuditLog
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, desc, and, gte, lte, count, like, or } from "drizzle-orm";
+import { eq, desc, and, gte, lte, count, like, or, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -437,6 +437,17 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(appointments.startTime)
       .limit(5); // Limit to next 5 appointments
+  }
+
+  async getClientIdByName(clientName: string): Promise<string | null> {
+    const [client] = await db
+      .select({ id: clients.id })
+      .from(clients)
+      .where(
+        sql`LOWER(${clients.firstName} || ' ' || ${clients.lastName}) = LOWER(${clientName})`
+      )
+      .limit(1);
+    return client?.id || null;
   }
 
   async updateAppointmentSessionPrep(appointmentId: string, sessionPrep: string): Promise<void> {
