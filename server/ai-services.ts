@@ -190,14 +190,15 @@ export async function analyzeSessionTranscript(transcript: string): Promise<Sess
 
 interface AppointmentData {
   id: string;
-  clientName: string;
-  appointmentDate: string;
+  clientId: string;
+  therapistId: string;
+  appointmentDate: Date;
   status: string;
   notes?: string;
 }
 
 // Generate appointment insights
-export async function generateAppointmentInsights(appointments: Appointment[]): Promise<AIAnalysisResult> {
+export async function generateAppointmentInsights(appointments: AppointmentData[]): Promise<AIAnalysisResult> {
   const appointmentData = appointments.map(apt => ({
     type: apt.type,
     status: apt.status,

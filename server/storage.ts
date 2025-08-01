@@ -927,7 +927,7 @@ export class DatabaseStorage implements IStorage {
     const noShows = appointments.filter(apt => apt.status === 'no_show').length;
     const cancelled = appointments.filter(apt => apt.status === 'cancelled').length;
 
-    const allClients = await this.getClients(therapistId);
+    const allClients = await this.getClients(therapistsId);
     const activeClients = allClients.filter(client => client.status === 'active').length;
 
     const averageSessionsPerClient = activeClients > 0 ? totalSessions / activeClients : 0;
@@ -1170,15 +1170,14 @@ export class DatabaseStorage implements IStorage {
 
   async getActionItemsByEventId(eventId: string): Promise<ActionItem[]> {
     try {
-      // Debug logging removed for production
-      const result = await pool.query(
-        'SELECT * FROM action_items WHERE event_id = $1 ORDER BY created_at DESC',
-        [eventId]
-      );
+      // Querying for eventId
 
-      // Debug logging removed for production
-      // Debug logging removed for production
+    const result = await pool.query(
+      'SELECT * FROM action_items WHERE event_id = $1 ORDER BY created_at DESC',
+      [eventId]
+    );
 
+    // Database query completed
       return result.rows.map((row: any) => ({
         id: row.id,
         clientId: row.client_id,

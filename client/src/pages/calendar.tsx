@@ -35,7 +35,7 @@ export default function Calendar() {
   // Fetch Google Calendar events instead of mock appointments
   // Add Connect Google Calendar functionality
   const connectGoogleCalendar = () => {
-    console.log('Initiating Google Calendar connection...');
+    // Initiating Google Calendar connection
     window.location.href = '/api/auth/google';
   };
 
@@ -67,17 +67,17 @@ export default function Calendar() {
         // Get events for the entire current week from Simple Practice integration
         const weekStart = currentWeek.toISOString();
         const weekEndISO = weekEnd.toISOString();
-        
+
         console.log('Fetching events for week range:', weekStart, 'to', weekEndISO);
-        
+
         // First try to get calendar events for the week range
         const weekResponse = await fetch(`/api/calendar/events?start=${encodeURIComponent(weekStart)}&end=${encodeURIComponent(weekEndISO)}`);
         console.log('Week response status:', weekResponse.status, 'for range:', weekStart, 'to', weekEndISO);
-        
+
         if (weekResponse.ok) {
           const weekEvents = await weekResponse.json();
           console.log('Week events from API:', weekEvents.length);
-          
+
           if (weekEvents.length > 0) {
             return weekEvents.map((event: any) => ({
               id: event.id,
@@ -91,20 +91,20 @@ export default function Calendar() {
             }));
           }
         }
-        
+
         // Fallback: Get today's events from Simple Practice integration
         const todayResponse = await fetch('/api/oauth/events/today');
         console.log('Today response status:', todayResponse.status);
-        
+
         if (todayResponse.ok) {
           const todayEvents = await todayResponse.json();
           console.log('Today events from API:', todayEvents.length);
-          
+
           // Convert Google Calendar events to the expected format
           const convertedEvents = todayEvents.map((event: any) => {
             const startTime = new Date(event.start?.dateTime || event.start?.date);
             const endTime = new Date(event.end?.dateTime || event.end?.date);
-            
+
             return {
               id: event.id,
               title: event.summary || 'Appointment',
@@ -116,7 +116,7 @@ export default function Calendar() {
               calendarName: 'Simple Practice'
             };
           });
-          
+
           console.log('Successfully converted', convertedEvents.length, 'events');
           return convertedEvents;
         } else {
@@ -127,11 +127,11 @@ export default function Calendar() {
         console.error('Calendar fetch error:', err);
         return [];
       }
-      
+
       // Fallback: First check if Google Calendar is connected
       const statusResponse = await fetch('/api/auth/google/status');
       const status = await statusResponse.json();
-      
+
       if (!status.connected) {
         // Try to get events from database first
         const dbResponse = await fetch('/api/calendar/events/local');
@@ -140,14 +140,14 @@ export default function Calendar() {
         }
         return []; // Return empty array instead of throwing error
       }
-      
+
       // Use hybrid endpoint to get fresh data and sync to database
       const timeMin = new Date('2020-01-01T00:00:00.000Z').toISOString();
       const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
       const calendarParam = selectedCalendarId === 'all' ? 'all' : selectedCalendarId;
-      
+
       const response = await fetch(`/api/calendar/events/hybrid?source=live&timeMin=${timeMin}&timeMax=${timeMax}&calendarId=${calendarParam}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         if (response.status === 401 || response.status === 403 || errorData.requiresAuth) {
@@ -160,7 +160,7 @@ export default function Calendar() {
         }
         throw new Error(errorData.error || 'Failed to fetch calendar events');
       }
-      
+
       return response.json();
     },
     retry: false,
@@ -190,7 +190,7 @@ export default function Calendar() {
   const calendarEvents: CalendarEvent[] = googleEvents.map((event: any) => {
     // Handle both dateTime and date formats from Google Calendar
     let startTime: Date, endTime: Date;
-    
+
     try {
       // Use the direct startTime if already converted by backend
       if (event.startTime) {
@@ -203,7 +203,7 @@ export default function Calendar() {
         console.warn('Event missing start time:', event);
         startTime = new Date();
       }
-      
+
       if (event.end?.dateTime) {
         endTime = new Date(event.end.dateTime);
       } else if (event.end?.date) {
@@ -216,7 +216,7 @@ export default function Calendar() {
       startTime = new Date();
       endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
     }
-    
+
     const startDateForLocation = event.start?.dateTime ? 
       new Date(event.start.dateTime) : 
       event.start?.date ? new Date(event.start.date) : new Date();
@@ -241,17 +241,15 @@ export default function Calendar() {
     const hasValidStart = event.startTime && (event.startTime instanceof Date || !isNaN(new Date(event.startTime).getTime()));
     const hasValidEnd = event.endTime && (event.endTime instanceof Date || !isNaN(new Date(event.endTime).getTime()));
     const isValid = hasValidStart && hasValidEnd;
-    
+
     if (!isValid) {
       console.warn('Filtering out invalid event:', event);
     }
     return isValid;
   });
 
-  // Add debug logging for event filtering
-  console.log(`Total events after conversion: ${calendarEvents.length}`);
-  console.log(`Current week: ${currentWeek.toDateString()} to ${weekEnd.toDateString()}`);
-  
+  // Events loaded and converted successfully
+
   // Show sample of events for debugging
   if (calendarEvents.length > 0) {
     console.log('Sample events:', calendarEvents.slice(0, 3).map(e => ({
@@ -259,7 +257,7 @@ export default function Calendar() {
       startTime: e.startTime,
       dateString: e.startTime instanceof Date ? e.startTime.toDateString() : 'Invalid Date'
     })));
-    
+
     // Show events for different weeks to help debug
     const eventsByWeek = calendarEvents.reduce((acc, event) => {
       const eventDate = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
@@ -268,7 +266,7 @@ export default function Calendar() {
       acc[weekStart].push(event.title);
       return acc;
     }, {} as Record<string, string[]>);
-    
+
     console.log('Events by week (showing first 5 weeks):', Object.entries(eventsByWeek).slice(0, 5));
   }
 
@@ -279,12 +277,12 @@ export default function Calendar() {
       const matches = eventDate.toDateString() === date.toDateString();
       return matches;
     });
-    
+
     // Debug logging for each day
     if (dayEvents.length > 0) {
       console.log(`${date.toDateString()}: ${dayEvents.length} events`, dayEvents.map(e => e.title));
     }
-    
+
     return {
       date,
       isToday: date.toDateString() === new Date().toDateString(),
@@ -292,7 +290,7 @@ export default function Calendar() {
       events: dayEvents
     };
   });
-  
+
   // Log total events for the current week
   const weekEventCount = calendarDays.reduce((total, day) => total + day.events.length, 0);
   console.log(`Events for current week (${currentWeek.toDateString()} - ${weekEnd.toDateString()}): ${weekEventCount}`);
@@ -340,7 +338,7 @@ export default function Calendar() {
 
   const handleExportCalendar = async (type: 'weekly' | 'daily' | 'appointments') => {
     const { exportToPDF, exportDailyToPDF } = await import('@/utils/pdfExport');
-    
+
     // Convert calendar events to appointment format for PDF export
     const appointmentData = calendarEvents.map(event => ({
       id: event.id,
@@ -503,7 +501,7 @@ export default function Calendar() {
                 </div>
               )}
             </div>
-            
+
             {/* Calendar Selector */}
             <div className="mt-3">
               <Select value={selectedCalendarId} onValueChange={setSelectedCalendarId}>
@@ -527,7 +525,7 @@ export default function Calendar() {
               </Select>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             <Link href="/calendar/integration">
               <Button variant="outline" size="sm">
@@ -542,7 +540,7 @@ export default function Calendar() {
               <CalendarIcon className="w-4 h-4" />
               New Appointment
             </Button>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
@@ -578,7 +576,7 @@ export default function Calendar() {
               <ChevronLeft className="w-4 h-4 mr-2" />
               Previous Week
             </Button>
-            
+
             <Button 
               variant={isCurrentWeek(currentWeek) ? "default" : "outline"}
               onClick={handleToday}
@@ -590,7 +588,7 @@ export default function Calendar() {
             >
               Today
             </Button>
-            
+
             <Button 
               variant="outline" 
               onClick={handleNextWeek}
@@ -674,7 +672,7 @@ export default function Calendar() {
               Appointment Details
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedEvent && (
             <div className="space-y-4">
               <div>
@@ -689,38 +687,38 @@ export default function Calendar() {
                     .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                 </p>
               </div>
-              
+
               {selectedEvent.clientName && (
                 <div>
                   <label className="text-sm font-medium text-therapy-text">Client</label>
                   <p className="text-therapy-text/70">{selectedEvent.clientName}</p>
                 </div>
               )}
-              
+
               <div>
                 <label className="text-sm font-medium text-therapy-text">Type</label>
                 <p className="text-therapy-text/70 capitalize">{selectedEvent.type}</p>
               </div>
-              
+
               <div>
                 <label className="text-sm font-medium text-therapy-text">Status</label>
                 <p className="text-therapy-text/70 capitalize">{selectedEvent.status}</p>
               </div>
-              
+
               {selectedEvent.location && (
                 <div>
                   <label className="text-sm font-medium text-therapy-text">Location</label>
                   <p className="text-therapy-text/70">{selectedEvent.location}</p>
                 </div>
               )}
-              
+
               {selectedEvent.notes && (
                 <div>
                   <label className="text-sm font-medium text-therapy-text">Notes</label>
                   <p className="text-therapy-text/70">{selectedEvent.notes}</p>
                 </div>
               )}
-              
+
               <div className="flex gap-2 pt-4">
                 <Button 
                   variant="outline" 
