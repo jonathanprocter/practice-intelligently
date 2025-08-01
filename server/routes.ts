@@ -17,6 +17,7 @@ import { randomUUID } from 'crypto';
 import multer from 'multer';
 import fs from 'fs';
 import { getAllApiStatuses } from "./health-check";
+import { simpleOAuth } from "./oauth-simple";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check
@@ -627,7 +628,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Use the simple OAuth implementation
       const { simpleOAuth } = await import('./oauth-simple');
-      const authUrl = simpleOAuth.generateAuthUrl();
+      const authUrl = simpleOAuth.getAuthUrl();
       
       // Redirecting to Google OAuth
       res.redirect(authUrl);
@@ -1411,7 +1412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/calendar/events', async (req, res) => {
     try {
       const { calendarId = 'primary', ...eventData } = req.body;
-      const event = await googleCalendarService.createEvent(calendarId, eventData);
+      const event = await simpleOAuth.createEvent(calendarId, eventData);
       res.json(event);
     } catch (error) {
       console.error('Error creating calendar event:', error);
@@ -1423,7 +1424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { eventId } = req.params;
       const { calendarId = 'primary', ...eventData } = req.body;
-      const event = await googleCalendarService.updateEvent(calendarId, eventId, eventData);
+      const event = await simpleOAuth.updateEvent(calendarId, eventId, eventData);
       res.json(event);
     } catch (error) {
       console.error('Error updating calendar event:', error);
@@ -1435,7 +1436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { eventId } = req.params;
       const { calendarId = 'primary' } = req.query;
-      await googleCalendarService.deleteEvent(calendarId as string, eventId);
+      await simpleOAuth.deleteEvent(calendarId as string, eventId);
       res.json({ success: true });
     } catch (error) {
       console.error('Error deleting calendar event:', error);
