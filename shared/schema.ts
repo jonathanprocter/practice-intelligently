@@ -218,6 +218,7 @@ export const progressNotes = pgTable("progress_notes", {
   keyPoints: jsonb("key_points"),
   significantQuotes: jsonb("significant_quotes"),
   narrativeSummary: text("narrative_summary"),
+  aiTags: jsonb("ai_tags"), // AI-generated tags for categorization
   sessionDate: timestamp("session_date"),
   // Legacy fields for backward compatibility
   progressSummary: text("progress_summary"),

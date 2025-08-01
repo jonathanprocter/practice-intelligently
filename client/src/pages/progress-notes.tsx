@@ -20,6 +20,7 @@ interface ProgressNote {
   keyPoints: string[];
   significantQuotes: string[];
   narrativeSummary: string;
+  aiTags?: string[]; // AI-generated tags
   createdAt: string;
 }
 
@@ -139,6 +140,24 @@ export function ProgressNotesPage() {
                     {note.subjective.substring(0, 100)}...
                   </p>
                   
+                  {note.aiTags && note.aiTags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {note.aiTags.slice(0, 3).map((tag, index) => (
+                        <span
+                          key={index}
+                          className="px-2 py-1 text-xs bg-therapy-primary/10 text-therapy-primary rounded-full"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {note.aiTags.length > 3 && (
+                        <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                          +{note.aiTags.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  
                   <div className="flex items-center gap-1 mt-2 text-xs text-gray-400">
                     <Clock className="w-3 h-3" />
                     <span>Created {format(new Date(note.createdAt), 'MMM d, h:mm a')}</span>
@@ -155,7 +174,7 @@ export function ProgressNotesPage() {
             <div className="space-y-6">
               <div>
                 <h2 className="text-lg font-semibold mb-2">{selectedNote.title}</h2>
-                <div className="flex items-center gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
                   <div className="flex items-center gap-1">
                     <User className="w-4 h-4" />
                     <span>{selectedNote.clientName}</span>
@@ -165,6 +184,20 @@ export function ProgressNotesPage() {
                     <span>{format(new Date(selectedNote.sessionDate), 'MMMM d, yyyy')}</span>
                   </div>
                 </div>
+                
+                {selectedNote.aiTags && selectedNote.aiTags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <span className="text-sm font-medium text-gray-700">AI Tags:</span>
+                    {selectedNote.aiTags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 text-sm bg-therapy-primary/10 text-therapy-primary rounded-full border border-therapy-primary/20"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <Tabs defaultValue="soap" className="w-full">
