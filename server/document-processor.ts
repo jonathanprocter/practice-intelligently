@@ -19,27 +19,16 @@ async function getCsvParser() {
   return csvParser;
 }
 
-// Use dynamic import with better error handling for pdf-parse
-let pdfParse: any = null;
-async function getPdfParse() {
-  if (!pdfParse) {
-    try {
-      // Try different import strategies for pdf-parse
-      const pdfParseModule = await import('pdf-parse');
-      pdfParse = pdfParseModule.default || pdfParseModule;
-      
-      // Test the function to ensure it works
-      if (typeof pdfParse !== 'function') {
-        throw new Error('pdf-parse module did not export a function');
-      }
-    } catch (error) {
-      console.error('Failed to import pdf-parse:', error);
-      // Instead of throwing, we'll fall back to a different approach
-      pdfParse = null;
-      return null;
-    }
+// Import pdfjs-dist for direct PDF text extraction
+async function getPdfJS() {
+  try {
+    // Use the legacy build for Node.js environments
+    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    return pdfjsLib;
+  } catch (error) {
+    console.error('Failed to import pdfjs-dist:', error);
+    throw new Error('PDF processing library unavailable');
   }
-  return pdfParse;
 }
 
 export interface ProcessedDocument {
@@ -136,29 +125,62 @@ export class DocumentProcessor {
         throw new Error('PDF file not found');
       }
       
-      const pdfParseModule = await getPdfParse();
-      if (!pdfParseModule) {
-        // Fallback: suggest converting PDF to text or using OCR
-        throw new Error('PDF processing is currently unavailable. Please convert your PDF to a text file or use an image format for OCR processing.');
+      console.log('Processing PDF using pdfjs-dist:', filePath);
+      
+      const pdfjsLib = await getPdfJS();
+      
+      // Read PDF file as buffer and convert to Uint8Array
+      const pdfBuffer = fs.readFileSync(filePath);
+      const pdfData = new Uint8Array(pdfBuffer);
+      
+      // Parse PDF document
+      const pdfDocument = await pdfjsLib.getDocument({
+        data: pdfData,
+        useWorkerFetch: false,
+        isEvalSupported: false,
+        useSystemFonts: true
+      }).promise;
+      
+      let fullText = '';
+      
+      // Extract text from each page
+      for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
+        try {
+          console.log(`Processing PDF page ${pageNum}...`);
+          
+          const page = await pdfDocument.getPage(pageNum);
+          const textContent = await page.getTextContent();
+          
+          let pageText = '';
+          for (const item of textContent.items) {
+            if ('str' in item) {
+              pageText += item.str + ' ';
+            }
+          }
+          
+          if (pageText.trim()) {
+            fullText += `Page ${pageNum}:\n${pageText.trim()}\n\n`;
+          }
+          
+          // Clean up page
+          page.cleanup();
+        } catch (pageError: any) {
+          console.warn(`Failed to process PDF page ${pageNum}:`, pageError.message);
+        }
       }
       
-      const dataBuffer = fs.readFileSync(filePath);
-      const data = await pdfParseModule(dataBuffer);
+      // Clean up document
+      pdfDocument.destroy();
       
-      if (!data.text || data.text.trim().length === 0) {
-        throw new Error('No text content found in PDF. The PDF might be image-based - try converting it to an image format for OCR processing.');
+      if (fullText.trim().length === 0) {
+        throw new Error('No text could be extracted from PDF. The PDF might be image-based or encrypted.');
       }
       
-      return data.text;
+      console.log('Successfully extracted text from PDF, length:', fullText.length);
+      return fullText;
     } catch (error: any) {
       console.error('PDF processing error:', error);
-      
-      // If it's a PDF processing library issue, provide helpful guidance
-      if (error.message.includes('PDF processing is not available') || error.message.includes('ENOENT')) {
-        throw new Error('PDF processing is temporarily unavailable. Please try uploading your document as a text file (.txt) or image format (.jpg, .png) instead.');
-      }
-      
-      throw new Error(`Failed to process PDF: ${error.message || 'Unknown error'}`);
+      throw new Error(`PDF processing failed: ${error.message || 'Unknown error'}`);
     }
   }
 

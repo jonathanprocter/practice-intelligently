@@ -771,7 +771,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'image/bmp',
         'application/vnd.ms-excel',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/csv'
+        'text/csv',
+        'application/pdf'
       ];
       
       if (allowedTypes.includes(file.mimetype)) {
