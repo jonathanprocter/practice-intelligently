@@ -168,6 +168,26 @@ export default function Appointments() {
     }
   });
 
+  const deleteCalendarEventMutation = useMutation({
+    mutationFn: (eventId: string) => ApiClient.deleteCalendarEvent(eventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['oauth-events'] });
+      toast({
+        title: "Calendar event deleted",
+        description: "The event has been successfully removed from your calendar.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: `Failed to delete calendar event: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -411,6 +431,7 @@ export default function Appointments() {
                           size="sm" 
                           className="text-xs h-7 text-red-600 hover:bg-red-50"
                           onClick={() => deleteAppointmentMutation.mutate(appointment.id)}
+                          disabled={deleteAppointmentMutation.isPending}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -418,9 +439,10 @@ export default function Appointments() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="text-xs h-7 text-gray-400 cursor-not-allowed"
-                          disabled
-                          title="Calendar events cannot be deleted from here"
+                          className="text-xs h-7 text-red-600 hover:bg-red-50"
+                          onClick={() => deleteCalendarEventMutation.mutate(appointment.id)}
+                          disabled={deleteCalendarEventMutation.isPending}
+                          title="Delete from Google Calendar"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>

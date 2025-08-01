@@ -236,6 +236,13 @@ export class ApiClient {
     return response.json();
   }
 
+  static async deleteCalendarEvent(eventId: string, calendarId: string = 'primary'): Promise<void> {
+    const response = await apiRequest('DELETE', `/api/calendar/events/${eventId}?calendarId=${calendarId}`);
+    if (!response.ok) {
+      throw new Error('Failed to delete calendar event');
+    }
+  }
+
   static async getAppointment(id: string): Promise<Appointment> {
     const response = await apiRequest('GET', `/api/appointments/detail/${id}`);
     return response.json();
