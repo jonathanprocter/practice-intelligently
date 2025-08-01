@@ -49,12 +49,39 @@ interface EnhancedInsights {
   };
 }
 
+interface SessionHistoryItem {
+  id: string;
+  date: string;
+  content: string;
+  insights?: string[];
+  mood?: string;
+  progress?: number;
+}
+
+interface ProgressReport {
+  clientId: string;
+  timeframe: string;
+  overallProgress: number;
+  keyMilestones: string[];
+  challengeAreas: string[];
+  recommendations: string[];
+  nextSteps: string[];
+}
+
+interface RiskAssessment {
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  riskFactors: string[];
+  protectiveFactors: string[];
+  immediateActions: string[];
+  followUpRecommendations: string[];
+}
+
 export async function generateEnhancedInsights(request: EnhancedInsightsRequest): Promise<EnhancedInsights> {
   try {
     // Gather comprehensive session history for context
     const clientHistory = request.sessionHistory || [];
     const recentSessions = clientHistory.slice(0, 5); // Last 5 sessions for context
-    
+
     const prompt = `You are an experienced clinical therapist providing comprehensive AI-assisted insights for session documentation and treatment planning.
 
 APPOINTMENT DETAILS:
@@ -125,7 +152,7 @@ Format your response as a structured JSON object matching the EnhancedInsights i
     });
 
     const insights = JSON.parse(response.choices[0].message.content || '{}');
-    
+
     // Structure the response to match our interface
     return {
       summary: insights.summary || 'AI analysis completed',
@@ -177,7 +204,7 @@ export async function generateProgressReport(clientId: string, timeframe: 'week'
   try {
     // Fetch session history for the specified timeframe
     const sessions = await storage.getSessionNotesByClientId(clientId);
-    
+
     if (sessions.length === 0) {
       return { message: 'No session data available for progress analysis' };
     }

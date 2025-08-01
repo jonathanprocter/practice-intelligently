@@ -1,6 +1,22 @@
 import OpenAI from 'openai';
 import { storage } from './storage';
 
+interface SessionData {
+  id: string;
+  date: string;
+  content: string;
+  mood?: string;
+  progress?: number;
+  clientId: string;
+}
+
+interface EventAnalysis {
+  preEventPatterns: string[];
+  postEventPatterns: string[];
+  significantChanges: string[];
+  recommendations: string[];
+}
+
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Advanced Pattern Recognition (#3)
@@ -244,7 +260,7 @@ function extractMoodIndicators(content: string): string[] {
   return moods;
 }
 
-function groupSessionsByTimePattern(sessions: any[], pattern: 'month' | 'dayOfWeek'): any {
+function groupSessionsByTimePattern(sessions: SessionData[], pattern: 'month' | 'dayOfWeek'): Record<string, SessionData[]> {
   const grouped: any = {};
   
   sessions.forEach(session => {
@@ -264,7 +280,7 @@ function groupSessionsByTimePattern(sessions: any[], pattern: 'month' | 'dayOfWe
   return grouped;
 }
 
-function analyzeAroundMajorEvents(sessions: any[]): any {
+function analyzeAroundMajorEvents(sessions: SessionData[]): EventAnalysis {
   const events = ['holiday', 'birthday', 'anniversary', 'seasonal'];
   const eventAnalysis: any = {};
   

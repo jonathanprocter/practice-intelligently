@@ -1,10 +1,18 @@
 import OpenAI from 'openai';
 import { storage } from './storage';
 
+interface TreatmentOutcome {
+  predictedSuccess: number;
+  estimatedDuration: number;
+  keyFactors: string[];
+  recommendations: string[];
+  confidenceLevel: number;
+}
+
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Predictive Clinical Modeling (#2)
-export async function predictTreatmentOutcome(clientId: string, currentSessionCount: number): Promise<any> {
+export async function predictTreatmentOutcome(clientId: string, currentSessionCount: number): Promise<TreatmentOutcome> {
   try {
     const sessionHistory = await storage.getSessionNotesByClientId(clientId);
     const recentSessions = sessionHistory.slice(0, Math.min(10, sessionHistory.length));

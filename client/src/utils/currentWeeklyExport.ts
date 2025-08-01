@@ -83,7 +83,7 @@ export const exportCurrentWeeklyView = (
   console.log(`🔍 Monday events found: ${mondayEvents.length}`);
   mondayEvents.forEach(event => {
     const eventDate = new Date(event.startTime);
-    console.log(` - "${event.title}" at ${eventDate.toLocaleString()}`);
+    // Event processed: ${event.title} at ${eventDate.toLocaleString()}
   });
 
   // Save the PDF with dynamic filename

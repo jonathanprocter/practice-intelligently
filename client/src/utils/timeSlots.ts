@@ -60,7 +60,7 @@ export function isEventInTimeSlot(event: any, timeSlot: TimeSlot): boolean {
 
   // Debug log for troubleshooting
   if (matches) {
-    console.log(`Event "${event.clientName || event.title}" matches time slot ${timeSlot.display}:`, {
+    // Event "${event.clientName || event.title}" matches time slot ${timeSlot.display}
       eventStart: eventStart.toISOString(),
       eventEnd: eventEnd.toISOString(),
       slotStart: slotStart.toISOString(),

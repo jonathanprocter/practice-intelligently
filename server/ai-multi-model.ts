@@ -6,7 +6,12 @@ import { perplexityClient } from './perplexity';
 // Initialize AI clients
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const gemini = new GoogleGenAI({ 
+  apiKey: process.env.GEMINI_API_KEY || (() => {
+    console.warn('GEMINI_API_KEY not configured');
+    return '';
+  })()
+});
 
 export interface AIResponse {
   content: string;
