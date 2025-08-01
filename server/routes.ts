@@ -823,7 +823,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Google Calendar Integration - new route without therapist ID parameter
-  app.get('/api/calendar/events', async (req, res) => {
+  app.get('/api/calendar/events', async (req,res) => {
     try {
       const { timeMin, timeMax, start, end, calendarId } = req.query;
 
@@ -1329,7 +1329,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: sessionContent
       });
 
-      console.log('Session note saved successfully:', sessionNote.id);
       res.json(sessionNote);
     } catch (error: any) {
       console.error('Error saving session notes:', error);

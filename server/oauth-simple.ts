@@ -123,13 +123,7 @@ class SimpleOAuth {
   }
 
   isConnected(): boolean {
-    const connected = this.isAuthenticated && this.tokens !== null;
-    console.log('OAuth connection check:', {
-      isAuthenticated: this.isAuthenticated,
-      hasTokens: this.tokens !== null,
-      connected
-    });
-    return connected;
+    return this.isAuthenticated && this.tokens !== null;
   }
 
   async getCalendars() {
