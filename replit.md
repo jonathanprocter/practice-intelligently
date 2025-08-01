@@ -6,6 +6,15 @@ This is a comprehensive therapy practice management system designed as a full-st
 
 ## Recent Changes (August 1, 2025)
 
+✅ **AI-Powered Client Check-ins System Completed**
+- **Database & Schema**: Created client_checkins table with lifecycle management and comprehensive status tracking
+- **AI Analysis**: Implemented OpenAI-powered session analysis to determine when clients need check-ins (midweek, homework reminders, crisis support)
+- **Review Workflow**: Built complete dashboard with Generated → Reviewed → Approved → Sent → Archived status pipeline
+- **Email Integration**: Added SendGrid email service for sending personalized check-ins to clients
+- **Automated Lifecycle**: 7-day auto-deletion of unsent check-ins, archiving of sent messages
+- **Calendar Display Enhancement**: Updated calendar events to show "Simple Practice | Malverne Office" format
+- **Status**: Full client check-ins system operational with AI insights and email delivery capabilities
+
 ✅ **Enhanced Calendar Synchronization & Notification System Completed**
 - **Full Calendar Range Sync**: Extended calendar sync from 2019-2030 to capture ALL historical and future events across ALL calendars and subcalendars
 - **Dynamic Notification System**: Replaced hardcoded notification counts with real-time data from urgent action items API

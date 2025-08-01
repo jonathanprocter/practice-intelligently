@@ -249,7 +249,7 @@ export default function TodaysSchedule() {
                   )}
                 </h4>
                 <p className="text-therapy-text/60 text-sm">
-                  {appointment.clientId === 'calendar-event' ? 'Simple Practice' : appointment.type}
+                  {appointment.clientId === 'calendar-event' ? 'Simple Practice | Malverne Office' : appointment.type}
                 </p>
                 <div className="flex items-center space-x-2 mt-1">
                   <Badge className={getStatusColor(appointment.status)}>

@@ -50,16 +50,6 @@ export async function sendCheckInEmail(
     from: fromEmail,
     subject: subject,
     text: message,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px;">
-          ${htmlMessage}
-        </div>
-        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e9ecef; font-size: 12px; color: #6c757d;">
-          <p>This message was sent from your therapy practice management system.</p>
-          <p>If you have any concerns, please contact your therapist directly.</p>
-        </div>
-      </div>
-    `
+    html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;"><div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px;">${htmlMessage}</div><div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e9ecef; font-size: 12px; color: #6c757d;"><p>This message was sent from your therapy practice management system.</p><p>If you have any concerns, please contact your therapist directly.</p></div></div>`
   });
 }
