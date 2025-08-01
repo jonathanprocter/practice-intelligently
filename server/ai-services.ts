@@ -1,5 +1,9 @@
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
+import { z } from 'zod';
+import fs from 'fs';
+import path from 'path';
+import type { Appointment } from '../shared/schema';
 
 // OpenAI as primary, Claude as fallback
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -193,7 +197,7 @@ interface AppointmentData {
 }
 
 // Generate appointment insights
-export async function generateAppointmentInsights(appointments: AppointmentData[]): Promise<AIAnalysisResult> {
+export async function generateAppointmentInsights(appointments: Appointment[]): Promise<AIAnalysisResult> {
   const appointmentData = appointments.map(apt => ({
     type: apt.type,
     status: apt.status,
@@ -211,3 +215,4 @@ export async function generateProgressInsights(clientData: unknown): Promise<AIA
   const content = `Client progress data: ${JSON.stringify(clientData, null, 2)}`;
   return analyzeContent(content, 'progress');
 }
+`

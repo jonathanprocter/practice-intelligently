@@ -80,10 +80,19 @@ const REAL_CLIENTS = [
   { firstName: 'Michael', lastName: 'Neira', dateOfBirth: '1994-02-18', phone: '', email: '', address: '', employment: '' }
 ];
 
+interface ImportResult {
+  status: 'success' | 'failed';
+  message?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  error?: string;
+}
+
 export function RealClientImporter() {
   const [isImporting, setIsImporting] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [results, setResults] = useState<{ success: number; errors: number; details: string[] }>({ success: 0, errors: 0, details: [] });
+  const [results, setResults] = useState<{ success: number; errors: number; details: ImportResult[] }>({ success: 0, errors: 0, details: [] });
   const [showResults, setShowResults] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -92,14 +101,6 @@ export function RealClientImporter() {
     setIsImporting(true);
     setProgress(0);
     setShowResults(false);
-
-    interface ImportResult {
-      name: string;
-      email?: string;
-      phone?: string;
-      status: 'success' | 'failed';
-      error?: string;
-    }
 
     const successfulImports: ImportResult[] = [];
     const failedImports: ImportResult[] = [];

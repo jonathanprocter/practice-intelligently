@@ -24,9 +24,8 @@ export const WeeklyCalendarGrid = ({
   onEventClick,
   onEventMove
 }: WeeklyCalendarGridProps) => {
-  
-  console.log('Total events after conversion:', events.length);
-  console.log('Sample events:', events.slice(0, 2));
+
+  // Events processed and ready for rendering
   const timeSlots = generateTimeSlots();
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
   const [dropZone, setDropZone] = useState<{date: Date, time: string} | null>(null);
@@ -132,20 +131,12 @@ export const WeeklyCalendarGrid = ({
       const isHolidayOrWeather = event.title?.includes('Forecast') || 
                                 event.title?.includes('Holiday') || 
                                 event.calendarName?.includes('Holiday');
-      
+
       return eventDate.toDateString() === date.toDateString() && (isMarkedAllDay || isHolidayOrWeather);
     });
   };
 
-  console.log('WeeklyCalendarGrid rendering with:', {
-    totalEvents: events.length,
-    weekDates: week.map(d => d.date.toDateString()),
-    sampleEvents: events.slice(0, 3).map(e => ({
-      title: e.clientName || e.title,
-      start: e.startTime,
-      startStr: e.startTime instanceof Date ? e.startTime.toISOString() : e.startTime
-    }))
-  });
+  // Rendering weekly calendar grid
 
   return (
     <div className="weekly-calendar-container">
@@ -182,7 +173,7 @@ export const WeeklyCalendarGrid = ({
         <div className="border-r border-gray-200 p-2 bg-gray-50 font-medium text-sm">
           Time
         </div>
-        
+
         {/* Day headers */}
         {week.map((day) => (
           <div
@@ -205,7 +196,7 @@ export const WeeklyCalendarGrid = ({
             <div className="border-r border-b border-gray-200 p-2 text-xs text-gray-600 bg-gray-50">
               {timeSlot.display}
             </div>
-            
+
             {/* Day columns */}
             {week.map((day) => {
               // Get all events for this day
@@ -215,27 +206,27 @@ export const WeeklyCalendarGrid = ({
                 if (isNaN(eventStart.getTime())) return false;
                 return eventStart.toDateString() === day.date.toDateString();
               });
-              
+
               // Filter events that START in this specific time slot (not span through it)
               const slotStartEvents = allDayEvents.filter(event => {
                 const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
                 const eventHour = eventStart.getHours();
                 const eventMinute = eventStart.getMinutes();
-                
+
                 // Check if event starts in this exact time slot
                 const startsInSlot = eventHour === timeSlot.hour && 
                   ((timeSlot.minute === 0 && eventMinute < 30) || 
                    (timeSlot.minute === 30 && eventMinute >= 30));
-                
+
                 // Exclude all-day events from timed slots
                 const isMarkedAllDay = (event as any).isAllDay;
                 const isHolidayOrWeather = event.title?.includes('Forecast') || 
                                           event.title?.includes('Holiday') || 
                                           event.calendarName?.includes('Holiday');
-                
+
                 return startsInSlot && !isMarkedAllDay && !isHolidayOrWeather;
               });
-              
+
               // Calculate how many 30-minute slots each event should span
               const eventsWithSpan = slotStartEvents.map(event => {
                 const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
@@ -243,14 +234,14 @@ export const WeeklyCalendarGrid = ({
                 const durationMs = eventEnd.getTime() - eventStart.getTime();
                 const durationMinutes = durationMs / (1000 * 60);
                 const slotsToSpan = Math.max(1, Math.ceil(durationMinutes / 30));
-                
+
                 return { ...event, slotsToSpan };
               });
-              
+
               const isDropTarget = dropZone && 
                 dropZone.date.toDateString() === day.date.toDateString() &&
                 dropZone.time === `${timeSlot.hour.toString().padStart(2, '0')}:${timeSlot.minute.toString().padStart(2, '0')}`;
-              
+
               return (
                 <div
                   key={`${day.date.toISOString()}-${timeSlot.hour}-${timeSlot.minute}`}

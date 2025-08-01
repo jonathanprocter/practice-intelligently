@@ -106,7 +106,7 @@ export const DailyView = ({
           // Use the most recent note
           const latestNote = existingNotes[0];
           setSessionNotes(latestNote.content);
-          console.log('Loaded existing session notes:', latestNote.content);
+          // Loaded existing session notes
         } else {
           setSessionNotes(event.notes || '');
         }
@@ -123,7 +123,7 @@ export const DailyView = ({
     if (!selectedEvent) return;
 
     try {
-      console.log('Saving session notes for event:', selectedEvent.id);
+      // Saving session notes for event
       const response = await fetch('/api/session-notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -135,11 +135,11 @@ export const DailyView = ({
         })
       });
 
-      console.log('Save response status:', response.status);
+      // Save response received
       
       if (response.ok) {
         const result = await response.json();
-        console.log('Session notes saved successfully:', result);
+        // Session notes saved successfully
         
         // Update the event locally to show it has notes
         const updatedEvent = { ...selectedEvent, notes: sessionNotes };
@@ -150,7 +150,7 @@ export const DailyView = ({
         toast({ title: "Session notes saved successfully" });
         
         // Update the visual state to show notes are saved
-        console.log('Notes saved and UI updated');
+        // Notes saved and UI updated
       } else {
         const errorText = await response.text();
         console.error('Failed to save session notes:', response.status, errorText);

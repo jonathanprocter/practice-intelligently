@@ -10,7 +10,7 @@ import {
   type AuditLog, type InsertAuditLog
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, desc, and, gte, lte, count } from "drizzle-orm";
+import { eq, desc, and, gte, lte, count, like, or } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -924,11 +924,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(appointments.therapistId, therapistId));
 
     const totalSessions = appointments.filter(apt => apt.status === 'completed').length;
-    const noShows = appointments.filter(apt => apt.status === 'no-show').length;
+    const noShows = appointments.filter(apt => apt.status === 'no_show').length;
     const cancelled = appointments.filter(apt => apt.status === 'cancelled').length;
 
     const allClients = await this.getClients(therapistId);
-    <previous_generation>
     const activeClients = allClients.filter(client => client.status === 'active').length;
 
     const averageSessionsPerClient = activeClients > 0 ? totalSessions / activeClients : 0;
@@ -1078,13 +1077,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getAppointmentsByTherapistTimeframe(therapistId: string, timeframe: 'week' | 'month' | 'quarter'): Promise<Array<{
-    id: string;
-    clientName: string;
-    appointmentDate: string;
-    status: string;
-    notes?: string;
-  }>> {
+  async getAppointmentsByTherapistTimeframe(therapistId: string, timeframe: 'week' | 'month' | 'quarter'): Promise<Appointment[]> {
     try {
       let dateThreshold = new Date();
       switch (timeframe) {
@@ -1147,7 +1140,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getClientOutcomesByTherapist(therapistId: string): Promise<ProgressNote[]> {
+  async getClientOutcomesByTherapist(therapistId: string): Promise<Assessment[]> {
     try {
       const result = await pool.query(
         'SELECT c.*, COUNT(sn.id) as session_count FROM clients c LEFT JOIN session_notes sn ON c.id::text = sn.client_id WHERE c.therapist_id::text = $1 GROUP BY c.id ORDER BY c.created_at DESC',

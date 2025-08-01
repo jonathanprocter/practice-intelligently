@@ -1,6 +1,36 @@
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
-import { pool } from './db';
+import { db } from './db';
+import { calendarEvents, type CalendarEvent } from '../shared/schema';
+import { eq } from 'drizzle-orm';
+
+interface GoogleCalendarInfo {
+  id: string;
+  summary: string;
+  description?: string;
+  primary?: boolean;
+}
+
+interface GoogleCalendarEvent {
+  id: string;
+  summary?: string;
+  description?: string;
+  start?: {
+    dateTime?: string;
+    date?: string;
+    timeZone?: string;
+  };
+  end?: {
+    dateTime?: string;
+    date?: string;
+    timeZone?: string;
+  };
+  location?: string;
+  attendees?: Array<{
+    email: string;
+    displayName?: string;
+  }>;
+}
 
 // Get the correct redirect URI based on environment
 const getRedirectUri = () => {
@@ -127,7 +157,7 @@ export class GoogleCalendarService {
     this.auth.setCredentials(this.tokens);
   }
 
-  async listCalendars(): Promise<GoogleCalendarEvent[]> {
+  async listCalendars(): Promise<GoogleCalendarInfo[]> {
     this.ensureAuthenticated();
     try {
       const response = await calendar.calendarList.list();
@@ -442,7 +472,7 @@ export class GoogleCalendarService {
     }
   }
 
-  async getEventsFromDatabase(therapistId: string = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', timeMin?: string, timeMax?: string): Promise<GoogleCalendarEvent[]> {
+  async getEventsFromDatabase(therapistId: string = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', timeMin?: string, timeMax?: string): Promise<CalendarEvent[]> {
     try {
       const client = await pool.connect();
       try {

@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, AlertTriangle, CheckCircle, Brain, Target, TrendingUp, FileText, Users, Calendar } from 'lucide-react';
+import type { ActionItem } from '../../../shared/schema';
 
 interface ActionItem {
   id: string;
