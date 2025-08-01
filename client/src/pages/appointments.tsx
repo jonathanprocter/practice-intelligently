@@ -10,7 +10,13 @@ export default function Appointments() {
   
   const { data: appointments, isLoading } = useQuery({
     queryKey: ['appointments', selectedDate],
-    queryFn: () => ApiClient.getAppointments(selectedDate),
+    queryFn: () => {
+      // For today, get both calendar events and database appointments
+      if (selectedDate === new Date().toISOString().split('T')[0]) {
+        return ApiClient.getTodaysAppointments();
+      }
+      return ApiClient.getAppointments(selectedDate);
+    },
   });
 
   const formatTime = (dateString: string) => {

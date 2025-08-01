@@ -1,14 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient, type SessionNote } from "@/lib/api";
-import { FileText, Clock, User } from "lucide-react";
+import { FileText, Clock, User, Upload, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DocumentUploadZone } from "@/components/forms/DocumentUploadZone";
+import { useState } from "react";
 
 export default function TodaysSessions() {
-  const { data: sessionNotes, isLoading } = useQuery({
+  const [showUpload, setShowUpload] = useState(false);
+
+  const { data: sessionNotes, isLoading, refetch } = useQuery({
     queryKey: ['todays-sessions'],
     queryFn: ApiClient.getTodaysSessionNotes,
   });
+
+  const handleSessionNoteGenerated = () => {
+    refetch();
+    setShowUpload(false);
+  };
 
   if (isLoading) {
     return (
@@ -46,11 +55,29 @@ export default function TodaysSessions() {
       <div className="p-6 border-b border-therapy-border">
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold text-therapy-text">Today's Sessions</h3>
-          <Button variant="ghost" className="text-therapy-primary hover:text-therapy-primary/80">
-            View All Notes
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setShowUpload(!showUpload)}
+              className="text-therapy-primary hover:text-therapy-primary/80"
+            >
+              <Upload className="h-4 w-4 mr-1" />
+              Upload
+            </Button>
+            <Button variant="ghost" className="text-therapy-primary hover:text-therapy-primary/80">
+              View All Notes
+            </Button>
+          </div>
         </div>
       </div>
+      
+      {/* Document Upload Zone */}
+      {showUpload && (
+        <div className="px-6 pb-4">
+          <DocumentUploadZone onProgressNoteGenerated={handleSessionNoteGenerated} />
+        </div>
+      )}
       
       <div className="p-6 space-y-4">
         {sessionNotes && sessionNotes.length > 0 ? (
