@@ -89,14 +89,15 @@ export default function SessionNotes() {
     if (!selectedNote) return;
     
     const tagsArray = editTags.split(",").map(tag => tag.trim()).filter(tag => tag.length > 0);
-    const updatedDate = new Date(editDate);
+    // Convert date string to ISO string for proper database storage
+    const updatedDate = new Date(editDate + 'T' + new Date(selectedNote.createdAt).toTimeString().slice(0,8));
     
     updateNoteMutation.mutate({
       id: selectedNote.id,
       updates: {
         content: editContent,
         tags: tagsArray,
-        createdAt: updatedDate
+        createdAt: updatedDate.toISOString()
       }
     });
   };

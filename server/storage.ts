@@ -394,9 +394,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateSessionNote(id: string, note: Partial<SessionNote>): Promise<SessionNote> {
+    // Ensure dates are properly converted
+    const updateData = { ...note, updatedAt: new Date() };
+    if (updateData.createdAt && typeof updateData.createdAt === 'string') {
+      updateData.createdAt = new Date(updateData.createdAt);
+    }
+    
     const [updatedNote] = await db
       .update(sessionNotes)
-      .set({ ...note, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(sessionNotes.id, id))
       .returning();
     return updatedNote;
