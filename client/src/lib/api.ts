@@ -190,6 +190,12 @@ export class ApiClient {
   }
 
   static async getAppointments(date?: string): Promise<Appointment[]> {
+    // If asking for today's date, use the combined approach
+    const today = new Date().toISOString().split('T')[0];
+    if (date === today) {
+      return this.getTodaysAppointments();
+    }
+    
     const url = date 
       ? `/api/appointments/${this.therapistId}?date=${date}`
       : `/api/appointments/${this.therapistId}`;

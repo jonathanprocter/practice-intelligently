@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient, type Appointment } from "@/lib/api";
-import { Play, Pause, MoreHorizontal, Calendar, ExternalLink, Clock, Edit, FileText, Users, Video } from "lucide-react";
+import { Play, Pause, MoreHorizontal, Calendar, ExternalLink, Clock, Edit, FileText, Users, Video, ChevronDown, ChevronUp, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -10,12 +10,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { useLocation } from "wouter";
 
 export default function TodaysSchedule() {
   const [activeSession, setActiveSession] = useState<string | null>(null);
+  const [expandedReminders, setExpandedReminders] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
@@ -39,6 +41,79 @@ export default function TodaysSchedule() {
       title: "Session Ended",
       description: "Session has been ended",
     });
+  };
+
+  const toggleReminder = (appointmentId: string) => {
+    const newExpanded = new Set(expandedReminders);
+    if (newExpanded.has(appointmentId)) {
+      newExpanded.delete(appointmentId);
+    } else {
+      newExpanded.add(appointmentId);
+    }
+    setExpandedReminders(newExpanded);
+  };
+
+  // Mock AI-generated reminder notes based on client name
+  const generateReminderNotes = (clientName: string) => {
+    const reminders = {
+      'John Best': {
+        lastSession: 'July 28, 2025',
+        keyPoints: [
+          'Discussed anxiety management techniques',
+          'Homework: practice breathing exercises daily',
+          'Progress with workplace stress reduction'
+        ],
+        nextFocus: 'Continue CBT techniques for anxiety, follow up on work situation',
+        aiInsight: 'Client showing improved self-awareness. Consider introducing mindfulness practices.'
+      },
+      'Valentina Gjidoda': {
+        lastSession: 'July 29, 2025',
+        keyPoints: [
+          'Explored relationship boundaries',
+          'Identified triggers for emotional responses',
+          'Discussed communication strategies'
+        ],
+        nextFocus: 'Role-play difficult conversations, review boundary-setting homework',
+        aiInsight: 'Strong therapeutic rapport established. Client ready for deeper trauma work.'
+      },
+      'Karen Foster': {
+        lastSession: 'July 30, 2025',
+        keyPoints: [
+          'Depression screening showed improvement',
+          'Medication compliance discussed',
+          'Social support system strengthening'
+        ],
+        nextFocus: 'Assess mood changes, discuss social activities plan',
+        aiInsight: 'Notable improvement in mood. Consider reducing session frequency if progress continues.'
+      },
+      'Brian Kolsch': {
+        lastSession: 'July 25, 2025',
+        keyPoints: [
+          'Anger management progress review',
+          'Family dynamics discussion',
+          'Coping strategies implementation'
+        ],
+        nextFocus: 'Practice new coping techniques, family session planning',
+        aiInsight: 'Client struggling with implementation. May benefit from group therapy referral.'
+      },
+      'Noah Silverman': {
+        lastSession: 'July 27, 2025',
+        keyPoints: [
+          'ADHD medication adjustment effects',
+          'Work productivity improvements',
+          'Organization strategies working well'
+        ],
+        nextFocus: 'Monitor medication effects, expand productivity systems',
+        aiInsight: 'Excellent progress with ADHD management. Consider vocational counseling referral.'
+      }
+    };
+
+    return reminders[clientName as keyof typeof reminders] || {
+      lastSession: 'Previous session',
+      keyPoints: ['Review previous session notes', 'Assess current goals'],
+      nextFocus: 'Continue therapeutic work based on treatment plan',
+      aiInsight: 'Maintain therapeutic rapport and assess progress toward goals.'
+    };
   };
 
   if (isLoading) {
@@ -94,12 +169,20 @@ export default function TodaysSchedule() {
       
       <div className="p-6 space-y-4">
         {appointments && appointments.length > 0 ? (
-          appointments.map((appointment) => (
-            <div key={appointment.id} className="flex items-center space-x-4 p-4 bg-therapy-bg rounded-lg">
-              <div className="w-12 h-12 bg-therapy-success text-white rounded-lg flex items-center justify-center font-bold">
-                <span className="text-sm">{formatTime(appointment.startTime)}</span>
-              </div>
-              <div className="flex-1">
+          appointments.map((appointment) => {
+            const clientName = appointment.clientId === 'calendar-event' 
+              ? appointment.type.replace(' Appointment', '') 
+              : appointment.type;
+            const reminderNotes = generateReminderNotes(clientName);
+            const isExpanded = expandedReminders.has(appointment.id);
+            
+            return (
+              <div key={appointment.id} className="bg-therapy-bg rounded-lg overflow-hidden">
+                <div className="flex items-center space-x-4 p-4">
+                  <div className="w-12 h-12 bg-therapy-success text-white rounded-lg flex items-center justify-center font-bold">
+                    <span className="text-sm">{formatTime(appointment.startTime)}</span>
+                  </div>
+                  <div className="flex-1">
                 <h4 className="font-semibold text-therapy-text flex items-center gap-2">
                   {appointment.clientId === 'calendar-event' ? (
                     <>
@@ -121,8 +204,8 @@ export default function TodaysSchedule() {
                     {appointment.clientId === 'calendar-event' ? 'Calendar Event' : '50 min'}
                   </span>
                 </div>
-              </div>
-              <div className="flex space-x-2">
+                  </div>
+                  <div className="flex space-x-2">
                 {/* Start/End Session Button */}
                 {activeSession === appointment.id ? (
                   <Button 
@@ -229,10 +312,61 @@ export default function TodaysSchedule() {
                       Reschedule
                     </DropdownMenuItem>
                   </DropdownMenuContent>
-                </DropdownMenu>
+                  </DropdownMenu>
+                  </div>
+                </div>
+                
+                {/* Reminder Notes Section */}
+              <Collapsible open={isExpanded} onOpenChange={() => toggleReminder(appointment.id)}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-between p-2 text-therapy-primary hover:bg-therapy-primary/5"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Lightbulb className="h-4 w-4" />
+                      <span className="text-sm font-medium">Session Prep Notes</span>
+                    </div>
+                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="px-4 pb-4">
+                  <div className="bg-therapy-primary/5 rounded-lg p-4 space-y-3">
+                    <div>
+                      <p className="text-xs text-therapy-text/60 mb-1">Last Session: {reminderNotes.lastSession}</p>
+                    </div>
+                    
+                    <div>
+                      <h5 className="text-sm font-semibold text-therapy-text mb-2">Key Points Covered:</h5>
+                      <ul className="text-sm text-therapy-text/80 space-y-1">
+                        {reminderNotes.keyPoints.map((point, index) => (
+                          <li key={index} className="flex items-start space-x-2">
+                            <span className="text-therapy-primary text-xs mt-1">•</span>
+                            <span>{point}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div>
+                      <h5 className="text-sm font-semibold text-therapy-text mb-1">Today's Focus:</h5>
+                      <p className="text-sm text-therapy-text/80">{reminderNotes.nextFocus}</p>
+                    </div>
+                    
+                    <div className="border-t border-therapy-border pt-3">
+                      <h5 className="text-sm font-semibold text-therapy-primary mb-1 flex items-center space-x-1">
+                        <Lightbulb className="h-3 w-3" />
+                        <span>AI Clinical Insight:</span>
+                      </h5>
+                      <p className="text-sm text-therapy-text/80 italic">{reminderNotes.aiInsight}</p>
+                    </div>
+                  </div>
+                </CollapsibleContent>
+                </Collapsible>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="text-center py-8">
             <p className="text-therapy-text/60">No appointments scheduled for today</p>

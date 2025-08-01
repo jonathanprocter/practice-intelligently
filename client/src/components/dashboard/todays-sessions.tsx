@@ -5,19 +5,27 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DocumentUploadZone } from "@/components/forms/DocumentUploadZone";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 export default function TodaysSessions() {
   const [showUpload, setShowUpload] = useState(false);
+  const { toast } = useToast();
+
+  const handleSessionNoteGenerated = (note: any) => {
+    // Handle the generated session note
+    queryClient.invalidateQueries({ queryKey: ['session-notes'] });
+    toast({
+      title: "Session Note Generated",
+      description: "AI has successfully processed your document.",
+    });
+    setShowUpload(false);
+  };
 
   const { data: sessionNotes, isLoading, refetch } = useQuery({
     queryKey: ['todays-sessions'],
     queryFn: ApiClient.getTodaysSessionNotes,
   });
-
-  const handleSessionNoteGenerated = () => {
-    refetch();
-    setShowUpload(false);
-  };
 
   if (isLoading) {
     return (
