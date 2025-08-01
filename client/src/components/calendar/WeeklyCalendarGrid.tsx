@@ -210,7 +210,9 @@ export const WeeklyCalendarGrid = ({
             {week.map((day) => {
               // Get all events for this day
               const allDayEvents = events.filter(event => {
+                if (!event.startTime) return false;
                 const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+                if (isNaN(eventStart.getTime())) return false;
                 return eventStart.toDateString() === day.date.toDateString();
               });
               

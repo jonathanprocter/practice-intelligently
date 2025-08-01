@@ -165,9 +165,7 @@ export default function Calendar() {
     },
     retry: false,
     refetchOnWindowFocus: false,
-    refetchOnMount: true,
-    staleTime: 5 * 60 * 1000, // Consider data stale after 5 minutes
-    gcTime: 15 * 60 * 1000 // Keep in cache for 15 minutes
+    refetchOnMount: true
   });
 
   // Fetch available calendars
@@ -194,7 +192,10 @@ export default function Calendar() {
     let startTime: Date, endTime: Date;
     
     try {
-      if (event.start?.dateTime) {
+      // Use the direct startTime if already converted by backend
+      if (event.startTime) {
+        startTime = new Date(event.startTime);
+      } else if (event.start?.dateTime) {
         startTime = new Date(event.start.dateTime);
       } else if (event.start?.date) {
         startTime = new Date(event.start.date + 'T00:00:00');
@@ -222,18 +223,18 @@ export default function Calendar() {
 
     return {
       id: event.id || `event-${Math.random()}`,
-      title: event.summary || 'Untitled Event',
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
+      title: event.title || event.summary || 'Appointment',
+      startTime: startTime,
+      endTime: endTime,
       clientId: `google-${event.id}`,
-      clientName: event.summary || 'Google Calendar Event',
+      clientName: event.title || event.summary || 'Appointment',
       type: 'individual' as CalendarEvent['type'],
       status: (event.status === 'confirmed' ? 'scheduled' : 'pending') as CalendarEvent['status'],
       location: event.location || getDefaultLocationForDate(startDateForLocation),
       notes: event.description || '',
       source: 'google' as CalendarEvent['source'],
       attendees: event.attendees?.map((a: any) => a.email).join(', ') || '',
-      calendarName: event.calendarName || 'Google Calendar'
+      calendarName: event.calendarName || 'Simple Practice'
     };
   }).filter(event => {
     // Filter out invalid events - check if we have valid date strings
