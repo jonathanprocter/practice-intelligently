@@ -51,6 +51,8 @@ The system utilizes a comprehensive PostgreSQL database with 13 robust tables:
 - **Analytics Dashboard**: Modern card-based layout with smart insights, AI-powered summaries, interactive data visualization, comparative benchmarks, and drill-down capabilities.
 - **Client Check-ins System**: AI-powered check-ins with database lifecycle management, OpenAI analysis for determining check-in needs, modern dashboard, advanced filtering, bulk operations, and email integration.
 - **Streamlined Appointments Tab**: Snapshot summary, enhanced appointment cards with quick actions, advanced search & filtering, bulk operations, and integration with session prep.
+- **Comprehensive US Holidays Integration**: Complete federal holidays system (2015-2030) with accurate calculations, integrated with Google Calendar OAuth as all-day events, includes holiday API endpoints and dashboard integration.
+- **Enhanced Calendar Layout**: Clean day headers with full day names positioned above All Day events section, military time format throughout, improved visual hierarchy.
 
 ### Data Flow
 Client requests from the React frontend are processed by the Express backend, which interacts with PostgreSQL via Drizzle ORM. External AI services process therapeutic content, and TanStack Query manages real-time UI updates.
