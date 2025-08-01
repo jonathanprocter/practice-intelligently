@@ -117,6 +117,7 @@ export const actionItems = pgTable("action_items", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: uuid("client_id").references(() => clients.id),
   therapistId: uuid("therapist_id").references(() => users.id).notNull(),
+  eventId: text("event_id"), // For Google Calendar event ID
   title: text("title").notNull(),
   description: text("description"),
   priority: text("priority").notNull().default("medium"),
