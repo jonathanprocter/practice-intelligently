@@ -22,8 +22,15 @@ async function getCsvParser() {
 // Import pdfjs-dist for direct PDF text extraction
 async function getPdfJS() {
   try {
-    // Use legacy build for Node.js compatibility
-    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.js');
+    // Import the legacy build for Node.js environments
+    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    
+    // Configure worker for Node.js environment - use absolute path
+    if (pdfjsLib.GlobalWorkerOptions) {
+      const workerPath = path.resolve(process.cwd(), 'node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `file://${workerPath}`;
+    }
+    
     return pdfjsLib;
   } catch (error) {
     // Failed to import pdfjs-dist (production logging disabled)
@@ -142,12 +149,13 @@ export class DocumentProcessor {
       const pdfBuffer = await fs.promises.readFile(filePath);
       const pdfData = new Uint8Array(pdfBuffer);
 
-      // Parse PDF document
+      // Parse PDF document with Node.js compatible options
       const pdfDocument = await pdfjsLib.getDocument({
         data: pdfData,
         useWorkerFetch: false,
         isEvalSupported: false,
-        useSystemFonts: true
+        useSystemFonts: true,
+        disableWorker: true
       }).promise;
 
       let fullText = '';
@@ -273,7 +281,7 @@ export class DocumentProcessor {
       }
       return extractedText;
     } catch (error: any) {
-      console.error('Excel processing error:', error);
+      // Excel processing error (production logging disabled)
       throw new Error(`Failed to process Excel file: ${error.message || 'Unknown error'}`);
     }
   }
