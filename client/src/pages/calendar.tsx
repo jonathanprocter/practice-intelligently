@@ -58,25 +58,43 @@ export default function Calendar() {
   };
 
   const { data: googleEvents = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['google-calendar-events'],
+    queryKey: ['google-calendar-events', currentWeek.toISOString()],
     queryFn: async () => {
-      console.log('Starting calendar fetch...');
+      console.log('Starting calendar fetch for week:', getWeekRangeString(currentWeek, weekEnd));
       try {
-        // Get today's events from Simple Practice integration
+        // Get events for the entire current week from Simple Practice integration
+        const weekStart = currentWeek.toISOString();
+        const weekEndISO = weekEnd.toISOString();
+        
+        // First try to get calendar events for the week range
+        const weekResponse = await fetch(`/api/calendar/events?start=${weekStart}&end=${weekEndISO}`);
+        console.log('Week response status:', weekResponse.status);
+        
+        if (weekResponse.ok) {
+          const weekEvents = await weekResponse.json();
+          console.log('Week events from API:', weekEvents.length);
+          
+          if (weekEvents.length > 0) {
+            return weekEvents.map((event: any) => ({
+              id: event.id,
+              title: event.title || event.summary || 'Appointment',
+              startTime: new Date(event.startTime || event.start?.dateTime || event.start?.date),
+              endTime: new Date(event.endTime || event.end?.dateTime || event.end?.date),
+              location: event.location || 'Simple Practice',
+              description: event.description || '',
+              calendarId: event.calendarId || 'simple-practice',
+              calendarName: event.calendarName || 'Simple Practice'
+            }));
+          }
+        }
+        
+        // Fallback: Get today's events from Simple Practice integration
         const todayResponse = await fetch('/api/oauth/events/today');
-        console.log('Response status:', todayResponse.status);
+        console.log('Today response status:', todayResponse.status);
         
         if (todayResponse.ok) {
           const todayEvents = await todayResponse.json();
-          console.log('Raw events from API:', todayEvents.length);
-          
-          if (todayEvents.length > 0) {
-            console.log('First event sample:', {
-              id: todayEvents[0].id,
-              summary: todayEvents[0].summary,
-              start: todayEvents[0].start
-            });
-          }
+          console.log('Today events from API:', todayEvents.length);
           
           // Convert Google Calendar events to the expected format
           const convertedEvents = todayEvents.map((event: any) => {

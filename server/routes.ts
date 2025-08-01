@@ -739,7 +739,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google Calendar Integration - new route without therapist ID parameter
   app.get('/api/calendar/events', async (req, res) => {
     try {
-      const { timeMin, timeMax, calendarId } = req.query;
+      const { timeMin, timeMax, start, end, calendarId } = req.query;
       
       const { simpleOAuth } = await import('./oauth-simple');
       
@@ -747,13 +747,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
       
-      const events = await simpleOAuth.getEvents(
-        calendarId as string || 'primary',
-        timeMin as string,
-        timeMax as string
-      );
+      // Use start/end or timeMin/timeMax
+      const startTime = (start as string) || (timeMin as string);
+      const endTime = (end as string) || (timeMax as string);
       
-      res.json(events);
+      console.log(`Fetching calendar events from ${startTime} to ${endTime}`);
+      
+      // Get events from all calendars if no specific calendar is requested
+      if (!calendarId) {
+        const calendars = await simpleOAuth.getCalendars();
+        let allEvents = [];
+        
+        for (const calendar of calendars) {
+          try {
+            const events = await simpleOAuth.getEvents(
+              calendar.id,
+              startTime,
+              endTime
+            );
+            
+            console.log(`Found ${events.length} events in ${calendar.summary}`);
+            
+            // Convert to standard format
+            const formattedEvents = events.map(event => ({
+              id: event.id,
+              title: event.summary || 'Untitled Event',
+              startTime: new Date(event.start?.dateTime || event.start?.date),
+              endTime: new Date(event.end?.dateTime || event.end?.date),
+              location: calendar.summary,
+              description: event.description || '',
+              calendarId: calendar.id,
+              calendarName: calendar.summary
+            }));
+            
+            allEvents = allEvents.concat(formattedEvents);
+          } catch (calError) {
+            console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError.message);
+          }
+        }
+        
+        console.log(`Total events found for date range: ${allEvents.length}`);
+        res.json(allEvents);
+      } else {
+        // Get events from specific calendar
+        const events = await simpleOAuth.getEvents(
+          calendarId as string,
+          startTime,
+          endTime
+        );
+        
+        res.json(events);
+      }
     } catch (error: any) {
       console.error('Error fetching calendar events:', error);
       if (error.message?.includes('authentication') || error.message?.includes('expired')) {
