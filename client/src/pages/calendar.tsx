@@ -237,9 +237,9 @@ export default function Calendar() {
       calendarName: event.calendarName || 'Simple Practice'
     };
   }).filter(event => {
-    // Filter out invalid events - check if we have valid date strings
-    const hasValidStart = event.startTime && typeof event.startTime === 'string';
-    const hasValidEnd = event.endTime && typeof event.endTime === 'string';
+    // Filter out invalid events - check if we have valid dates (Date objects or valid date strings)
+    const hasValidStart = event.startTime && (event.startTime instanceof Date || !isNaN(new Date(event.startTime).getTime()));
+    const hasValidEnd = event.endTime && (event.endTime instanceof Date || !isNaN(new Date(event.endTime).getTime()));
     const isValid = hasValidStart && hasValidEnd;
     
     if (!isValid) {
