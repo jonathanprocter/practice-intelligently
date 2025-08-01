@@ -140,9 +140,32 @@ export const WeeklyCalendarGrid = ({
 
   return (
     <div className="weekly-calendar-container">
+      {/* Day headers with day names */}
+      <div className="grid grid-cols-8 border border-gray-200 mb-0">
+        {/* Empty corner for alignment */}
+        <div className="border-r border-gray-200 p-2 bg-gray-50"></div>
+        
+        {/* Day headers */}
+        {week.map((day) => (
+          <div
+            key={day.date.toISOString()}
+            className={cn(
+              "calendar-day-header border-r border-gray-200 p-2 bg-gray-50 text-center cursor-pointer",
+              day.isToday && "calendar-day-today bg-blue-50"
+            )}
+            onClick={() => onDayClick(day.date)}
+          >
+            <div className="font-medium text-sm">{formatDateShort(day.date)}</div>
+            <div className="text-xs text-gray-600 mt-1">
+              {day.date.toLocaleDateString('en-US', { weekday: 'long' })}
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* All-day events section */}
       <div className="mb-4">
-        <div className="grid grid-cols-8 border border-gray-200 bg-gray-50">
+        <div className="grid grid-cols-8 border border-gray-200 border-t-0 bg-gray-50">
           <div className="border-r border-gray-200 p-2 font-medium text-sm">
             All Day
           </div>
@@ -174,18 +197,16 @@ export const WeeklyCalendarGrid = ({
           Time
         </div>
 
-        {/* Day headers */}
+        {/* Simplified column headers for timed events */}
         {week.map((day) => (
           <div
-            key={day.date.toISOString()}
+            key={`timed-header-${day.date.toISOString()}`}
             className={cn(
-              "calendar-day-header border-r border-gray-200",
-              day.isToday && "calendar-day-today"
+              "border-r border-gray-200 p-2 bg-gray-50 text-center text-xs text-gray-600",
+              day.isToday && "bg-blue-50"
             )}
-            onClick={() => onDayClick(day.date)}
           >
-            <div>{formatDateShort(day.date)}</div>
-            <div className="text-xs text-gray-500">{day.date.getDate()}</div>
+            {getDefaultLocation(day.date)}
           </div>
         ))}
 
