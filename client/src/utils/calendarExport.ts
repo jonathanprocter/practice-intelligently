@@ -293,7 +293,7 @@ function drawDailyGrid(pdf: jsPDF, events: CalendarEvent[], date: Date): void {
       pdf.setTextColor(...THERAPY_COLORS.text);
       pdf.setFontSize(config.fonts.timeLabel);
       pdf.setFont('helvetica', 'bold');
-      const timeStr = `${eventStart.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - ${eventEnd.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+      const timeStr = `${eventStart.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} - ${eventEnd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
       pdf.text(timeStr, config.margins + 5, currentY + 12);
       
       // Event details
@@ -425,7 +425,7 @@ export function exportAppointmentList(events: CalendarEvent[], startDate: Date, 
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'bold');
       pdf.text(eventStart.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }), 40, currentY);
-      pdf.text(`${eventStart.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - ${eventEnd.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`, 120, currentY);
+      pdf.text(`${eventStart.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} - ${eventEnd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`, 120, currentY);
       
       // Event details
       pdf.setFont('helvetica', 'normal');

@@ -97,13 +97,13 @@ export async function exportToPDF(options: PDFExportOptions): Promise<void> {
         const startTime = new Date(appointment.startTime);
         const endTime = new Date(appointment.endTime);
         const timeString = `${startTime.toLocaleTimeString('en-US', { 
-          hour: 'numeric', 
+          hour: '2-digit', 
           minute: '2-digit',
-          hour12: true 
+          hour12: false 
         })} - ${endTime.toLocaleTimeString('en-US', { 
-          hour: 'numeric', 
+          hour: '2-digit', 
           minute: '2-digit',
-          hour12: true 
+          hour12: false 
         })}`;
         
         doc.setFont('helvetica', 'normal');
@@ -216,13 +216,13 @@ export async function exportDailyToPDF(options: {
       const startTime = new Date(appointment.startTime);
       const endTime = new Date(appointment.endTime);
       const timeString = `${startTime.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
+        hour: '2-digit', 
         minute: '2-digit',
-        hour12: true 
+        hour12: false 
       })} - ${endTime.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
+        hour: '2-digit', 
         minute: '2-digit',
-        hour12: true 
+        hour12: false 
       })}`;
       
       doc.setFontSize(12);

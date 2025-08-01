@@ -91,9 +91,9 @@ export const AppointmentStatusView = ({
   const formatTime = (time: Date | string) => {
     const dateTime = time instanceof Date ? time : new Date(time);
     return dateTime.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
+      hour: '2-digit', 
       minute: '2-digit', 
-      hour12: true 
+      hour12: false 
     });
   };
 

@@ -83,9 +83,8 @@ export function isEventInTimeSlotLegacy(eventStart: Date, eventEnd: Date, slotHo
 }
 
 export function formatTimeSlot(hour: number, minute: number): string {
-  const period = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-  return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
+  // Use military time format (24-hour)
+  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
 }
 
 export function getTimeSlotPosition(eventTime: Date): { hour: number; minute: number } {

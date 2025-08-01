@@ -260,9 +260,9 @@ export const DailyView = ({
   const formatTime = (dateTime: Date | string) => {
     const date = dateTime instanceof Date ? dateTime : new Date(dateTime);
     return date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
+      hour: '2-digit', 
       minute: '2-digit', 
-      hour12: true 
+      hour12: false 
     });
   };
 

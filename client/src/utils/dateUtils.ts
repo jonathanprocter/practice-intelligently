@@ -97,3 +97,37 @@ export function getTodayInEasternTime(): string {
   const now = new Date();
   return now.toLocaleDateString('en-CA', EASTERN_TIME_OPTIONS); // YYYY-MM-DD format
 }
+
+// Military time formatting functions
+export function formatTimeMilitary(dateTime: Date | string): string {
+  const date = dateTime instanceof Date ? dateTime : new Date(dateTime);
+  if (isNaN(date.getTime())) {
+    return '00:00';
+  }
+  return date.toLocaleTimeString('en-US', {
+    ...EASTERN_TIME_OPTIONS,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+}
+
+export function formatDateTimeMilitary(dateTime: Date | string): string {
+  const date = dateTime instanceof Date ? dateTime : new Date(dateTime);
+  if (isNaN(date.getTime())) {
+    return '';
+  }
+  const dateStr = date.toLocaleDateString('en-US', {
+    ...EASTERN_TIME_OPTIONS,
+    month: 'short',
+    day: 'numeric'
+  });
+  const timeStr = formatTimeMilitary(date);
+  return `${dateStr} ${timeStr}`;
+}
+
+export function formatTimeRangeMilitary(startTime: Date | string, endTime: Date | string): string {
+  const start = formatTimeMilitary(startTime);
+  const end = formatTimeMilitary(endTime);
+  return `${start} - ${end}`;
+}

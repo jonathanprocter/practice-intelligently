@@ -436,7 +436,7 @@ function drawPerfectDailyGrid(pdf: jsPDF, events: CalendarEvent[], date: Date): 
       pdf.setTextColor(0, 0, 0);
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'bold');
-      const timeStr = `${eventStart.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} - ${eventEnd.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+      const timeStr = `${eventStart.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} - ${eventEnd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
       pdf.text(timeStr, config.margin + 5, currentY + 15);
       
       // Event details
