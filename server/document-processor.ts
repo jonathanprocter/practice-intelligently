@@ -22,12 +22,12 @@ async function getCsvParser() {
 // Import pdfjs-dist for direct PDF text extraction
 async function getPdfJS() {
   try {
-    // Use the legacy build for Node.js environments
-    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    // Use legacy build for Node.js compatibility
+    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.js');
     return pdfjsLib;
   } catch (error) {
     console.error('Failed to import pdfjs-dist:', error);
-    throw new Error('PDF processing library unavailable');
+    throw new Error('PDF processing is currently unavailable. Please convert your PDF to a text file (.txt) or image format (.jpg, .png) for processing.');
   }
 }
 
@@ -120,6 +120,9 @@ export class DocumentProcessor {
   }
 
   private async processPDF(filePath: string): Promise<string> {
+    // For now, disable PDF processing to avoid import issues
+    throw new Error('PDF processing is currently unavailable. Please convert your PDF to a text file (.txt) or image format (.jpg, .png) for processing.');
+    
     try {
       if (!fs.existsSync(filePath)) {
         throw new Error('PDF file not found');

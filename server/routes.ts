@@ -473,67 +473,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Google Calendar OAuth Routes
-  app.get('/api/auth/google', (req, res) => {
+  // Google Calendar OAuth Routes (Updated)
+  app.get('/api/auth/google', async (req, res) => {
     try {
       console.log('Google OAuth initiation requested');
-      const authUrl = googleCalendarService.generateAuthUrl();
-      console.log('Generated auth URL length:', authUrl.length);
-      console.log('Auth URL domain:', authUrl.substring(0, 50) + '...');
+      
+      // Use the simple OAuth implementation
+      const { simpleOAuth } = await import('./oauth-simple');
+      const authUrl = simpleOAuth.generateAuthUrl();
+      
+      console.log('Redirecting to Google OAuth...');
       res.redirect(authUrl);
     } catch (error: any) {
-      console.error('Error generating Google auth URL:', error);
-      res.status(500).json({ error: 'Failed to initiate Google authentication', details: error?.message || 'Unknown error' });
+      console.error('Error initiating Google OAuth:', error);
+      res.status(500).json({ 
+        error: 'Failed to initiate Google authentication', 
+        details: error?.message || 'Unknown error',
+        suggestion: 'Please check your Google OAuth credentials in Replit Secrets'
+      });
     }
   });
 
   // Check Google Calendar connection status
-  app.get('/api/auth/google/status', (req, res) => {
-    const isConnected = googleCalendarService.isConnected();
-    res.json({ connected: isConnected });
+  app.get('/api/auth/google/status', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+      const isConnected = simpleOAuth.isConnected();
+      res.json({ connected: isConnected });
+    } catch (error: any) {
+      console.error('Error checking OAuth status:', error);
+      res.json({ connected: false, error: error.message });
+    }
+  });
+
+  // Disconnect Google Calendar
+  app.post('/api/auth/google/disconnect', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+      simpleOAuth.disconnect();
+      res.json({ success: true, message: 'Google Calendar disconnected' });
+    } catch (error: any) {
+      console.error('Error disconnecting OAuth:', error);
+      res.status(500).json({ error: 'Failed to disconnect', details: error.message });
+    }
   });
 
   app.get('/api/auth/google/callback', async (req, res) => {
     try {
       const { code, error, state } = req.query;
       
-      console.log('OAuth callback received with:', { 
+      console.log('OAuth callback received:', { 
         hasCode: !!code, 
         hasError: !!error, 
-        hasState: !!state,
         codeLength: code ? (code as string).length : 0,
-        fullUrl: req.url,
-        headers: req.headers,
-        domain: req.get('host')
+        host: req.get('host')
       });
       
       if (error) {
         console.error('OAuth authorization error:', error);
-        if (error === 'access_denied') {
-          return res.redirect('/oauth-troubleshoot?error=permission_denied&message=' + encodeURIComponent('You denied permission to access your Google Calendar. Please try again and click "Allow" when prompted.'));
-        }
-        return res.redirect('/oauth-troubleshoot?error=oauth_failed&message=' + encodeURIComponent(`OAuth error: ${error}`));
+        const errorMessage = error === 'access_denied' 
+          ? 'You denied permission to access your Google Calendar. Please try again and click "Allow" when prompted.'
+          : `OAuth error: ${error}`;
+        return res.redirect('/oauth-troubleshoot?error=oauth_failed&message=' + encodeURIComponent(errorMessage));
       }
       
       if (!code || typeof code !== 'string' || code.trim() === '') {
-        console.error('No valid authorization code received. Code:', code);
+        console.error('No authorization code received');
         return res.redirect('/oauth-troubleshoot?error=no_code&message=' + encodeURIComponent('No authorization code received from Google. Please try the OAuth flow again.'));
       }
       
-      console.log('Processing OAuth callback with code:', (code as string).substring(0, 10) + '... (length: ' + code.length + ')');
-      console.log('Using redirect URI:', getRedirectUri());
+      console.log('Processing authorization code...');
       
-      await googleCalendarService.getAccessToken(code as string);
+      // Use the simple OAuth implementation
+      const { simpleOAuth } = await import('./oauth-simple');
+      await simpleOAuth.exchangeCodeForTokens(code as string);
+      
       console.log('Google Calendar authentication successful');
-      res.redirect('/calendar?success=connected&message=' + encodeURIComponent('Successfully connected to Google Calendar! Your events are now loading.'));
+      res.redirect('/calendar?success=connected&message=' + encodeURIComponent('Successfully connected to Google Calendar!'));
+      
     } catch (error: any) {
-      console.error('OAuth callback error details:', {
-        message: error.message,
-        stack: error.stack,
-        code: error.code,
-        response: error.response?.data
-      });
-      res.redirect('/oauth-troubleshoot?error=auth_failed&message=' + encodeURIComponent(error.message || 'Authentication failed. Please check the console logs for details.'));
+      console.error('OAuth callback error:', error.message);
+      res.redirect('/oauth-troubleshoot?error=auth_failed&message=' + encodeURIComponent(error.message || 'Authentication failed. Please try again or check your configuration.'));
     }
   });
 
@@ -542,33 +562,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { timeMin, timeMax, calendarId } = req.query;
       
-      if (!googleCalendarService.isConnected()) {
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
       
-      let events;
-      if (!calendarId || calendarId === 'all') {
-        // Fetch from all calendars
-        events = await googleCalendarService.getAllEvents(
-          timeMin as string,
-          timeMax as string
-        );
-      } else {
-        // Fetch from specific calendar
-        events = await googleCalendarService.getEvents(
-          calendarId as string,
-          timeMin as string,
-          timeMax as string
-        );
-      }
+      const events = await simpleOAuth.getEvents(
+        calendarId as string || 'primary',
+        timeMin as string,
+        timeMax as string
+      );
       
       res.json(events);
     } catch (error: any) {
       console.error('Error fetching calendar events:', error);
-      if (error.message?.includes('authentication required')) {
+      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      res.status(500).json({ error: 'Failed to fetch calendar events' });
+      res.status(500).json({ error: 'Failed to fetch calendar events', details: error.message });
     }
   });
 
@@ -609,17 +621,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/calendar/calendars', async (req, res) => {
     try {
-      if (!googleCalendarService.isConnected()) {
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      const calendars = await googleCalendarService.listCalendars();
+      
+      const calendars = await simpleOAuth.getCalendars();
       res.json(calendars);
     } catch (error: any) {
       console.error('Error fetching calendars:', error);
-      if (error.message?.includes('authentication required')) {
+      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      res.status(500).json({ error: 'Failed to fetch calendars' });
+      res.status(500).json({ error: 'Failed to fetch calendars', details: error.message });
     }
   });
 

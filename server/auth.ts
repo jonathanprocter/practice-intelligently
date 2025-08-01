@@ -79,10 +79,14 @@ export class GoogleCalendarService {
     const authUrl = this.auth.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
-      prompt: 'consent'
+      prompt: 'consent',
+      include_granted_scopes: true
     });
 
     console.log('Generated OAuth URL:', authUrl);
+    console.log('Generated auth URL length:', authUrl.length);
+    console.log('Auth URL domain:', authUrl.substring(0, 50) + '...');
+    
     return authUrl;
   }
 

@@ -9,7 +9,7 @@ import Appointments from "@/pages/appointments";
 import Calendar from "@/pages/calendar";
 import CalendarIntegration from "@/pages/calendar-integration";
 import GoogleCloudSetup from "@/pages/google-cloud-setup";
-import OAuthDebugPage from "@/pages/oauth-debug";
+import OAuthDebug from "@/pages/oauth-debug";
 import SessionNotes from "@/pages/session-notes";
 import ActionItems from "@/pages/action-items";
 import Analytics from "@/pages/analytics";
@@ -50,7 +50,7 @@ function Router() {
       <Route path="/calendar" component={Calendar} />
       <Route path="/calendar/integration" component={CalendarIntegration} />
       <Route path="/calendar/setup" component={GoogleCloudSetup} />
-      <Route path="/oauth/debug" component={OAuthDebugPage} />
+      <Route path="/oauth/debug" component={OAuthDebug} />
       <Route path="/session-notes" component={SessionNotes} />
       <Route path="/progress-notes" component={ProgressNotesPage} />
       <Route path="/action-items" component={ActionItems} />
