@@ -2081,6 +2081,111 @@ Your therapist`,
     }
   }
 
+  /**
+   * Creates a unified narrative from progress note sections (SOAP + Analysis + Insights + Summary)
+   * Following the exact order: Subjective, Objective, Assessment, Plan, Analysis, Insights, Summary
+   */
+  createUnifiedNarrative(data: {
+    subjective: string;
+    objective: string;
+    assessment: string;
+    plan: string;
+    tonalAnalysis: string;
+    narrativeSummary: string;
+  }): string {
+    const sections = [];
+
+    if (data.subjective?.trim()) {
+      sections.push('Subjective:\n' + data.subjective.trim());
+    }
+
+    if (data.objective?.trim()) {
+      sections.push('Objective:\n' + data.objective.trim());
+    }
+
+    if (data.assessment?.trim()) {
+      sections.push('Assessment:\n' + data.assessment.trim());
+    }
+
+    if (data.plan?.trim()) {
+      sections.push('Plan:\n' + data.plan.trim());
+    }
+
+    if (data.tonalAnalysis?.trim()) {
+      sections.push('Analysis:\n' + data.tonalAnalysis.trim());
+    }
+
+    // Extract insights from narrative summary if it contains them
+    let insights = '';
+    let summary = data.narrativeSummary?.trim() || '';
+
+    // Try to separate insights and summary if they're combined
+    if (summary.includes('Insights:') || summary.includes('Key Insights:')) {
+      const insightMatch = summary.match(/(.*?)(Insights?:.*?)(?:Summary:.*?$|$)/s);
+      if (insightMatch) {
+        insights = insightMatch[2].trim();
+        summary = summary.replace(insightMatch[2], '').trim();
+      }
+    }
+
+    if (insights) {
+      sections.push('Insights:\n' + insights);
+    }
+
+    if (summary) {
+      sections.push('Summary:\n' + summary);
+    }
+
+    return sections.join('\n\n');
+  }
+
+  /**
+   * Generates AI tags for session notes based on unified narrative content
+   */
+  async generateAITags(unifiedNarrative: string): Promise<string[]> {
+    try {
+      // Use AI to generate tags for searchable clinical themes
+      const { generateClinicalAnalysis } = await import('./ai-services');
+      
+      const prompt = `Analyze the following clinical session narrative and generate 5-8 searchable tags that capture the key clinical themes, modalities, and content areas. Focus on therapeutic modalities used, clinical presentations, intervention types, and major themes.
+
+Clinical Narrative:
+${unifiedNarrative}
+
+Return only a JSON array of strings, like: ["CBT", "anxiety", "EMDR", "trauma processing", "behavioral activation"]`;
+
+      const response = await generateClinicalAnalysis(prompt);
+      
+      try {
+        const tags = JSON.parse(response);
+        return Array.isArray(tags) ? tags : [];
+      } catch (parseError) {
+        console.warn('Could not parse AI tags, using fallback approach');
+        return this.extractBasicTags(unifiedNarrative);
+      }
+    } catch (error) {
+      console.warn('AI tag generation failed, using fallback approach');
+      return this.extractBasicTags(unifiedNarrative);
+    }
+  }
+
+  /**
+   * Fallback method for basic tag extraction
+   */
+  private extractBasicTags(content: string): string[] {
+    const commonTags = [
+      'CBT', 'DBT', 'ACT', 'EMDR', 'anxiety', 'depression', 'trauma', 
+      'mindfulness', 'behavioral activation', 'cognitive restructuring',
+      'emotional regulation', 'coping skills', 'homework', 'progress'
+    ];
+
+    const extractedTags = commonTags.filter(tag => 
+      content.toLowerCase().includes(tag.toLowerCase())
+    );
+
+    return extractedTags.slice(0, 8); // Limit to 8 tags
+  }
+
   async createProgressNote(data: {
     clientId: string;
     therapistId: string;
@@ -2094,13 +2199,15 @@ Your therapist`,
     significantQuotes: string[];
     narrativeSummary: string;
     sessionDate: Date;
+    appointmentId?: string;
   }): Promise<any> {
     try {
+      // Create the progress note
       const result = await pool.query(
         `INSERT INTO progress_notes 
          (client_id, therapist_id, title, subjective, objective, assessment, plan, 
-          tonal_analysis, key_points, significant_quotes, narrative_summary, session_date, created_at, updated_at) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()) 
+          tonal_analysis, key_points, significant_quotes, narrative_summary, session_date, appointment_id, created_at, updated_at) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW()) 
          RETURNING *`,
         [
           data.clientId,
@@ -2114,11 +2221,12 @@ Your therapist`,
           JSON.stringify(data.keyPoints),
           JSON.stringify(data.significantQuotes),
           data.narrativeSummary,
-          data.sessionDate
+          data.sessionDate,
+          data.appointmentId || null
         ]
       );
 
-      return {
+      const progressNote = {
         id: result.rows[0].id,
         clientId: result.rows[0].client_id,
         therapistId: result.rows[0].therapist_id,
@@ -2132,9 +2240,65 @@ Your therapist`,
         significantQuotes: this.safeParseJSON(result.rows[0].significant_quotes, []),
         narrativeSummary: result.rows[0].narrative_summary,
         sessionDate: new Date(result.rows[0].session_date),
+        appointmentId: result.rows[0].appointment_id,
         createdAt: new Date(result.rows[0].created_at),
         updatedAt: new Date(result.rows[0].updated_at)
       };
+
+      // AUTOMATED WORKFLOW: Create unified narrative and session note
+      try {
+        console.log('🤖 Creating unified narrative from progress note sections...');
+        
+        // Create unified narrative from all sections
+        const unifiedNarrative = this.createUnifiedNarrative({
+          subjective: data.subjective,
+          objective: data.objective,
+          assessment: data.assessment,
+          plan: data.plan,
+          tonalAnalysis: data.tonalAnalysis,
+          narrativeSummary: data.narrativeSummary
+        });
+
+        // Generate AI tags for the unified narrative
+        const aiTags = await this.generateAITags(unifiedNarrative);
+
+        // Create session note with unified narrative
+        const sessionNoteResult = await pool.query(
+          `INSERT INTO session_notes 
+           (client_id, therapist_id, content, ai_summary, tags, appointment_id, created_at, updated_at) 
+           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) 
+           RETURNING *`,
+          [
+            data.clientId,
+            data.therapistId,
+            unifiedNarrative,
+            `AI-generated unified narrative from progress note: ${data.title}`,
+            JSON.stringify(aiTags),
+            data.appointmentId || null
+          ]
+        );
+
+        console.log('✅ Unified narrative created and saved to session notes');
+        console.log(`📊 Generated ${aiTags.length} AI tags: ${aiTags.join(', ')}`);
+
+        // Return progress note with session note reference
+        return {
+          ...progressNote,
+          sessionNoteId: sessionNoteResult.rows[0].id,
+          unifiedNarrativeCreated: true,
+          aiTags
+        };
+
+      } catch (sessionError) {
+        console.error('⚠️  Error creating unified narrative session note:', sessionError);
+        // Progress note was created successfully, but session note creation failed
+        return {
+          ...progressNote,
+          unifiedNarrativeCreated: false,
+          sessionNoteError: sessionError.message
+        };
+      }
+
     } catch (error) {
       console.error('Error creating progress note:', error);
       throw error;

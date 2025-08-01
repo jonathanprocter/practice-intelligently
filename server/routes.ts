@@ -1467,7 +1467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         finalSessionDate
       );
 
-      // Save progress note to database
+      // Save progress note to database with automated unified narrative workflow
       const savedNote = await storage.createProgressNote({
         clientId: finalClientId,
         therapistId: req.body.therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
@@ -1481,18 +1481,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
         significantQuotes: progressNote.significantQuotes,
         narrativeSummary: progressNote.narrativeSummary,
         sessionDate: new Date(finalSessionDate),
+        appointmentId: req.body.appointmentId || null,
       });
 
       res.json({
         success: true,
         progressNote: savedNote,
-        message: 'Progress note generated and saved successfully'
+        unifiedNarrativeCreated: savedNote.unifiedNarrativeCreated,
+        sessionNoteId: savedNote.sessionNoteId,
+        aiTags: savedNote.aiTags,
+        message: savedNote.unifiedNarrativeCreated 
+          ? 'Progress note generated and unified narrative created in session notes successfully'
+          : 'Progress note generated successfully (session note creation failed)'
       });
 
     } catch (error: any) {
       console.error('Error generating progress note:', error);
       res.status(500).json({ 
         error: 'Failed to generate progress note',
+        details: error.message 
+      });
+    }
+  });
+
+  // Manual endpoint to trigger unified narrative workflow for existing progress notes
+  app.post('/api/progress-notes/:id/create-unified-narrative', async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Get the existing progress note
+      const progressNoteResult = await pool.query(
+        'SELECT * FROM progress_notes WHERE id = $1',
+        [id]
+      );
+
+      if (progressNoteResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Progress note not found' });
+      }
+
+      const progressNote = progressNoteResult.rows[0];
+
+      // Create unified narrative from existing sections
+      const unifiedNarrative = storage.createUnifiedNarrative({
+        subjective: progressNote.subjective,
+        objective: progressNote.objective,
+        assessment: progressNote.assessment,
+        plan: progressNote.plan,
+        tonalAnalysis: progressNote.tonal_analysis,
+        narrativeSummary: progressNote.narrative_summary
+      });
+
+      // Generate AI tags
+      const aiTags = await storage.generateAITags(unifiedNarrative);
+
+      // Create session note with unified narrative
+      const sessionNoteResult = await pool.query(
+        `INSERT INTO session_notes 
+         (client_id, therapist_id, content, ai_summary, tags, appointment_id, created_at, updated_at) 
+         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) 
+         RETURNING *`,
+        [
+          progressNote.client_id,
+          progressNote.therapist_id,
+          unifiedNarrative,
+          `Manual unified narrative from progress note: ${progressNote.title}`,
+          JSON.stringify(aiTags),
+          progressNote.appointment_id
+        ]
+      );
+
+      console.log(`✅ Manual unified narrative created for progress note ${id}`);
+      
+      res.json({
+        success: true,
+        progressNoteId: id,
+        sessionNoteId: sessionNoteResult.rows[0].id,
+        unifiedNarrative: unifiedNarrative.substring(0, 500) + '...', // Preview
+        aiTags,
+        message: 'Unified narrative created and saved to session notes successfully'
+      });
+
+    } catch (error: any) {
+      console.error('Error creating unified narrative:', error);
+      res.status(500).json({ 
+        error: 'Failed to create unified narrative',
         details: error.message 
       });
     }
