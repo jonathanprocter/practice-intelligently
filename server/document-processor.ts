@@ -1,12 +1,37 @@
 import fs from 'fs';
 import path from 'path';
-// Import pdf-parse in a way that avoids debug mode execution
-const pdfParse = require('pdf-parse');
 import mammoth from 'mammoth';
 import xlsx from 'xlsx';
-import csv from 'csv-parser';
 import sharp from 'sharp';
 import { multiModelAI } from './ai-multi-model';
+
+// Dynamic imports for ES module compatibility
+let csvParser: any = null;
+async function getCsvParser() {
+  if (!csvParser) {
+    try {
+      csvParser = (await import('csv-parser')).default;
+    } catch (error) {
+      console.error('Failed to import csv-parser:', error);
+      throw new Error('CSV processing is not available');
+    }
+  }
+  return csvParser;
+}
+
+// Dynamic import for pdf-parse to handle ES module compatibility
+let pdfParse: any = null;
+async function getPdfParse() {
+  if (!pdfParse) {
+    try {
+      pdfParse = (await import('pdf-parse')).default;
+    } catch (error) {
+      console.error('Failed to import pdf-parse:', error);
+      throw new Error('PDF processing is not available');
+    }
+  }
+  return pdfParse;
+}
 
 export interface ProcessedDocument {
   extractedText: string;
@@ -60,10 +85,14 @@ export class DocumentProcessor {
           break;
         case '.xlsx':
         case '.xls':
-          extractedText = await this.processExcel(filePath);
+          // Temporarily disable Excel processing to isolate the issue
+          throw new Error('Excel processing is temporarily disabled. Please use TXT or other supported formats.');
+          // extractedText = await this.processExcel(filePath);
           break;
         case '.csv':
-          extractedText = await this.processCSV(filePath);
+          // Temporarily disable CSV processing due to ES module compatibility issues
+          throw new Error('CSV processing is temporarily disabled. Please use TXT or other supported formats.');
+          // extractedText = await this.processCSV(filePath);
           break;
         default:
           throw new Error(`Unsupported file type: ${fileExtension}`);
@@ -87,34 +116,64 @@ export class DocumentProcessor {
 
   private async processPDF(filePath: string): Promise<string> {
     try {
+      if (!fs.existsSync(filePath)) {
+        throw new Error('PDF file not found');
+      }
+      const pdfParseModule = await getPdfParse();
       const dataBuffer = fs.readFileSync(filePath);
-      const data = await pdfParse(dataBuffer);
+      const data = await pdfParseModule(dataBuffer);
+      if (!data.text || data.text.trim().length === 0) {
+        throw new Error('No text content found in PDF');
+      }
       return data.text;
     } catch (error: any) {
       console.error('PDF processing error:', error);
-      throw new Error(`Failed to process PDF: ${error.message}`);
+      throw new Error(`Failed to process PDF: ${error.message || 'Unknown error'}`);
     }
   }
 
   private async processWordDocument(filePath: string): Promise<string> {
-    const result = await mammoth.extractRawText({ path: filePath });
-    return result.value;
+    try {
+      if (!fs.existsSync(filePath)) {
+        throw new Error('Word document file not found');
+      }
+      const result = await mammoth.extractRawText({ path: filePath });
+      if (!result.value || result.value.trim().length === 0) {
+        throw new Error('No text content found in Word document');
+      }
+      return result.value;
+    } catch (error: any) {
+      console.error('Word document processing error:', error);
+      throw new Error(`Failed to process Word document: ${error.message || 'Unknown error'}`);
+    }
   }
 
   private async processTextFile(filePath: string): Promise<string> {
-    return fs.readFileSync(filePath, 'utf8');
+    try {
+      if (!fs.existsSync(filePath)) {
+        throw new Error('Text file not found');
+      }
+      const content = fs.readFileSync(filePath, 'utf8');
+      if (!content || content.trim().length === 0) {
+        throw new Error('No content found in text file');
+      }
+      return content;
+    } catch (error: any) {
+      console.error('Text file processing error:', error);
+      throw new Error(`Failed to process text file: ${error.message || 'Unknown error'}`);
+    }
   }
 
   private async processImage(filePath: string): Promise<string> {
-    // Convert image to base64 for OpenAI Vision API
-    const imageBuffer = await sharp(filePath)
-      .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 80 })
-      .toBuffer();
-    
-    const base64Image = imageBuffer.toString('base64');
-
     try {
+      // Convert image to base64 for OpenAI Vision API
+      const imageBuffer = await sharp(filePath)
+        .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 80 })
+        .toBuffer();
+      
+      const base64Image = imageBuffer.toString('base64');
+
       const result = await multiModelAI.analyzeMultimodalContent(
         `Extract all text content from this image. If this appears to be a clinical document, therapy session notes, or mental health related content, preserve the clinical language and structure. Return the extracted text exactly as it appears in the image. Image data: data:image/jpeg;base64,${base64Image}`,
         'image'
@@ -123,54 +182,92 @@ export class DocumentProcessor {
       return result.content;
     } catch (error) {
       console.error('Error processing image with AI:', error);
-      throw new Error('Failed to extract text from image');
+      throw new Error(`Failed to extract text from image: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   private async processExcel(filePath: string): Promise<string> {
-    const workbook = xlsx.readFile(filePath);
-    let extractedText = '';
+    try {
+      if (!fs.existsSync(filePath)) {
+        throw new Error('Excel file not found');
+      }
+      const workbook = xlsx.readFile(filePath);
+      let extractedText = '';
 
-    workbook.SheetNames.forEach(sheetName => {
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
-      
-      extractedText += `Sheet: ${sheetName}\n`;
-      (jsonData as any[]).forEach((row: any) => {
-        if (Array.isArray(row)) {
-          extractedText += row.join('\t') + '\n';
-        }
+      workbook.SheetNames.forEach(sheetName => {
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        extractedText += `Sheet: ${sheetName}\n`;
+        (jsonData as any[]).forEach((row: any) => {
+          if (Array.isArray(row)) {
+            extractedText += row.join('\t') + '\n';
+          }
+        });
+        extractedText += '\n';
       });
-      extractedText += '\n';
-    });
 
-    return extractedText;
+      if (!extractedText || extractedText.trim().length === 0) {
+        throw new Error('No content found in Excel file');
+      }
+      return extractedText;
+    } catch (error: any) {
+      console.error('Excel processing error:', error);
+      throw new Error(`Failed to process Excel file: ${error.message || 'Unknown error'}`);
+    }
   }
 
   private async processCSV(filePath: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const results: any[] = [];
-      const stream = fs.createReadStream(filePath);
-      
-      stream
-        .pipe(csv())
-        .on('data', (data) => results.push(data))
-        .on('end', () => {
-          const headers = Object.keys(results[0] || {});
-          let text = headers.join('\t') + '\n';
-          
-          results.forEach(row => {
-            text += headers.map(header => row[header] || '').join('\t') + '\n';
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (!fs.existsSync(filePath)) {
+          return reject(new Error('CSV file not found'));
+        }
+        
+        const csvParserModule = await getCsvParser();
+        const results: any[] = [];
+        const stream = fs.createReadStream(filePath);
+        
+        stream
+          .pipe(csvParserModule())
+          .on('data', (data) => results.push(data))
+          .on('end', () => {
+            try {
+              if (results.length === 0) {
+                return reject(new Error('No data found in CSV file'));
+              }
+              
+              const headers = Object.keys(results[0] || {});
+              let text = headers.join('\t') + '\n';
+              
+              results.forEach(row => {
+                text += headers.map(header => row[header] || '').join('\t') + '\n';
+              });
+              
+              if (!text || text.trim().length === 0) {
+                return reject(new Error('No content extracted from CSV file'));
+              }
+              
+              resolve(text);
+            } catch (error) {
+              reject(new Error(`Failed to process CSV data: ${error instanceof Error ? error.message : 'Unknown error'}`));
+            }
+          })
+          .on('error', (error) => {
+            reject(new Error(`Failed to read CSV file: ${error.message}`));
           });
-          
-          resolve(text);
-        })
-        .on('error', reject);
+      } catch (error) {
+        reject(new Error(`Failed to process CSV file: ${error instanceof Error ? error.message : 'Unknown error'}`));
+      }
     });
   }
 
   private async extractMetadata(content: string): Promise<{ clientName?: string; sessionDate?: string }> {
     try {
+      if (!content || content.trim().length === 0) {
+        return {};
+      }
+
       const result = await multiModelAI.generateDetailedInsights(
         `Extract client name and session date from this clinical document. Return JSON format with 'clientName' and 'sessionDate' fields. If not found, return null for those fields.\n\nDocument content:\n${content.substring(0, 2000)}`,
         'metadata extraction'
@@ -199,6 +296,9 @@ export class DocumentProcessor {
   }
 
   async generateProgressNote(extractedText: string, clientId: string, sessionDate: string): Promise<ProgressNote> {
+    if (!extractedText || extractedText.trim().length === 0) {
+      throw new Error('No content provided for progress note generation');
+    }
     const prompt = `Comprehensive Clinical Progress Note Generation Prompt
 
 Overview

@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { ApiClient, type AiInsight } from "@/lib/api";
-import { Bot, Lightbulb, TrendingUp, FileText, AlertTriangle, Sparkles, RefreshCw, Eye, X, Brain, Users, Calendar } from "lucide-react";
+import { Bot, Lightbulb, TrendingUp, FileText, AlertTriangle, Sparkles, RefreshCw, Eye, X, Brain, Users, Calendar, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

@@ -208,7 +208,19 @@ export const progressNotes = pgTable("progress_notes", {
   therapistId: uuid("therapist_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   appointmentId: uuid("appointment_id").references(() => appointments.id, { onDelete: "cascade" }),
   treatmentPlanId: uuid("treatment_plan_id").references(() => treatmentPlans.id, { onDelete: "set null" }),
-  progressSummary: text("progress_summary").notNull(),
+  // AI-generated comprehensive progress note fields
+  title: text("title").notNull(),
+  subjective: text("subjective"),
+  objective: text("objective"),
+  assessment: text("assessment"),
+  plan: text("plan"),
+  tonalAnalysis: text("tonal_analysis"),
+  keyPoints: jsonb("key_points"),
+  significantQuotes: jsonb("significant_quotes"),
+  narrativeSummary: text("narrative_summary"),
+  sessionDate: timestamp("session_date"),
+  // Legacy fields for backward compatibility
+  progressSummary: text("progress_summary"),
   currentMood: text("current_mood"),
   behavioralObservations: text("behavioral_observations"),
   interventionsUsed: jsonb("interventions_used"),
@@ -223,6 +235,7 @@ export const progressNotes = pgTable("progress_notes", {
 }, (table) => ({
   clientIdx: index("progress_notes_client_idx").on(table.clientId),
   appointmentIdx: index("progress_notes_appointment_idx").on(table.appointmentId),
+  sessionDateIdx: index("progress_notes_session_date_idx").on(table.sessionDate),
 }));
 
 export const medications = pgTable("medications", {

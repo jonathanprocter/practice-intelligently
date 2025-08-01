@@ -136,6 +136,17 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  private safeParseJSON(jsonString: any, defaultValue: any = null): any {
+    if (!jsonString) return defaultValue;
+    if (typeof jsonString === 'object') return jsonString; // Already parsed
+    try {
+      return JSON.parse(jsonString);
+    } catch (error) {
+      console.warn('Failed to parse JSON:', jsonString);
+      return defaultValue;
+    }
+  }
+
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
@@ -1247,8 +1258,8 @@ export class DatabaseStorage implements IStorage {
         assessment: result.rows[0].assessment,
         plan: result.rows[0].plan,
         tonalAnalysis: result.rows[0].tonal_analysis,
-        keyPoints: JSON.parse(result.rows[0].key_points || '[]'),
-        significantQuotes: JSON.parse(result.rows[0].significant_quotes || '[]'),
+        keyPoints: this.safeParseJSON(result.rows[0].key_points, []),
+        significantQuotes: this.safeParseJSON(result.rows[0].significant_quotes, []),
         narrativeSummary: result.rows[0].narrative_summary,
         sessionDate: new Date(result.rows[0].session_date),
         createdAt: new Date(result.rows[0].created_at),
@@ -1281,8 +1292,8 @@ export class DatabaseStorage implements IStorage {
         assessment: row.assessment,
         plan: row.plan,
         tonalAnalysis: row.tonal_analysis,
-        keyPoints: JSON.parse(row.key_points || '[]'),
-        significantQuotes: JSON.parse(row.significant_quotes || '[]'),
+        keyPoints: this.safeParseJSON(row.key_points, []),
+        significantQuotes: this.safeParseJSON(row.significant_quotes, []),
         narrativeSummary: row.narrative_summary,
         sessionDate: new Date(row.session_date),
         clientName: row.first_name && row.last_name ? `${row.first_name} ${row.last_name}` : 'Unknown Client',
