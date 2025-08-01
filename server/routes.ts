@@ -497,6 +497,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { code, error } = req.query;
       
+      console.log('OAuth callback received with:', { 
+        hasCode: !!code, 
+        hasError: !!error, 
+        codeLength: code ? (code as string).length : 0,
+        fullUrl: req.url 
+      });
+      
       if (error) {
         console.error('OAuth authorization error:', error);
         if (error === 'access_denied') {
@@ -505,18 +512,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.redirect('/calendar/integration?error=oauth_failed&message=' + encodeURIComponent(`OAuth error: ${error}`));
       }
       
-      if (!code) {
-        console.error('No authorization code received');
-        return res.redirect('/calendar/integration?error=no_code&message=' + encodeURIComponent('No authorization code received from Google'));
+      if (!code || typeof code !== 'string' || code.trim() === '') {
+        console.error('No valid authorization code received. Code:', code);
+        return res.redirect('/calendar/integration?error=no_code&message=' + encodeURIComponent('No authorization code received from Google. Please try the OAuth flow again.'));
       }
       
-      console.log('Processing OAuth callback with code:', (code as string).substring(0, 10) + '...');
+      console.log('Processing OAuth callback with code:', (code as string).substring(0, 10) + '... (length: ' + code.length + ')');
       await googleCalendarService.getAccessToken(code as string);
       console.log('Google Calendar authentication successful');
-      res.redirect('/calendar/integration?success=connected&message=' + encodeURIComponent('Successfully connected to Google Calendar! You can now sync your events.'));
+      res.redirect('/calendar?success=connected&message=' + encodeURIComponent('Successfully connected to Google Calendar! Your events are now loading.'));
     } catch (error: any) {
       console.error('OAuth callback error:', error);
-      res.redirect('/calendar/integration?error=auth_failed&message=' + encodeURIComponent(error.message || 'Authentication failed'));
+      res.redirect('/calendar/integration?error=auth_failed&message=' + encodeURIComponent(error.message || 'Authentication failed. Please try again.'));
     }
   });
 

@@ -22,11 +22,16 @@ const getRedirectUri = () => {
   return uri;
 };
 
-const oauth2Client = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  getRedirectUri()
-);
+// Create a function to get OAuth client with current redirect URI
+const getOAuth2Client = () => {
+  return new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    getRedirectUri()
+  );
+};
+
+const oauth2Client = getOAuth2Client();
 
 const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
@@ -65,6 +70,9 @@ export class GoogleCalendarService {
       'https://www.googleapis.com/auth/calendar.events'
     ];
 
+    // Get fresh OAuth client with current redirect URI
+    this.auth = getOAuth2Client();
+    
     console.log('Generating OAuth URL with redirect URI:', getRedirectUri());
     console.log('Using Client ID:', process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
 
@@ -81,9 +89,14 @@ export class GoogleCalendarService {
   async getAccessToken(code: string): Promise<void> {
     try {
       console.log('Exchanging authorization code for tokens...');
-      const { tokens } = await this.auth.getToken(code);
+      
+      // Use fresh OAuth client with current redirect URI for token exchange
+      const currentOAuth = getOAuth2Client();
+      const { tokens } = await currentOAuth.getToken(code);
+      
       console.log('Successfully received tokens:', Object.keys(tokens));
       this.tokens = tokens;
+      this.auth = currentOAuth;
       this.auth.setCredentials(tokens);
       this.isAuthenticated = true;
       console.log('Successfully authenticated with Google Calendar');
