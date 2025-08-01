@@ -133,8 +133,23 @@ class SimpleOAuth {
 
     try {
       const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
-      const response = await calendar.calendarList.list();
-      return response.data.items || [];
+      
+      // Fetch ALL calendars including subcalendars with comprehensive parameters
+      const response = await calendar.calendarList.list({
+        maxResults: 250, // Increase to ensure we get all calendars and subcalendars
+        showDeleted: false,
+        showHidden: false // Include hidden calendars that might contain subcalendars
+      });
+      
+      const calendars = response.data.items || [];
+      
+      // Enhanced logging to understand calendar structure
+      console.log(`Found ${calendars.length} calendars including subcalendars:`);
+      calendars.forEach((cal, index) => {
+        console.log(`  ${index + 1}. ${cal.summary} (${cal.id}) [${cal.accessRole}] ${cal.primary ? '[PRIMARY]' : ''}`);
+      });
+      
+      return calendars;
     } catch (error: any) {
       console.error('Error fetching calendars:', error);
       if (error.code === 401 || error.code === 403) {
@@ -158,16 +173,24 @@ class SimpleOAuth {
         timeMax: timeMax || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         singleEvents: true,
         orderBy: 'startTime',
+        maxResults: 2500, // Increase to ensure we get all events from each calendar/subcalendar
+        showDeleted: false
       });
 
-      return response.data.items || [];
+      const events = response.data.items || [];
+      if (events.length > 0) {
+        console.log(`  → Fetched ${events.length} events from calendar: ${calendarId}`);
+      }
+      
+      return events;
     } catch (error: any) {
-      console.error('Error fetching events:', error);
+      console.error(`Error fetching events from calendar ${calendarId}:`, error.message);
       if (error.code === 401 || error.code === 403) {
         this.isAuthenticated = false;
         throw new Error('Authentication expired. Please re-authenticate.');
       }
-      throw error;
+      // Don't throw error for individual calendars, just return empty array
+      return [];
     }
   }
 

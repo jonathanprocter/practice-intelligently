@@ -885,9 +885,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let processedCalendars = 0;
         let totalEventsFound = 0;
 
+        console.log(`\n🗓️  Processing ${calendars.length} calendars and subcalendars for comprehensive event fetch...`);
+
         // Process ALL calendars and subcalendars in parallel for better performance
         const calendarPromises = calendars.map(async (calendar) => {
           try {
+            // Include all calendar types: primary, secondary, and subcalendars
             const events = await simpleOAuth.getEvents(
               calendar.id,
               startTime,
@@ -897,7 +900,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             totalEventsFound += events.length;
             processedCalendars++;
 
-            // Convert to standard format with enhanced metadata
+            // Convert to standard format with enhanced metadata including subcalendar info
             return events.map((event: any) => ({
               id: event.id,
               title: event.summary || 'Untitled Event',
@@ -908,10 +911,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               calendarId: calendar.id,
               calendarName: calendar.summary,
               isPrimary: calendar.primary || false,
+              isSubcalendar: !calendar.primary && calendar.accessRole !== 'owner',
+              accessRole: calendar.accessRole,
               status: event.status || 'confirmed'
             }));
           } catch (calError) {
-            console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError.message);
+            console.warn(`❌ Could not fetch events from calendar ${calendar.summary}:`, calError.message);
             return [];
           }
         });
@@ -922,7 +927,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Sort events by start time
         allEvents.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
-        console.log(`Successfully fetched ${totalEventsFound} events from ${processedCalendars}/${calendars.length} calendars (${startTime.substring(0,4)}-${endTime.substring(0,4)})`);
+        // Enhanced logging with subcalendar breakdown
+        const subcalendarEvents = allEvents.filter(event => event.isSubcalendar);
+        console.log(`\n✅ Successfully fetched ${totalEventsFound} events from ${processedCalendars}/${calendars.length} calendars (${startTime.substring(0,4)}-${endTime.substring(0,4)})`);
+        console.log(`   📊 Breakdown: ${allEvents.length - subcalendarEvents.length} from primary calendars, ${subcalendarEvents.length} from subcalendars`);
         
         res.json(allEvents);
       } else {
