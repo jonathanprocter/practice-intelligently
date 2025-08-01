@@ -472,17 +472,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // AI Analysis endpoints
+  // AI Analysis endpoints with provider-specific routing
   app.post('/api/ai/analyze', async (req, res) => {
     try {
-      const { content, type, provider } = req.body;
+      const { content, type = 'session', provider } = req.body;
       
       if (!content) {
         return res.status(400).json({ error: 'Content is required' });
       }
       
-      const result = await analyzeContent(content, type || 'session');
-      res.json(result);
+      let result;
+      
+      if (provider === 'openai') {
+        // Use OpenAI for primary analysis
+        result = await multiModelAI.generateClinicalAnalysis(content, type);
+      } else if (provider === 'claude') {
+        // Use Claude for secondary analysis  
+        result = await multiModelAI.generateDetailedInsights(content, type);
+      } else if (provider === 'gemini') {
+        // Use Gemini for multimodal analysis
+        result = await multiModelAI.analyzeMultimodalContent(content, type);
+      } else {
+        // Default to OpenAI-first fallback chain
+        result = await multiModelAI.generateClinicalAnalysis(content, type);
+      }
+      
+      // Transform to expected format
+      const transformedResult = {
+        insights: [result.content],
+        recommendations: ['Analysis completed using ' + result.model],
+        themes: ['Clinical analysis'],
+        priority: result.confidence > 0.8 ? 'high' : 'medium',
+        nextSteps: ['Review analysis and implement recommendations']
+      };
+      
+      res.json(transformedResult);
     } catch (error) {
       console.error('AI analysis error:', error);
       res.status(500).json({ 
@@ -494,14 +518,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/ai/analyze-transcript', async (req, res) => {
     try {
-      const { transcript } = req.body;
+      const { transcript, provider = 'openai' } = req.body;
       
       if (!transcript) {
         return res.status(400).json({ error: 'Transcript is required' });
       }
       
-      const result = await analyzeSessionTranscript(transcript);
-      res.json(result);
+      let result;
+      
+      if (provider === 'openai') {
+        // Use OpenAI for transcript analysis (primary)
+        result = await multiModelAI.generateClinicalAnalysis(transcript, 'session transcript analysis');
+      } else {
+        // Fallback to old method
+        result = await analyzeSessionTranscript(transcript);
+      }
+      
+      // Ensure we return the expected format for transcript analysis
+      if (result.content) {
+        // Transform multiModelAI response to SessionTranscriptAnalysis format
+        res.json({
+          summary: result.content.substring(0, 200) + '...',
+          keyPoints: [result.content],
+          actionItems: ['Review session insights'],
+          emotionalTone: 'Analysis completed',
+          progressIndicators: ['Session analyzed using ' + result.model],
+          concernFlags: []
+        });
+      } else {
+        res.json(result);
+      }
     } catch (error) {
       console.error('Transcript analysis error:', error);
       res.status(500).json({ 

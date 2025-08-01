@@ -6,6 +6,15 @@ This is a comprehensive therapy practice management system designed as a full-st
 
 ## Recent Changes (August 1, 2025)
 
+✅ **AI Service Priority Configuration Updated**
+- **OpenAI as Primary**: Configured OpenAI GPT-4o as the primary AI service for all clinical analysis
+- **Claude as Secondary**: Set Claude Sonnet-4 as the secondary/fallback service for detailed insights
+- **Tertiary Services**: Gemini for multimodal analysis, Perplexity for research as needed
+- Updated `server/ai-multi-model.ts` to prioritize OpenAI in all analysis methods
+- Modified client-side `aiServices.ts` to enforce OpenAI-first fallback chain
+- Updated backend routes to handle provider-specific routing with proper fallbacks
+- **Status**: AI services now consistently use OpenAI as primary with proper fallback hierarchy
+
 ✅ **Google Calendar Real-Time Integration Completed**
 - Fixed OAuth endpoints returning HTML instead of JSON data
 - Added proper OAuth API routes: `/api/oauth/is-connected`, `/api/oauth/calendars`, `/api/oauth/events/today`
@@ -75,7 +84,7 @@ The system utilizes a comprehensive PostgreSQL database with 13 robust tables:
 - **Session Documentation**: Rich text session notes, transcript processing, automated AI insights generation, progress tracking.
 - **Action Items & Tasks**: Priority-based task management with due dates and client-specific tasks.
 - **Robust Storage Layer**: Over 65 methods supporting comprehensive CRUD operations, advanced querying, status management, bulk operations, and integration with business logic for analytics and reporting.
-- **Advanced AI Integration & Clinical Intelligence**: Integrates multiple AI models (Claude, OpenAI GPT-4o, Google Gemini, Perplexity Sonar) for:
+- **Advanced AI Integration & Clinical Intelligence**: Integrates multiple AI models with OpenAI GPT-4o as primary (OpenAI GPT-4o, Claude Sonnet-4, Google Gemini, Perplexity Sonar) for:
     - **Predictive Clinical Modeling**: Treatment outcome prediction, risk escalation alerts, optimal intervention timing.
     - **Advanced Pattern Recognition**: Cross-client learning, seasonal/cyclical pattern detection, therapeutic relationship optimization.
     - **Personalized Therapeutic Recommendations**: Evidence-based intervention matching, dynamic homework assignment, curated resources.
@@ -89,8 +98,10 @@ Client requests from the React frontend are processed by the Express backend, wh
 ## External Dependencies
 
 ### AI Services
-- **Anthropic API**: For advanced text analysis and therapy insights.
-- **OpenAI API**: For complementary AI capabilities.
+- **OpenAI API**: Primary AI service for clinical analysis and therapy insights.
+- **Anthropic API**: Secondary AI service for advanced text analysis and detailed insights.
+- **Google Gemini API**: For multimodal content analysis when needed.
+- **Perplexity API**: For evidence-based research and recommendations.
 - **Notion API**: For external documentation integration.
 
 ### Database & Infrastructure

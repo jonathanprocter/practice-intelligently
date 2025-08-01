@@ -20,15 +20,44 @@ export interface AIResponse {
 }
 
 export class MultiModelAI {
-  // Primary analysis using Claude for clinical sophistication
+  // Primary analysis using OpenAI for robust performance
   async generateClinicalAnalysis(content: string, context?: string): Promise<AIResponse> {
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // Latest OpenAI model
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert clinical therapist. Provide detailed, evidence-based insights and analysis."
+          },
+          {
+            role: "user",
+            content: `Analyze the following content${context ? ` in the context of: ${context}` : ''}:\n\n${content}`
+          }
+        ],
+        max_tokens: 2000,
+      });
+
+      return {
+        content: response.choices[0].message.content || '',
+        model: 'gpt-4o',
+        confidence: 0.9
+      };
+    } catch (error) {
+      console.error('OpenAI analysis failed, falling back to Claude:', error);
+      return this.fallbackToClaude(content, context);
+    }
+  }
+
+  // Secondary analysis using Claude for detailed insights
+  async generateDetailedInsights(content: string, analysisType: string): Promise<AIResponse> {
     try {
       const message = await anthropic.messages.create({
         max_tokens: 2000,
         messages: [
           {
             role: 'user',
-            content: `As an expert clinical therapist, analyze the following content${context ? ` in the context of: ${context}` : ''}:\n\n${content}`
+            content: `As an expert clinical therapist specializing in ${analysisType}, provide detailed, evidence-based insights for the following content:\n\n${content}`
           }
         ],
         model: "claude-sonnet-4-20250514", // Latest Claude model
@@ -39,39 +68,10 @@ export class MultiModelAI {
           ? (message.content[0].type === 'text' ? message.content[0].text : '')
           : (typeof message.content === 'string' ? message.content : ''),
         model: 'claude-sonnet-4',
-        confidence: 0.9
-      };
-    } catch (error) {
-      console.error('Claude analysis failed, falling back to OpenAI:', error);
-      return this.fallbackToOpenAI(content, context);
-    }
-  }
-
-  // Secondary analysis using OpenAI for detailed insights
-  async generateDetailedInsights(content: string, analysisType: string): Promise<AIResponse> {
-    try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o", // Latest OpenAI model
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert clinical therapist specializing in ${analysisType}. Provide detailed, evidence-based insights.`
-          },
-          {
-            role: "user",
-            content: content
-          }
-        ],
-        max_tokens: 2000,
-      });
-
-      return {
-        content: response.choices[0].message.content || '',
-        model: 'gpt-4o',
         confidence: 0.85
       };
     } catch (error) {
-      console.error('OpenAI analysis failed, falling back to Gemini:', error);
+      console.error('Claude analysis failed, falling back to Gemini:', error);
       return this.fallbackToGemini(content, analysisType);
     }
   }
@@ -102,7 +102,7 @@ export class MultiModelAI {
         citations: [] // Perplexity provides citations
       };
     } catch (error) {
-      console.error('Perplexity analysis failed, falling back to Claude:', error);
+      console.error('Perplexity analysis failed, falling back to OpenAI:', error);
       return this.generateClinicalAnalysis(query, `Evidence-based research for ${domain}`);
     }
   }
@@ -137,7 +137,7 @@ export class MultiModelAI {
   // Ensemble approach - combine insights from multiple models
   async generateEnsembleAnalysis(content: string, analysisType: string): Promise<AIResponse> {
     try {
-      const [claudeResult, openaiResult, perplexityResult] = await Promise.allSettled([
+      const [openaiResult, claudeResult, perplexityResult] = await Promise.allSettled([
         this.generateClinicalAnalysis(content, analysisType),
         this.generateDetailedInsights(content, analysisType),
         this.getEvidenceBasedRecommendations(content, 'clinical')
@@ -146,8 +146,8 @@ export class MultiModelAI {
       // Combine successful results
       const results: AIResponse[] = [];
 
-      if (claudeResult.status === 'fulfilled') results.push(claudeResult.value);
       if (openaiResult.status === 'fulfilled') results.push(openaiResult.value);
+      if (claudeResult.status === 'fulfilled') results.push(claudeResult.value);
       if (perplexityResult.status === 'fulfilled') results.push(perplexityResult.value);
 
       if (results.length === 0) {
@@ -170,6 +170,27 @@ export class MultiModelAI {
   }
 
   // Fallback methods
+  private async fallbackToClaude(content: string, context?: string): Promise<AIResponse> {
+    const message = await anthropic.messages.create({
+      max_tokens: 2000,
+      messages: [
+        {
+          role: 'user',
+          content: `${context ? `Context: ${context}\n\n` : ''}${content}`
+        }
+      ],
+      model: "claude-sonnet-4-20250514",
+    });
+
+    return {
+      content: Array.isArray(message.content) 
+        ? (message.content[0].type === 'text' ? message.content[0].text : '')
+        : (typeof message.content === 'string' ? message.content : ''),
+      model: 'claude-sonnet-4-fallback',
+      confidence: 0.7
+    };
+  }
+
   private async fallbackToOpenAI(content: string, context?: string): Promise<AIResponse> {
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -213,9 +234,29 @@ export class MultiModelAI {
   private async synthesizeInsights(results: AIResponse[], analysisType: string): Promise<string> {
     const combinedInsights = results.map((r, i) => `**${r.model} Analysis:**\n${r.content}`).join('\n\n---\n\n');
 
-    // Use Claude to synthesize the combined insights
+    // Use OpenAI to synthesize the combined insights
     try {
-      const synthesis = await anthropic.messages.create({
+      const synthesis = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert clinical supervisor. Synthesize multiple AI analyses into comprehensive clinical assessments."
+          },
+          {
+            role: "user",
+            content: `Synthesize the following multiple AI analyses into a comprehensive, clinically sophisticated ${analysisType} assessment. Focus on the most valuable insights and resolve any contradictions:\n\n${combinedInsights}`
+          }
+        ],
+        max_tokens: 2000,
+      });
+
+      return synthesis.choices[0].message.content || '';
+    } catch (error) {
+      console.error('OpenAI synthesis failed, falling back to Claude:', error);
+      
+      // Fallback to Claude for synthesis
+      const claudeSynthesis = await anthropic.messages.create({
         max_tokens: 2000,
         messages: [
           {
@@ -226,12 +267,9 @@ export class MultiModelAI {
         model: "claude-sonnet-4-20250514",
       });
 
-      return Array.isArray(synthesis.content) 
-        ? (synthesis.content[0].type === 'text' ? synthesis.content[0].text : '')
-        : (typeof synthesis.content === 'string' ? synthesis.content : '');
-    } catch (error) {
-      console.error('Synthesis failed, returning combined content:', error);
-      return combinedInsights;
+      return Array.isArray(claudeSynthesis.content) 
+        ? (claudeSynthesis.content[0].type === 'text' ? claudeSynthesis.content[0].text : '')
+        : (typeof claudeSynthesis.content === 'string' ? claudeSynthesis.content : '');
     }
   }
 }
