@@ -107,6 +107,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk client creation endpoint
+  app.post("/api/clients/bulk", async (req, res) => {
+    try {
+      const { clients: clientsData } = req.body;
+      
+      if (!Array.isArray(clientsData)) {
+        return res.status(400).json({ error: "Clients data must be an array" });
+      }
+
+      const createdClients = [];
+      const errors = [];
+
+      for (let i = 0; i < clientsData.length; i++) {
+        try {
+          const validatedData = insertClientSchema.parse(clientsData[i]);
+          const client = await storage.createClient(validatedData);
+          createdClients.push(client);
+        } catch (error) {
+          errors.push({ index: i, error: error.message, data: clientsData[i] });
+        }
+      }
+
+      res.json({
+        success: true,
+        created: createdClients.length,
+        errors: errors.length,
+        clients: createdClients,
+        errorDetails: errors
+      });
+    } catch (error) {
+      console.error("Error in bulk client creation:", error);
+      res.status(500).json({ error: "Failed to create clients in bulk" });
+    }
+  });
+
   app.get("/api/clients/detail/:id", async (req, res) => {
     try {
       const { id } = req.params;
