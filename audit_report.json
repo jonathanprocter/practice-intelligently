@@ -1,11 +1,11 @@
 {
   "summary": {
-    "total_issues": 304,
-    "critical_issues": 13,
+    "total_issues": 303,
+    "critical_issues": 5,
     "high_issues": 0,
-    "medium_issues": 291,
+    "medium_issues": 298,
     "low_issues": 0,
-    "auto_fixable": 145
+    "auto_fixable": 148
   },
   "issues": [
     {
@@ -13,7 +13,7 @@
       "severity": "medium",
       "file_path": "populate-clients.ts",
       "line_number": 116,
-      "description": "Debug logging (should be removed in production): console.log(\"Starting client population...\");",
+      "description": "Debug logging (should be removed in production): //     console.log(\"Starting client population...\");",
       "recommendation": "Fix debug logging (should be removed in production) in this line",
       "auto_fixable": true
     },
@@ -22,7 +22,7 @@
       "severity": "medium",
       "file_path": "populate-clients.ts",
       "line_number": 117,
-      "description": "Debug logging (should be removed in production): console.log(`Using therapist ID: ${THERAPIST_ID}`);",
+      "description": "Debug logging (should be removed in production): //     console.log(`Using therapist ID: ${THERAPIST_ID}`);",
       "recommendation": "Fix debug logging (should be removed in production) in this line",
       "auto_fixable": true
     },
@@ -31,7 +31,7 @@
       "severity": "medium",
       "file_path": "populate-clients.ts",
       "line_number": 128,
-      "description": "Debug logging (should be removed in production): console.log(`Client ${clientData.firstName} ${clientData.lastName} already exists, skipping...`);",
+      "description": "Debug logging (should be removed in production): //         console.log(`Client ${clientData.firstName} ${clientData.lastName} already exists, skipping...`);",
       "recommendation": "Fix debug logging (should be removed in production) in this line",
       "auto_fixable": true
     },
@@ -40,7 +40,7 @@
       "severity": "medium",
       "file_path": "populate-clients.ts",
       "line_number": 138,
-      "description": "Debug logging (should be removed in production): console.log(`Created client: ${insertedClient.firstName} ${insertedClient.lastName} (ID: ${insertedClient.id})`);",
+      "description": "Debug logging (should be removed in production): //       console.log(`Created client: ${insertedClient.firstName} ${insertedClient.lastName} (ID: ${insertedClient.id})`);",
       "recommendation": "Fix debug logging (should be removed in production) in this line",
       "auto_fixable": true
     },
@@ -49,7 +49,7 @@
       "severity": "medium",
       "file_path": "populate-clients.ts",
       "line_number": 141,
-      "description": "Debug logging (should be removed in production): console.log(\"Client population completed successfully!\");",
+      "description": "Debug logging (should be removed in production): //     console.log(\"Client population completed successfully!\");",
       "recommendation": "Fix debug logging (should be removed in production) in this line",
       "auto_fixable": true
     },
@@ -58,7 +58,7 @@
       "severity": "medium",
       "file_path": "populate-clients.ts",
       "line_number": 142,
-      "description": "Debug logging (should be removed in production): console.log(`All clients are assigned to therapist ID: ${THERAPIST_ID}`);",
+      "description": "Debug logging (should be removed in production): //     console.log(`All clients are assigned to therapist ID: ${THERAPIST_ID}`);",
       "recommendation": "Fix debug logging (should be removed in production) in this line",
       "auto_fixable": true
     },
@@ -67,96 +67,33 @@
       "severity": "medium",
       "file_path": "populate-clients.ts",
       "line_number": 143,
-      "description": "Debug logging (should be removed in production): console.log(\"Use this therapist ID in your application to see these clients.\");",
+      "description": "Debug logging (should be removed in production): //     console.log(\"Use this therapist ID in your application to see these clients.\");",
       "recommendation": "Fix debug logging (should be removed in production) in this line",
       "auto_fixable": true
     },
     {
       "category": "Code Quality",
       "severity": "medium",
-      "file_path": "client/src/lib/googleCalendar.ts",
-      "line_number": 46,
-      "description": "Loose typing: static async getCalendars(): Promise<any[]> {",
+      "file_path": "client/src/lib/api.ts",
+      "line_number": 104,
+      "description": "Loose typing: static async getTodaysCalendarEvents(): Promise<any[]> {",
+      "recommendation": "Fix loose typing in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "client/src/lib/api.ts",
+      "line_number": 187,
+      "description": "Loose typing: static async getGoogleCalendarEvents(): Promise<any[]> {",
       "recommendation": "Fix loose typing in this line",
       "auto_fixable": true
     },
     {
       "category": "Type Safety",
       "severity": "medium",
-      "file_path": "client/src/lib/googleCalendar.ts",
-      "line_number": 92,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
       "file_path": "client/src/lib/api.ts",
-      "line_number": 22,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "client/src/lib/api.ts",
-      "line_number": 23,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "client/src/lib/api.ts",
-      "line_number": 24,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "client/src/lib/api.ts",
-      "line_number": 25,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "client/src/lib/api.ts",
-      "line_number": 26,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "client/src/lib/api.ts",
-      "line_number": 27,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "client/src/lib/api.ts",
-      "line_number": 29,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "client/src/lib/api.ts",
-      "line_number": 33,
+      "line_number": 149,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -1009,330 +946,6 @@
     },
     {
       "category": "Code Quality",
-      "severity": "critical",
-      "file_path": "server/document-processor.ts",
-      "line_number": 127,
-      "description": "Synchronous file operations: if (!fs.existsSync(filePath)) {",
-      "recommendation": "Fix synchronous file operations in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 131,
-      "description": "Debug logging (should be removed in production): console.log('Processing PDF using pdfjs-dist:', filePath);",
-      "recommendation": "Fix debug logging (should be removed in production) in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "critical",
-      "file_path": "server/document-processor.ts",
-      "line_number": 136,
-      "description": "Synchronous file operations: const pdfBuffer = fs.readFileSync(filePath);",
-      "recommendation": "Fix synchronous file operations in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 152,
-      "description": "Debug logging (should be removed in production): console.log(`Processing PDF page ${pageNum}...`);",
-      "recommendation": "Fix debug logging (should be removed in production) in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 182,
-      "description": "Debug logging (should be removed in production): console.log('Successfully extracted text from PDF, length:', fullText.length);",
-      "recommendation": "Fix debug logging (should be removed in production) in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "critical",
-      "file_path": "server/document-processor.ts",
-      "line_number": 192,
-      "description": "Synchronous file operations: if (!fs.existsSync(filePath)) {",
-      "recommendation": "Fix synchronous file operations in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "critical",
-      "file_path": "server/document-processor.ts",
-      "line_number": 208,
-      "description": "Synchronous file operations: if (!fs.existsSync(filePath)) {",
-      "recommendation": "Fix synchronous file operations in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "critical",
-      "file_path": "server/document-processor.ts",
-      "line_number": 211,
-      "description": "Synchronous file operations: const content = fs.readFileSync(filePath, 'utf8');",
-      "recommendation": "Fix synchronous file operations in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "critical",
-      "file_path": "server/document-processor.ts",
-      "line_number": 246,
-      "description": "Synchronous file operations: if (!fs.existsSync(filePath)) {",
-      "recommendation": "Fix synchronous file operations in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 257,
-      "description": "Loose typing: (jsonData as any[]).forEach((row: any) => {",
-      "recommendation": "Fix loose typing in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "critical",
-      "file_path": "server/document-processor.ts",
-      "line_number": 278,
-      "description": "Synchronous file operations: if (!fs.existsSync(filePath)) {",
-      "recommendation": "Fix synchronous file operations in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 283,
-      "description": "Loose typing: const results: any[] = [];",
-      "recommendation": "Fix loose typing in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 572,
-      "description": "Debug logging (should be removed in production): console.log('=== DEBUG: Cleaned Content for Parsing ===');",
-      "recommendation": "Fix debug logging (should be removed in production) in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 573,
-      "description": "Debug logging (should be removed in production): console.log(cleanedContent.substring(0, 1000));",
-      "recommendation": "Fix debug logging (should be removed in production) in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 574,
-      "description": "Debug logging (should be removed in production): console.log('=== END DEBUG ===');",
-      "recommendation": "Fix debug logging (should be removed in production) in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 579,
-      "description": "Debug logging (should be removed in production): console.log('=== DEBUG: Extracted Sections ===');",
-      "recommendation": "Fix debug logging (should be removed in production) in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 580,
-      "description": "Debug logging (should be removed in production): console.log('Subjective:', extractedSections.subjective.substring(0, 200));",
-      "recommendation": "Fix debug logging (should be removed in production) in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 581,
-      "description": "Debug logging (should be removed in production): console.log('Objective:', extractedSections.objective.substring(0, 200));",
-      "recommendation": "Fix debug logging (should be removed in production) in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 582,
-      "description": "Debug logging (should be removed in production): console.log('Assessment:', extractedSections.assessment.substring(0, 200));",
-      "recommendation": "Fix debug logging (should be removed in production) in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 583,
-      "description": "Debug logging (should be removed in production): console.log('Plan:', extractedSections.plan.substring(0, 200));",
-      "recommendation": "Fix debug logging (should be removed in production) in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 584,
-      "description": "Debug logging (should be removed in production): console.log('=== END DEBUG ===');",
-      "recommendation": "Fix debug logging (should be removed in production) in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 9,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 39,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 62,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 69,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 97,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 116,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 170,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 184,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 200,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 216,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 257,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 269,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 283,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 619,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/document-processor.ts",
-      "line_number": 731,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Code Quality",
       "severity": "medium",
       "file_path": "server/auth.ts",
       "line_number": 10,
@@ -1820,8 +1433,287 @@
     {
       "category": "Code Quality",
       "severity": "medium",
+      "file_path": "server/vite-backup.ts",
+      "line_number": 19,
+      "description": "Debug logging (should be removed in production): console.log(`${formattedTime} [${source}] ${message}`);",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "critical",
+      "file_path": "server/vite-backup.ts",
+      "line_number": 73,
+      "description": "Synchronous file operations: if (!fs.existsSync(distPath)) {",
+      "recommendation": "Fix synchronous file operations in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 140,
+      "description": "Debug logging (should be removed in production): console.log('Processing PDF using pdfjs-dist:', filePath);",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 161,
+      "description": "Debug logging (should be removed in production): console.log(`Processing PDF page ${pageNum}...`);",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 191,
+      "description": "Debug logging (should be removed in production): console.log('Successfully extracted text from PDF, length:', fullText.length);",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 266,
+      "description": "Loose typing: (jsonData as any[]).forEach((row: any) => {",
+      "recommendation": "Fix loose typing in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 292,
+      "description": "Loose typing: const results: any[] = [];",
+      "recommendation": "Fix loose typing in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 581,
+      "description": "Debug logging (should be removed in production): console.log('=== DEBUG: Cleaned Content for Parsing ===');",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 582,
+      "description": "Debug logging (should be removed in production): console.log(cleanedContent.substring(0, 1000));",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 583,
+      "description": "Debug logging (should be removed in production): console.log('=== END DEBUG ===');",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 588,
+      "description": "Debug logging (should be removed in production): console.log('=== DEBUG: Extracted Sections ===');",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 589,
+      "description": "Debug logging (should be removed in production): console.log('Subjective:', extractedSections.subjective.substring(0, 200));",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 590,
+      "description": "Debug logging (should be removed in production): console.log('Objective:', extractedSections.objective.substring(0, 200));",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 591,
+      "description": "Debug logging (should be removed in production): console.log('Assessment:', extractedSections.assessment.substring(0, 200));",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 592,
+      "description": "Debug logging (should be removed in production): console.log('Plan:', extractedSections.plan.substring(0, 200));",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 593,
+      "description": "Debug logging (should be removed in production): console.log('=== END DEBUG ===');",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 9,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 39,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 71,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 78,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 106,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 125,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 179,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 193,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 209,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 225,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 266,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 278,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 292,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 628,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/document-processor.ts",
+      "line_number": 740,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 479,
+      "line_number": 543,
       "description": "Debug logging (should be removed in production): console.log('Google OAuth initiation requested');",
       "recommendation": "Fix debug logging (should be removed in production) in this line",
       "auto_fixable": true
@@ -1830,7 +1722,7 @@
       "category": "Code Quality",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 485,
+      "line_number": 549,
       "description": "Debug logging (should be removed in production): console.log('Redirecting to Google OAuth...');",
       "recommendation": "Fix debug logging (should be removed in production) in this line",
       "auto_fixable": true
@@ -1839,7 +1731,70 @@
       "category": "Code Quality",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 525,
+      "line_number": 622,
+      "description": "Debug logging (should be removed in production): console.log(`Checking ${calendars.length} calendars for today's events...`);",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/routes.ts",
+      "line_number": 626,
+      "description": "Debug logging (should be removed in production): console.log(`Checking calendar: ${calendar.summary} (${calendar.id})`);",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/routes.ts",
+      "line_number": 633,
+      "description": "Debug logging (should be removed in production): console.log(`Found ${events.length} events in ${calendar.summary}`);",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/routes.ts",
+      "line_number": 648,
+      "description": "Debug logging (should be removed in production): console.log(`All-day event \"${event.summary}\": ${eventDateStr} === ${todayStr}? ${isToday}`);",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/routes.ts",
+      "line_number": 658,
+      "description": "Debug logging (should be removed in production): console.log(`Timed event \"${event.summary}\": ${eventDateStr} === ${todayStr}? ${isToday}`);",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/routes.ts",
+      "line_number": 663,
+      "description": "Debug logging (should be removed in production): console.log(`Filtered to ${todaysEvents.length} events actually for today in ${calendar.summary}`);",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/routes.ts",
+      "line_number": 677,
+      "description": "Debug logging (should be removed in production): console.log(`Total events found across all calendars: ${allEvents.length}`);",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "server/routes.ts",
+      "line_number": 704,
       "description": "Debug logging (should be removed in production): console.log('OAuth callback received:', {",
       "recommendation": "Fix debug logging (should be removed in production) in this line",
       "auto_fixable": true
@@ -1848,7 +1803,7 @@
       "category": "Code Quality",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 545,
+      "line_number": 724,
       "description": "Debug logging (should be removed in production): console.log('Processing authorization code...');",
       "recommendation": "Fix debug logging (should be removed in production) in this line",
       "auto_fixable": true
@@ -1857,34 +1812,16 @@
       "category": "Code Quality",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 551,
+      "line_number": 730,
       "description": "Debug logging (should be removed in production): console.log('Google Calendar authentication successful');",
       "recommendation": "Fix debug logging (should be removed in production) in this line",
       "auto_fixable": true
     },
     {
       "category": "Code Quality",
-      "severity": "critical",
-      "file_path": "server/routes.ts",
-      "line_number": 882,
-      "description": "Synchronous file operations: fs.unlinkSync(req.file.path);",
-      "recommendation": "Fix synchronous file operations in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
-      "severity": "critical",
-      "file_path": "server/routes.ts",
-      "line_number": 905,
-      "description": "Synchronous file operations: fs.unlinkSync(req.file.path);",
-      "recommendation": "Fix synchronous file operations in this line",
-      "auto_fixable": true
-    },
-    {
-      "category": "Code Quality",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 1002,
+      "line_number": 1181,
       "description": "Debug logging (should be removed in production): console.log('Received session notes request:', { eventId, notes, content, date, clientName });",
       "recommendation": "Fix debug logging (should be removed in production) in this line",
       "auto_fixable": true
@@ -1893,7 +1830,7 @@
       "category": "Code Quality",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 1023,
+      "line_number": 1202,
       "description": "Debug logging (should be removed in production): console.log('Session note saved successfully:', sessionNote.id);",
       "recommendation": "Fix debug logging (should be removed in production) in this line",
       "auto_fixable": true
@@ -1902,7 +1839,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 247,
+      "line_number": 311,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -1911,7 +1848,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 487,
+      "line_number": 551,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -1920,7 +1857,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 503,
+      "line_number": 567,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -1929,7 +1866,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 515,
+      "line_number": 579,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -1938,7 +1875,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 554,
+      "line_number": 595,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -1947,7 +1884,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 578,
+      "line_number": 679,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -1956,7 +1893,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 605,
+      "line_number": 694,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -1965,7 +1902,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 624,
+      "line_number": 733,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -1974,7 +1911,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 639,
+      "line_number": 757,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -1983,7 +1920,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 651,
+      "line_number": 784,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -1992,7 +1929,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 664,
+      "line_number": 803,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2001,7 +1938,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 677,
+      "line_number": 818,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2010,7 +1947,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 690,
+      "line_number": 830,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2019,7 +1956,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 702,
+      "line_number": 843,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2028,7 +1965,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 714,
+      "line_number": 856,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2037,7 +1974,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 727,
+      "line_number": 869,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2046,7 +1983,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 739,
+      "line_number": 881,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2055,7 +1992,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 751,
+      "line_number": 893,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2064,7 +2001,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 764,
+      "line_number": 906,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2073,7 +2010,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 776,
+      "line_number": 918,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2082,7 +2019,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 788,
+      "line_number": 930,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2091,7 +2028,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 801,
+      "line_number": 943,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2100,7 +2037,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 813,
+      "line_number": 955,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2109,7 +2046,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 826,
+      "line_number": 967,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2118,7 +2055,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 899,
+      "line_number": 980,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2127,7 +2064,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 976,
+      "line_number": 992,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2136,7 +2073,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 991,
+      "line_number": 1005,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2145,7 +2082,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 1025,
+      "line_number": 1078,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2154,7 +2091,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 1036,
+      "line_number": 1155,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2163,7 +2100,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 1061,
+      "line_number": 1170,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2172,16 +2109,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 1099,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/routes.ts",
-      "line_number": 1157,
+      "line_number": 1204,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2199,7 +2127,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 1270,
+      "line_number": 1240,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2208,7 +2136,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 1316,
+      "line_number": 1278,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2217,25 +2145,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 1337,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/routes.ts",
-      "line_number": 1356,
-      "description": "Usage of 'any' type reduces type safety",
-      "recommendation": "Replace 'any' with specific type definitions",
-      "auto_fixable": false
-    },
-    {
-      "category": "Type Safety",
-      "severity": "medium",
-      "file_path": "server/routes.ts",
-      "line_number": 1373,
+      "line_number": 1336,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2253,7 +2163,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 1411,
+      "line_number": 1449,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2262,7 +2172,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 1428,
+      "line_number": 1495,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2271,7 +2181,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 1445,
+      "line_number": 1516,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2280,7 +2190,7 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 1462,
+      "line_number": 1535,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
@@ -2289,10 +2199,82 @@
       "category": "Type Safety",
       "severity": "medium",
       "file_path": "server/routes.ts",
-      "line_number": 1475,
+      "line_number": 1552,
       "description": "Usage of 'any' type reduces type safety",
       "recommendation": "Replace 'any' with specific type definitions",
       "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/routes.ts",
+      "line_number": 1573,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/routes.ts",
+      "line_number": 1590,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/routes.ts",
+      "line_number": 1607,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/routes.ts",
+      "line_number": 1624,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/routes.ts",
+      "line_number": 1641,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "server/routes.ts",
+      "line_number": 1654,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Type Safety",
+      "severity": "medium",
+      "file_path": "client/src/components/dashboard/todays-sessions.tsx",
+      "line_number": 15,
+      "description": "Usage of 'any' type reduces type safety",
+      "recommendation": "Replace 'any' with specific type definitions",
+      "auto_fixable": false
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "client/src/components/dashboard/quick-stats.tsx",
+      "line_number": 10,
+      "description": "Debug logging (should be removed in production): console.log('QuickStats received stats:', stats);",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
     },
     {
       "category": "Code Quality",
@@ -2741,6 +2723,15 @@
       "file_path": "client/src/pages/oauth-quick-test.tsx",
       "line_number": 33,
       "description": "Debug logging (should be removed in production): console.log('Calendar test result:', data);",
+      "recommendation": "Fix debug logging (should be removed in production) in this line",
+      "auto_fixable": true
+    },
+    {
+      "category": "Code Quality",
+      "severity": "medium",
+      "file_path": "client/src/pages/clients.tsx",
+      "line_number": 28,
+      "description": "Debug logging (should be removed in production): console.log('Clients query state:', { clients: clients?.length, isLoading, error });",
       "recommendation": "Fix debug logging (should be removed in production) in this line",
       "auto_fixable": true
     }
@@ -3239,31 +3230,31 @@
           "export interface DashboardStats {"
         ],
         [
-          10,
+          12,
           "export interface Client {"
         ],
         [
-          40,
+          42,
           "export interface Appointment {"
         ],
         [
-          50,
+          52,
           "export interface ActionItem {"
         ],
         [
-          60,
+          62,
           "export interface AiInsight {"
         ],
         [
-          70,
+          72,
           "export interface SessionNote {"
         ],
         [
-          84,
+          86,
           "export interface ApiStatus {"
         ],
         [
-          91,
+          93,
           "export class ApiClient {"
         ]
       ]
@@ -4094,54 +4085,6 @@
         ]
       ]
     },
-    "server/document-processor.ts": {
-      "imports": 6,
-      "exports": 4,
-      "import_details": [
-        [
-          1,
-          "import fs from 'fs';"
-        ],
-        [
-          2,
-          "import path from 'path';"
-        ],
-        [
-          3,
-          "import mammoth from 'mammoth';"
-        ],
-        [
-          4,
-          "import xlsx from 'xlsx';"
-        ],
-        [
-          5,
-          "import sharp from 'sharp';"
-        ],
-        [
-          6,
-          "import { multiModelAI } from './ai-multi-model';"
-        ]
-      ],
-      "export_details": [
-        [
-          34,
-          "export interface ProcessedDocument {"
-        ],
-        [
-          42,
-          "export interface ProgressNote {"
-        ],
-        [
-          57,
-          "export class DocumentProcessor {"
-        ],
-        [
-          857,
-          "export const documentProcessor = new DocumentProcessor();"
-        ]
-      ]
-    },
     "server/auth.ts": {
       "imports": 3,
       "exports": 3,
@@ -4199,6 +4142,102 @@
         [
           192,
           "export { SimpleOAuth };"
+        ]
+      ]
+    },
+    "server/vite-backup.ts": {
+      "imports": 7,
+      "exports": 3,
+      "import_details": [
+        [
+          1,
+          "import express, { type Express } from \"express\";"
+        ],
+        [
+          2,
+          "import fs from \"fs\";"
+        ],
+        [
+          3,
+          "import path from \"path\";"
+        ],
+        [
+          4,
+          "import { createServer as createViteServer, createLogger } from \"vite\";"
+        ],
+        [
+          5,
+          "import { type Server } from \"http\";"
+        ],
+        [
+          6,
+          "import viteConfig from \"../vite.config\";"
+        ],
+        [
+          7,
+          "import { nanoid } from \"nanoid\";"
+        ]
+      ],
+      "export_details": [
+        [
+          11,
+          "export function log(message: string, source = \"express\") {"
+        ],
+        [
+          22,
+          "export async function setupVite(app: Express, server: Server) {"
+        ],
+        [
+          70,
+          "export function serveStatic(app: Express) {"
+        ]
+      ]
+    },
+    "server/document-processor.ts": {
+      "imports": 6,
+      "exports": 4,
+      "import_details": [
+        [
+          1,
+          "import fs from 'fs';"
+        ],
+        [
+          2,
+          "import path from 'path';"
+        ],
+        [
+          3,
+          "import mammoth from 'mammoth';"
+        ],
+        [
+          4,
+          "import xlsx from 'xlsx';"
+        ],
+        [
+          5,
+          "import sharp from 'sharp';"
+        ],
+        [
+          6,
+          "import { multiModelAI } from './ai-multi-model';"
+        ]
+      ],
+      "export_details": [
+        [
+          34,
+          "export interface ProcessedDocument {"
+        ],
+        [
+          42,
+          "export interface ProgressNote {"
+        ],
+        [
+          57,
+          "export class DocumentProcessor {"
+        ],
+        [
+          866,
+          "export const documentProcessor = new DocumentProcessor();"
         ]
       ]
     },
@@ -5761,58 +5800,6 @@
         ]
       ]
     },
-    "client/src/components/dashboard/quick-stats.tsx": {
-      "imports": 2,
-      "exports": 1,
-      "import_details": [
-        [
-          1,
-          "import { Calendar, Users, CheckSquare, TrendingUp } from \"lucide-react\";"
-        ],
-        [
-          2,
-          "import type { DashboardStats } from \"@/lib/api\";"
-        ]
-      ],
-      "export_details": [
-        [
-          8,
-          "export default function QuickStats({ stats }: QuickStatsProps) {"
-        ]
-      ]
-    },
-    "client/src/components/dashboard/todays-schedule.tsx": {
-      "imports": 5,
-      "exports": 1,
-      "import_details": [
-        [
-          1,
-          "import { useQuery } from \"@tanstack/react-query\";"
-        ],
-        [
-          2,
-          "import { ApiClient, type Appointment } from \"@/lib/api\";"
-        ],
-        [
-          3,
-          "import { Play, Pause, MoreHorizontal } from \"lucide-react\";"
-        ],
-        [
-          4,
-          "import { Button } from \"@/components/ui/button\";"
-        ],
-        [
-          5,
-          "import { Badge } from \"@/components/ui/badge\";"
-        ]
-      ],
-      "export_details": [
-        [
-          7,
-          "export default function TodaysSchedule() {"
-        ]
-      ]
-    },
     "client/src/components/dashboard/ai-insights-panel.tsx": {
       "imports": 4,
       "exports": 1,
@@ -5948,38 +5935,6 @@
         ]
       ]
     },
-    "client/src/components/dashboard/todays-sessions.tsx": {
-      "imports": 5,
-      "exports": 1,
-      "import_details": [
-        [
-          1,
-          "import { useQuery } from \"@tanstack/react-query\";"
-        ],
-        [
-          2,
-          "import { ApiClient, type SessionNote } from \"@/lib/api\";"
-        ],
-        [
-          3,
-          "import { FileText, Clock, User } from \"lucide-react\";"
-        ],
-        [
-          4,
-          "import { Badge } from \"@/components/ui/badge\";"
-        ],
-        [
-          5,
-          "import { Button } from \"@/components/ui/button\";"
-        ]
-      ],
-      "export_details": [
-        [
-          7,
-          "export default function TodaysSessions() {"
-        ]
-      ]
-    },
     "client/src/components/dashboard/api-status-indicators.tsx": {
       "imports": 5,
       "exports": 2,
@@ -6013,6 +5968,126 @@
         [
           14,
           "export default function ApiStatusIndicators() {"
+        ]
+      ]
+    },
+    "client/src/components/dashboard/todays-sessions.tsx": {
+      "imports": 9,
+      "exports": 1,
+      "import_details": [
+        [
+          1,
+          "import { useQuery } from \"@tanstack/react-query\";"
+        ],
+        [
+          2,
+          "import { ApiClient, type SessionNote } from \"@/lib/api\";"
+        ],
+        [
+          3,
+          "import { FileText, Clock, User, Upload, Plus } from \"lucide-react\";"
+        ],
+        [
+          4,
+          "import { Badge } from \"@/components/ui/badge\";"
+        ],
+        [
+          5,
+          "import { Button } from \"@/components/ui/button\";"
+        ],
+        [
+          6,
+          "import { DocumentUploadZone } from \"@/components/forms/DocumentUploadZone\";"
+        ],
+        [
+          7,
+          "import { useState } from \"react\";"
+        ],
+        [
+          8,
+          "import { useToast } from \"@/hooks/use-toast\";"
+        ],
+        [
+          9,
+          "import { queryClient } from \"@/lib/queryClient\";"
+        ]
+      ],
+      "export_details": [
+        [
+          11,
+          "export default function TodaysSessions() {"
+        ]
+      ]
+    },
+    "client/src/components/dashboard/todays-schedule.tsx": {
+      "imports": 10,
+      "exports": 1,
+      "import_details": [
+        [
+          1,
+          "import { useQuery } from \"@tanstack/react-query\";"
+        ],
+        [
+          2,
+          "import { ApiClient, type Appointment } from \"@/lib/api\";"
+        ],
+        [
+          3,
+          "import { Play, Pause, MoreHorizontal, Calendar, ExternalLink, Clock, Edit, FileText, Users, Video, ChevronDown, ChevronUp, Lightbulb } from \"lucide-react\";"
+        ],
+        [
+          4,
+          "import { Button } from \"@/components/ui/button\";"
+        ],
+        [
+          5,
+          "import { Badge } from \"@/components/ui/badge\";"
+        ],
+        [
+          6,
+          "import {"
+        ],
+        [
+          13,
+          "import { Collapsible, CollapsibleContent, CollapsibleTrigger } from \"@/components/ui/collapsible\";"
+        ],
+        [
+          14,
+          "import { useToast } from \"@/hooks/use-toast\";"
+        ],
+        [
+          15,
+          "import { useState } from \"react\";"
+        ],
+        [
+          16,
+          "import { useLocation } from \"wouter\";"
+        ]
+      ],
+      "export_details": [
+        [
+          18,
+          "export default function TodaysSchedule() {"
+        ]
+      ]
+    },
+    "client/src/components/dashboard/quick-stats.tsx": {
+      "imports": 2,
+      "exports": 1,
+      "import_details": [
+        [
+          1,
+          "import { Calendar, Users, CheckSquare, TrendingUp, CheckCircle2 } from \"lucide-react\";"
+        ],
+        [
+          2,
+          "import type { DashboardStats } from \"@/lib/api\";"
+        ]
+      ],
+      "export_details": [
+        [
+          8,
+          "export default function QuickStats({ stats }: QuickStatsProps) {"
         ]
       ]
     },
@@ -6624,42 +6699,6 @@
         ]
       ]
     },
-    "client/src/pages/appointments.tsx": {
-      "imports": 6,
-      "exports": 1,
-      "import_details": [
-        [
-          1,
-          "import { useQuery } from \"@tanstack/react-query\";"
-        ],
-        [
-          2,
-          "import { ApiClient, type Appointment } from \"@/lib/api\";"
-        ],
-        [
-          3,
-          "import { Calendar, Plus, Clock, MapPin } from \"lucide-react\";"
-        ],
-        [
-          4,
-          "import { Button } from \"@/components/ui/button\";"
-        ],
-        [
-          5,
-          "import { Badge } from \"@/components/ui/badge\";"
-        ],
-        [
-          6,
-          "import { useState } from \"react\";"
-        ]
-      ],
-      "export_details": [
-        [
-          8,
-          "export default function Appointments() {"
-        ]
-      ]
-    },
     "client/src/pages/action-items.tsx": {
       "imports": 11,
       "exports": 1,
@@ -7088,74 +7127,6 @@
         ]
       ]
     },
-    "client/src/pages/clients.tsx": {
-      "imports": 14,
-      "exports": 1,
-      "import_details": [
-        [
-          1,
-          "import { useQuery } from \"@tanstack/react-query\";"
-        ],
-        [
-          2,
-          "import { ApiClient, type Client } from \"@/lib/api\";"
-        ],
-        [
-          3,
-          "import { Users, Plus, Search, Filter, Edit2, Calendar, Phone, Mail, UserCheck, Upload, FileText } from \"lucide-react\";"
-        ],
-        [
-          4,
-          "import { Button } from \"@/components/ui/button\";"
-        ],
-        [
-          5,
-          "import { Input } from \"@/components/ui/input\";"
-        ],
-        [
-          6,
-          "import { Badge } from \"@/components/ui/badge\";"
-        ],
-        [
-          7,
-          "import { ClientForm } from \"@/components/forms/ClientForm\";"
-        ],
-        [
-          8,
-          "import { ClientListGenerator } from \"@/components/clients/ClientListGenerator\";"
-        ],
-        [
-          9,
-          "import { RealClientImporter } from \"@/components/clients/RealClientImporter\";"
-        ],
-        [
-          10,
-          "import { QuickClientUpdate } from \"@/components/clients/QuickClientUpdate\";"
-        ],
-        [
-          11,
-          "import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from \"@/components/ui/dialog\";"
-        ],
-        [
-          12,
-          "import { Tabs, TabsContent, TabsList, TabsTrigger } from \"@/components/ui/tabs\";"
-        ],
-        [
-          13,
-          "import { useState } from \"react\";"
-        ],
-        [
-          14,
-          "import { format } from \"date-fns\";"
-        ]
-      ],
-      "export_details": [
-        [
-          16,
-          "export default function Clients() {"
-        ]
-      ]
-    },
     "client/src/pages/calendar.tsx": {
       "imports": 17,
       "exports": 1,
@@ -7431,6 +7402,110 @@
           "export default function OAuthQuickTest() {"
         ]
       ]
+    },
+    "client/src/pages/appointments.tsx": {
+      "imports": 6,
+      "exports": 1,
+      "import_details": [
+        [
+          1,
+          "import { useQuery } from \"@tanstack/react-query\";"
+        ],
+        [
+          2,
+          "import { ApiClient, type Appointment } from \"@/lib/api\";"
+        ],
+        [
+          3,
+          "import { Calendar, Plus, Clock, MapPin } from \"lucide-react\";"
+        ],
+        [
+          4,
+          "import { Button } from \"@/components/ui/button\";"
+        ],
+        [
+          5,
+          "import { Badge } from \"@/components/ui/badge\";"
+        ],
+        [
+          6,
+          "import { useState } from \"react\";"
+        ]
+      ],
+      "export_details": [
+        [
+          8,
+          "export default function Appointments() {"
+        ]
+      ]
+    },
+    "client/src/pages/clients.tsx": {
+      "imports": 14,
+      "exports": 1,
+      "import_details": [
+        [
+          1,
+          "import { useQuery } from \"@tanstack/react-query\";"
+        ],
+        [
+          2,
+          "import { ApiClient, type Client } from \"@/lib/api\";"
+        ],
+        [
+          3,
+          "import { Users, Plus, Search, Filter, Edit2, Calendar, Phone, Mail, UserCheck, Upload, FileText } from \"lucide-react\";"
+        ],
+        [
+          4,
+          "import { Button } from \"@/components/ui/button\";"
+        ],
+        [
+          5,
+          "import { Input } from \"@/components/ui/input\";"
+        ],
+        [
+          6,
+          "import { Badge } from \"@/components/ui/badge\";"
+        ],
+        [
+          7,
+          "import { ClientForm } from \"@/components/forms/ClientForm\";"
+        ],
+        [
+          8,
+          "import { ClientListGenerator } from \"@/components/clients/ClientListGenerator\";"
+        ],
+        [
+          9,
+          "import { RealClientImporter } from \"@/components/clients/RealClientImporter\";"
+        ],
+        [
+          10,
+          "import { QuickClientUpdate } from \"@/components/clients/QuickClientUpdate\";"
+        ],
+        [
+          11,
+          "import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from \"@/components/ui/dialog\";"
+        ],
+        [
+          12,
+          "import { Tabs, TabsContent, TabsList, TabsTrigger } from \"@/components/ui/tabs\";"
+        ],
+        [
+          13,
+          "import { useState } from \"react\";"
+        ],
+        [
+          14,
+          "import { format } from \"date-fns\";"
+        ]
+      ],
+      "export_details": [
+        [
+          16,
+          "export default function Clients() {"
+        ]
+      ]
     }
   },
   "fix_plan": {
@@ -7443,65 +7518,9 @@
         "auto_fixable": true
       },
       {
-        "issue": "Synchronous file operations: if (!fs.existsSync(filePath)) {",
-        "file": "server/document-processor.ts",
-        "line": 127,
-        "fix": "Fix synchronous file operations in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Synchronous file operations: const pdfBuffer = fs.readFileSync(filePath);",
-        "file": "server/document-processor.ts",
-        "line": 136,
-        "fix": "Fix synchronous file operations in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Synchronous file operations: if (!fs.existsSync(filePath)) {",
-        "file": "server/document-processor.ts",
-        "line": 192,
-        "fix": "Fix synchronous file operations in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Synchronous file operations: if (!fs.existsSync(filePath)) {",
-        "file": "server/document-processor.ts",
-        "line": 208,
-        "fix": "Fix synchronous file operations in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Synchronous file operations: const content = fs.readFileSync(filePath, 'utf8');",
-        "file": "server/document-processor.ts",
-        "line": 211,
-        "fix": "Fix synchronous file operations in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Synchronous file operations: if (!fs.existsSync(filePath)) {",
-        "file": "server/document-processor.ts",
-        "line": 246,
-        "fix": "Fix synchronous file operations in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Synchronous file operations: if (!fs.existsSync(filePath)) {",
-        "file": "server/document-processor.ts",
-        "line": 278,
-        "fix": "Fix synchronous file operations in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Synchronous file operations: fs.unlinkSync(req.file.path);",
-        "file": "server/routes.ts",
-        "line": 882,
-        "fix": "Fix synchronous file operations in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Synchronous file operations: fs.unlinkSync(req.file.path);",
-        "file": "server/routes.ts",
-        "line": 905,
+        "issue": "Synchronous file operations: if (!fs.existsSync(distPath)) {",
+        "file": "server/vite-backup.ts",
+        "line": 73,
         "fix": "Fix synchronous file operations in this line",
         "auto_fixable": true
       },
@@ -7529,121 +7548,72 @@
     ],
     "architecture_improvements": [
       {
-        "issue": "Debug logging (should be removed in production): console.log(\"Starting client population...\");",
+        "issue": "Debug logging (should be removed in production): //     console.log(\"Starting client population...\");",
         "file": "populate-clients.ts",
         "line": 116,
         "fix": "Fix debug logging (should be removed in production) in this line",
         "auto_fixable": true
       },
       {
-        "issue": "Debug logging (should be removed in production): console.log(`Using therapist ID: ${THERAPIST_ID}`);",
+        "issue": "Debug logging (should be removed in production): //     console.log(`Using therapist ID: ${THERAPIST_ID}`);",
         "file": "populate-clients.ts",
         "line": 117,
         "fix": "Fix debug logging (should be removed in production) in this line",
         "auto_fixable": true
       },
       {
-        "issue": "Debug logging (should be removed in production): console.log(`Client ${clientData.firstName} ${clientData.lastName} already exists, skipping...`);",
+        "issue": "Debug logging (should be removed in production): //         console.log(`Client ${clientData.firstName} ${clientData.lastName} already exists, skipping...`);",
         "file": "populate-clients.ts",
         "line": 128,
         "fix": "Fix debug logging (should be removed in production) in this line",
         "auto_fixable": true
       },
       {
-        "issue": "Debug logging (should be removed in production): console.log(`Created client: ${insertedClient.firstName} ${insertedClient.lastName} (ID: ${insertedClient.id})`);",
+        "issue": "Debug logging (should be removed in production): //       console.log(`Created client: ${insertedClient.firstName} ${insertedClient.lastName} (ID: ${insertedClient.id})`);",
         "file": "populate-clients.ts",
         "line": 138,
         "fix": "Fix debug logging (should be removed in production) in this line",
         "auto_fixable": true
       },
       {
-        "issue": "Debug logging (should be removed in production): console.log(\"Client population completed successfully!\");",
+        "issue": "Debug logging (should be removed in production): //     console.log(\"Client population completed successfully!\");",
         "file": "populate-clients.ts",
         "line": 141,
         "fix": "Fix debug logging (should be removed in production) in this line",
         "auto_fixable": true
       },
       {
-        "issue": "Debug logging (should be removed in production): console.log(`All clients are assigned to therapist ID: ${THERAPIST_ID}`);",
+        "issue": "Debug logging (should be removed in production): //     console.log(`All clients are assigned to therapist ID: ${THERAPIST_ID}`);",
         "file": "populate-clients.ts",
         "line": 142,
         "fix": "Fix debug logging (should be removed in production) in this line",
         "auto_fixable": true
       },
       {
-        "issue": "Debug logging (should be removed in production): console.log(\"Use this therapist ID in your application to see these clients.\");",
+        "issue": "Debug logging (should be removed in production): //     console.log(\"Use this therapist ID in your application to see these clients.\");",
         "file": "populate-clients.ts",
         "line": 143,
         "fix": "Fix debug logging (should be removed in production) in this line",
         "auto_fixable": true
       },
       {
-        "issue": "Loose typing: static async getCalendars(): Promise<any[]> {",
-        "file": "client/src/lib/googleCalendar.ts",
-        "line": 46,
+        "issue": "Loose typing: static async getTodaysCalendarEvents(): Promise<any[]> {",
+        "file": "client/src/lib/api.ts",
+        "line": 104,
+        "fix": "Fix loose typing in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Loose typing: static async getGoogleCalendarEvents(): Promise<any[]> {",
+        "file": "client/src/lib/api.ts",
+        "line": 187,
         "fix": "Fix loose typing in this line",
         "auto_fixable": true
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
-        "file": "client/src/lib/googleCalendar.ts",
-        "line": 92,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
         "file": "client/src/lib/api.ts",
-        "line": 22,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "client/src/lib/api.ts",
-        "line": 23,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "client/src/lib/api.ts",
-        "line": 24,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "client/src/lib/api.ts",
-        "line": 25,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "client/src/lib/api.ts",
-        "line": 26,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "client/src/lib/api.ts",
-        "line": 27,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "client/src/lib/api.ts",
-        "line": 29,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "client/src/lib/api.ts",
-        "line": 33,
+        "line": 149,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
@@ -8299,209 +8269,6 @@
         "auto_fixable": false
       },
       {
-        "issue": "Debug logging (should be removed in production): console.log('Processing PDF using pdfjs-dist:', filePath);",
-        "file": "server/document-processor.ts",
-        "line": 131,
-        "fix": "Fix debug logging (should be removed in production) in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Debug logging (should be removed in production): console.log(`Processing PDF page ${pageNum}...`);",
-        "file": "server/document-processor.ts",
-        "line": 152,
-        "fix": "Fix debug logging (should be removed in production) in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Debug logging (should be removed in production): console.log('Successfully extracted text from PDF, length:', fullText.length);",
-        "file": "server/document-processor.ts",
-        "line": 182,
-        "fix": "Fix debug logging (should be removed in production) in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Loose typing: (jsonData as any[]).forEach((row: any) => {",
-        "file": "server/document-processor.ts",
-        "line": 257,
-        "fix": "Fix loose typing in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Loose typing: const results: any[] = [];",
-        "file": "server/document-processor.ts",
-        "line": 283,
-        "fix": "Fix loose typing in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Debug logging (should be removed in production): console.log('=== DEBUG: Cleaned Content for Parsing ===');",
-        "file": "server/document-processor.ts",
-        "line": 572,
-        "fix": "Fix debug logging (should be removed in production) in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Debug logging (should be removed in production): console.log(cleanedContent.substring(0, 1000));",
-        "file": "server/document-processor.ts",
-        "line": 573,
-        "fix": "Fix debug logging (should be removed in production) in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Debug logging (should be removed in production): console.log('=== END DEBUG ===');",
-        "file": "server/document-processor.ts",
-        "line": 574,
-        "fix": "Fix debug logging (should be removed in production) in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Debug logging (should be removed in production): console.log('=== DEBUG: Extracted Sections ===');",
-        "file": "server/document-processor.ts",
-        "line": 579,
-        "fix": "Fix debug logging (should be removed in production) in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Debug logging (should be removed in production): console.log('Subjective:', extractedSections.subjective.substring(0, 200));",
-        "file": "server/document-processor.ts",
-        "line": 580,
-        "fix": "Fix debug logging (should be removed in production) in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Debug logging (should be removed in production): console.log('Objective:', extractedSections.objective.substring(0, 200));",
-        "file": "server/document-processor.ts",
-        "line": 581,
-        "fix": "Fix debug logging (should be removed in production) in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Debug logging (should be removed in production): console.log('Assessment:', extractedSections.assessment.substring(0, 200));",
-        "file": "server/document-processor.ts",
-        "line": 582,
-        "fix": "Fix debug logging (should be removed in production) in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Debug logging (should be removed in production): console.log('Plan:', extractedSections.plan.substring(0, 200));",
-        "file": "server/document-processor.ts",
-        "line": 583,
-        "fix": "Fix debug logging (should be removed in production) in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Debug logging (should be removed in production): console.log('=== END DEBUG ===');",
-        "file": "server/document-processor.ts",
-        "line": 584,
-        "fix": "Fix debug logging (should be removed in production) in this line",
-        "auto_fixable": true
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/document-processor.ts",
-        "line": 9,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/document-processor.ts",
-        "line": 39,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/document-processor.ts",
-        "line": 62,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/document-processor.ts",
-        "line": 69,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/document-processor.ts",
-        "line": 97,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/document-processor.ts",
-        "line": 116,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/document-processor.ts",
-        "line": 170,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/document-processor.ts",
-        "line": 184,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/document-processor.ts",
-        "line": 200,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/document-processor.ts",
-        "line": 216,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/document-processor.ts",
-        "line": 257,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/document-processor.ts",
-        "line": 269,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/document-processor.ts",
-        "line": 283,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/document-processor.ts",
-        "line": 619,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/document-processor.ts",
-        "line": 731,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
         "issue": "Debug logging (should be removed in production): console.log('Using REPLIT_DEV_DOMAIN redirect URI:', uri);",
         "file": "server/auth.ts",
         "line": 10,
@@ -8880,275 +8647,527 @@
         "auto_fixable": false
       },
       {
+        "issue": "Debug logging (should be removed in production): console.log(`${formattedTime} [${source}] ${message}`);",
+        "file": "server/vite-backup.ts",
+        "line": 19,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log('Processing PDF using pdfjs-dist:', filePath);",
+        "file": "server/document-processor.ts",
+        "line": 140,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log(`Processing PDF page ${pageNum}...`);",
+        "file": "server/document-processor.ts",
+        "line": 161,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log('Successfully extracted text from PDF, length:', fullText.length);",
+        "file": "server/document-processor.ts",
+        "line": 191,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Loose typing: (jsonData as any[]).forEach((row: any) => {",
+        "file": "server/document-processor.ts",
+        "line": 266,
+        "fix": "Fix loose typing in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Loose typing: const results: any[] = [];",
+        "file": "server/document-processor.ts",
+        "line": 292,
+        "fix": "Fix loose typing in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log('=== DEBUG: Cleaned Content for Parsing ===');",
+        "file": "server/document-processor.ts",
+        "line": 581,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log(cleanedContent.substring(0, 1000));",
+        "file": "server/document-processor.ts",
+        "line": 582,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log('=== END DEBUG ===');",
+        "file": "server/document-processor.ts",
+        "line": 583,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log('=== DEBUG: Extracted Sections ===');",
+        "file": "server/document-processor.ts",
+        "line": 588,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log('Subjective:', extractedSections.subjective.substring(0, 200));",
+        "file": "server/document-processor.ts",
+        "line": 589,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log('Objective:', extractedSections.objective.substring(0, 200));",
+        "file": "server/document-processor.ts",
+        "line": 590,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log('Assessment:', extractedSections.assessment.substring(0, 200));",
+        "file": "server/document-processor.ts",
+        "line": 591,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log('Plan:', extractedSections.plan.substring(0, 200));",
+        "file": "server/document-processor.ts",
+        "line": 592,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log('=== END DEBUG ===');",
+        "file": "server/document-processor.ts",
+        "line": 593,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/document-processor.ts",
+        "line": 9,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/document-processor.ts",
+        "line": 39,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/document-processor.ts",
+        "line": 71,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/document-processor.ts",
+        "line": 78,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/document-processor.ts",
+        "line": 106,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/document-processor.ts",
+        "line": 125,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/document-processor.ts",
+        "line": 179,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/document-processor.ts",
+        "line": 193,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/document-processor.ts",
+        "line": 209,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/document-processor.ts",
+        "line": 225,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/document-processor.ts",
+        "line": 266,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/document-processor.ts",
+        "line": 278,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/document-processor.ts",
+        "line": 292,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/document-processor.ts",
+        "line": 628,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/document-processor.ts",
+        "line": 740,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
         "issue": "Debug logging (should be removed in production): console.log('Google OAuth initiation requested');",
         "file": "server/routes.ts",
-        "line": 479,
+        "line": 543,
         "fix": "Fix debug logging (should be removed in production) in this line",
         "auto_fixable": true
       },
       {
         "issue": "Debug logging (should be removed in production): console.log('Redirecting to Google OAuth...');",
         "file": "server/routes.ts",
-        "line": 485,
+        "line": 549,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log(`Checking ${calendars.length} calendars for today's events...`);",
+        "file": "server/routes.ts",
+        "line": 622,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log(`Checking calendar: ${calendar.summary} (${calendar.id})`);",
+        "file": "server/routes.ts",
+        "line": 626,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log(`Found ${events.length} events in ${calendar.summary}`);",
+        "file": "server/routes.ts",
+        "line": 633,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log(`All-day event \"${event.summary}\": ${eventDateStr} === ${todayStr}? ${isToday}`);",
+        "file": "server/routes.ts",
+        "line": 648,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log(`Timed event \"${event.summary}\": ${eventDateStr} === ${todayStr}? ${isToday}`);",
+        "file": "server/routes.ts",
+        "line": 658,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log(`Filtered to ${todaysEvents.length} events actually for today in ${calendar.summary}`);",
+        "file": "server/routes.ts",
+        "line": 663,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log(`Total events found across all calendars: ${allEvents.length}`);",
+        "file": "server/routes.ts",
+        "line": 677,
         "fix": "Fix debug logging (should be removed in production) in this line",
         "auto_fixable": true
       },
       {
         "issue": "Debug logging (should be removed in production): console.log('OAuth callback received:', {",
         "file": "server/routes.ts",
-        "line": 525,
+        "line": 704,
         "fix": "Fix debug logging (should be removed in production) in this line",
         "auto_fixable": true
       },
       {
         "issue": "Debug logging (should be removed in production): console.log('Processing authorization code...');",
         "file": "server/routes.ts",
-        "line": 545,
+        "line": 724,
         "fix": "Fix debug logging (should be removed in production) in this line",
         "auto_fixable": true
       },
       {
         "issue": "Debug logging (should be removed in production): console.log('Google Calendar authentication successful');",
         "file": "server/routes.ts",
-        "line": 551,
+        "line": 730,
         "fix": "Fix debug logging (should be removed in production) in this line",
         "auto_fixable": true
       },
       {
         "issue": "Debug logging (should be removed in production): console.log('Received session notes request:', { eventId, notes, content, date, clientName });",
         "file": "server/routes.ts",
-        "line": 1002,
+        "line": 1181,
         "fix": "Fix debug logging (should be removed in production) in this line",
         "auto_fixable": true
       },
       {
         "issue": "Debug logging (should be removed in production): console.log('Session note saved successfully:', sessionNote.id);",
         "file": "server/routes.ts",
-        "line": 1023,
+        "line": 1202,
         "fix": "Fix debug logging (should be removed in production) in this line",
         "auto_fixable": true
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 247,
+        "line": 311,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 487,
+        "line": 551,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 503,
+        "line": 567,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 515,
+        "line": 579,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 554,
+        "line": 595,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 578,
+        "line": 679,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 605,
+        "line": 694,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 624,
+        "line": 733,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 639,
+        "line": 757,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 651,
+        "line": 784,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 664,
+        "line": 803,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 677,
+        "line": 818,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 690,
+        "line": 830,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 702,
+        "line": 843,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 714,
+        "line": 856,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 727,
+        "line": 869,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 739,
+        "line": 881,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 751,
+        "line": 893,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 764,
+        "line": 906,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 776,
+        "line": 918,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 788,
+        "line": 930,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 801,
+        "line": 943,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 813,
+        "line": 955,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 826,
+        "line": 967,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 899,
+        "line": 980,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 976,
+        "line": 992,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 991,
+        "line": 1005,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 1025,
+        "line": 1078,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 1036,
+        "line": 1155,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 1061,
+        "line": 1170,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 1099,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/routes.ts",
-        "line": 1157,
+        "line": 1204,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
@@ -9162,35 +9181,21 @@
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 1270,
+        "line": 1240,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 1316,
+        "line": 1278,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 1337,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/routes.ts",
-        "line": 1356,
-        "fix": "Replace 'any' with specific type definitions",
-        "auto_fixable": false
-      },
-      {
-        "issue": "Usage of 'any' type reduces type safety",
-        "file": "server/routes.ts",
-        "line": 1373,
+        "line": 1336,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
@@ -9204,37 +9209,93 @@
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 1411,
+        "line": 1449,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 1428,
+        "line": 1495,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 1445,
+        "line": 1516,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 1462,
+        "line": 1535,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
       },
       {
         "issue": "Usage of 'any' type reduces type safety",
         "file": "server/routes.ts",
-        "line": 1475,
+        "line": 1552,
         "fix": "Replace 'any' with specific type definitions",
         "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/routes.ts",
+        "line": 1573,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/routes.ts",
+        "line": 1590,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/routes.ts",
+        "line": 1607,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/routes.ts",
+        "line": 1624,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/routes.ts",
+        "line": 1641,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "server/routes.ts",
+        "line": 1654,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Usage of 'any' type reduces type safety",
+        "file": "client/src/components/dashboard/todays-sessions.tsx",
+        "line": 15,
+        "fix": "Replace 'any' with specific type definitions",
+        "auto_fixable": false
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log('QuickStats received stats:', stats);",
+        "file": "client/src/components/dashboard/quick-stats.tsx",
+        "line": 10,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
       },
       {
         "issue": "Debug logging (should be removed in production): console.log('WeeklyCalendarGrid rendering with:', {",
@@ -9562,6 +9623,13 @@
         "issue": "Debug logging (should be removed in production): console.log('Calendar test result:', data);",
         "file": "client/src/pages/oauth-quick-test.tsx",
         "line": 33,
+        "fix": "Fix debug logging (should be removed in production) in this line",
+        "auto_fixable": true
+      },
+      {
+        "issue": "Debug logging (should be removed in production): console.log('Clients query state:', { clients: clients?.length, isLoading, error });",
+        "file": "client/src/pages/clients.tsx",
+        "line": 28,
         "fix": "Fix debug logging (should be removed in production) in this line",
         "auto_fixable": true
       }

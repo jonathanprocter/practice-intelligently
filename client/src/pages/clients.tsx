@@ -21,11 +21,13 @@ export default function Clients() {
   
   const { data: clients, isLoading, error } = useQuery({
     queryKey: ['clients'],
-    queryFn: ApiClient.getClients,
+    queryFn: () => ApiClient.getClients(),
   });
 
-  // Debug logging
-  console.log('Clients query state:', { clients: clients?.length, isLoading, error });
+  // Debug logging - check for API errors
+  if (error) {
+    console.error('Clients API error:', error);
+  }
 
   const filteredClients = clients?.filter(client =>
     `${client.firstName} ${client.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||

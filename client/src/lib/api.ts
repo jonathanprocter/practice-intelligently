@@ -146,7 +146,7 @@ export class ApiClient {
         const calendarEvents = await calendarResponse.json();
         
         // Convert Google Calendar events to appointment format
-        const calendarAppointments: Appointment[] = calendarEvents.map((event: any) => ({
+        const calendarAppointments: Appointment[] = calendarEvents.map((event: unknown) => ({
           id: event.id || `calendar-${Date.now()}`,
           clientId: 'calendar-event',
           startTime: event.start?.dateTime || event.start?.date,
