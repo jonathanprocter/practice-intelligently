@@ -38,7 +38,7 @@ export interface SessionTranscriptAnalysis {
 async function analyzeWithOpenAI(content: string, type: 'session' | 'appointment' | 'progress'): Promise<AIAnalysisResult> {
   try {
     const systemPrompt = getSystemPrompt(type);
-    
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
@@ -61,7 +61,7 @@ async function analyzeWithOpenAI(content: string, type: 'session' | 'appointment
 async function analyzeWithClaude(content: string, type: 'session' | 'appointment' | 'progress'): Promise<AIAnalysisResult> {
   try {
     const systemPrompt = getSystemPrompt(type);
-    
+
     const response = await anthropic.messages.create({
       model: DEFAULT_ANTHROPIC_MODEL, // claude-sonnet-4-20250514
       system: systemPrompt,
@@ -109,13 +109,13 @@ export async function analyzeContent(content: string, type: 'session' | 'appoint
     return await analyzeWithOpenAI(content, type);
   } catch (openaiError) {
     console.warn('OpenAI failed, falling back to Claude:', openaiError);
-    
+
     try {
       // Fallback to Claude
       return await analyzeWithClaude(content, type);
     } catch (claudeError) {
       console.error('Both AI services failed:', { openaiError, claudeError });
-      
+
       // Return default analysis if both fail
       return {
         insights: ['Analysis temporarily unavailable - please check API keys'],
@@ -172,7 +172,7 @@ export async function analyzeSessionTranscript(transcript: string): Promise<Sess
     }
   } catch (error) {
     console.error('Transcript analysis failed:', error);
-    
+
     return {
       summary: 'Analysis temporarily unavailable - please check API configuration',
       keyPoints: ['Transcript received but analysis failed'],
@@ -184,8 +184,16 @@ export async function analyzeSessionTranscript(transcript: string): Promise<Sess
   }
 }
 
+interface AppointmentData {
+  id: string;
+  clientName: string;
+  appointmentDate: string;
+  status: string;
+  notes?: string;
+}
+
 // Generate appointment insights
-export async function generateAppointmentInsights(appointments: unknown[]): Promise<AIAnalysisResult> {
+export async function generateAppointmentInsights(appointments: AppointmentData[]): Promise<AIAnalysisResult> {
   const appointmentData = appointments.map(apt => ({
     type: apt.type,
     status: apt.status,

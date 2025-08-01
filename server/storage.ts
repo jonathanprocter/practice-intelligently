@@ -340,7 +340,7 @@ export class DatabaseStorage implements IStorage {
         .from(sessionNotes)
         .where(eq(sessionNotes.eventId, eventId))
         .orderBy(desc(sessionNotes.createdAt));
-      
+
       return notes;
     } catch (error) {
       console.error('Error in getSessionNotesByEventId:', error);
@@ -878,7 +878,7 @@ export class DatabaseStorage implements IStorage {
     const currentMonth = new Date();
     currentMonth.setDate(1);
     currentMonth.setHours(0, 0, 0, 0);
-    
+
     const monthlyBills = await db
       .select()
       .from(billingRecords)
@@ -926,10 +926,11 @@ export class DatabaseStorage implements IStorage {
     const totalSessions = appointments.filter(apt => apt.status === 'completed').length;
     const noShows = appointments.filter(apt => apt.status === 'no-show').length;
     const cancelled = appointments.filter(apt => apt.status === 'cancelled').length;
-    
+
     const allClients = await this.getClients(therapistId);
+    <previous_generation>
     const activeClients = allClients.filter(client => client.status === 'active').length;
-    
+
     const averageSessionsPerClient = activeClients > 0 ? totalSessions / activeClients : 0;
     const noShowRate = appointments.length > 0 ? (noShows / appointments.length) * 100 : 0;
     const cancellationRate = appointments.length > 0 ? (cancelled / appointments.length) * 100 : 0;
@@ -964,7 +965,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     const bills = await query;
-    
+
     const totalRevenue = bills.reduce((sum, bill) => sum + parseFloat(bill.totalAmount || '0'), 0);
     const paidAmount = bills
       .filter(bill => bill.status === 'paid')
@@ -972,7 +973,7 @@ export class DatabaseStorage implements IStorage {
     const pendingAmount = bills
       .filter(bill => bill.status === 'pending')
       .reduce((sum, bill) => sum + parseFloat(bill.totalAmount || '0'), 0);
-    
+
     const now = new Date();
     const overdueAmount = bills
       .filter(bill => bill.status === 'pending' && bill.dueDate && new Date(bill.dueDate) < now)
@@ -992,7 +993,7 @@ export class DatabaseStorage implements IStorage {
         'SELECT * FROM session_notes WHERE client_id = $1 ORDER BY created_at DESC',
         [clientId]
       );
-      
+
       return result.rows.map((row: any) => ({
         id: row.id,
         appointmentId: row.appointment_id || null,
@@ -1018,7 +1019,7 @@ export class DatabaseStorage implements IStorage {
         'SELECT * FROM session_notes WHERE therapist_id = $1 ORDER BY created_at DESC',
         [therapistId]
       );
-      
+
       return result.rows.map((row: any) => ({
         id: row.id,
         appointmentId: row.appointment_id || null,
@@ -1057,7 +1058,7 @@ export class DatabaseStorage implements IStorage {
         'SELECT * FROM session_notes WHERE therapist_id = $1 AND created_at >= $2 ORDER BY created_at DESC',
         [therapistId, dateThreshold]
       );
-      
+
       return result.rows.map((row: any) => ({
         id: row.id,
         appointmentId: row.appointment_id || null,
@@ -1077,7 +1078,13 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getAppointmentsByTherapistTimeframe(therapistId: string, timeframe: 'week' | 'month' | 'quarter'): Promise<Appointment[]> {
+  async getAppointmentsByTherapistTimeframe(therapistId: string, timeframe: 'week' | 'month' | 'quarter'): Promise<Array<{
+    id: string;
+    clientName: string;
+    appointmentDate: string;
+    status: string;
+    notes?: string;
+  }>> {
     try {
       let dateThreshold = new Date();
       switch (timeframe) {
@@ -1096,7 +1103,7 @@ export class DatabaseStorage implements IStorage {
         'SELECT * FROM appointments WHERE therapist_id = $1 AND start_time >= $2 ORDER BY start_time DESC',
         [therapistId, dateThreshold]
       );
-      
+
       return result.rows.map((row: any) => ({
         id: row.id,
         clientId: row.client_id,
@@ -1121,7 +1128,7 @@ export class DatabaseStorage implements IStorage {
         'SELECT * FROM appointments WHERE client_id = $1 ORDER BY start_time DESC',
         [clientId]
       );
-      
+
       return result.rows.map((row: any) => ({
         id: row.id,
         clientId: row.client_id,
@@ -1146,7 +1153,7 @@ export class DatabaseStorage implements IStorage {
         'SELECT c.*, COUNT(sn.id) as session_count FROM clients c LEFT JOIN session_notes sn ON c.id::text = sn.client_id WHERE c.therapist_id::text = $1 GROUP BY c.id ORDER BY c.created_at DESC',
         [therapistId]
       );
-      
+
       return result.rows.map((row: any) => ({
         id: row.id,
         name: row.name,
@@ -1170,11 +1177,15 @@ export class DatabaseStorage implements IStorage {
 
   async getActionItemsByEventId(eventId: string): Promise<ActionItem[]> {
     try {
+      // Debug logging removed for production
       const result = await pool.query(
         'SELECT * FROM action_items WHERE event_id = $1 ORDER BY created_at DESC',
         [eventId]
       );
-      
+
+      // Debug logging removed for production
+      // Debug logging removed for production
+
       return result.rows.map((row: any) => ({
         id: row.id,
         clientId: row.client_id,

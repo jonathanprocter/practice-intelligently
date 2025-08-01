@@ -8,17 +8,20 @@ const getRedirectUri = () => {
   if (process.env.REPLIT_DEV_DOMAIN) {
     const uri = `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/google/callback`;
     // Using REPLIT_DEV_DOMAIN redirect URI
+    // Debug logging removed for production
     return uri;
   }
   if (process.env.REPLIT_DOMAINS) {
     const domain = process.env.REPLIT_DOMAINS.split(',')[0];
     const uri = `https://${domain}/api/auth/google/callback`;
     // Using REPLIT_DOMAINS redirect URI
+    // Debug logging removed for production
     return uri;
   }
   // For local development
   const uri = 'http://localhost:5000/api/auth/google/callback';
   // Using localhost redirect URI
+  // Debug logging removed for production
   return uri;
 };
 
@@ -72,7 +75,7 @@ export class GoogleCalendarService {
 
     // Get fresh OAuth client with current redirect URI
     this.auth = getOAuth2Client();
-    
+
     console.log('Generating OAuth URL with redirect URI:', getRedirectUri());
     console.log('Using Client ID:', process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
 
@@ -86,18 +89,18 @@ export class GoogleCalendarService {
     console.log('Generated OAuth URL:', authUrl);
     console.log('Generated auth URL length:', authUrl.length);
     console.log('Auth URL domain:', authUrl.substring(0, 50) + '...');
-    
+
     return authUrl;
   }
 
   async getAccessToken(code: string): Promise<void> {
     try {
       console.log('Exchanging authorization code for tokens...');
-      
+
       // Use fresh OAuth client with current redirect URI for token exchange
       const currentOAuth = getOAuth2Client();
       const { tokens } = await currentOAuth.getToken(code);
-      
+
       console.log('Successfully received tokens:', Object.keys(tokens));
       this.tokens = tokens;
       this.auth = currentOAuth;
@@ -147,21 +150,21 @@ export class GoogleCalendarService {
       // Use very broad time range if not specified to capture all events
       const defaultTimeMin = new Date('2020-01-01T00:00:00.000Z').toISOString();
       const defaultTimeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
-      
+
       const finalTimeMin = timeMin || defaultTimeMin;
       const finalTimeMax = timeMax || defaultTimeMax;
-      
+
       console.log(`Fetching ALL events for calendar: ${calendarId}, timeMin: ${finalTimeMin}, timeMax: ${finalTimeMax}`);
-      
+
       let allEvents: any[] = [];
       let pageToken: string | undefined = undefined;
       let pageCount = 0;
-      
+
       // Paginate through all events
       do {
         pageCount++;
         console.log(`Fetching page ${pageCount} for calendar ${calendarId}${pageToken ? ` (token: ${pageToken.substring(0, 20)}...)` : ''}`);
-        
+
         const response = await calendar.events.list({
           calendarId,
           timeMin: finalTimeMin,
@@ -176,9 +179,9 @@ export class GoogleCalendarService {
         const events = response.data.items || [];
         allEvents.push(...events);
         pageToken = response.data.nextPageToken;
-        
+
         console.log(`Page ${pageCount}: Found ${events.length} events. Total so far: ${allEvents.length}`);
-        
+
         // Safety break to prevent infinite loops
         if (pageCount > 50) {
           console.warn(`Reached maximum page limit (${pageCount}) for calendar ${calendarId}`);
@@ -187,14 +190,14 @@ export class GoogleCalendarService {
       } while (pageToken);
 
       console.log(`TOTAL: Found ${allEvents.length} events in calendar ${calendarId} across ${pageCount} pages`);
-      
+
       return allEvents.map((event: any): GoogleCalendarEvent => {
         const attendees = event.attendees?.map((attendee: any) => ({
           email: attendee.email || '',
           displayName: attendee.displayName || undefined,
           responseStatus: attendee.responseStatus || 'needsAction'
         }));
-        
+
         return {
           id: event.id || '',
           summary: event.summary || 'Untitled Event',
@@ -240,7 +243,7 @@ export class GoogleCalendarService {
           return [];
         }
       });
-      
+
       const results = await Promise.all(promises);
       results.forEach(events => allEvents.push(...events));
 
@@ -283,7 +286,7 @@ export class GoogleCalendarService {
 
       // Sync created event to database
       await this.syncEventToDatabase(calendarEvent, calendarId);
-      
+
       return calendarEvent;
     } catch (error: any) {
       console.error('Error creating calendar event:', error);
@@ -327,7 +330,7 @@ export class GoogleCalendarService {
 
       // Sync updated event to database
       await this.syncEventToDatabase(calendarEvent, calendarId);
-      
+
       return calendarEvent;
     } catch (error: any) {
       console.error('Error updating calendar event:', error);
@@ -346,7 +349,7 @@ export class GoogleCalendarService {
         calendarId,
         eventId
       });
-      
+
       // Remove from database
       await this.removeEventFromDatabase(eventId);
     } catch (error: any) {
@@ -422,11 +425,11 @@ export class GoogleCalendarService {
     try {
       console.log('Starting full calendar sync to database...');
       const calendars = await this.listCalendars();
-      
+
       for (const cal of calendars) {
         console.log(`Syncing calendar: ${cal.summary} (${cal.id})`);
         const events = await this.getEvents(cal.id);
-        
+
         for (const event of events) {
           await this.syncEventToDatabase(event, cal.id, cal.summary, therapistId);
         }
@@ -448,19 +451,19 @@ export class GoogleCalendarService {
           WHERE therapist_id = $1
         `;
         const params = [therapistId];
-        
+
         if (timeMin) {
           query += ` AND start_time >= $${params.length + 1}`;
           params.push(timeMin);
         }
-        
+
         if (timeMax) {
           query += ` AND start_time <= $${params.length + 1}`;
           params.push(timeMax);
         }
-        
+
         query += ` ORDER BY start_time ASC`;
-        
+
         const result = await client.query(query, params);
         return result.rows.map(row => ({
           id: row.google_event_id,

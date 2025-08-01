@@ -16,7 +16,10 @@ export function log(message: string, source = "express") {
     hour12: true,
   });
 
-  console.log(`${formattedTime} [${source}] ${message}`);
+  // Use structured logging instead of console.log in production
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`${formattedTime} [${source}] ${message}`);
+  }
 }
 
 export async function setupVite(app: Express, server: Server) {
@@ -67,12 +70,12 @@ export async function setupVite(app: Express, server: Server) {
   });
 }
 
-export function serveStatic(app: Express) {
+export async function serveStatic(app: Express) {
   const distPath = path.resolve(import.meta.dirname, "public");
 
   try {
-      await fs.promises.access(distPath);
-    } catch {
+    await fs.promises.access(distPath);
+  } catch {
     throw new Error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`,
     );

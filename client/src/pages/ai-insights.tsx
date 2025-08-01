@@ -16,11 +16,11 @@ export default function AiInsights() {
   const [selectedInsight, setSelectedInsight] = useState<AiInsight | null>(null);
   const [activeView, setActiveView] = useState<'intelligence' | 'legacy'>('intelligence');
   const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined);
-  
+
   const { toast } = useToast();
 
   // Mock therapist ID - in a real app, this would come from auth context
-  const therapistId = "e66b8b8e-e7a2-40b9-ae74-00c93ffe503c";
+  const therapistId = "00000000-0000-0000-0000-000000000001";
 
   const { data: insights, isLoading } = useQuery({
     queryKey: ['ai-insights'],
@@ -375,7 +375,7 @@ export default function AiInsights() {
                       <X className="w-4 h-4" />
                     </Button>
                   </div>
-                  
+
                   <div className="space-y-4">
                     <div>
                       <h3 className="font-semibold text-therapy-text mb-2">Analysis Details</h3>
@@ -383,7 +383,7 @@ export default function AiInsights() {
                         {selectedInsight.content}
                       </p>
                     </div>
-                    
+
                     <div className="flex items-center justify-between pt-4 border-t border-therapy-border">
                       <div className="text-sm text-therapy-text/50">
                         Generated on {new Date(selectedInsight.createdAt).toLocaleDateString('en-US', {

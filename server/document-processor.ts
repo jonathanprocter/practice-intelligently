@@ -137,7 +137,7 @@ export class DocumentProcessor {
         throw new Error('PDF file not found');
       }
       
-      console.log('Processing PDF using pdfjs-dist:', filePath);
+      // Debug logging removed for production
       
       const pdfjsLib = await getPdfJS();
       

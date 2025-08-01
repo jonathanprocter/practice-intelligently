@@ -92,14 +92,22 @@ export function RealClientImporter() {
     setIsImporting(true);
     setProgress(0);
     setShowResults(false);
-    
-    const successfulImports: string[] = [];
-    const failedImports: string[] = [];
-    
+
+    interface ImportResult {
+      name: string;
+      email?: string;
+      phone?: string;
+      status: 'success' | 'failed';
+      error?: string;
+    }
+
+    const successfulImports: ImportResult[] = [];
+    const failedImports: ImportResult[] = [];
+
     for (let i = 0; i < REAL_CLIENTS.length; i++) {
       const clientData = REAL_CLIENTS[i];
       setProgress(((i + 1) / REAL_CLIENTS.length) * 100);
-      
+
       try {
         const clientToCreate = {
           firstName: clientData.firstName,
@@ -113,40 +121,43 @@ export function RealClientImporter() {
           primaryConcerns: clientData.employment ? { employment: clientData.employment } : undefined,
           address: clientData.address ? { street: clientData.address } : undefined
         };
-        
+
         const createdClient = await ApiClient.createClient(clientToCreate);
-        successfulImports.push({ client: createdClient, originalData: clientData });
-        
+        successfulImports.push({ name: createdClient.firstName + ' ' + createdClient.lastName, email: createdClient.email, phone: createdClient.phone, status: 'success' });
+
         // Small delay to prevent overwhelming the server
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
       } catch (error: any) {
         console.error(`Failed to import ${clientData.firstName} ${clientData.lastName}:`, error);
         failedImports.push({ 
-          originalData: clientData, 
+          name: clientData.firstName + ' ' + clientData.lastName,
+          email: clientData.email,
+          phone: clientData.phone,
+          status: 'failed',
           error: error.message || 'Unknown error' 
         });
       }
     }
-    
+
     setResults({
       success: successfulImports.length,
       errors: failedImports.length,
       details: [...successfulImports, ...failedImports]
     });
-    
+
     setShowResults(true);
     setIsImporting(false);
-    
+
     queryClient.invalidateQueries({ queryKey: ['clients'] });
-    
+
     if (successfulImports.length > 0) {
       toast({
         title: 'Import Complete',
         description: `Successfully imported ${successfulImports.length} clients${failedImports.length > 0 ? ` (${failedImports.length} failed)` : ''}`,
       });
     }
-    
+
     if (failedImports.length > 0) {
       toast({
         title: 'Some Imports Failed',
@@ -173,7 +184,7 @@ export function RealClientImporter() {
             This will import all your actual clients with their names, dates of birth, contact information, addresses, and employment status from the CSV data you provided.
           </p>
         </div>
-        
+
         {!isImporting && !showResults && (
           <Button 
             onClick={importClients}
@@ -184,7 +195,7 @@ export function RealClientImporter() {
             Import All {REAL_CLIENTS.length} Clients
           </Button>
         )}
-        
+
         {isImporting && (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
@@ -194,7 +205,7 @@ export function RealClientImporter() {
             <Progress value={progress} className="w-full" />
           </div>
         )}
-        
+
         {showResults && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -209,7 +220,7 @@ export function RealClientImporter() {
                   </div>
                 </div>
               </div>
-              
+
               {results.errors > 0 && (
                 <div className="flex items-center space-x-2 p-3 bg-red-50 dark:bg-red-950 rounded-lg">
                   <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
@@ -224,7 +235,7 @@ export function RealClientImporter() {
                 </div>
               )}
             </div>
-            
+
             <Button 
               onClick={() => setShowResults(false)}
               variant="outline"
@@ -234,7 +245,7 @@ export function RealClientImporter() {
             </Button>
           </div>
         )}
-        
+
         <div className="text-xs text-muted-foreground space-y-1">
           <p><strong>Note:</strong> This will create new client records with the real data from your CSV file.</p>
           <p>Employment status will be stored in the client's primary concerns field.</p>

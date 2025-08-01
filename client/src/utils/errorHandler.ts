@@ -30,7 +30,17 @@ export async function safeJsonParse(response: Response) {
 }
 
 // Helper function to handle API errors consistently
-export function handleApiError(error: any): string {
+interface ApiError {
+  message?: string;
+  status?: number;
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
+
+export function handleApiError(error: ApiError | Error | unknown): string {
   if (error?.message) {
     return error.message;
   }

@@ -70,7 +70,7 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
             } catch {
               errorMessage = `Request failed with status ${response.status}`;
             }
-            
+
             // Create a proper error object with the message
             const error = new Error(errorMessage);
             error.name = 'DocumentProcessingError';
@@ -110,7 +110,7 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
             }
           : f
       ));
-      
+
       toast({
         title: "Document Processed",
         description: data.requiresConfirmation 
@@ -121,7 +121,7 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
     onError: (error, file) => {
       // Extract the error message without logging anything to console
       let errorMessage = 'Document processing failed';
-      
+
       // Check if it's an Error object with a message
       if (error instanceof Error && error.message) {
         errorMessage = error.message;
@@ -140,14 +140,14 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
       else if (typeof error === 'string') {
         errorMessage = error;
       }
-      
+
       // Update UI state without console logging
       setUploadedFiles(prev => prev.map(f => 
         f.file === file 
           ? { ...f, status: 'error', error: errorMessage }
           : f
       ));
-      
+
       toast({
         title: "Processing Failed",
         description: errorMessage,
@@ -175,7 +175,7 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
           sessionDate,
           detectedClientName,
           detectedSessionDate,
-          therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', // Add default therapist ID
+          therapistId: '00000000-0000-0000-0000-000000000001', // Add default therapist ID
         }),
       });
 
@@ -215,16 +215,16 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
           ? { ...f, status: 'completed' }
           : f
       ));
-      
+
       if (onProgressNoteGenerated) {
         onProgressNoteGenerated(data.progressNote);
       }
-      
+
       toast({
         title: "Progress Note Generated",
         description: "Clinical progress note created successfully!",
       });
-      
+
       queryClient.invalidateQueries({ queryKey: ['progressNotes'] });
     },
     onError: (error) => {
@@ -360,7 +360,7 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
         <p className="text-sm text-gray-600 mb-6">
           Upload clinical documents and our AI will automatically extract client information and generate comprehensive progress notes.
         </p>
-        
+
         {/* Drop Zone */}
         <div
           {...getRootProps()}
@@ -451,7 +451,7 @@ function FileProcessingCard({
   const handleConfirmClick = () => {
     if (uploadedFile.status === 'awaiting-confirmation') {
       setEditingClientName(uploadedFile.extractedData?.detectedClientName || '');
-      
+
       // Format detected date for HTML date input or use today's date
       let formattedDate = '';
       if (uploadedFile.extractedData?.detectedSessionDate) {
@@ -461,12 +461,12 @@ function FileProcessingCard({
           formattedDate = detectedDate.toISOString().split('T')[0];
         }
       }
-      
+
       // Default to today's date if no valid date detected
       if (!formattedDate) {
         formattedDate = new Date().toISOString().split('T')[0];
       }
-      
+
       setEditingSessionDate(formattedDate);
       setShowConfirmation(true);
     }
@@ -525,7 +525,7 @@ function FileProcessingCard({
               {uploadedFile.extractedData.extractedText}
             </p>
           </div>
-          
+
           {!showConfirmation ? (
             <div className="flex gap-2">
               <Button onClick={handleConfirmClick} size="sm">
