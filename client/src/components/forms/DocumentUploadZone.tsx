@@ -94,15 +94,30 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
     },
     onError: (error, file) => {
       console.error('Document processing error:', error);
+      
+      // Handle error objects that might be empty or malformed
+      let errorMessage = 'Document processing failed';
+      if (error && typeof error === 'object') {
+        if (error.message) {
+          errorMessage = error.message;
+        } else if (error.details) {
+          errorMessage = error.details;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        }
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       setUploadedFiles(prev => prev.map(f => 
         f.file === file 
-          ? { ...f, status: 'error', error: error?.message || 'Unknown error' }
+          ? { ...f, status: 'error', error: errorMessage }
           : f
       ));
       
       toast({
         title: "Processing Failed",
-        description: error?.message || 'Document processing failed',
+        description: errorMessage,
         variant: "destructive",
       });
     },

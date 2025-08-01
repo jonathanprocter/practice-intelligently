@@ -829,9 +829,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Provide more specific error messages for common issues
+      let errorMessage = 'Failed to process document';
+      let details = error.message || 'Unknown error occurred';
+      
+      if (error.message && error.message.includes('PDF processing')) {
+        errorMessage = 'PDF processing unavailable';
+        details = 'PDF processing is currently unavailable. Please convert your PDF to a text file (.txt) or image format (.jpg, .png) for processing.';
+      } else if (error.message && error.message.includes('Unsupported file type')) {
+        errorMessage = 'Unsupported file format';
+        details = error.message;
+      }
+      
       res.status(500).json({ 
-        error: 'Failed to process document',
-        details: error.message 
+        error: errorMessage,
+        details: details,
+        supportedFormats: ['txt', 'doc', 'docx', 'jpg', 'png', 'gif', 'bmp', 'xlsx', 'xls', 'csv']
       });
     }
   });
