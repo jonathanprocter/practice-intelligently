@@ -26,6 +26,7 @@ const OAuthTroubleshoot = lazy(() => import("./pages/oauth-troubleshoot"));
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import OAuthTestSimple from './pages/oauth-test-simple';
+import OAuthQuickTest from './pages/oauth-quick-test';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -73,6 +74,7 @@ function Router() {
           <OAuthTestSimple />
         </Suspense>
       </Route>
+      <Route path="/oauth-quick-test" component={OAuthQuickTest} />
       <Route path="/oauth-troubleshoot">
         <Suspense fallback={<div className="p-6">Loading...</div>}>
           <OAuthTroubleshoot />

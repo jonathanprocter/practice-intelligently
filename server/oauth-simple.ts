@@ -1,11 +1,14 @@
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
+import fs from 'fs';
+import path from 'path';
 
 // Simple OAuth configuration focused on working implementation
 class SimpleOAuth {
   private oauth2Client: OAuth2Client;
   private tokens: any = null;
   private isAuthenticated = false;
+  private tokensFilePath: string;
 
   constructor() {
     const redirectUri = this.getRedirectUri();
@@ -20,6 +23,10 @@ class SimpleOAuth {
       process.env.GOOGLE_CLIENT_SECRET,
       redirectUri
     );
+
+    // Set up persistent token storage
+    this.tokensFilePath = path.join(process.cwd(), '.oauth-tokens.json');
+    this.loadTokens();
   }
 
   private getRedirectUri(): string {
@@ -53,6 +60,31 @@ class SimpleOAuth {
     return authUrl;
   }
 
+  private loadTokens(): void {
+    try {
+      if (fs.existsSync(this.tokensFilePath)) {
+        const tokensData = fs.readFileSync(this.tokensFilePath, 'utf8');
+        this.tokens = JSON.parse(tokensData);
+        this.oauth2Client.setCredentials(this.tokens);
+        this.isAuthenticated = true;
+        console.log('Loaded existing OAuth tokens');
+      }
+    } catch (error) {
+      console.warn('Failed to load existing tokens:', error);
+      this.tokens = null;
+      this.isAuthenticated = false;
+    }
+  }
+
+  private saveTokens(): void {
+    try {
+      fs.writeFileSync(this.tokensFilePath, JSON.stringify(this.tokens, null, 2));
+      console.log('OAuth tokens saved to file');
+    } catch (error) {
+      console.error('Failed to save tokens:', error);
+    }
+  }
+
   async exchangeCodeForTokens(code: string): Promise<void> {
     try {
       console.log('Exchanging code for tokens...');
@@ -61,8 +93,9 @@ class SimpleOAuth {
       this.tokens = tokens;
       this.oauth2Client.setCredentials(tokens);
       this.isAuthenticated = true;
+      this.saveTokens();
       
-      console.log('Successfully obtained tokens:', Object.keys(tokens));
+      console.log('Successfully obtained and saved tokens:', Object.keys(tokens));
     } catch (error: any) {
       console.error('Token exchange failed:', error);
       this.isAuthenticated = false;
@@ -71,7 +104,13 @@ class SimpleOAuth {
   }
 
   isConnected(): boolean {
-    return this.isAuthenticated && this.tokens !== null;
+    const connected = this.isAuthenticated && this.tokens !== null;
+    console.log('OAuth connection check:', {
+      isAuthenticated: this.isAuthenticated,
+      hasTokens: this.tokens !== null,
+      connected
+    });
+    return connected;
   }
 
   async getCalendars() {
@@ -123,6 +162,17 @@ class SimpleOAuth {
     this.tokens = null;
     this.isAuthenticated = false;
     this.oauth2Client.setCredentials({});
+    
+    // Remove tokens file
+    try {
+      if (fs.existsSync(this.tokensFilePath)) {
+        fs.unlinkSync(this.tokensFilePath);
+        console.log('OAuth tokens file deleted');
+      }
+    } catch (error) {
+      console.warn('Failed to delete tokens file:', error);
+    }
+    
     console.log('OAuth session disconnected');
   }
 }
