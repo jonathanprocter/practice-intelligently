@@ -124,6 +124,19 @@ export class ApiClient {
     }
   }
 
+  static async getSessionNotes(): Promise<SessionNote[]> {
+    try {
+      const response = await fetch(`/api/session-notes/therapist/${this.therapistId}`);
+      if (response.ok) {
+        return response.json();
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching session notes:', error);
+      return [];
+    }
+  }
+
   static async getClients(): Promise<Client[]> {
     const response = await apiRequest('GET', `/api/clients/${this.therapistId}`);
     return response.json();

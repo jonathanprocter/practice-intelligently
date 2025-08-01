@@ -474,6 +474,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/session-notes/therapist/:therapistId", async (req, res) => {
+    try {
+      const { therapistId } = req.params;
+      const notes = await storage.getAllSessionNotesByTherapist(therapistId);
+      res.json(notes);
+    } catch (error) {
+      console.error("Error fetching session notes:", error);
+      res.status(500).json({ error: "Failed to fetch session notes" });
+    }
+  });
+
   // Legacy session notes endpoint - disabled in favor of calendar-specific endpoint below
 
   // Action Items
