@@ -85,11 +85,11 @@ export default function Appointments() {
     apt.notes?.toLowerCase().includes(searchFilter.toLowerCase())
   );
 
-  // Quick stats
-  const todayAppointments = appointments.length;
-  const thisWeekAppointments = 42; // Mock - would calculate from weekly data
-  const noShows = 2; // Mock - would calculate from historical data  
-  const newClients = 3; // Mock - would calculate from client data
+  // Quick stats - based on actual displayed data
+  const todayAppointments = filteredAppointments.length; // Show actual filtered count
+  const thisWeekAppointments = appointments.length; // Total for selected date
+  const noShows = appointments.filter(apt => apt.status === 'no_show').length;
+  const newClients = appointments.filter(apt => apt.status === 'confirmed' && apt.type?.includes('Initial')).length;
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('en-US', {
@@ -256,7 +256,9 @@ export default function Appointments() {
       <Card className="border-0 shadow-sm bg-gradient-to-r from-blue-50 to-purple-50">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-therapy-text">Today's Snapshot</h3>
+            <h3 className="text-lg font-semibold text-therapy-text">
+              {selectedDate === new Date().toISOString().split('T')[0] ? "Today's" : "Selected Date"} Snapshot
+            </h3>
             <div className="text-sm text-therapy-text/60">
               Next available: <span className="font-medium text-therapy-primary">{getNextAvailableSlot()}</span>
             </div>
@@ -264,11 +266,13 @@ export default function Appointments() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{todayAppointments}</div>
-              <p className="text-xs text-therapy-text/60">Today</p>
+              <p className="text-xs text-therapy-text/60">
+                {searchFilter ? 'Filtered' : (selectedDate === new Date().toISOString().split('T')[0] ? 'Today' : 'Selected')}
+              </p>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-600">{thisWeekAppointments}</div>
-              <p className="text-xs text-therapy-text/60">This Week</p>
+              <p className="text-xs text-therapy-text/60">Total</p>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-orange-600">{noShows}</div>
@@ -279,6 +283,13 @@ export default function Appointments() {
               <p className="text-xs text-therapy-text/60">New Clients</p>
             </div>
           </div>
+          {/* Debug info for development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded">
+              Debug: {appointments.length} total appointments, {filteredAppointments.length} after filters
+              {searchFilter && ` (filter: "${searchFilter}")`}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -510,7 +521,7 @@ export default function Appointments() {
               </h3>
               <p className="text-therapy-text/60 mb-4">
                 {searchFilter ? 
-                  `No appointments found matching "${searchFilter}"` : 
+                  `No appointments found matching "${searchFilter}" ${appointments.length > 0 ? `(${appointments.length} total available)` : ''}` : 
                   `No appointments found for ${new Date(selectedDate).toLocaleDateString()}`
                 }
               </p>
