@@ -27,7 +27,7 @@ interface CalendarEvent {
   calendarId?: string;
   calendarName?: string;
   location?: string;
-  attendees?: any[];
+  attendees?: { email: string; displayName?: string }[];
 }
 
 export default function CalendarIntegration() {

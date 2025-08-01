@@ -83,7 +83,7 @@ const REAL_CLIENTS = [
 export function RealClientImporter() {
   const [isImporting, setIsImporting] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [results, setResults] = useState<{ success: number; errors: number; details: any[] }>({ success: 0, errors: 0, details: [] });
+  const [results, setResults] = useState<{ success: number; errors: number; details: string[] }>({ success: 0, errors: 0, details: [] });
   const [showResults, setShowResults] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -93,8 +93,8 @@ export function RealClientImporter() {
     setProgress(0);
     setShowResults(false);
     
-    const successfulImports: any[] = [];
-    const failedImports: any[] = [];
+    const successfulImports: string[] = [];
+    const failedImports: string[] = [];
     
     for (let i = 0; i < REAL_CLIENTS.length; i++) {
       const clientData = REAL_CLIENTS[i];

@@ -17,7 +17,7 @@ const getRedirectUri = () => {
     return uri;
   }
   // For local development
-  const uri = 'http://0.0.0.0:5000/api/auth/google/callback';
+  const uri = 'http://localhost:5000/api/auth/google/callback';
   // Using localhost redirect URI
   return uri;
 };
@@ -124,7 +124,7 @@ export class GoogleCalendarService {
     this.auth.setCredentials(this.tokens);
   }
 
-  async listCalendars(): Promise<any[]> {
+  async listCalendars(): Promise<GoogleCalendarEvent[]> {
     this.ensureAuthenticated();
     try {
       const response = await calendar.calendarList.list();
@@ -439,7 +439,7 @@ export class GoogleCalendarService {
     }
   }
 
-  async getEventsFromDatabase(therapistId: string = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', timeMin?: string, timeMax?: string): Promise<any[]> {
+  async getEventsFromDatabase(therapistId: string = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', timeMin?: string, timeMax?: string): Promise<GoogleCalendarEvent[]> {
     try {
       const client = await pool.connect();
       try {

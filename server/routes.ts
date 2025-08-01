@@ -55,12 +55,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const updateData = req.body;
-
+      
       // Remove password field if it's empty or undefined
       if (!updateData.password) {
         delete updateData.password;
       }
-
+      
       const user = await storage.updateUser(id, updateData);
       // Don't return password
       const { password, ...safeUser } = user;
@@ -86,14 +86,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/dashboard/stats/:therapistId", async (req, res) => {
     try {
       const { therapistId } = req.params;
-
+      
       // Get base stats from database
       const stats = await storage.getDashboardStats(therapistId);
-
+      
       // Try to add Google Calendar data for today's sessions
       try {
         const { simpleOAuth } = await import('./oauth-simple');
-
+        
         if (simpleOAuth.isConnected()) {
           // Get today's events from Google Calendar
           const today = new Date();
@@ -104,7 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Get events from all calendars, especially Simple Practice
           const calendars = await simpleOAuth.getCalendars();
           let allEvents = [];
-
+          
           for (const calendar of calendars) {
             try {
               const events = await simpleOAuth.getEvents(
@@ -116,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const todaysEvents = events.filter(event => {
                 const eventStart = event.start?.dateTime || event.start?.date;
                 if (!eventStart) return false;
-
+                
                 if (event.start?.date && !event.start?.dateTime) {
                   // All-day event - only include if it's specifically for today
                   const eventDateStr = event.start.date; // YYYY-MM-DD format
@@ -128,18 +128,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   return eventDateTime >= today && eventDateTime < tomorrow;
                 }
               });
-
+              
               allEvents = allEvents.concat(todaysEvents);
             } catch (calError) {
               console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError.message);
             }
           }
-
+          
           const events = allEvents;
-
+          
           // Add calendar events to today's sessions count
           stats.todaysSessions = (stats.todaysSessions || 0) + events.length;
-
+          
           // Add a flag to indicate calendar integration is active
           stats.calendarIntegrated = true;
           stats.calendarEvents = events.length;
@@ -150,7 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.warn('Could not fetch calendar data for dashboard stats:', calendarError.message);
         stats.calendarIntegrated = false;
       }
-
+      
       res.json(stats);
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
@@ -228,7 +228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/clients/bulk", async (req, res) => {
     try {
       const { clients: clientsData } = req.body;
-
+      
       if (!Array.isArray(clientsData)) {
         return res.status(400).json({ error: "Clients data must be an array" });
       }
@@ -279,22 +279,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { therapistId } = req.params;
       const { date } = req.query;
-
+      
       // Validate therapistId is not undefined and is a valid UUID format
       if (!therapistId || therapistId === 'undefined') {
         return res.status(400).json({ error: 'Valid therapist ID is required' });
       }
-
+      
       // Basic UUID format validation
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(therapistId)) {
         return res.status(400).json({ error: 'Invalid therapist ID format' });
       }
-
+      
       const appointments = date 
         ? await storage.getAppointments(therapistId, new Date(date as string))
         : await storage.getAppointments(therapistId);
-
+      
       res.json(appointments);
     } catch (error) {
       console.error("Error fetching appointments:", error);
@@ -344,9 +344,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { status, reason } = req.body;
-
+      
       let updateData: any = { status };
-
+      
       if (status === 'cancelled' && reason) {
         updateData.cancellationReason = reason;
       } else if (status === 'no_show' && reason) {
@@ -356,7 +356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (status === 'checked_in') {
         updateData.checkedInAt = new Date();
       }
-
+      
       const appointment = await storage.updateAppointment(id, updateData);
       res.json(appointment);
     } catch (error) {
@@ -459,11 +459,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const updateData = req.body;
-
+      
       if (updateData.status === 'completed' && !updateData.completedAt) {
         updateData.completedAt = new Date();
       }
-
+      
       const item = await storage.updateActionItem(id, updateData);
       res.json(item);
     } catch (error) {
@@ -476,11 +476,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/ai/analyze', async (req, res) => {
     try {
       const { content, type, provider } = req.body;
-
+      
       if (!content) {
         return res.status(400).json({ error: 'Content is required' });
       }
-
+      
       const result = await analyzeContent(content, type || 'session');
       res.json(result);
     } catch (error) {
@@ -495,11 +495,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/ai/analyze-transcript', async (req, res) => {
     try {
       const { transcript } = req.body;
-
+      
       if (!transcript) {
         return res.status(400).json({ error: 'Transcript is required' });
       }
-
+      
       const result = await analyzeSessionTranscript(transcript);
       res.json(result);
     } catch (error) {
@@ -526,26 +526,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ai/generate-insights/:therapistId", async (req, res) => {
     try {
       const { therapistId } = req.params;
-
+      
       // Get recent data for analysis
       const clients = await storage.getClients(therapistId);
       const actionItems = await storage.getActionItems(therapistId);
       const appointments = await storage.getAppointments(therapistId);
-
+      
       // Generate insights using AI
       const analysisContent = `
         Practice Analytics:
         - Total Clients: ${clients.length}
         - Recent Action Items: ${actionItems.slice(0, 20).length}
         - Recent Appointments: ${appointments.slice(0, 50).length}
-
+        
         Client Summary: ${JSON.stringify(clients.slice(0, 5), null, 2)}
         Action Items: ${JSON.stringify(actionItems.slice(0, 10), null, 2)}
         Appointments: ${JSON.stringify(appointments.slice(0, 10), null, 2)}
       `;
-
+      
       const rawInsights = await analyzeContent(analysisContent, 'progress');
-
+      
       // Transform AI response into insight format
       const insights = rawInsights.insights.map((insight, index) => ({
         type: rawInsights.priority === 'high' ? 'urgent' : 'general',
@@ -554,7 +554,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         confidence: 0.8,
         actionable: rawInsights.nextSteps.length > 0
       }));
-
+      
       // Store insights in database
       for (const insight of insights) {
         await storage.createAiInsight({
@@ -566,7 +566,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           metadata: { actionable: insight.actionable }
         });
       }
-
+      
       res.json(insights);
     } catch (error) {
       console.error("Error generating AI insights:", error);
@@ -577,13 +577,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google Calendar OAuth Routes (Updated)
   app.get('/api/auth/google', async (req, res) => {
     try {
-      console.log('Google OAuth initiation requested');
-
+      // OAuth initiation requested
+      
       // Use the simple OAuth implementation
       const { simpleOAuth } = await import('./oauth-simple');
       const authUrl = simpleOAuth.generateAuthUrl();
-
-      console.log('Redirecting to Google OAuth...');
+      
+      // Redirecting to Google OAuth
       res.redirect(authUrl);
     } catch (error: any) {
       console.error('Error initiating Google OAuth:', error);
@@ -600,17 +600,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
       const isConnected = simpleOAuth.isConnected();
-      res.json({
-        connected: googleCalendarService.isConnected(),
-        hasTokens: googleCalendarService.tokens !== null
-      });
-    } catch (error) {
+      res.json({ connected: isConnected });
+    } catch (error: any) {
       console.error('Error checking OAuth status:', error);
-      res.status(500).json({ 
-        error: 'Failed to check OAuth status',
-        connected: false,
-        hasTokens: false
-      });
+      res.json({ connected: false, error: error.message });
     }
   });
 
@@ -629,11 +622,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/oauth/calendars', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
-
+      
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-
+      
       const calendars = await simpleOAuth.getCalendars();
       res.json(calendars);
     } catch (error: any) {
@@ -648,7 +641,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/oauth/events/today', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
-
+      
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
@@ -662,9 +655,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get events from ALL calendars, especially Simple Practice
       const calendars = await simpleOAuth.getCalendars();
       let allEvents = [];
-
+      
       console.log(`Checking ${calendars.length} calendars for today's events...`);
-
+      
       for (const calendar of calendars) {
         try {
           console.log(`Checking calendar: ${calendar.summary} (${calendar.id})`);
@@ -673,24 +666,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
             today.toISOString(),
             tomorrow.toISOString()
           );
-
+          
           console.log(`Found ${events.length} events in ${calendar.summary}`);
-
+          
           // Filter events to only include TODAY'S events (strict date filtering)
           const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-
+          
           const todaysEvents = events.filter(event => {
             const eventStart = event.start?.dateTime || event.start?.date;
             if (!eventStart) return false;
-
+            
             // Handle all-day events (date only) vs timed events (dateTime)
             if (event.start?.date && !event.start?.dateTime) {
               // All-day event - STRICT date comparison
               const eventDateStr = event.start.date; // YYYY-MM-DD format
               const isToday = eventDateStr === todayStr;
-
+              
               console.log(`All-day event "${event.summary}": ${eventDateStr} === ${todayStr}? ${isToday}`);
-
+              
               // ONLY include if the all-day event is exactly today's date
               return isToday;
             } else {
@@ -698,14 +691,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const eventDateTime = new Date(eventStart);
               const eventDateStr = eventDateTime.toISOString().split('T')[0];
               const isToday = eventDateStr === todayStr;
-
+              
               console.log(`Timed event "${event.summary}": ${eventDateStr} === ${todayStr}? ${isToday}`);
               return isToday;
             }
           });
-
+          
           console.log(`Filtered to ${todaysEvents.length} events actually for today in ${calendar.summary}`);
-
+          
           // Add calendar info to each event
           const eventsWithCalendar = todaysEvents.map(event => ({
             ...event,
@@ -744,14 +737,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/google/callback', async (req, res) => {
     try {
       const { code, error, state } = req.query;
-
+      
       console.log('OAuth callback received:', { 
         hasCode: !!code, 
         hasError: !!error, 
         codeLength: code ? (code as string).length : 0,
         host: req.get('host')
       });
-
+      
       if (error) {
         console.error('OAuth authorization error:', error);
         const errorMessage = error === 'access_denied' 
@@ -759,21 +752,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           : `OAuth error: ${error}`;
         return res.redirect('/oauth-troubleshoot?error=oauth_failed&message=' + encodeURIComponent(errorMessage));
       }
-
+      
       if (!code || typeof code !== 'string' || code.trim() === '') {
         console.error('No authorization code received');
         return res.redirect('/oauth-troubleshoot?error=no_code&message=' + encodeURIComponent('No authorization code received from Google. Please try the OAuth flow again.'));
       }
-
+      
       console.log('Processing authorization code...');
-
+      
       // Use the simple OAuth implementation
       const { simpleOAuth } = await import('./oauth-simple');
       await simpleOAuth.exchangeCodeForTokens(code as string);
-
+      
       console.log('Google Calendar authentication successful');
       res.redirect('/calendar?success=connected&message=' + encodeURIComponent('Successfully connected to Google Calendar!'));
-
+      
     } catch (error: any) {
       console.error('OAuth callback error:', error.message);
       res.redirect('/oauth-troubleshoot?error=auth_failed&message=' + encodeURIComponent(error.message || 'Authentication failed. Please try again or check your configuration.'));
@@ -784,24 +777,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/calendar/events', async (req, res) => {
     try {
       const { timeMin, timeMax, start, end, calendarId } = req.query;
-
+      
       const { simpleOAuth } = await import('./oauth-simple');
-
+      
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-
+      
       // Use start/end or timeMin/timeMax
       const startTime = (start as string) || (timeMin as string);
       const endTime = (end as string) || (timeMax as string);
-
+      
       console.log(`Fetching calendar events from ${startTime} to ${endTime}`);
-
+      
       // Get events from all calendars if no specific calendar is requested
       if (!calendarId) {
         const calendars = await simpleOAuth.getCalendars();
         let allEvents = [];
-
+        
         for (const calendar of calendars) {
           try {
             const events = await simpleOAuth.getEvents(
@@ -809,9 +802,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               startTime,
               endTime
             );
-
+            
             console.log(`Found ${events.length} events in ${calendar.summary}`);
-
+            
             // Convert to standard format
             const formattedEvents = events.map(event => ({
               id: event.id,
@@ -823,13 +816,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               calendarId: calendar.id,
               calendarName: calendar.summary
             }));
-
+            
             allEvents = allEvents.concat(formattedEvents);
           } catch (calError) {
             console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError.message);
           }
         }
-
+        
         console.log(`Total events found for date range: ${allEvents.length}`);
         res.json(allEvents);
       } else {
@@ -837,8 +830,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const events = await simpleOAuth.getEvents(
           calendarId as string,
           startTime,
-          endTime        );
-
+          endTime
+        );
+        
         res.json(events);
       }
     } catch (error: any) {
@@ -854,19 +848,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/calendar/events/:therapistId', async (req, res) => {
     try {
       const { timeMin, timeMax, calendarId } = req.query;
-
+      
       const { simpleOAuth } = await import('./oauth-simple');
-
+      
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-
+      
       const events = await simpleOAuth.getEvents(
         calendarId as string || 'primary',
         timeMin as string,
         timeMax as string
       );
-
+      
       res.json(events);
     } catch (error: any) {
       console.error('Error fetching calendar events:', error);
@@ -880,11 +874,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/calendar/calendars', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
-
+      
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-
+      
       const calendars = await simpleOAuth.getCalendars();
       res.json(calendars);
     } catch (error: any) {
@@ -1118,7 +1112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'text/csv',
         'application/pdf'
       ];
-
+      
       if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);
       } else {
@@ -1136,7 +1130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Import document processor
       const { documentProcessor } = await import('./document-processor');
-
+      
       // Process the uploaded document and extract metadata using AI
       const processedDoc = await documentProcessor.processDocument(
         req.file.path,
@@ -1164,7 +1158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error: any) {
       console.error('Error processing clinical document:', error);
-
+      
       // Clean up uploaded file in case of error
       if (req.file?.path) {
         try {
@@ -1173,11 +1167,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.warn('Failed to cleanup uploaded file after error:', cleanupError);
         }
       }
-
+      
       // Provide more specific error messages for common issues
       let errorMessage = 'Failed to process document';
       let details = error.message || 'Unknown error occurred';
-
+      
       if (error.message && error.message.includes('PDF processing')) {
         errorMessage = 'PDF processing unavailable';
         details = 'PDF processing is currently unavailable. Please convert your PDF to a text file (.txt) or image format (.jpg, .png) for processing.';
@@ -1185,7 +1179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         errorMessage = 'Unsupported file format';
         details = error.message;
       }
-
+      
       res.status(500).json({ 
         error: errorMessage,
         details: details,
@@ -1198,7 +1192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/documents/generate-progress-note', async (req, res) => {
     try {
       const { content, clientId, sessionDate, detectedClientName, detectedSessionDate } = req.body;
-
+      
       if (!content) {
         return res.status(400).json({ error: 'Document content is required' });
       }
@@ -1209,7 +1203,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Import document processor
       const { documentProcessor } = await import('./document-processor');
-
+      
       // Generate progress note using AI
       const progressNote = await documentProcessor.generateProgressNote(
         content,
@@ -1264,12 +1258,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/session-notes', async (req, res) => {
     try {
       const { eventId, notes, content, date, clientName, clientId, therapistId } = req.body;
-
+      
       console.log('Received session notes request:', { eventId, notes, content, date, clientName });
-
+      
       // Get content from either field
       const sessionContent = content || notes;
-
+      
       if (!eventId || !sessionContent) {
         return res.status(400).json({ error: 'Missing required fields: eventId and content/notes' });
       }
@@ -1285,7 +1279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         clientId: finalClientId,
         content: sessionContent
       });
-
+      
       console.log('Session note saved successfully:', sessionNote.id);
       res.json(sessionNote);
     } catch (error: any) {
@@ -1310,7 +1304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { eventId } = req.params;
       const { insights, clientId, therapistId } = req.body;
-
+      
       if (!insights) {
         return res.status(400).json({ error: 'Missing AI insights content' });
       }
@@ -1334,16 +1328,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/appointments/:eventId/next-summary', async (req, res) => {
     try {
       const { eventId } = req.params;
-
+      
       // Get session notes for this appointment
       const notes = await storage.getSessionNotesByEventId(eventId);
-
+      
       // Get action items for this client/appointment (stub for now)
       const actionItems = await storage.getActionItemsByEventId(eventId);
-
+      
       // Find next appointment (stub for now - would integrate with calendar)
       const nextAppointment = null; // Would query calendar for next appointment
-
+      
       const summary = {
         notes: notes.map(note => ({
           content: note.content,
@@ -1360,7 +1354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })),
         nextAppointment
       };
-
+      
       res.json(summary);
     } catch (error: any) {
       console.error('Error fetching appointment summary:', error);
@@ -1407,14 +1401,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/calendar/sync', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
-
+      
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-
+      
       // Get events and sync to database (simplified for now)
       const events = await simpleOAuth.getEvents('primary');
-
+      
       res.json({ 
         success: true, 
         message: 'Calendar events retrieved successfully', 
@@ -1434,13 +1428,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { timeMin, timeMax, therapistId } = req.query;
       const finalTherapistId = (therapistId as string) || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-
+      
       const events = await googleCalendarService.getEventsFromDatabase(
         finalTherapistId,
         timeMin as string,
         timeMax as string
       );
-
+      
       res.json(events);
     } catch (error) {
       console.error('Error fetching events from database:', error);
@@ -1453,21 +1447,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { timeMin, timeMax, source = 'database', therapistId } = req.query;
       const finalTherapistId = (therapistId as string) || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-
+      
       if (source === 'live' || source === 'api') {
         // Fetch from Google Calendar API using simple OAuth
         const { simpleOAuth } = await import('./oauth-simple');
-
+        
         if (!simpleOAuth.isConnected()) {
           return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
         }
-
+        
         const events = await simpleOAuth.getEvents(
           'primary', // Use primary calendar by default
           timeMin as string,
           timeMax as string
         );
-
+        
         res.json(events);
       } else {
         // Fetch from database (default and fastest)
@@ -1519,7 +1513,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { eventId } = req.params;
       const { insights, clientId, therapistId } = req.body;
-
+      
       if (!insights || !clientId || !therapistId) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
@@ -1543,10 +1537,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/appointments/:eventId/next-summary', async (req, res) => {
     try {
       const { eventId } = req.params;
-
+      
       // Get current appointment details
       const currentNotes = await storage.getSessionNotesByEventId(eventId);
-
+      
       if (currentNotes.length === 0) {
         return res.json({ notes: [], actionItems: [], nextAppointment: null });
       }
@@ -1607,16 +1601,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Multi-Model AI Endpoints for Enhanced Clinical Intelligence
-
+  
   // Clinical Analysis using Claude (primary)
   app.post('/api/ai/clinical-analysis', async (req, res) => {
     try {
       const { content, context } = req.body;
-
+      
       if (!content) {
         return res.status(400).json({ error: 'Content is required' });
       }
-
+      
       const result = await multiModelAI.generateClinicalAnalysis(content, context);
       res.json(result);
     } catch (error: any) {
@@ -1629,11 +1623,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/ai/detailed-insights', async (req, res) => {
     try {
       const { content, analysisType } = req.body;
-
+      
       if (!content || !analysisType) {
         return res.status(400).json({ error: 'Content and analysis type are required' });
       }
-
+      
       const result = await multiModelAI.generateDetailedInsights(content, analysisType);
       res.json(result);
     } catch (error: any) {
@@ -1646,15 +1640,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/ai/evidence-recommendations', async (req, res) => {
     try {
       const { query, domain } = req.body;
-
+      
       if (!query || !domain) {
         return res.status(400).json({ error: 'Query and domain are required' });
       }
-
+      
       if (!['clinical', 'treatment', 'education'].includes(domain)) {
         return res.status(400).json({ error: 'Domain must be clinical, treatment, or education' });
       }
-
+      
       const result = await multiModelAI.getEvidenceBasedRecommendations(query, domain);
       res.json(result);
     } catch (error: any) {
@@ -1663,17 +1657,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  Applying error handling to multimodal analysis endpoint.
-```text
-// Multimodal Analysis using Gemini
+  // Multimodal Analysis using Gemini
   app.post('/api/ai/multimodal-analysis', async (req, res) => {
     try {
       const { content, mediaType } = req.body;
-
+      
       if (!content) {
         return res.status(400).json({ error: 'Content is required' });
       }
-
+      
       const result = await multiModelAI.analyzeMultimodalContent(content, mediaType);
       res.json(result);
     } catch (error: any) {
@@ -1686,11 +1678,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/ai/ensemble-analysis', async (req, res) => {
     try {
       const { content, analysisType } = req.body;
-
+      
       if (!content || !analysisType) {
         return res.status(400).json({ error: 'Content and analysis type are required' });
       }
-
+      
       const result = await multiModelAI.generateEnsembleAnalysis(content, analysisType);
       res.json(result);
     } catch (error: any) {
@@ -1703,11 +1695,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/ai/clinical-research', async (req, res) => {
     try {
       const { query } = req.body;
-
+      
       if (!query) {
         return res.status(400).json({ error: 'Research query is required' });
       }
-
+      
       const research = await perplexityClient.getClinicalResearch(query);
       res.json({ content: research, model: 'perplexity-research' });
     } catch (error: any) {
@@ -1720,11 +1712,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/ai/treatment-protocols', async (req, res) => {
     try {
       const { condition, clientProfile } = req.body;
-
+      
       if (!condition) {
         return res.status(400).json({ error: 'Condition is required' });
       }
-
+      
       const protocols = await perplexityClient.getTreatmentProtocols(condition, clientProfile || {});
       res.json({ content: protocols, model: 'perplexity-protocols' });
     } catch (error: any) {
@@ -1737,7 +1729,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/ai/continuing-education-research', async (req, res) => {
     try {
       const { therapistProfile, clientMix } = req.body;
-
+      
       const education = await perplexityClient.getContinuingEducation(therapistProfile || {}, clientMix || {});
       res.json({ content: education, model: 'perplexity-education' });
     } catch (error: any) {

@@ -7,6 +7,14 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, AlertTriangle, CheckCircle, Brain, Target, TrendingUp, FileText, Users, Calendar } from 'lucide-react';
 
+interface ActionItem {
+  id: string;
+  title: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+  dueDate?: Date;
+}
+
 interface EnhancedInsightsProps {
   insights: {
     summary: string;
@@ -48,7 +56,7 @@ interface EnhancedInsightsProps {
   };
   onSaveInsights: () => void;
   onGenerateProgressReport: () => void;
-  onCreateActionItems: (actions: any[]) => void;
+  onCreateActionItems: (actions: ActionItem[]) => void;
 }
 
 export function EnhancedInsightsPanel({ 

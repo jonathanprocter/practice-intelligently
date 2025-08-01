@@ -1077,7 +1077,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getAppointmentsByTherapistTimeframe(therapistId: string, timeframe: 'week' | 'month' | 'quarter'): Promise<any[]> {
+  async getAppointmentsByTherapistTimeframe(therapistId: string, timeframe: 'week' | 'month' | 'quarter'): Promise<Appointment[]> {
     try {
       let dateThreshold = new Date();
       switch (timeframe) {
@@ -1115,7 +1115,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getAppointmentsByClientId(clientId: string): Promise<any[]> {
+  async getAppointmentsByClientId(clientId: string): Promise<Appointment[]> {
     try {
       const result = await pool.query(
         'SELECT * FROM appointments WHERE client_id = $1 ORDER BY start_time DESC',
@@ -1140,7 +1140,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getClientOutcomesByTherapist(therapistId: string): Promise<any[]> {
+  async getClientOutcomesByTherapist(therapistId: string): Promise<ProgressNote[]> {
     try {
       const result = await pool.query(
         'SELECT c.*, COUNT(sn.id) as session_count FROM clients c LEFT JOIN session_notes sn ON c.id::text = sn.client_id WHERE c.therapist_id::text = $1 GROUP BY c.id ORDER BY c.created_at DESC',
@@ -1255,7 +1255,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getProgressNotes(therapistId: string): Promise<any[]> {
+  async getProgressNotes(therapistId: string): Promise<ProgressNote[]> {
     try {
       const result = await pool.query(
         `SELECT pn.*, c.first_name, c.last_name 

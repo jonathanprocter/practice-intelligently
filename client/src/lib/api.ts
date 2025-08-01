@@ -86,11 +86,11 @@ export interface SessionNote {
 export interface CalendarEvent {
   id: string;
   title: string;
-  startTime: Date;
-  endTime: Date;
+  start: Date;
+  end: Date;
+  description?: string;
   location?: string;
   clientName?: string;
-  eventType?: string;
 }
 
 export interface ApiStatus {

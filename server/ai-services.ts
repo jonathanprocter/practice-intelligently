@@ -185,7 +185,7 @@ export async function analyzeSessionTranscript(transcript: string): Promise<Sess
 }
 
 // Generate appointment insights
-export async function generateAppointmentInsights(appointments: any[]): Promise<AIAnalysisResult> {
+export async function generateAppointmentInsights(appointments: unknown[]): Promise<AIAnalysisResult> {
   const appointmentData = appointments.map(apt => ({
     type: apt.type,
     status: apt.status,
@@ -199,7 +199,7 @@ export async function generateAppointmentInsights(appointments: any[]): Promise<
 }
 
 // Generate progress insights for client
-export async function generateProgressInsights(clientData: any): Promise<AIAnalysisResult> {
+export async function generateProgressInsights(clientData: unknown): Promise<AIAnalysisResult> {
   const content = `Client progress data: ${JSON.stringify(clientData, null, 2)}`;
   return analyzeContent(content, 'progress');
 }

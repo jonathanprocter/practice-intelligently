@@ -44,15 +44,10 @@ class SimpleOAuth {
   }
 
   async getAccessToken(code: string): Promise<any> {
-    console.log('Exchanging code for tokens...');
-
     try {
       const { tokens } = await this.oauth2Client.getToken(code);
       this.oauth2Client.setCredentials(tokens);
-      this.tokens = tokens;
-      await this.saveTokens();
-
-      console.log('Successfully obtained and saved tokens:', Object.keys(tokens));
+      await this.saveTokens(tokens);
       return tokens;
     } catch (error) {
       console.error('Error getting access token:', error);
@@ -99,10 +94,10 @@ class SimpleOAuth {
     }
   }
 
-  private async saveTokens(): Promise<void> {
+  private async saveTokens(tokens: any): Promise<void> {
     try {
       const { promises: fsPromises } = await import('fs');
-      await fsPromises.writeFile(this.tokensFilePath, JSON.stringify(this.tokens, null, 2));
+      await fsPromises.writeFile(this.tokensFilePath, JSON.stringify(tokens, null, 2));
       console.log('OAuth tokens saved to file');
     } catch (error) {
       console.error('Failed to save tokens:', error);
@@ -117,7 +112,7 @@ class SimpleOAuth {
       this.tokens = tokens;
       this.oauth2Client.setCredentials(tokens);
       this.isAuthenticated = true;
-      await this.saveTokens();
+      await this.saveTokens(tokens);
 
       console.log('Successfully obtained and saved tokens:', Object.keys(tokens));
     } catch (error: any) {
