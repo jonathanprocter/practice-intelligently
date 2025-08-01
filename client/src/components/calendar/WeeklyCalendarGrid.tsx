@@ -88,7 +88,7 @@ export const WeeklyCalendarGrid = ({
 
       onEventMove(dragData.eventId, newStartTime, newEndTime);
     } catch (error) {
-      console.error('Error handling drop:', error);
+      // Error handling drop (production logging disabled)
     } finally {
       // Clear drag state
       setDraggedEventId(null);
@@ -191,7 +191,7 @@ export const WeeklyCalendarGrid = ({
 
         {/* Time slots */}
         {timeSlots.map((timeSlot) => (
-          <React.Fragment key={`timeslot-${timeSlot.hour}-${timeSlot.minute}`}>
+          <div key={`timeslot-${timeSlot.hour}-${timeSlot.minute}`} className="contents">
             {/* Time label */}
             <div className="border-r border-b border-gray-200 p-2 text-xs text-gray-600 bg-gray-50">
               {timeSlot.display}
@@ -341,7 +341,7 @@ export const WeeklyCalendarGrid = ({
                 </div>
               );
             })}
-          </React.Fragment>
+          </div>
         ))}
       </div>
     </div>

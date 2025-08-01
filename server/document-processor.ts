@@ -26,7 +26,7 @@ async function getPdfJS() {
     const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.js');
     return pdfjsLib;
   } catch (error) {
-    console.error('Failed to import pdfjs-dist:', error);
+    // Failed to import pdfjs-dist (production logging disabled)
     throw new Error('PDF processing is currently unavailable. Please convert your PDF to a text file (.txt) or image format (.jpg, .png) for processing.');
   }
 }
@@ -104,7 +104,7 @@ export class DocumentProcessor {
           try {
             extractedText = await this.processCSV(filePath);
           } catch (csvError: any) {
-            console.warn('CSV processing failed:', csvError.message);
+            // CSV processing failed (production logging disabled)
             throw new Error(`CSV processing failed: ${csvError.message}. Please try converting your CSV to a text file instead.`);
           }
           break;
@@ -123,15 +123,12 @@ export class DocumentProcessor {
         metadata,
       };
     } catch (error: any) {
-      console.error('Error processing document:', error);
+      // Error processing document (production logging disabled)
       throw new Error(`Failed to process ${fileExtension} file: ${error?.message || 'Unknown error'}`);
     }
   }
 
   private async processPDF(filePath: string): Promise<string> {
-    // For now, disable PDF processing to avoid import issues
-    throw new Error('PDF processing is currently unavailable. Please convert your PDF to a text file (.txt) or image format (.jpg, .png) for processing.');
-
     try {
       if (!await this._fileExists(filePath)) {
         throw new Error('PDF file not found');
@@ -158,7 +155,7 @@ export class DocumentProcessor {
       // Extract text from each page
       for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
         try {
-          console.log(`Processing PDF page ${pageNum}...`);
+          // Processing PDF page (production logging disabled)
 
           const page = await pdfDocument.getPage(pageNum);
           const textContent = await page.getTextContent();
@@ -177,7 +174,7 @@ export class DocumentProcessor {
           // Clean up page
           page.cleanup();
         } catch (pageError: any) {
-          console.warn(`Failed to process PDF page ${pageNum}:`, pageError.message);
+          // Failed to process PDF page (production logging disabled)
         }
       }
 
@@ -188,10 +185,10 @@ export class DocumentProcessor {
         throw new Error('No text could be extracted from PDF. The PDF might be image-based or encrypted.');
       }
 
-      console.log('Successfully extracted text from PDF, length:', fullText.length);
+      // Successfully extracted text from PDF (production logging disabled)
       return fullText;
     } catch (error: any) {
-      console.error('PDF processing error:', error);
+      // PDF processing error (production logging disabled)
       throw new Error(`PDF processing failed: ${error.message || 'Unknown error'}`);
     }
   }
@@ -207,7 +204,7 @@ export class DocumentProcessor {
       }
       return result.value;
     } catch (error: any) {
-      console.error('Word document processing error:', error);
+      // Word document processing error (production logging disabled)
       throw new Error(`Failed to process Word document: ${error.message || 'Unknown error'}`);
     }
   }
@@ -223,7 +220,7 @@ export class DocumentProcessor {
       }
       return content;
     } catch (error: any) {
-      console.error('Text file processing error:', error);
+      // Text file processing error (production logging disabled)
       throw new Error(`Failed to process text file: ${error.message || 'Unknown error'}`);
     }
   }
@@ -383,7 +380,7 @@ ${content.substring(0, 3000)}`;
         sessionDate: contentData.sessionDate || filenameData.sessionDate,
       };
     } catch (error) {
-      console.error('Error extracting metadata:', error);
+      // Error extracting metadata (production logging disabled)
       return {};
     }
   }
