@@ -499,21 +499,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (error) {
         console.error('OAuth authorization error:', error);
-        return res.redirect('/calendar?error=oauth_denied');
+        if (error === 'access_denied') {
+          return res.redirect('/calendar/integration?error=permission_denied&message=' + encodeURIComponent('You need to grant permission to access your Google Calendar. Please try again and click "Allow" when prompted.'));
+        }
+        return res.redirect('/calendar/integration?error=oauth_failed&message=' + encodeURIComponent(`OAuth error: ${error}`));
       }
       
       if (!code) {
         console.error('No authorization code received');
-        return res.status(400).json({ error: 'Authorization code is required' });
+        return res.redirect('/calendar/integration?error=no_code&message=' + encodeURIComponent('No authorization code received from Google'));
       }
       
       console.log('Processing OAuth callback with code:', (code as string).substring(0, 10) + '...');
       await googleCalendarService.getAccessToken(code as string);
       console.log('Google Calendar authentication successful');
-      res.redirect('/calendar?connected=true');
-    } catch (error) {
+      res.redirect('/calendar/integration?success=connected&message=' + encodeURIComponent('Successfully connected to Google Calendar! You can now sync your events.'));
+    } catch (error: any) {
       console.error('OAuth callback error:', error);
-      res.redirect('/calendar?error=auth_failed');
+      res.redirect('/calendar/integration?error=auth_failed&message=' + encodeURIComponent(error.message || 'Authentication failed'));
     }
   });
 

@@ -33,7 +33,27 @@ interface CalendarEvent {
 export default function CalendarIntegration() {
   const [syncingEvents, setSyncingEvents] = useState(false);
   const [eventSource, setEventSource] = useState<'database' | 'live'>('database');
+  const [urlMessage, setUrlMessage] = useState<{type: 'success' | 'error', message: string} | null>(null);
   const queryClient = useQueryClient();
+
+  // Check URL parameters for messages from OAuth callback
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    const success = urlParams.get('success');
+    const message = urlParams.get('message');
+
+    if (error && message) {
+      setUrlMessage({ type: 'error', message: decodeURIComponent(message) });
+    } else if (success && message) {
+      setUrlMessage({ type: 'success', message: decodeURIComponent(message) });
+    }
+
+    // Clear URL parameters after reading them
+    if (error || success) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   // Check Google Calendar connection status
   const { data: connectionStatus, refetch: refetchStatus } = useQuery({
@@ -106,6 +126,20 @@ export default function CalendarIntegration() {
           </Button>
         </div>
       </div>
+
+      {/* URL Message Alert */}
+      {urlMessage && (
+        <Alert className={urlMessage.type === 'error' ? 'border-red-200 bg-red-50' : 'border-green-200 bg-green-50'}>
+          <AlertDescription className={urlMessage.type === 'error' ? 'text-red-800' : 'text-green-800'}>
+            {urlMessage.type === 'error' ? (
+              <XCircle className="w-4 h-4 inline mr-2" />
+            ) : (
+              <CheckCircle className="w-4 h-4 inline mr-2" />
+            )}
+            {urlMessage.message}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Connection Status Card */}
       <Card>
