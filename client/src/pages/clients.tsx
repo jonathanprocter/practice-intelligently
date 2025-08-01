@@ -6,7 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ClientForm } from "@/components/forms/ClientForm";
 import { ClientListGenerator } from "@/components/clients/ClientListGenerator";
+import { RealClientImporter } from "@/components/clients/RealClientImporter";
+import { QuickClientUpdate } from "@/components/clients/QuickClientUpdate";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { format } from "date-fns";
 
@@ -106,12 +109,23 @@ export default function Clients() {
                 Import List
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden">
+            <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
               <DialogHeader>
                 <DialogTitle>Import Client List</DialogTitle>
               </DialogHeader>
               <div className="overflow-y-auto">
-                <ClientListGenerator />
+                <Tabs defaultValue="real-data" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="real-data">Your Real Clients (27)</TabsTrigger>
+                    <TabsTrigger value="manual-import">Manual Import</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="real-data" className="mt-4">
+                    <RealClientImporter />
+                  </TabsContent>
+                  <TabsContent value="manual-import" className="mt-4">
+                    <ClientListGenerator />
+                  </TabsContent>
+                </Tabs>
               </div>
             </DialogContent>
           </Dialog>
@@ -141,6 +155,11 @@ export default function Clients() {
           Filter
         </Button>
       </div>
+
+      {/* Quick Update Component for existing clients missing data */}
+      {clients && clients.length > 0 && (
+        <QuickClientUpdate clients={clients} />
+      )}
 
       <div className="grid gap-4">
         {filteredClients.length > 0 ? (
