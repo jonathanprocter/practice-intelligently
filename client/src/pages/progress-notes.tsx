@@ -28,13 +28,23 @@ export function ProgressNotesPage() {
   const [showUpload, setShowUpload] = useState(false);
 
   // Fetch progress notes
-  const { data: progressNotes, isLoading, refetch } = useQuery({
+  const { data: progressNotes, isLoading, refetch, error } = useQuery({
     queryKey: ['progress-notes'],
     queryFn: async () => {
-      const response = await fetch('/api/progress-notes/therapist-1');
-      if (!response.ok) throw new Error('Failed to fetch progress notes');
-      return response.json();
+      try {
+        const response = await fetch('/api/progress-notes/therapist-1');
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to fetch progress notes: ${errorText}`);
+        }
+        return response.json();
+      } catch (error) {
+        console.error('Error fetching progress notes:', error);
+        throw error;
+      }
     },
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const handleProgressNoteGenerated = (newNote: ProgressNote) => {

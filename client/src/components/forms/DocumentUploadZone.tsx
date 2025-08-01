@@ -45,8 +45,15 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
+        let errorMessage = 'Unknown error occurred';
+        try {
+          const errorData = await response.text();
+          const parsedError = JSON.parse(errorData);
+          errorMessage = parsedError.error || parsedError.details || errorData;
+        } catch {
+          errorMessage = `Request failed with status ${response.status}`;
+        }
+        throw new Error(errorMessage);
       }
 
       return response.json();
@@ -71,15 +78,16 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
       });
     },
     onError: (error, file) => {
+      console.error('Document processing error:', error);
       setUploadedFiles(prev => prev.map(f => 
         f.file === file 
-          ? { ...f, status: 'error', error: error.message }
+          ? { ...f, status: 'error', error: error?.message || 'Unknown error' }
           : f
       ));
       
       toast({
         title: "Processing Failed",
-        description: error.message,
+        description: error?.message || 'Document processing failed',
         variant: "destructive",
       });
     },
@@ -104,12 +112,20 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
           sessionDate,
           detectedClientName,
           detectedSessionDate,
+          therapistId: 'therapist-1', // Add default therapist ID
         }),
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
+        let errorMessage = 'Failed to generate progress note';
+        try {
+          const errorData = await response.text();
+          const parsedError = JSON.parse(errorData);
+          errorMessage = parsedError.error || parsedError.details || errorData;
+        } catch {
+          errorMessage = `Request failed with status ${response.status}`;
+        }
+        throw new Error(errorMessage);
       }
 
       return response.json();
@@ -134,9 +150,10 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
       queryClient.invalidateQueries({ queryKey: ['progressNotes'] });
     },
     onError: (error) => {
+      console.error('Progress note generation error:', error);
       toast({
         title: "Generation Failed",
-        description: error.message,
+        description: error?.message || 'Failed to generate progress note',
         variant: "destructive",
       });
     },
