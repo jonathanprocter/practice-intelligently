@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ApiClient } from '@/lib/api';
 import { CalendarEvent, CalendarDay } from '../types/calendar';
+import { getOfficeLocationByDay, getCalendarLocationDisplay } from '@/utils/locationUtils';
 import { getWeekStart, getWeekEnd, getWeekDays, addWeeks, isCurrentWeek, getWeekRangeString } from '../utils/dateUtils';
 // Removed export imports - using direct PDF export now
 import { WeeklyCalendarGrid } from '../components/calendar/WeeklyCalendarGrid';
@@ -39,23 +40,7 @@ export default function Calendar() {
     window.location.href = '/api/auth/google';
   };
 
-  // Function to get default location based on day of week
-  const getDefaultLocationForDate = (date: Date) => {
-    if (!date || isNaN(date.getTime())) return 'Remote/Office';
-    const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    switch (dayOfWeek) {
-      case 1: // Monday
-        return 'Woodbury';
-      case 2: // Tuesday
-        return 'Telehealth';
-      case 3: // Wednesday
-      case 4: // Thursday
-      case 5: // Friday
-        return 'Rockville Centre';
-      default:
-        return 'Remote/Office';
-    }
-  };
+
 
   const { data: googleEvents = [], isLoading, error, refetch } = useQuery({
     queryKey: ['google-calendar-events', currentWeek.toISOString()],
@@ -81,7 +66,7 @@ export default function Calendar() {
               title: event.title || event.summary || 'Appointment',
               startTime: new Date(event.startTime || event.start?.dateTime || event.start?.date),
               endTime: new Date(event.endTime || event.end?.dateTime || event.end?.date),
-              location: event.location || 'Simple Practice',
+              location: event.location || getCalendarLocationDisplay(event.startTime || event.start?.dateTime || event.start?.date),
               description: event.description || '',
               calendarId: event.calendarId || 'simple-practice',
               calendarName: event.calendarName || 'Simple Practice'

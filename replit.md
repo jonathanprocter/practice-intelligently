@@ -12,7 +12,7 @@ This is a comprehensive therapy practice management system designed as a full-st
 - **Review Workflow**: Built complete dashboard with Generated → Reviewed → Approved → Sent → Archived status pipeline
 - **Email Integration**: Added SendGrid email service for sending personalized check-ins to clients
 - **Automated Lifecycle**: 7-day auto-deletion of unsent check-ins, archiving of sent messages
-- **Calendar Display Enhancement**: Updated calendar events to show "Simple Practice | Malverne Office" format
+- **Dynamic Office Location System**: Calendar events now automatically display correct office location based on day of week (Monday=Woodbury, Tue/Sat/Sun=Telehealth, Wed/Thu/Fri=Rockville Centre)
 - **Status**: Full client check-ins system operational with AI insights and email delivery capabilities
 
 ✅ **Enhanced Calendar Synchronization & Notification System Completed**

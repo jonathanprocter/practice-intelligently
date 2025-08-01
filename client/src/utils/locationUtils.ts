@@ -1,47 +1,78 @@
-// Location utilities for calendar events
+/**
+ * Utility functions for determining office locations based on scheduling rules
+ */
 
-export function getLocationDisplay(location?: string): string {
-  if (!location) return '';
+/**
+ * Gets the office location based on the day of the week
+ * Monday = Woodbury
+ * Tuesday, Saturday, Sunday = Telehealth
+ * Wednesday, Thursday, Friday = Rockville Centre
+ */
+export function getOfficeLocationByDay(date: Date | string): string {
+  const targetDate = typeof date === 'string' ? new Date(date) : date;
   
-  // Clean and format location for display
-  return location.trim();
+  if (!targetDate || isNaN(targetDate.getTime())) {
+    return 'Rockville Centre'; // Default fallback
+  }
+  
+  const dayOfWeek = targetDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  
+  switch (dayOfWeek) {
+    case 1: // Monday
+      return 'Woodbury';
+    case 2: // Tuesday
+    case 0: // Sunday
+    case 6: // Saturday
+      return 'Telehealth';
+    case 3: // Wednesday
+    case 4: // Thursday
+    case 5: // Friday
+      return 'Rockville Centre';
+    default:
+      return 'Rockville Centre'; // Default fallback
+  }
 }
 
-export function getLocationIcon(location?: string): string {
-  if (!location) return '';
-  
-  const loc = location.toLowerCase();
-  
-  // Return appropriate icon based on location type
-  if (loc.includes('office') || loc.includes('clinic')) return '🏢';
-  if (loc.includes('home') || loc.includes('remote')) return '🏠';
-  if (loc.includes('video') || loc.includes('zoom') || loc.includes('online')) return '💻';
-  if (loc.includes('phone') || loc.includes('call')) return '📞';
-  if (loc.includes('hospital')) return '🏥';
-  if (loc.includes('school')) return '🏫';
-  
-  return '📍'; // Default location icon
+/**
+ * Gets the full display text for calendar events
+ */
+export function getCalendarLocationDisplay(date: Date | string): string {
+  const location = getOfficeLocationByDay(date);
+  return `Simple Practice | ${location}`;
 }
 
-export function formatLocationForPDF(location?: string): string {
-  if (!location) return '';
+/**
+ * Gets location display for different contexts
+ */
+export function getLocationDisplay(date: Date | string, context: 'calendar' | 'appointment' | 'brief' = 'calendar'): string {
+  const location = getOfficeLocationByDay(date);
   
-  // Format location for PDF export - remove special characters
-  return location
-    .replace(/[^\w\s\-.,()]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  switch (context) {
+    case 'calendar':
+      return `Simple Practice | ${location}`;
+    case 'appointment':
+      return location;
+    case 'brief':
+      return location;
+    default:
+      return `Simple Practice | ${location}`;
+  }
 }
 
-export function getLocationTypeColor(location?: string): string {
-  if (!location) return 'bg-gray-100 text-gray-700';
+/**
+ * Gets an icon or color code for the location type
+ */
+export function getLocationIcon(date: Date | string): string {
+  const location = getOfficeLocationByDay(date);
   
-  const loc = location.toLowerCase();
-  
-  if (loc.includes('office') || loc.includes('clinic')) return 'bg-blue-100 text-blue-700';
-  if (loc.includes('home') || loc.includes('remote')) return 'bg-green-100 text-green-700';
-  if (loc.includes('video') || loc.includes('zoom') || loc.includes('online')) return 'bg-purple-100 text-purple-700';
-  if (loc.includes('phone') || loc.includes('call')) return 'bg-orange-100 text-orange-700';
-  
-  return 'bg-gray-100 text-gray-700';
+  switch (location) {
+    case 'Telehealth':
+      return '🏠'; // Home/remote icon
+    case 'Woodbury':
+      return '🏢'; // Office building icon
+    case 'Rockville Centre':
+      return '🏥'; // Medical/clinic icon
+    default:
+      return '📍'; // General location icon
+  }
 }

@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import SessionPrepModal from "@/components/session-prep/session-prep-modal";
+import { getCalendarLocationDisplay } from "@/utils/locationUtils";
 
 export default function TodaysSchedule() {
   const [activeSession, setActiveSession] = useState<string | null>(null);
@@ -202,6 +203,8 @@ export default function TodaysSchedule() {
     });
   };
 
+
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed': return 'bg-therapy-primary/10 text-therapy-primary';
@@ -249,7 +252,9 @@ export default function TodaysSchedule() {
                   )}
                 </h4>
                 <p className="text-therapy-text/60 text-sm">
-                  {appointment.clientId === 'calendar-event' ? 'Simple Practice | Malverne Office' : appointment.type}
+                  {appointment.clientId === 'calendar-event' 
+                    ? getCalendarLocationDisplay(appointment.startTime)
+                    : appointment.type}
                 </p>
                 <div className="flex items-center space-x-2 mt-1">
                   <Badge className={getStatusColor(appointment.status)}>
