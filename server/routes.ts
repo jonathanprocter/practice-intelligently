@@ -1464,12 +1464,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { eventId } = req.params;
       const { calendarId = 'primary' } = req.query;
-      // Note: deleteEvent method needs to be implemented in simpleOAuth
-      // await simpleOAuth.deleteEvent(calendarId as string, eventId);
-      res.json({ success: true });
-    } catch (error) {
+      
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
+      await simpleOAuth.deleteEvent(calendarId as string, eventId);
+      res.json({ success: true, message: 'Event deleted successfully' });
+    } catch (error: any) {
       console.error('Error deleting calendar event:', error);
-      res.status(500).json({ error: 'Failed to delete calendar event' });
+      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      res.status(500).json({ error: 'Failed to delete calendar event', details: error.message });
     }
   });
 

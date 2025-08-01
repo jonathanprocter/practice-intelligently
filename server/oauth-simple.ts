@@ -171,6 +171,28 @@ class SimpleOAuth {
     }
   }
 
+  async deleteEvent(calendarId: string = 'primary', eventId: string): Promise<void> {
+    if (!this.isConnected()) {
+      throw new Error('Not authenticated with Google Calendar');
+    }
+
+    try {
+      const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
+      await calendar.events.delete({
+        calendarId,
+        eventId
+      });
+      console.log(`Successfully deleted event ${eventId} from calendar ${calendarId}`);
+    } catch (error: any) {
+      console.error('Error deleting event:', error);
+      if (error.code === 401 || error.code === 403) {
+        this.isAuthenticated = false;
+        throw new Error('Authentication expired. Please re-authenticate.');
+      }
+      throw error;
+    }
+  }
+
   async disconnect(): Promise<void> {
     this.tokens = null;
     this.isAuthenticated = false;
