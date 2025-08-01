@@ -19,6 +19,7 @@ import fs from 'fs';
 import { getAllApiStatuses } from "./health-check";
 import { simpleOAuth } from "./oauth-simple";
 import { googleCalendarService } from "./auth";
+import { generateUSHolidays, getHolidaysForYear, getHolidaysInRange, isUSHoliday } from "./us-holidays";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check
@@ -135,6 +136,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
             } catch (calError) {
               console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError.message);
             }
+          }
+
+          // Add US holidays if today is a federal holiday
+          try {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const todayHoliday = isUSHoliday(todayStr);
+            if (todayHoliday) {
+              const year = parseInt(todayStr.substring(0, 4));
+              const holidays = getHolidaysForYear(year);
+              const holiday = holidays.find(h => h.start.date === todayStr);
+              
+              if (holiday) {
+                const holidayEvent = {
+                  id: holiday.id,
+                  summary: `🇺🇸 ${holiday.summary}`,
+                  start: { date: holiday.start.date },
+                  calendarName: 'US Federal Holidays'
+                };
+                allEvents.push(holidayEvent);
+                console.log(`🇺🇸 Added today's US federal holiday to dashboard: ${holiday.summary}`);
+              }
+            }
+          } catch (holidayError) {
+            console.warn('Could not check for US holidays in dashboard stats:', holidayError.message);
           }
 
           const events = allEvents;
@@ -797,7 +822,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Filtered to ${todaysEvents.length} events actually for today in ${calendar.summary}
+      // Add US holidays if today is a federal holiday
+      try {
+        const todayHoliday = isUSHoliday(easternDateStr);
+        if (todayHoliday) {
+          const year = parseInt(easternDateStr.substring(0, 4));
+          const holidays = getHolidaysForYear(year);
+          const holiday = holidays.find(h => h.start.date === easternDateStr);
+          
+          if (holiday) {
+            const holidayEvent = {
+              id: holiday.id,
+              summary: `🇺🇸 ${holiday.summary}`,
+              description: holiday.description,
+              start: { date: holiday.start.date },
+              end: { date: holiday.end.date },
+              status: 'confirmed',
+              calendarName: 'US Federal Holidays',
+              calendarId: 'us-holidays',
+              isAllDay: true,
+              isHoliday: true
+            };
+            
+            allEvents.push(holidayEvent);
+            console.log(`🇺🇸 Added today's US federal holiday: ${holiday.summary}`);
+          }
+        }
+      } catch (holidayError) {
+        console.warn('Could not check for US holidays:', holidayError.message);
+      }
+
       // Total events found across all calendars: ${allEvents.length}
       res.json(allEvents);
     } catch (error: any) {
@@ -924,13 +978,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const results = await Promise.all(calendarPromises);
         allEvents = results.flat();
 
+        // Add US holidays as all-day events for the requested date range
+        try {
+          const holidays = getHolidaysInRange(
+            startTime.substring(0, 10), // Extract YYYY-MM-DD format
+            endTime.substring(0, 10)
+          );
+          
+          const holidayEvents = holidays.map(holiday => ({
+            id: holiday.id,
+            title: `🇺🇸 ${holiday.summary}`,
+            startTime: new Date(holiday.start.date + 'T00:00:00'),
+            endTime: new Date(holiday.end.date + 'T23:59:59'),
+            location: 'United States',
+            description: holiday.description,
+            calendarId: 'us-holidays',
+            calendarName: 'US Federal Holidays',
+            isPrimary: false,
+            isSubcalendar: true,
+            isAllDay: true,
+            isHoliday: true,
+            accessRole: 'reader',
+            status: 'confirmed'
+          }));
+
+          allEvents = allEvents.concat(holidayEvents);
+          console.log(`🇺🇸 Added ${holidayEvents.length} US federal holidays to calendar events`);
+        } catch (holidayError) {
+          console.warn('Could not add US holidays to calendar events:', holidayError.message);
+        }
+
         // Sort events by start time
         allEvents.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
         // Enhanced logging with subcalendar breakdown
         const subcalendarEvents = allEvents.filter(event => event.isSubcalendar);
+        const holidayCount = allEvents.filter(event => event.isHoliday).length;
         console.log(`\n✅ Successfully fetched ${totalEventsFound} events from ${processedCalendars}/${calendars.length} calendars (${startTime.substring(0,4)}-${endTime.substring(0,4)})`);
-        console.log(`   📊 Breakdown: ${allEvents.length - subcalendarEvents.length} from primary calendars, ${subcalendarEvents.length} from subcalendars`);
+        console.log(`   📊 Breakdown: ${allEvents.length - subcalendarEvents.length} from primary calendars, ${subcalendarEvents.length} from subcalendars (including ${holidayCount} holidays)`);
         
         res.json(allEvents);
       } else {
@@ -1007,6 +1092,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
       res.status(500).json({ error: 'Failed to fetch calendars', details: error.message });
+    }
+  });
+
+  // US Holidays API endpoints
+  app.get('/api/holidays/us', async (req, res) => {
+    try {
+      const { year, startDate, endDate } = req.query;
+      
+      if (year) {
+        const yearNum = parseInt(year as string);
+        if (yearNum < 2015 || yearNum > 2030) {
+          return res.status(400).json({ error: 'Year must be between 2015 and 2030' });
+        }
+        const holidays = getHolidaysForYear(yearNum);
+        res.json(holidays);
+      } else if (startDate && endDate) {
+        const holidays = getHolidaysInRange(startDate as string, endDate as string);
+        res.json(holidays);
+      } else {
+        // Return all holidays (2015-2030)
+        const allHolidays = generateUSHolidays();
+        res.json(allHolidays);
+      }
+    } catch (error: any) {
+      console.error('Error fetching US holidays:', error);
+      res.status(500).json({ error: 'Failed to fetch US holidays', details: error.message });
+    }
+  });
+
+  app.get('/api/holidays/us/check/:date', async (req, res) => {
+    try {
+      const { date } = req.params;
+      const isHoliday = isUSHoliday(date);
+      
+      if (isHoliday) {
+        const year = parseInt(date.substring(0, 4));
+        const holidays = getHolidaysForYear(year);
+        const holiday = holidays.find(h => h.start.date === date);
+        res.json({ 
+          isHoliday: true, 
+          holiday: holiday ? {
+            name: holiday.summary,
+            description: holiday.description
+          } : null
+        });
+      } else {
+        res.json({ isHoliday: false, holiday: null });
+      }
+    } catch (error: any) {
+      console.error('Error checking holiday status:', error);
+      res.status(500).json({ error: 'Failed to check holiday status', details: error.message });
     }
   });
 
