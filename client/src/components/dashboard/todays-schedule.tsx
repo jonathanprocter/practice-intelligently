@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ApiClient, type Appointment } from "@/lib/api";
-import { Play, Pause, MoreHorizontal, Calendar, ExternalLink, Clock, Edit, FileText, Users, Video, ChevronDown, ChevronUp, Lightbulb, Brain, NotebookPen } from "lucide-react";
+import { Play, Pause, MoreHorizontal, Calendar, ExternalLink, Clock, Edit, FileText, Users, Video, ChevronDown, ChevronUp, Lightbulb, Brain, NotebookPen, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -10,6 +10,16 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -31,8 +41,11 @@ export default function TodaysSchedule() {
     clientName: '',
     appointmentTime: ''
   });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
 
   const { data: appointments, isLoading } = useQuery({
     queryKey: ['todays-appointments'],
@@ -106,6 +119,39 @@ export default function TodaysSchedule() {
         description: "Failed to generate AI insights. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  // Delete appointment mutation
+  const deleteAppointmentMutation = useMutation({
+    mutationFn: (appointmentId: string) => ApiClient.cancelAppointment(appointmentId, "Cancelled by user"),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['todays-appointments']);
+      queryClient.invalidateQueries(['dashboard-stats']);
+      toast({
+        title: "Appointment deleted",
+        description: "The appointment has been successfully cancelled.",
+      });
+      setDeleteDialogOpen(false);
+      setAppointmentToDelete(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete appointment. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleDeleteClick = (appointment: Appointment) => {
+    setAppointmentToDelete(appointment);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (appointmentToDelete) {
+      deleteAppointmentMutation.mutate(appointmentToDelete.id);
     }
   };
 
@@ -400,6 +446,24 @@ export default function TodaysSchedule() {
                       <Clock className="h-4 w-4 mr-2" />
                       Reschedule
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => {
+                        if (appointment.clientId !== 'calendar-event') {
+                          // For database appointments, allow deletion
+                          handleDeleteClick(appointment);
+                        } else {
+                          toast({
+                            title: "Simple Practice Event",
+                            description: "This appointment is from Simple Practice. Please cancel it there.",
+                          });
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Appointment
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                   </DropdownMenu>
                   </div>
@@ -473,6 +537,39 @@ export default function TodaysSchedule() {
         clientName={sessionPrepModal.clientName}
         appointmentTime={sessionPrepModal.appointmentTime}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Appointment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this appointment with{" "}
+              <span className="font-medium">
+                {appointmentToDelete?.type}
+              </span>
+              {" "}scheduled for{" "}
+              <span className="font-medium">
+                {appointmentToDelete?.startTime && 
+                  new Date(appointmentToDelete.startTime).toLocaleString()
+                }
+              </span>?
+              <br /><br />
+              This action cannot be undone. The appointment will be cancelled and marked as deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleteAppointmentMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteAppointmentMutation.isPending ? "Deleting..." : "Delete Appointment"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
