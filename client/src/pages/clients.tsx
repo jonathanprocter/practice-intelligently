@@ -19,10 +19,13 @@ export default function Clients() {
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   
-  const { data: clients, isLoading } = useQuery({
+  const { data: clients, isLoading, error } = useQuery({
     queryKey: ['clients'],
     queryFn: ApiClient.getClients,
   });
+
+  // Debug logging
+  console.log('Clients query state:', { clients: clients?.length, isLoading, error });
 
   const filteredClients = clients?.filter(client =>
     `${client.firstName} ${client.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||

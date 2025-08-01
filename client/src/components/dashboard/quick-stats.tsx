@@ -6,6 +6,9 @@ interface QuickStatsProps {
 }
 
 export default function QuickStats({ stats }: QuickStatsProps) {
+  // Debug logging to see what stats are being received
+  console.log('QuickStats received stats:', stats);
+  
   const statItems = [
     {
       icon: Calendar,
