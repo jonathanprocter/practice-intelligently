@@ -1,5 +1,11 @@
+// Eastern Time timezone options for consistent date formatting
+const EASTERN_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
+  timeZone: 'America/New_York'
+};
+
 export function formatDateShort(date: Date): string {
   return date.toLocaleDateString('en-US', {
+    ...EASTERN_TIME_OPTIONS,
     month: 'short',
     day: 'numeric'
   });
@@ -7,6 +13,7 @@ export function formatDateShort(date: Date): string {
 
 export function formatDateLong(date: Date): string {
   return date.toLocaleDateString('en-US', {
+    ...EASTERN_TIME_OPTIONS,
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -43,20 +50,26 @@ export function getWeekDays(weekStart: Date): Date[] {
 
 export function isToday(date: Date): boolean {
   const today = new Date();
-  return date.toDateString() === today.toDateString();
+  const todayEastern = today.toLocaleDateString('en-CA', EASTERN_TIME_OPTIONS);
+  const dateEastern = date.toLocaleDateString('en-CA', EASTERN_TIME_OPTIONS);
+  return dateEastern === todayEastern;
 }
 
 export function isSameDay(date1: Date, date2: Date): boolean {
-  return date1.toDateString() === date2.toDateString();
+  const date1Eastern = date1.toLocaleDateString('en-CA', EASTERN_TIME_OPTIONS);
+  const date2Eastern = date2.toLocaleDateString('en-CA', EASTERN_TIME_OPTIONS);
+  return date1Eastern === date2Eastern;
 }
 
 export function getWeekRangeString(weekStart: Date, weekEnd: Date): string {
   const startStr = weekStart.toLocaleDateString('en-US', {
+    ...EASTERN_TIME_OPTIONS,
     month: 'long',
     day: 'numeric'
   });
   
   const endStr = weekEnd.toLocaleDateString('en-US', {
+    ...EASTERN_TIME_OPTIONS,
     month: 'long',
     day: 'numeric',
     year: 'numeric'
@@ -74,5 +87,13 @@ export function addWeeks(date: Date, weeks: number): Date {
 export function isCurrentWeek(weekStart: Date): boolean {
   const today = new Date();
   const currentWeekStart = getWeekStart(today);
-  return weekStart.toDateString() === currentWeekStart.toDateString();
+  const weekStartEastern = weekStart.toLocaleDateString('en-CA', EASTERN_TIME_OPTIONS);
+  const currentWeekStartEastern = currentWeekStart.toLocaleDateString('en-CA', EASTERN_TIME_OPTIONS);
+  return weekStartEastern === currentWeekStartEastern;
+}
+
+// Helper function to get current date in Eastern Time
+export function getTodayInEasternTime(): string {
+  const now = new Date();
+  return now.toLocaleDateString('en-CA', EASTERN_TIME_OPTIONS); // YYYY-MM-DD format
 }

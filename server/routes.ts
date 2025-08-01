@@ -692,61 +692,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
 
-      // Get today's date range
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      // Get today's date range in Eastern Standard Time (EST/EDT)
+      const now = new Date();
+      
+      // Convert to Eastern Time (handles both EST/EDT automatically)
+      const easternTimeOptions: Intl.DateTimeFormatOptions = { 
+        timeZone: 'America/New_York',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      };
+      
+      const easternDateStr = now.toLocaleDateString('en-CA', easternTimeOptions); // YYYY-MM-DD format
+      console.log(`Today in Eastern Time: ${easternDateStr}`);
+      
+      // Create today's date range in Eastern timezone  
+      const todayEastern = new Date(easternDateStr + 'T00:00:00');
+      const tomorrowEastern = new Date(easternDateStr + 'T23:59:59');
+      tomorrowEastern.setDate(tomorrowEastern.getDate() + 1);
+      tomorrowEastern.setHours(0, 0, 0, 0);
 
       // Get events from ALL calendars, especially Simple Practice
       const calendars = await simpleOAuth.getCalendars();
       let allEvents = [];
 
-      // Checking calendars for today's events
-
       for (const calendar of calendars) {
-        // Processing calendar: ${calendar.summary}
         try {
-          // Processing calendar: ${calendar.summary}
           const events = await simpleOAuth.getEvents(
             calendar.id,
-            today.toISOString(),
-            tomorrow.toISOString()
+            todayEastern.toISOString(),
+            tomorrowEastern.toISOString()
           );
 
-          // Processing calendar: ${calendar.summary}
-          // Found ${events.length} events in ${calendar.summary}
-          // Filter events to only include TODAY'S events (strict date filtering)
-          const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-
+          console.log(`Found ${events.length} events in ${calendar.summary}`);
+          
+          // STRICT filtering - only include events that are actually for today in Eastern Time
           const todaysEvents = events.filter(event => {
             const eventStart = event.start?.dateTime || event.start?.date;
-            if (!eventStart) return false;
+            if (!eventStart) {
+              console.log(`Event "${event.summary}" has no start time - excluding`);
+              return false;
+            }
 
             // Handle all-day events (date only) vs timed events (dateTime)
             if (event.start?.date && !event.start?.dateTime) {
               // All-day event - STRICT date comparison
               const eventDateStr = event.start.date; // YYYY-MM-DD format
-              const isToday = eventDateStr === todayStr;
-
-              // Found ${events.length} events in ${calendar.summary}
-              // All-day event "${event.summary}": ${eventDateStr} === ${todayStr}? ${isToday}
-              // ONLY include if the all-day event is exactly today's date
+              const isToday = eventDateStr === easternDateStr;
+              console.log(`All-day event "${event.summary}": ${eventDateStr} === ${easternDateStr}? ${isToday}`);
               return isToday;
             } else {
-              // Timed event - check if it falls within today's date range
+              // Timed event - check if it starts today in Eastern timezone
               const eventDateTime = new Date(eventStart);
-              const eventDateStr = eventDateTime.toISOString().split('T')[0];
-              const isToday = eventDateStr === todayStr;
-
-              // All-day event "${event.summary}": ${eventDateStr} === ${todayStr}? ${isToday}
-              // Timed event "${event.summary}": ${eventDateStr} === ${todayStr}? ${isToday}
+              const eventEasternDateStr = eventDateTime.toLocaleDateString('en-CA', easternTimeOptions);
+              const isToday = eventEasternDateStr === easternDateStr;
+              console.log(`Timed event "${event.summary}": ${eventEasternDateStr} === ${easternDateStr}? ${isToday} (Eastern Time)`);
               return isToday;
             }
           });
 
-          // Timed event "${event.summary}": ${eventDateStr} === ${todayStr}? ${isToday}
-          // Filtered to ${todaysEvents.length} events actually for today in ${calendar.summary}
+          console.log(`Filtered to ${todaysEvents.length} events actually for today (Eastern Time) in ${calendar.summary}`);
+          
           // Add calendar info to each event
           const eventsWithCalendar = todaysEvents.map(event => ({
             ...event,

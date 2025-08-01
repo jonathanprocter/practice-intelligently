@@ -1,9 +1,10 @@
 /**
  * Utility functions for determining office locations based on scheduling rules
+ * All times calculated in Eastern Time Zone (America/New_York)
  */
 
 /**
- * Gets the office location based on the day of the week
+ * Gets the office location based on the day of the week (Eastern Time)
  * Monday = Woodbury
  * Tuesday, Saturday, Sunday = Telehealth
  * Wednesday, Thursday, Friday = Rockville Centre
@@ -15,7 +16,20 @@ export function getOfficeLocationByDay(date: Date | string): string {
     return 'Rockville Centre'; // Default fallback
   }
   
-  const dayOfWeek = targetDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  // Convert to Eastern Time to get the correct day of week
+  const easternTimeOptions: Intl.DateTimeFormatOptions = {
+    timeZone: 'America/New_York'
+  };
+  
+  // Create a new date in Eastern timezone and get the day of week
+  const easternDateFormatter = new Intl.DateTimeFormat('en-US', easternTimeOptions);
+  const easternDate = new Date(easternDateFormatter.format(targetDate));
+  const dayOfWeek = easternDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  
+  // Office location rules (Eastern Time):
+  // Monday (1) = Woodbury
+  // Tuesday (2), Saturday (6), Sunday (0) = Telehealth  
+  // Wednesday (3), Thursday (4), Friday (5) = Rockville Centre
   
   switch (dayOfWeek) {
     case 1: // Monday
