@@ -85,9 +85,14 @@ export class DocumentProcessor {
   }
 
   private async processPDF(filePath: string): Promise<string> {
-    const dataBuffer = fs.readFileSync(filePath);
-    const data = await pdfParse(dataBuffer);
-    return data.text;
+    try {
+      const dataBuffer = fs.readFileSync(filePath);
+      const data = await pdfParse(dataBuffer);
+      return data.text;
+    } catch (error: any) {
+      console.error('PDF processing error:', error);
+      throw new Error(`Failed to process PDF: ${error.message}`);
+    }
   }
 
   private async processWordDocument(filePath: string): Promise<string> {

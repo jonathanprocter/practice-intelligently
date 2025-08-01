@@ -31,7 +31,9 @@ export class MultiModelAI {
       });
 
       return {
-        content: Array.isArray(message.content) ? message.content[0].text : message.content,
+        content: Array.isArray(message.content) 
+          ? (message.content[0].type === 'text' ? message.content[0].text : '')
+          : (typeof message.content === 'string' ? message.content : ''),
         model: 'claude-sonnet-4',
         confidence: 0.9
       };
@@ -204,7 +206,9 @@ export class MultiModelAI {
         model: "claude-sonnet-4-20250514",
       });
 
-      return Array.isArray(synthesis.content) ? synthesis.content[0].text : synthesis.content;
+      return Array.isArray(synthesis.content) 
+        ? (synthesis.content[0].type === 'text' ? synthesis.content[0].text : '')
+        : (typeof synthesis.content === 'string' ? synthesis.content : '');
     } catch (error) {
       console.error('Synthesis failed, returning combined content:', error);
       return combinedInsights;
