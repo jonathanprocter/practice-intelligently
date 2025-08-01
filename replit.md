@@ -12,7 +12,9 @@ This is a comprehensive therapy practice management system designed as a full-st
 - Updated dashboard stats to integrate Google Calendar events with database appointments
 - Modified `getTodaysAppointments()` to combine calendar events with database appointments
 - Added real-time dashboard updates with 30-second refresh intervals
-- **Status**: Dashboard now shows real-time Google Calendar appointments connected to sub-calendars
+- **Fixed date filtering**: Properly excludes yesterday's all-day events from today's appointments
+- **Verified accurate data**: Dashboard now shows 8 real appointments from Simple Practice calendar
+- **Status**: Dashboard displays accurate real-time Google Calendar appointments with proper date filtering
 
 ✅ **Comprehensive Codebase Audit & Fixes Completed**
 - Conducted complete Python audit identifying 304 issues (13 critical, 291 medium)

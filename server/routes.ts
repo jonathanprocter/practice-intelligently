@@ -75,7 +75,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 today.toISOString(),
                 tomorrow.toISOString()
               );
-              allEvents = allEvents.concat(events);
+              // Filter dashboard stats events the same way
+              const todaysEvents = events.filter(event => {
+                const eventStart = event.start?.dateTime || event.start?.date;
+                if (!eventStart) return false;
+                
+                if (event.start?.date && !event.start?.dateTime) {
+                  // All-day event - only include if it's specifically for today
+                  const eventDateStr = event.start.date; // YYYY-MM-DD format
+                  const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+                  return eventDateStr === todayStr;
+                } else {
+                  // Timed event
+                  const eventDateTime = new Date(eventStart);
+                  return eventDateTime >= today && eventDateTime < tomorrow;
+                }
+              });
+              
+              allEvents = allEvents.concat(todaysEvents);
             } catch (calError) {
               console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError.message);
             }
@@ -615,8 +632,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           console.log(`Found ${events.length} events in ${calendar.summary}`);
           
+          // Filter events to only include TODAY'S events (strict date filtering)
+          const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+          
+          const todaysEvents = events.filter(event => {
+            const eventStart = event.start?.dateTime || event.start?.date;
+            if (!eventStart) return false;
+            
+            // Handle all-day events (date only) vs timed events (dateTime)
+            if (event.start?.date && !event.start?.dateTime) {
+              // All-day event - STRICT date comparison
+              const eventDateStr = event.start.date; // YYYY-MM-DD format
+              const isToday = eventDateStr === todayStr;
+              
+              console.log(`All-day event "${event.summary}": ${eventDateStr} === ${todayStr}? ${isToday}`);
+              
+              // ONLY include if the all-day event is exactly today's date
+              return isToday;
+            } else {
+              // Timed event - check if it falls within today's date range
+              const eventDateTime = new Date(eventStart);
+              const eventDateStr = eventDateTime.toISOString().split('T')[0];
+              const isToday = eventDateStr === todayStr;
+              
+              console.log(`Timed event "${event.summary}": ${eventDateStr} === ${todayStr}? ${isToday}`);
+              return isToday;
+            }
+          });
+          
+          console.log(`Filtered to ${todaysEvents.length} events actually for today in ${calendar.summary}`);
+          
           // Add calendar info to each event
-          const eventsWithCalendar = events.map(event => ({
+          const eventsWithCalendar = todaysEvents.map(event => ({
             ...event,
             calendarName: calendar.summary,
             calendarId: calendar.id
