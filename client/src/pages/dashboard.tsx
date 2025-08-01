@@ -13,8 +13,11 @@ import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['dashboard-stats'],
+    queryKey: ['dashboard-stats', Date.now()], // Force cache invalidation with timestamp
     queryFn: () => ApiClient.getDashboardStats(),
+    staleTime: 0, // Always consider data stale to force refetch
+    gcTime: 0, // Don't cache data (TanStack Query v5 uses gcTime instead of cacheTime)
+    refetchInterval: 5000, // Refetch every 5 seconds for immediate updates
   });
 
   if (statsLoading) {
