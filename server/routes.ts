@@ -72,7 +72,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all clients (for dropdowns and selections)
   app.get("/api/clients", async (req, res) => {
     try {
-      const clients = await storage.getClients('therapist-1'); // Default therapist for now
+      const clients = await storage.getClients('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'); // Default therapist UUID
       res.json(clients);
     } catch (error) {
       console.error("Error fetching clients:", error);
@@ -954,7 +954,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save progress note to database
       const savedNote = await storage.createProgressNote({
         clientId: finalClientId,
-        therapistId: req.body.therapistId || 'therapist-1',
+        therapistId: req.body.therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
         title: progressNote.title,
         subjective: progressNote.subjective,
         objective: progressNote.objective,
