@@ -510,7 +510,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/google/disconnect', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
-      simpleOAuth.disconnect();
+      await simpleOAuth.disconnect();
       res.json({ success: true, message: 'Google Calendar disconnected' });
     } catch (error: any) {
       console.error('Error disconnecting OAuth:', error);
@@ -1189,24 +1189,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const finalTherapistId = (therapistId as string) || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
       
       if (source === 'live' || source === 'api') {
-        // Fetch from Google Calendar API and sync to database
-        if (!googleCalendarService.isConnected()) {
+        // Fetch from Google Calendar API using simple OAuth
+        const { simpleOAuth } = await import('./oauth-simple');
+        
+        if (!simpleOAuth.isConnected()) {
           return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
         }
         
-        const events = await googleCalendarService.getAllEvents(
+        const events = await simpleOAuth.getEvents(
+          'primary', // Use primary calendar by default
           timeMin as string,
           timeMax as string
         );
-        
-        // Sync to database in background
-        setTimeout(async () => {
-          try {
-            await googleCalendarService.syncAllEventsToDatabase(finalTherapistId);
-          } catch (error) {
-            console.error('Background sync error:', error);
-          }
-        }, 100);
         
         res.json(events);
       } else {

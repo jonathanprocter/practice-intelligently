@@ -1,6 +1,5 @@
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
-import fs from 'fs';
 import path from 'path';
 
 // Simple OAuth configuration focused on working implementation
@@ -26,7 +25,9 @@ class SimpleOAuth {
 
     // Set up persistent token storage
     this.tokensFilePath = path.join(process.cwd(), '.oauth-tokens.json');
-    this.loadTokens();
+    this.loadTokens().catch(error => {
+      console.warn('Failed to load tokens during initialization:', error);
+    });
   }
 
   private getRedirectUri(): string {
@@ -60,14 +61,19 @@ class SimpleOAuth {
     return authUrl;
   }
 
-  private loadTokens(): void {
+  private async loadTokens(): Promise<void> {
     try {
-      if (fs.existsSync(this.tokensFilePath)) {
-        const tokensData = fs.readFileSync(this.tokensFilePath, 'utf8');
+      const { promises: fsPromises } = await import('fs');
+      try {
+        const tokensData = await fsPromises.readFile(this.tokensFilePath, 'utf8');
         this.tokens = JSON.parse(tokensData);
         this.oauth2Client.setCredentials(this.tokens);
         this.isAuthenticated = true;
         console.log('Loaded existing OAuth tokens');
+      } catch (fileError) {
+        // File doesn't exist or is invalid, start fresh
+        this.tokens = null;
+        this.isAuthenticated = false;
       }
     } catch (error) {
       console.warn('Failed to load existing tokens:', error);
@@ -76,9 +82,10 @@ class SimpleOAuth {
     }
   }
 
-  private saveTokens(): void {
+  private async saveTokens(): Promise<void> {
     try {
-      fs.writeFileSync(this.tokensFilePath, JSON.stringify(this.tokens, null, 2));
+      const { promises: fsPromises } = await import('fs');
+      await fsPromises.writeFile(this.tokensFilePath, JSON.stringify(this.tokens, null, 2));
       console.log('OAuth tokens saved to file');
     } catch (error) {
       console.error('Failed to save tokens:', error);
@@ -93,7 +100,7 @@ class SimpleOAuth {
       this.tokens = tokens;
       this.oauth2Client.setCredentials(tokens);
       this.isAuthenticated = true;
-      this.saveTokens();
+      await this.saveTokens();
       
       console.log('Successfully obtained and saved tokens:', Object.keys(tokens));
     } catch (error: any) {
@@ -158,16 +165,19 @@ class SimpleOAuth {
     }
   }
 
-  disconnect(): void {
+  async disconnect(): Promise<void> {
     this.tokens = null;
     this.isAuthenticated = false;
     this.oauth2Client.setCredentials({});
     
     // Remove tokens file
     try {
-      if (fs.existsSync(this.tokensFilePath)) {
-        fs.unlinkSync(this.tokensFilePath);
+      const { promises: fsPromises } = await import('fs');
+      try {
+        await fsPromises.unlink(this.tokensFilePath);
         console.log('OAuth tokens file deleted');
+      } catch (fileError) {
+        // File might not exist, which is fine
       }
     } catch (error) {
       console.warn('Failed to delete tokens file:', error);
