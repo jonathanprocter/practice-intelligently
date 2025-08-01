@@ -1,4 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
+import { OpenAI } from 'openai';
+import { Anthropic } from '@anthropic-ai/sdk';
 
 interface ApiHealthStatus {
   service: string;
@@ -76,11 +78,75 @@ export async function checkGeminiHealth(): Promise<ApiHealthStatus> {
   }
 }
 
+export async function checkOpenAIHealth(): Promise<ApiHealthStatus> {
+  const status: ApiHealthStatus = {
+    service: 'openai',
+    status: 'checking',
+    lastChecked: new Date().toISOString()
+  };
+
+  try {
+    if (!process.env.OPENAI_API_KEY) {
+      return { ...status, status: 'offline', error: 'API key not configured' };
+    }
+
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    
+    // Simple test call
+    await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: 'test' }],
+      max_tokens: 1
+    });
+
+    return { ...status, status: 'online' };
+  } catch (error) {
+    return { 
+      ...status, 
+      status: 'offline', 
+      error: error instanceof Error ? error.message : 'Connection failed' 
+    };
+  }
+}
+
+export async function checkAnthropicHealth(): Promise<ApiHealthStatus> {
+  const status: ApiHealthStatus = {
+    service: 'anthropic',
+    status: 'checking',
+    lastChecked: new Date().toISOString()
+  };
+
+  try {
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return { ...status, status: 'offline', error: 'API key not configured' };
+    }
+
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    
+    // Simple test call
+    await anthropic.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 1,
+      messages: [{ role: 'user', content: 'test' }]
+    });
+
+    return { ...status, status: 'online' };
+  } catch (error) {
+    return { 
+      ...status, 
+      status: 'offline', 
+      error: error instanceof Error ? error.message : 'Connection failed' 
+    };
+  }
+}
+
 export async function getAllApiStatuses(): Promise<ApiHealthStatus[]> {
-  const [perplexityStatus, geminiStatus] = await Promise.all([
+  const [openaiStatus, anthropicStatus, perplexityStatus, geminiStatus] = await Promise.all([
+    checkOpenAIHealth(),
+    checkAnthropicHealth(),
     checkPerplexityHealth(),
     checkGeminiHealth()
   ]);
 
-  return [perplexityStatus, geminiStatus];
+  return [openaiStatus, anthropicStatus, perplexityStatus, geminiStatus];
 }

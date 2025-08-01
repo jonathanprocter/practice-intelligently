@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient } from "@/lib/api";
-import { Bot, Brain, AlertCircle, CheckCircle } from "lucide-react";
+import { Bot, Brain, AlertCircle, CheckCircle, Zap, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -24,7 +24,15 @@ export default function ApiStatusIndicators() {
     return (
       <div className="flex items-center space-x-2">
         <div className="flex items-center space-x-1">
+          <Zap className="h-4 w-4 text-therapy-text/30" />
+          <div className="w-2 h-2 bg-therapy-text/30 rounded-full animate-pulse" />
+        </div>
+        <div className="flex items-center space-x-1">
           <Bot className="h-4 w-4 text-therapy-text/30" />
+          <div className="w-2 h-2 bg-therapy-text/30 rounded-full animate-pulse" />
+        </div>
+        <div className="flex items-center space-x-1">
+          <Sparkles className="h-4 w-4 text-therapy-text/30" />
           <div className="w-2 h-2 bg-therapy-text/30 rounded-full animate-pulse" />
         </div>
         <div className="flex items-center space-x-1">
@@ -35,6 +43,8 @@ export default function ApiStatusIndicators() {
     );
   }
 
+  const openaiStatus = statuses.find((s: ApiStatus) => s.service === 'openai');
+  const anthropicStatus = statuses.find((s: ApiStatus) => s.service === 'anthropic');
   const perplexityStatus = statuses.find((s: ApiStatus) => s.service === 'perplexity');
   const geminiStatus = statuses.find((s: ApiStatus) => s.service === 'gemini');
 
@@ -57,11 +67,49 @@ export default function ApiStatusIndicators() {
   return (
     <TooltipProvider>
       <div className="flex items-center space-x-3">
-        {/* Perplexity Status */}
+        {/* OpenAI Status */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center space-x-1 cursor-pointer">
+              <Zap className="h-4 w-4 text-therapy-text/70" />
+              <div className={`w-2 h-2 rounded-full ${getStatusColor(openaiStatus?.status || 'offline')}`} />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="text-xs">
+              <p className="font-semibold">OpenAI GPT-4o</p>
+              <p className="capitalize">{openaiStatus?.status || 'offline'}</p>
+              {openaiStatus?.error && (
+                <p className="text-therapy-error mt-1">{openaiStatus.error}</p>
+              )}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+
+        {/* Anthropic Status */}
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="flex items-center space-x-1 cursor-pointer">
               <Bot className="h-4 w-4 text-therapy-text/70" />
+              <div className={`w-2 h-2 rounded-full ${getStatusColor(anthropicStatus?.status || 'offline')}`} />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="text-xs">
+              <p className="font-semibold">Anthropic Claude</p>
+              <p className="capitalize">{anthropicStatus?.status || 'offline'}</p>
+              {anthropicStatus?.error && (
+                <p className="text-therapy-error mt-1">{anthropicStatus.error}</p>
+              )}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+
+        {/* Perplexity Status */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center space-x-1 cursor-pointer">
+              <Sparkles className="h-4 w-4 text-therapy-text/70" />
               <div className={`w-2 h-2 rounded-full ${getStatusColor(perplexityStatus?.status || 'offline')}`} />
             </div>
           </TooltipTrigger>
