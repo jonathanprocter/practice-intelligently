@@ -11,7 +11,7 @@ class SimpleOAuth {
 
   constructor() {
     const redirectUri = this.getRedirectUri();
-    console.log('Initializing OAuth with redirect URI:', redirectUri);
+    // OAuth initialization complete
 
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
       throw new Error('Google OAuth credentials not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.');
@@ -56,7 +56,7 @@ class SimpleOAuth {
   }
 
   async getAuthUrl(): Promise<string> {
-    console.log('Generating auth URL...');
+    // Generating OAuth URL
     const scopes = [
       'https://www.googleapis.com/auth/calendar.readonly',
       'https://www.googleapis.com/auth/calendar.events'
@@ -69,7 +69,7 @@ class SimpleOAuth {
       include_granted_scopes: true
     });
 
-    console.log('Generated auth URL:', authUrl.substring(0, 100) + '...');
+    // OAuth URL generated successfully
     return authUrl;
   }
 
