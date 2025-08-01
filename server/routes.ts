@@ -64,11 +64,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const tomorrow = new Date(today);
           tomorrow.setDate(tomorrow.getDate() + 1);
 
-          const events = await simpleOAuth.getEvents(
-            'primary',
-            today.toISOString(),
-            tomorrow.toISOString()
-          );
+          // Get events from all calendars, especially Simple Practice
+          const calendars = await simpleOAuth.getCalendars();
+          let allEvents = [];
+          
+          for (const calendar of calendars) {
+            try {
+              const events = await simpleOAuth.getEvents(
+                calendar.id,
+                today.toISOString(),
+                tomorrow.toISOString()
+              );
+              allEvents = allEvents.concat(events);
+            } catch (calError) {
+              console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError.message);
+            }
+          }
+          
+          const events = allEvents;
           
           // Add calendar events to today's sessions count
           stats.todaysSessions = (stats.todaysSessions || 0) + events.length;
@@ -585,13 +598,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
-      const events = await simpleOAuth.getEvents(
-        'primary',
-        today.toISOString(),
-        tomorrow.toISOString()
-      );
+      // Get events from ALL calendars, especially Simple Practice
+      const calendars = await simpleOAuth.getCalendars();
+      let allEvents = [];
       
-      res.json(events);
+      console.log(`Checking ${calendars.length} calendars for today's events...`);
+      
+      for (const calendar of calendars) {
+        try {
+          console.log(`Checking calendar: ${calendar.summary} (${calendar.id})`);
+          const events = await simpleOAuth.getEvents(
+            calendar.id,
+            today.toISOString(),
+            tomorrow.toISOString()
+          );
+          
+          console.log(`Found ${events.length} events in ${calendar.summary}`);
+          
+          // Add calendar info to each event
+          const eventsWithCalendar = events.map(event => ({
+            ...event,
+            calendarName: calendar.summary,
+            calendarId: calendar.id
+          }));
+          allEvents = allEvents.concat(eventsWithCalendar);
+        } catch (calError) {
+          console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError.message);
+        }
+      }
+
+      console.log(`Total events found across all calendars: ${allEvents.length}`);
+      res.json(allEvents);
     } catch (error: any) {
       console.error('Error fetching today\'s events:', error);
       if (error.message?.includes('authentication') || error.message?.includes('expired')) {

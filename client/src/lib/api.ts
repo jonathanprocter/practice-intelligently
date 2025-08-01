@@ -101,6 +101,19 @@ export class ApiClient {
     return response.json();
   }
 
+  static async getTodaysCalendarEvents(): Promise<any[]> {
+    try {
+      const response = await fetch('/api/oauth/events/today');
+      if (response.ok) {
+        return response.json();
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching calendar events:', error);
+      return [];
+    }
+  }
+
   static async getClients(): Promise<Client[]> {
     const response = await apiRequest('GET', `/api/clients/${this.therapistId}`);
     return response.json();

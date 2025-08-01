@@ -113,6 +113,9 @@ export default function TodaysSchedule() {
         ) : (
           <div className="text-center py-8">
             <p className="text-therapy-text/60">No appointments scheduled for today</p>
+            <p className="text-xs text-therapy-text/40 mt-2">
+              {appointments === undefined ? 'Loading appointments...' : 'Connected to Google Calendar'}
+            </p>
           </div>
         )}
       </div>
