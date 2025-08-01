@@ -11,6 +11,7 @@ import CalendarIntegration from "@/pages/calendar-integration";
 import GoogleCloudSetup from "@/pages/google-cloud-setup";
 import OAuthDebug from "@/pages/oauth-debug";
 import SessionNotes from "@/pages/session-notes";
+import ClientCheckins from "@/pages/client-checkins";
 import ActionItems from "@/pages/action-items";
 import Analytics from "@/pages/analytics";
 import AiInsights from "@/pages/ai-insights";
@@ -54,6 +55,7 @@ function Router() {
       <Route path="/oauth/debug" component={OAuthDebug} />
       <Route path="/session-notes" component={SessionNotes} />
       <Route path="/progress-notes" component={ProgressNotesPage} />
+      <Route path="/client-checkins" component={ClientCheckins} />
       <Route path="/action-items" component={ActionItems} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/ai-insights" component={AiInsights} />

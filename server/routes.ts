@@ -1570,6 +1570,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Client check-ins endpoints
+  app.get('/api/client-checkins/:therapistId', async (req, res) => {
+    try {
+      const { therapistId } = req.params;
+      const { status } = req.query;
+      
+      const checkins = await storage.getClientCheckins(therapistId, status as string);
+      res.json(checkins);
+    } catch (error: any) {
+      console.error('Error fetching client check-ins:', error);
+      res.status(500).json({ error: 'Failed to fetch client check-ins' });
+    }
+  });
+
+  app.post('/api/client-checkins/generate', async (req, res) => {
+    try {
+      const { therapistId } = req.body;
+      
+      if (!therapistId) {
+        return res.status(400).json({ error: 'Therapist ID is required' });
+      }
+
+      const generatedCheckins = await storage.generateAICheckins(therapistId);
+      
+      res.json({ 
+        success: true, 
+        message: `Generated ${generatedCheckins.length} AI check-ins`,
+        checkins: generatedCheckins 
+      });
+    } catch (error: any) {
+      console.error('Error generating AI check-ins:', error);
+      res.status(500).json({ error: 'Failed to generate AI check-ins' });
+    }
+  });
+
+  app.put('/api/client-checkins/:id/status', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, clientResponse } = req.body;
+      
+      const updateData: any = { status };
+      if (clientResponse) {
+        updateData.clientResponse = clientResponse;
+      }
+
+      const updatedCheckin = await storage.updateClientCheckin(id, updateData);
+      res.json(updatedCheckin);
+    } catch (error: any) {
+      console.error('Error updating check-in status:', error);
+      res.status(500).json({ error: 'Failed to update check-in status' });
+    }
+  });
+
+  app.post('/api/client-checkins/:id/send', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { method = 'email' } = req.body;
+      
+      const success = await storage.sendCheckin(id, method);
+      
+      if (success) {
+        res.json({ success: true, message: 'Check-in sent successfully' });
+      } else {
+        res.status(500).json({ error: 'Failed to send check-in' });
+      }
+    } catch (error: any) {
+      console.error('Error sending check-in:', error);
+      res.status(500).json({ error: 'Failed to send check-in' });
+    }
+  });
+
+  app.delete('/api/client-checkins/cleanup', async (req, res) => {
+    try {
+      const deletedCount = await storage.cleanupExpiredCheckins();
+      res.json({ 
+        success: true, 
+        message: `Cleaned up ${deletedCount} expired check-ins` 
+      });
+    } catch (error: any) {
+      console.error('Error cleaning up expired check-ins:', error);
+      res.status(500).json({ error: 'Failed to cleanup expired check-ins' });
+    }
+  });
+
   // Enhanced Calendar sync endpoints - fetches from ALL calendars and subcalendars
   app.post('/api/calendar/sync', async (req, res) => {
     try {

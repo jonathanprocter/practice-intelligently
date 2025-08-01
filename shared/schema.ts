@@ -137,6 +137,37 @@ export const sessionPrepNotes = pgTable("session_prep_notes", {
   therapistIdIdx: index("session_prep_notes_therapist_id_idx").on(table.therapistId),
 }));
 
+export const clientCheckins = pgTable("client_checkins", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: text("client_id").notNull(),
+  therapistId: text("therapist_id").notNull(),
+  eventId: text("event_id"),
+  sessionNoteId: uuid("session_note_id").references(() => sessionNotes.id),
+  checkinType: text("checkin_type", { enum: ["midweek", "followup", "crisis_support", "goal_reminder", "homework_reminder"] }).notNull().default("midweek"),
+  priority: text("priority", { enum: ["low", "medium", "high", "urgent"] }).notNull().default("medium"),
+  subject: text("subject").notNull(),
+  messageContent: text("message_content").notNull(),
+  aiReasoning: text("ai_reasoning"),
+  triggerContext: jsonb("trigger_context"),
+  deliveryMethod: text("delivery_method", { enum: ["email", "sms", "both"] }).notNull().default("email"),
+  status: text("status", { enum: ["generated", "reviewed", "approved", "sent", "archived", "deleted"] }).notNull().default("generated"),
+  generatedAt: timestamp("generated_at").defaultNow(),
+  reviewedAt: timestamp("reviewed_at"),
+  sentAt: timestamp("sent_at"),
+  archivedAt: timestamp("archived_at"),
+  expiresAt: timestamp("expires_at").default(sql`NOW() + INTERVAL '7 days'`),
+  clientResponse: text("client_response"),
+  responseReceivedAt: timestamp("response_received_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  clientIdIdx: index("client_checkins_client_id_idx").on(table.clientId),
+  therapistIdIdx: index("client_checkins_therapist_id_idx").on(table.therapistId),
+  statusIdx: index("client_checkins_status_idx").on(table.status),
+  expiresAtIdx: index("client_checkins_expires_at_idx").on(table.expiresAt),
+  generatedAtIdx: index("client_checkins_generated_at_idx").on(table.generatedAt),
+}));
+
 export const actionItems = pgTable("action_items", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: uuid("client_id").references(() => clients.id),
@@ -593,6 +624,13 @@ export const insertSessionPrepNoteSchema = createInsertSchema(sessionPrepNotes).
   updatedAt: true,
 });
 
+export const insertClientCheckinSchema = createInsertSchema(clientCheckins).omit({
+  id: true,
+  generatedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertActionItemSchema = createInsertSchema(actionItems).omit({
   id: true,
   createdAt: true,
@@ -662,6 +700,8 @@ export type SessionNote = typeof sessionNotes.$inferSelect;
 export type InsertSessionNote = z.infer<typeof insertSessionNoteSchema>;
 export type SessionPrepNote = typeof sessionPrepNotes.$inferSelect;
 export type InsertSessionPrepNote = z.infer<typeof insertSessionPrepNoteSchema>;
+export type ClientCheckin = typeof clientCheckins.$inferSelect;
+export type InsertClientCheckin = z.infer<typeof insertClientCheckinSchema>;
 export type ActionItem = typeof actionItems.$inferSelect;
 export type InsertActionItem = z.infer<typeof insertActionItemSchema>;
 export type TreatmentPlan = typeof treatmentPlans.$inferSelect;

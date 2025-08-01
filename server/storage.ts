@@ -1,8 +1,9 @@
 import { 
-  users, clients, appointments, sessionNotes, sessionPrepNotes, actionItems, treatmentPlans, aiInsights,
+  users, clients, appointments, sessionNotes, sessionPrepNotes, clientCheckins, actionItems, treatmentPlans, aiInsights,
   billingRecords, assessments, progressNotes, medications, communicationLogs, documents, auditLogs,
   type User, type InsertUser, type Client, type InsertClient, type Appointment, type InsertAppointment,
-  type SessionNote, type InsertSessionNote, type SessionPrepNote, type InsertSessionPrepNote, type ActionItem, type InsertActionItem,
+  type SessionNote, type InsertSessionNote, type SessionPrepNote, type InsertSessionPrepNote, 
+  type ClientCheckin, type InsertClientCheckin, type ActionItem, type InsertActionItem,
   type TreatmentPlan, type InsertTreatmentPlan, type AiInsight, type InsertAiInsight,
   type BillingRecord, type InsertBillingRecord, type Assessment, type InsertAssessment,
   type ProgressNote, type InsertProgressNote, type Medication, type InsertMedication,
@@ -49,6 +50,16 @@ export interface IStorage {
   createSessionPrepNote(note: InsertSessionPrepNote): Promise<SessionPrepNote>;
   updateSessionPrepNote(id: string, note: Partial<SessionPrepNote>): Promise<SessionPrepNote>;
   generateAIInsightsForSession(eventId: string, clientId: string): Promise<string>;
+
+  // Client check-ins methods
+  getClientCheckins(therapistId: string, status?: string): Promise<ClientCheckin[]>;
+  getClientCheckinsByClient(clientId: string): Promise<ClientCheckin[]>;
+  getClientCheckin(id: string): Promise<ClientCheckin | undefined>;
+  createClientCheckin(checkin: InsertClientCheckin): Promise<ClientCheckin>;
+  updateClientCheckin(id: string, checkin: Partial<ClientCheckin>): Promise<ClientCheckin>;
+  generateAICheckins(therapistId: string): Promise<ClientCheckin[]>;
+  sendCheckin(id: string, method: 'email' | 'sms'): Promise<boolean>;
+  cleanupExpiredCheckins(): Promise<number>;
 
   // Action items methods
   getActionItems(therapistId: string): Promise<ActionItem[]>;
@@ -1427,6 +1438,469 @@ Respond in a professional, clinical tone suitable for a licensed therapist.`;
     } catch (error) {
       console.error('Error generating AI insights:', error);
       return 'Unable to generate AI insights at this time. Please refer to previous session notes and treatment plan.';
+    }
+  }
+
+  // Client check-ins methods implementation
+  async getClientCheckins(therapistId: string, status?: string): Promise<ClientCheckin[]> {
+    try {
+      let query = 'SELECT * FROM client_checkins WHERE therapist_id = $1';
+      const params: any[] = [therapistId];
+
+      if (status) {
+        query += ' AND status = $2';
+        params.push(status);
+      }
+
+      query += ' ORDER BY generated_at DESC';
+
+      const result = await pool.query(query, params);
+
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        eventId: row.event_id,
+        sessionNoteId: row.session_note_id,
+        checkinType: row.checkin_type,
+        priority: row.priority,
+        subject: row.subject,
+        messageContent: row.message_content,
+        aiReasoning: row.ai_reasoning,
+        triggerContext: row.trigger_context || {},
+        deliveryMethod: row.delivery_method,
+        status: row.status,
+        generatedAt: new Date(row.generated_at),
+        reviewedAt: row.reviewed_at ? new Date(row.reviewed_at) : null,
+        sentAt: row.sent_at ? new Date(row.sent_at) : null,
+        archivedAt: row.archived_at ? new Date(row.archived_at) : null,
+        expiresAt: new Date(row.expires_at),
+        clientResponse: row.client_response,
+        responseReceivedAt: row.response_received_at ? new Date(row.response_received_at) : null,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      }));
+    } catch (error) {
+      console.error('Error in getClientCheckins:', error);
+      return [];
+    }
+  }
+
+  async getClientCheckinsByClient(clientId: string): Promise<ClientCheckin[]> {
+    try {
+      const result = await pool.query(
+        'SELECT * FROM client_checkins WHERE client_id = $1 ORDER BY generated_at DESC',
+        [clientId]
+      );
+
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        eventId: row.event_id,
+        sessionNoteId: row.session_note_id,
+        checkinType: row.checkin_type,
+        priority: row.priority,
+        subject: row.subject,
+        messageContent: row.message_content,
+        aiReasoning: row.ai_reasoning,
+        triggerContext: row.trigger_context || {},
+        deliveryMethod: row.delivery_method,
+        status: row.status,
+        generatedAt: new Date(row.generated_at),
+        reviewedAt: row.reviewed_at ? new Date(row.reviewed_at) : null,
+        sentAt: row.sent_at ? new Date(row.sent_at) : null,
+        archivedAt: row.archived_at ? new Date(row.archived_at) : null,
+        expiresAt: new Date(row.expires_at),
+        clientResponse: row.client_response,
+        responseReceivedAt: row.response_received_at ? new Date(row.response_received_at) : null,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      }));
+    } catch (error) {
+      console.error('Error in getClientCheckinsByClient:', error);
+      return [];
+    }
+  }
+
+  async getClientCheckin(id: string): Promise<ClientCheckin | undefined> {
+    try {
+      const result = await pool.query(
+        'SELECT * FROM client_checkins WHERE id = $1',
+        [id]
+      );
+
+      if (result.rows.length === 0) return undefined;
+
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        eventId: row.event_id,
+        sessionNoteId: row.session_note_id,
+        checkinType: row.checkin_type,
+        priority: row.priority,
+        subject: row.subject,
+        messageContent: row.message_content,
+        aiReasoning: row.ai_reasoning,
+        triggerContext: row.trigger_context || {},
+        deliveryMethod: row.delivery_method,
+        status: row.status,
+        generatedAt: new Date(row.generated_at),
+        reviewedAt: row.reviewed_at ? new Date(row.reviewed_at) : null,
+        sentAt: row.sent_at ? new Date(row.sent_at) : null,
+        archivedAt: row.archived_at ? new Date(row.archived_at) : null,
+        expiresAt: new Date(row.expires_at),
+        clientResponse: row.client_response,
+        responseReceivedAt: row.response_received_at ? new Date(row.response_received_at) : null,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      };
+    } catch (error) {
+      console.error('Error in getClientCheckin:', error);
+      return undefined;
+    }
+  }
+
+  async createClientCheckin(checkin: InsertClientCheckin): Promise<ClientCheckin> {
+    try {
+      const result = await pool.query(
+        `INSERT INTO client_checkins (
+          client_id, therapist_id, event_id, session_note_id, checkin_type,
+          priority, subject, message_content, ai_reasoning, trigger_context,
+          delivery_method, status, expires_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        RETURNING *`,
+        [
+          checkin.clientId,
+          checkin.therapistId,
+          checkin.eventId,
+          checkin.sessionNoteId,
+          checkin.checkinType,
+          checkin.priority,
+          checkin.subject,
+          checkin.messageContent,
+          checkin.aiReasoning,
+          JSON.stringify(checkin.triggerContext || {}),
+          checkin.deliveryMethod,
+          checkin.status,
+          checkin.expiresAt
+        ]
+      );
+
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        eventId: row.event_id,
+        sessionNoteId: row.session_note_id,
+        checkinType: row.checkin_type,
+        priority: row.priority,
+        subject: row.subject,
+        messageContent: row.message_content,
+        aiReasoning: row.ai_reasoning,
+        triggerContext: row.trigger_context || {},
+        deliveryMethod: row.delivery_method,
+        status: row.status,
+        generatedAt: new Date(row.generated_at),
+        reviewedAt: row.reviewed_at ? new Date(row.reviewed_at) : null,
+        sentAt: row.sent_at ? new Date(row.sent_at) : null,
+        archivedAt: row.archived_at ? new Date(row.archived_at) : null,
+        expiresAt: new Date(row.expires_at),
+        clientResponse: row.client_response,
+        responseReceivedAt: row.response_received_at ? new Date(row.response_received_at) : null,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      };
+    } catch (error) {
+      console.error('Error in createClientCheckin:', error);
+      throw error;
+    }
+  }
+
+  async updateClientCheckin(id: string, checkin: Partial<ClientCheckin>): Promise<ClientCheckin> {
+    try {
+      const updateFields: string[] = [];
+      const values: any[] = [];
+      let paramIndex = 1;
+
+      if (checkin.status !== undefined) {
+        updateFields.push(`status = $${paramIndex++}`);
+        values.push(checkin.status);
+        
+        if (checkin.status === 'reviewed') {
+          updateFields.push(`reviewed_at = $${paramIndex++}`);
+          values.push(new Date());
+        } else if (checkin.status === 'sent') {
+          updateFields.push(`sent_at = $${paramIndex++}`);
+          values.push(new Date());
+        } else if (checkin.status === 'archived') {
+          updateFields.push(`archived_at = $${paramIndex++}`);
+          values.push(new Date());
+        }
+      }
+
+      if (checkin.clientResponse !== undefined) {
+        updateFields.push(`client_response = $${paramIndex++}`);
+        values.push(checkin.clientResponse);
+        updateFields.push(`response_received_at = $${paramIndex++}`);
+        values.push(new Date());
+      }
+
+      updateFields.push(`updated_at = $${paramIndex++}`);
+      values.push(new Date());
+
+      values.push(id);
+
+      const result = await pool.query(
+        `UPDATE client_checkins SET ${updateFields.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+        values
+      );
+
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        eventId: row.event_id,
+        sessionNoteId: row.session_note_id,
+        checkinType: row.checkin_type,
+        priority: row.priority,
+        subject: row.subject,
+        messageContent: row.message_content,
+        aiReasoning: row.ai_reasoning,
+        triggerContext: row.trigger_context || {},
+        deliveryMethod: row.delivery_method,
+        status: row.status,
+        generatedAt: new Date(row.generated_at),
+        reviewedAt: row.reviewed_at ? new Date(row.reviewed_at) : null,
+        sentAt: row.sent_at ? new Date(row.sent_at) : null,
+        archivedAt: row.archived_at ? new Date(row.archived_at) : null,
+        expiresAt: new Date(row.expires_at),
+        clientResponse: row.client_response,
+        responseReceivedAt: row.response_received_at ? new Date(row.response_received_at) : null,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      };
+    } catch (error) {
+      console.error('Error in updateClientCheckin:', error);
+      throw error;
+    }
+  }
+
+  async generateAICheckins(therapistId: string): Promise<ClientCheckin[]> {
+    try {
+      // Get all active clients for this therapist
+      const clients = await this.getClients(therapistId);
+      const generatedCheckins: ClientCheckin[] = [];
+
+      for (const client of clients) {
+        // Get recent session notes for this client
+        const sessionNotes = await this.getSessionNotesByClientId(client.id);
+        const recentNotes = sessionNotes.slice(0, 3); // Last 3 sessions
+
+        if (recentNotes.length === 0) continue;
+
+        // Check if we've already generated a check-in for this client recently
+        const existingCheckins = await this.getClientCheckinsByClient(client.id);
+        const recentCheckin = existingCheckins.find(checkin => 
+          checkin.status !== 'archived' && checkin.status !== 'deleted' &&
+          new Date(checkin.generatedAt).getTime() > Date.now() - (7 * 24 * 60 * 60 * 1000) // Within 7 days
+        );
+
+        if (recentCheckin) continue; // Skip if already has recent check-in
+
+        // Analyze session notes to determine if a check-in is needed
+        const analysis = await this.analyzeSessionForCheckin(client, recentNotes);
+        
+        if (analysis.shouldGenerateCheckin) {
+          const checkin = await this.createClientCheckin({
+            clientId: client.id,
+            therapistId,
+            eventId: null,
+            sessionNoteId: recentNotes[0]?.id || null,
+            checkinType: analysis.checkinType,
+            priority: analysis.priority,
+            subject: analysis.subject,
+            messageContent: analysis.messageContent,
+            aiReasoning: analysis.reasoning,
+            triggerContext: analysis.triggerContext,
+            deliveryMethod: 'email',
+            status: 'generated',
+            expiresAt: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)) // 7 days from now
+          });
+
+          generatedCheckins.push(checkin);
+        }
+      }
+
+      return generatedCheckins;
+    } catch (error) {
+      console.error('Error generating AI check-ins:', error);
+      return [];
+    }
+  }
+
+  private async analyzeSessionForCheckin(client: any, sessionNotes: any[]): Promise<{
+    shouldGenerateCheckin: boolean;
+    checkinType: string;
+    priority: string;
+    subject: string;
+    messageContent: string;
+    reasoning: string;
+    triggerContext: any;
+  }> {
+    try {
+      // Use OpenAI to analyze session notes for check-in opportunities
+      const { generateClinicalAnalysis } = await import('./ai-services');
+      
+      const lastSession = sessionNotes[0];
+      const daysSinceLastSession = Math.floor((Date.now() - new Date(lastSession.createdAt).getTime()) / (24 * 60 * 60 * 1000));
+      
+      // Prepare context for AI analysis
+      const sessionContext = sessionNotes.slice(0, 2).map(note => ({
+        date: note.createdAt,
+        content: note.content,
+        daysSince: Math.floor((Date.now() - new Date(note.createdAt).getTime()) / (24 * 60 * 60 * 1000))
+      }));
+
+      const prompt = `Analyze the following therapy session notes for a client named ${client.firstName} ${client.lastName} and determine if a check-in message would be beneficial:
+
+Recent Sessions:
+${sessionContext.map(s => `- ${s.daysSince} days ago: ${s.content}`).join('\n')}
+
+Days since last session: ${daysSinceLastSession}
+
+Based on the session content, determine:
+1. Should we generate a check-in? (consider: homework assignments, crisis indicators, progress milestones, emotional state)
+2. What type of check-in? (midweek, followup, crisis_support, goal_reminder, homework_reminder)
+3. Priority level? (low, medium, high, urgent)
+4. Appropriate subject line and personalized message
+
+Respond with JSON:
+{
+  "shouldGenerateCheckin": boolean,
+  "checkinType": string,
+  "priority": string,
+  "subject": string,
+  "messageContent": string,
+  "reasoning": string
+}`;
+
+      const analysis = await generateClinicalAnalysis(prompt);
+      
+      try {
+        const result = JSON.parse(analysis);
+        return {
+          ...result,
+          triggerContext: { 
+            daysSinceSession: daysSinceLastSession, 
+            lastSessionDate: lastSession.createdAt,
+            sessionCount: sessionNotes.length
+          }
+        };
+      } catch (parseError) {
+        console.error('Error parsing AI analysis:', parseError);
+        // Fallback to simple logic
+        return this.getSimpleCheckinAnalysis(client, sessionNotes, daysSinceLastSession);
+      }
+    } catch (error) {
+      console.error('Error in AI analysis:', error);
+      // Fallback to simple logic
+      const lastSession = sessionNotes[0];
+      const daysSinceLastSession = Math.floor((Date.now() - new Date(lastSession.createdAt).getTime()) / (24 * 60 * 60 * 1000));
+      return this.getSimpleCheckinAnalysis(client, sessionNotes, daysSinceLastSession);
+    }
+  }
+
+  private getSimpleCheckinAnalysis(client: any, sessionNotes: any[], daysSinceLastSession: number) {
+    const lastSession = sessionNotes[0];
+    
+    // Simple rule-based logic
+    if (daysSinceLastSession >= 3 && daysSinceLastSession <= 5) {
+      return {
+        shouldGenerateCheckin: true,
+        checkinType: 'midweek',
+        priority: 'medium',
+        subject: `Midweek check-in`,
+        messageContent: `Hi ${client.firstName},
+
+I hope you're doing well since our last session. I wanted to check in and see how you've been feeling and if you've had a chance to work on the strategies we discussed.
+
+Remember, you can always reach out if you need support between sessions.
+
+Best regards,
+Your therapist`,
+        reasoning: `Generated midweek check-in because it's been ${daysSinceLastSession} days since last session`,
+        triggerContext: { daysSinceSession: daysSinceLastSession, lastSessionDate: lastSession.createdAt }
+      };
+    }
+
+    return {
+      shouldGenerateCheckin: false,
+      checkinType: 'midweek',
+      priority: 'low',
+      subject: '',
+      messageContent: '',
+      reasoning: 'No check-in triggers detected',
+      triggerContext: {}
+    };
+  }
+
+  async sendCheckin(id: string, method: 'email' | 'sms'): Promise<boolean> {
+    try {
+      const checkin = await this.getClientCheckin(id);
+      if (!checkin) return false;
+
+      // Get client information for email
+      const client = await this.getClient(checkin.clientId);
+      if (!client?.email) {
+        console.error('Client email not found');
+        return false;
+      }
+
+      if (method === 'email') {
+        // Import email service dynamically to avoid module resolution issues
+        const { sendCheckInEmail } = await import('./email-service');
+        const emailSent = await sendCheckInEmail(
+          client.email,
+          checkin.subject,
+          checkin.messageContent
+        );
+        
+        if (!emailSent) {
+          console.error('Failed to send email');
+          return false;
+        }
+      } else if (method === 'sms') {
+        // SMS functionality would be implemented here with Twilio
+        console.log('SMS functionality not yet implemented');
+        return false;
+      }
+      
+      await this.updateClientCheckin(id, { status: 'sent' });
+      return true;
+    } catch (error) {
+      console.error('Error sending check-in:', error);
+      return false;
+    }
+  }
+
+  async cleanupExpiredCheckins(): Promise<number> {
+    try {
+      const result = await pool.query(
+        `UPDATE client_checkins 
+         SET status = 'deleted', updated_at = NOW() 
+         WHERE expires_at < NOW() AND status = 'generated' 
+         RETURNING id`
+      );
+      
+      return result.rowCount || 0;
+    } catch (error) {
+      console.error('Error cleaning up expired check-ins:', error);
+      return 0;
     }
   }
 
