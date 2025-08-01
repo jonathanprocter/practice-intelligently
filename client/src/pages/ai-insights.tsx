@@ -20,7 +20,7 @@ export default function AiInsights() {
   const { toast } = useToast();
 
   // Mock therapist ID - in a real app, this would come from auth context
-  const therapistId = "therapist-1";
+  const therapistId = "e66b8b8e-e7a2-40b9-ae74-00c93ffe503c";
 
   const { data: insights, isLoading } = useQuery({
     queryKey: ['ai-insights'],

@@ -12,11 +12,11 @@ class SimpleOAuth {
   constructor() {
     const redirectUri = this.getRedirectUri();
     console.log('Initializing OAuth with redirect URI:', redirectUri);
-    
+
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
       throw new Error('Google OAuth credentials not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.');
     }
-    
+
     this.oauth2Client = new OAuth2Client(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
@@ -43,7 +43,24 @@ class SimpleOAuth {
     return 'http://localhost:5000/api/auth/google/callback';
   }
 
-  generateAuthUrl(): string {
+  async getAccessToken(code: string): Promise<any> {
+    console.log('Exchanging code for tokens...');
+
+    try {
+      const { tokens } = await this.oauth2Client.getToken(code);
+      this.oauth2Client.setCredentials(tokens);
+      this.tokens = tokens;
+      await this.saveTokens();
+
+      console.log('Successfully obtained and saved tokens:', Object.keys(tokens));
+      return tokens;
+    } catch (error) {
+      console.error('Error getting access token:', error);
+      throw error;
+    }
+  }
+
+  async getAuthUrl(): Promise<string> {
     console.log('Generating auth URL...');
     const scopes = [
       'https://www.googleapis.com/auth/calendar.readonly',
@@ -96,12 +113,12 @@ class SimpleOAuth {
     try {
       console.log('Exchanging code for tokens...');
       const { tokens } = await this.oauth2Client.getToken(code);
-      
+
       this.tokens = tokens;
       this.oauth2Client.setCredentials(tokens);
       this.isAuthenticated = true;
       await this.saveTokens();
-      
+
       console.log('Successfully obtained and saved tokens:', Object.keys(tokens));
     } catch (error: any) {
       console.error('Token exchange failed:', error);
@@ -153,7 +170,7 @@ class SimpleOAuth {
         singleEvents: true,
         orderBy: 'startTime',
       });
-      
+
       return response.data.items || [];
     } catch (error: any) {
       console.error('Error fetching events:', error);
@@ -169,7 +186,7 @@ class SimpleOAuth {
     this.tokens = null;
     this.isAuthenticated = false;
     this.oauth2Client.setCredentials({});
-    
+
     // Remove tokens file
     try {
       const { promises: fsPromises } = await import('fs');
@@ -182,7 +199,7 @@ class SimpleOAuth {
     } catch (error) {
       console.warn('Failed to delete tokens file:', error);
     }
-    
+
     console.log('OAuth session disconnected');
   }
 }

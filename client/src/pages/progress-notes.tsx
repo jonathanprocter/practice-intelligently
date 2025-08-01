@@ -33,7 +33,7 @@ export function ProgressNotesPage() {
     queryKey: ['progress-notes'],
     queryFn: async () => {
       try {
-        const response = await fetch('/api/progress-notes/therapist-1');
+        const response = await fetch('/api/progress-notes/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c');
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(`Failed to fetch progress notes: ${errorText}`);

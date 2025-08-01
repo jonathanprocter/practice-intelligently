@@ -175,7 +175,7 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
           sessionDate,
           detectedClientName,
           detectedSessionDate,
-          therapistId: 'therapist-1', // Add default therapist ID
+          therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', // Add default therapist ID
         }),
       });
 

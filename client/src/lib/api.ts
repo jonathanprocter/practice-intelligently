@@ -83,6 +83,16 @@ export interface SessionNote {
   updatedAt: string;
 }
 
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  startTime: Date;
+  endTime: Date;
+  location?: string;
+  clientName?: string;
+  eventType?: string;
+}
+
 export interface ApiStatus {
   service: string;
   status: 'online' | 'offline' | 'checking';
@@ -141,10 +151,10 @@ export class ApiClient {
     try {
       // First try to get Google Calendar events for today
       const calendarResponse = await fetch('/api/oauth/events/today');
-      
+
       if (calendarResponse.ok) {
         const calendarEvents = await calendarResponse.json();
-        
+
         // Convert Google Calendar events to appointment format
         const calendarAppointments: Appointment[] = calendarEvents.map((event: unknown) => ({
           id: event.id || `calendar-${Date.now()}`,
@@ -160,7 +170,7 @@ export class ApiClient {
         try {
           const dbResponse = await apiRequest('GET', `/api/appointments/${this.therapistId}`);
           const dbAppointments = await dbResponse.json();
-          
+
           // Combine and return both
           return [...calendarAppointments, ...dbAppointments];
         } catch (dbError) {
@@ -195,7 +205,7 @@ export class ApiClient {
     if (date === today) {
       return this.getTodaysAppointments();
     }
-    
+
     const url = date 
       ? `/api/appointments/${this.therapistId}?date=${date}`
       : `/api/appointments/${this.therapistId}`;

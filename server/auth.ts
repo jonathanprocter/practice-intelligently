@@ -7,18 +7,18 @@ const getRedirectUri = () => {
   // Check if we're running on Replit
   if (process.env.REPLIT_DEV_DOMAIN) {
     const uri = `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/google/callback`;
-    console.log('Using REPLIT_DEV_DOMAIN redirect URI:', uri);
+    // Using REPLIT_DEV_DOMAIN redirect URI
     return uri;
   }
   if (process.env.REPLIT_DOMAINS) {
     const domain = process.env.REPLIT_DOMAINS.split(',')[0];
     const uri = `https://${domain}/api/auth/google/callback`;
-    console.log('Using REPLIT_DOMAINS redirect URI:', uri);
+    // Using REPLIT_DOMAINS redirect URI
     return uri;
   }
   // For local development
-  const uri = 'http://localhost:5000/api/auth/google/callback';
-  console.log('Using localhost redirect URI:', uri);
+  const uri = 'http://0.0.0.0:5000/api/auth/google/callback';
+  // Using localhost redirect URI
   return uri;
 };
 
