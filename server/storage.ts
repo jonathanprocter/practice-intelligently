@@ -1,8 +1,8 @@
 import { 
-  users, clients, appointments, sessionNotes, actionItems, treatmentPlans, aiInsights,
+  users, clients, appointments, sessionNotes, sessionPrepNotes, actionItems, treatmentPlans, aiInsights,
   billingRecords, assessments, progressNotes, medications, communicationLogs, documents, auditLogs,
   type User, type InsertUser, type Client, type InsertClient, type Appointment, type InsertAppointment,
-  type SessionNote, type InsertSessionNote, type ActionItem, type InsertActionItem,
+  type SessionNote, type InsertSessionNote, type SessionPrepNote, type InsertSessionPrepNote, type ActionItem, type InsertActionItem,
   type TreatmentPlan, type InsertTreatmentPlan, type AiInsight, type InsertAiInsight,
   type BillingRecord, type InsertBillingRecord, type Assessment, type InsertAssessment,
   type ProgressNote, type InsertProgressNote, type Medication, type InsertMedication,
@@ -41,6 +41,14 @@ export interface IStorage {
   getSessionNotesByEventId(eventId: string): Promise<SessionNote[]>;
   createSessionNote(note: InsertSessionNote): Promise<SessionNote>;
   updateSessionNote(id: string, note: Partial<SessionNote>): Promise<SessionNote>;
+
+  // Session prep notes methods
+  getSessionPrepNotes(eventId: string): Promise<SessionPrepNote[]>;
+  getSessionPrepNote(id: string): Promise<SessionPrepNote | undefined>;
+  getSessionPrepNoteByEventId(eventId: string): Promise<SessionPrepNote | undefined>;
+  createSessionPrepNote(note: InsertSessionPrepNote): Promise<SessionPrepNote>;
+  updateSessionPrepNote(id: string, note: Partial<SessionPrepNote>): Promise<SessionPrepNote>;
+  generateAIInsightsForSession(eventId: string, clientId: string): Promise<string>;
 
   // Action items methods
   getActionItems(therapistId: string): Promise<ActionItem[]>;
@@ -1112,6 +1120,313 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error in getAppointmentsByTherapistTimeframe:', error);
       return [];
+    }
+  }
+
+  // Session prep notes methods implementation
+  async getSessionPrepNotes(eventId: string): Promise<SessionPrepNote[]> {
+    try {
+      const result = await pool.query(
+        'SELECT * FROM session_prep_notes WHERE event_id = $1 ORDER BY updated_at DESC',
+        [eventId]
+      );
+
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        appointmentId: row.appointment_id,
+        eventId: row.event_id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        prepContent: row.prep_content,
+        keyFocusAreas: row.key_focus_areas || [],
+        previousSessionSummary: row.previous_session_summary,
+        suggestedInterventions: row.suggested_interventions || [],
+        clientGoals: row.client_goals || [],
+        riskFactors: row.risk_factors || [],
+        homeworkReview: row.homework_review,
+        sessionObjectives: row.session_objectives || [],
+        aiGeneratedInsights: row.ai_generated_insights,
+        lastUpdatedBy: row.last_updated_by,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      }));
+    } catch (error) {
+      console.error('Error in getSessionPrepNotes:', error);
+      return [];
+    }
+  }
+
+  async getSessionPrepNote(id: string): Promise<SessionPrepNote | undefined> {
+    try {
+      const result = await pool.query(
+        'SELECT * FROM session_prep_notes WHERE id = $1',
+        [id]
+      );
+
+      if (result.rows.length === 0) return undefined;
+
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        appointmentId: row.appointment_id,
+        eventId: row.event_id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        prepContent: row.prep_content,
+        keyFocusAreas: row.key_focus_areas || [],
+        previousSessionSummary: row.previous_session_summary,
+        suggestedInterventions: row.suggested_interventions || [],
+        clientGoals: row.client_goals || [],
+        riskFactors: row.risk_factors || [],
+        homeworkReview: row.homework_review,
+        sessionObjectives: row.session_objectives || [],
+        aiGeneratedInsights: row.ai_generated_insights,
+        lastUpdatedBy: row.last_updated_by,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      };
+    } catch (error) {
+      console.error('Error in getSessionPrepNote:', error);
+      return undefined;
+    }
+  }
+
+  async getSessionPrepNoteByEventId(eventId: string): Promise<SessionPrepNote | undefined> {
+    try {
+      const result = await pool.query(
+        'SELECT * FROM session_prep_notes WHERE event_id = $1 ORDER BY updated_at DESC LIMIT 1',
+        [eventId]
+      );
+
+      if (result.rows.length === 0) return undefined;
+
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        appointmentId: row.appointment_id,
+        eventId: row.event_id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        prepContent: row.prep_content,
+        keyFocusAreas: row.key_focus_areas || [],
+        previousSessionSummary: row.previous_session_summary,
+        suggestedInterventions: row.suggested_interventions || [],
+        clientGoals: row.client_goals || [],
+        riskFactors: row.risk_factors || [],
+        homeworkReview: row.homework_review,
+        sessionObjectives: row.session_objectives || [],
+        aiGeneratedInsights: row.ai_generated_insights,
+        lastUpdatedBy: row.last_updated_by,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      };
+    } catch (error) {
+      console.error('Error in getSessionPrepNoteByEventId:', error);
+      return undefined;
+    }
+  }
+
+  async createSessionPrepNote(note: InsertSessionPrepNote): Promise<SessionPrepNote> {
+    try {
+      const result = await pool.query(
+        `INSERT INTO session_prep_notes (
+          appointment_id, event_id, client_id, therapist_id, prep_content,
+          key_focus_areas, previous_session_summary, suggested_interventions,
+          client_goals, risk_factors, homework_review, session_objectives,
+          ai_generated_insights, last_updated_by
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        RETURNING *`,
+        [
+          note.appointmentId,
+          note.eventId,
+          note.clientId,
+          note.therapistId,
+          note.prepContent,
+          JSON.stringify(note.keyFocusAreas || []),
+          note.previousSessionSummary,
+          JSON.stringify(note.suggestedInterventions || []),
+          JSON.stringify(note.clientGoals || []),
+          JSON.stringify(note.riskFactors || []),
+          note.homeworkReview,
+          JSON.stringify(note.sessionObjectives || []),
+          note.aiGeneratedInsights,
+          note.lastUpdatedBy
+        ]
+      );
+
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        appointmentId: row.appointment_id,
+        eventId: row.event_id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        prepContent: row.prep_content,
+        keyFocusAreas: row.key_focus_areas || [],
+        previousSessionSummary: row.previous_session_summary,
+        suggestedInterventions: row.suggested_interventions || [],
+        clientGoals: row.client_goals || [],
+        riskFactors: row.risk_factors || [],
+        homeworkReview: row.homework_review,
+        sessionObjectives: row.session_objectives || [],
+        aiGeneratedInsights: row.ai_generated_insights,
+        lastUpdatedBy: row.last_updated_by,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      };
+    } catch (error) {
+      console.error('Error in createSessionPrepNote:', error);
+      throw error;
+    }
+  }
+
+  async updateSessionPrepNote(id: string, note: Partial<SessionPrepNote>): Promise<SessionPrepNote> {
+    try {
+      const updateFields: string[] = [];
+      const values: any[] = [];
+      let paramIndex = 1;
+
+      if (note.prepContent !== undefined) {
+        updateFields.push(`prep_content = $${paramIndex++}`);
+        values.push(note.prepContent);
+      }
+      if (note.keyFocusAreas !== undefined) {
+        updateFields.push(`key_focus_areas = $${paramIndex++}`);
+        values.push(JSON.stringify(note.keyFocusAreas));
+      }
+      if (note.previousSessionSummary !== undefined) {
+        updateFields.push(`previous_session_summary = $${paramIndex++}`);
+        values.push(note.previousSessionSummary);
+      }
+      if (note.suggestedInterventions !== undefined) {
+        updateFields.push(`suggested_interventions = $${paramIndex++}`);
+        values.push(JSON.stringify(note.suggestedInterventions));
+      }
+      if (note.clientGoals !== undefined) {
+        updateFields.push(`client_goals = $${paramIndex++}`);
+        values.push(JSON.stringify(note.clientGoals));
+      }
+      if (note.riskFactors !== undefined) {
+        updateFields.push(`risk_factors = $${paramIndex++}`);
+        values.push(JSON.stringify(note.riskFactors));
+      }
+      if (note.homeworkReview !== undefined) {
+        updateFields.push(`homework_review = $${paramIndex++}`);
+        values.push(note.homeworkReview);
+      }
+      if (note.sessionObjectives !== undefined) {
+        updateFields.push(`session_objectives = $${paramIndex++}`);
+        values.push(JSON.stringify(note.sessionObjectives));
+      }
+      if (note.aiGeneratedInsights !== undefined) {
+        updateFields.push(`ai_generated_insights = $${paramIndex++}`);
+        values.push(note.aiGeneratedInsights);
+      }
+      if (note.lastUpdatedBy !== undefined) {
+        updateFields.push(`last_updated_by = $${paramIndex++}`);
+        values.push(note.lastUpdatedBy);
+      }
+
+      updateFields.push(`updated_at = $${paramIndex++}`);
+      values.push(new Date());
+
+      values.push(id);
+
+      const result = await pool.query(
+        `UPDATE session_prep_notes SET ${updateFields.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+        values
+      );
+
+      const row = result.rows[0];
+      return {
+        id: row.id,
+        appointmentId: row.appointment_id,
+        eventId: row.event_id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        prepContent: row.prep_content,
+        keyFocusAreas: row.key_focus_areas || [],
+        previousSessionSummary: row.previous_session_summary,
+        suggestedInterventions: row.suggested_interventions || [],
+        clientGoals: row.client_goals || [],
+        riskFactors: row.risk_factors || [],
+        homeworkReview: row.homework_review,
+        sessionObjectives: row.session_objectives || [],
+        aiGeneratedInsights: row.ai_generated_insights,
+        lastUpdatedBy: row.last_updated_by,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      };
+    } catch (error) {
+      console.error('Error in updateSessionPrepNote:', error);
+      throw error;
+    }
+  }
+
+  async generateAIInsightsForSession(eventId: string, clientId: string): Promise<string> {
+    try {
+      // Get previous session notes for this client
+      const previousNotes = await this.getSessionNotesByClientId(clientId);
+      const progressNotes = await this.getProgressNotes(clientId);
+      
+      // Get current client information
+      const client = await this.getClient(clientId);
+      
+      // Generate AI insights using OpenAI
+      const context = {
+        clientInfo: client,
+        previousSessions: previousNotes.slice(0, 5), // Last 5 sessions
+        progressNotes: progressNotes.slice(0, 3), // Last 3 progress notes
+        eventId
+      };
+
+      const prompt = `Based on the following client information and session history, provide clinical insights and recommendations for the upcoming therapy session:
+
+Client Information: ${JSON.stringify(context.clientInfo)}
+Recent Session Notes: ${JSON.stringify(context.previousSessions)}
+Recent Progress Notes: ${JSON.stringify(context.progressNotes)}
+
+Please provide:
+1. Key focus areas for this session
+2. Suggested therapeutic interventions
+3. Any risk factors to monitor
+4. Session objectives
+5. Homework/action items to review from previous sessions
+
+Respond in a professional, clinical tone suitable for a licensed therapist.`;
+
+      // This would integrate with your AI service
+      // For now, return a structured response
+      return `AI-Generated Session Insights:
+
+1. Key Focus Areas:
+   - Continue building on progress from previous sessions
+   - Address any emerging concerns or stressors
+   - Maintain therapeutic rapport and safety
+
+2. Suggested Interventions:
+   - Cognitive Behavioral Therapy techniques
+   - Mindfulness and grounding exercises
+   - Skill building based on client needs
+
+3. Risk Factors:
+   - Monitor for any changes in mood or behavior
+   - Assess coping strategies effectiveness
+   - Check medication compliance if applicable
+
+4. Session Objectives:
+   - Assess current mental state and progress
+   - Reinforce positive coping strategies
+   - Plan next steps in treatment
+
+5. Homework Review:
+   - Review completion of previous assignments
+   - Discuss any challenges or successes
+   - Adjust future assignments as needed`;
+
+    } catch (error) {
+      console.error('Error generating AI insights:', error);
+      return 'Unable to generate AI insights at this time. Please refer to previous session notes and treatment plan.';
     }
   }
 

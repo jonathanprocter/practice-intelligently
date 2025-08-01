@@ -1482,6 +1482,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Session prep notes endpoints
+  app.get('/api/session-prep/:eventId', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const prepNote = await storage.getSessionPrepNoteByEventId(eventId);
+      
+      if (!prepNote) {
+        return res.status(404).json({ error: 'Session prep note not found' });
+      }
+      
+      res.json(prepNote);
+    } catch (error: any) {
+      console.error('Error fetching session prep note:', error);
+      res.status(500).json({ error: 'Failed to fetch session prep note' });
+    }
+  });
+
+  app.post('/api/session-prep', async (req, res) => {
+    try {
+      const { eventId, clientId, therapistId, prepContent, keyFocusAreas, sessionObjectives } = req.body;
+      
+      if (!eventId || !clientId || !therapistId || !prepContent) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const newPrepNote = await storage.createSessionPrepNote({
+        eventId,
+        clientId,
+        therapistId,
+        prepContent,
+        keyFocusAreas: keyFocusAreas || [],
+        sessionObjectives: sessionObjectives || [],
+        previousSessionSummary: null,
+        suggestedInterventions: [],
+        clientGoals: [],
+        riskFactors: [],
+        homeworkReview: null,
+        aiGeneratedInsights: null,
+        lastUpdatedBy: therapistId,
+        appointmentId: null
+      });
+
+      res.json(newPrepNote);
+    } catch (error: any) {
+      console.error('Error creating session prep note:', error);
+      res.status(500).json({ error: 'Failed to create session prep note' });
+    }
+  });
+
+  app.put('/api/session-prep/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      
+      const updatedPrepNote = await storage.updateSessionPrepNote(id, updateData);
+      res.json(updatedPrepNote);
+    } catch (error: any) {
+      console.error('Error updating session prep note:', error);
+      res.status(500).json({ error: 'Failed to update session prep note' });
+    }
+  });
+
+  app.post('/api/session-prep/:eventId/ai-insights', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const { clientId } = req.body;
+      
+      if (!clientId) {
+        return res.status(400).json({ error: 'Client ID is required' });
+      }
+
+      const aiInsights = await storage.generateAIInsightsForSession(eventId, clientId);
+      
+      // Update the prep note with AI insights
+      const existingNote = await storage.getSessionPrepNoteByEventId(eventId);
+      if (existingNote) {
+        await storage.updateSessionPrepNote(existingNote.id, {
+          aiGeneratedInsights: aiInsights
+        });
+      }
+
+      res.json({ insights: aiInsights });
+    } catch (error: any) {
+      console.error('Error generating AI insights:', error);
+      res.status(500).json({ error: 'Failed to generate AI insights' });
+    }
+  });
+
   // Enhanced Calendar sync endpoints - fetches from ALL calendars and subcalendars
   app.post('/api/calendar/sync', async (req, res) => {
     try {

@@ -113,6 +113,30 @@ export const sessionNotes = pgTable("session_notes", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const sessionPrepNotes = pgTable("session_prep_notes", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  appointmentId: uuid("appointment_id").references(() => appointments.id),
+  eventId: text("event_id"), // For Google Calendar event ID
+  clientId: text("client_id"), // For Google Calendar integration
+  therapistId: text("therapist_id"), // For Google Calendar integration
+  prepContent: text("prep_content").notNull(),
+  keyFocusAreas: jsonb("key_focus_areas"),
+  previousSessionSummary: text("previous_session_summary"),
+  suggestedInterventions: jsonb("suggested_interventions"),
+  clientGoals: jsonb("client_goals"),
+  riskFactors: jsonb("risk_factors"),
+  homeworkReview: text("homework_review"),
+  sessionObjectives: jsonb("session_objectives"),
+  aiGeneratedInsights: text("ai_generated_insights"),
+  lastUpdatedBy: uuid("last_updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  eventIdIdx: index("session_prep_notes_event_id_idx").on(table.eventId),
+  clientIdIdx: index("session_prep_notes_client_id_idx").on(table.clientId),
+  therapistIdIdx: index("session_prep_notes_therapist_id_idx").on(table.therapistId),
+}));
+
 export const actionItems = pgTable("action_items", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: uuid("client_id").references(() => clients.id),
@@ -563,6 +587,12 @@ export const insertSessionNoteSchema = createInsertSchema(sessionNotes).omit({
   updatedAt: true,
 });
 
+export const insertSessionPrepNoteSchema = createInsertSchema(sessionPrepNotes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertActionItemSchema = createInsertSchema(actionItems).omit({
   id: true,
   createdAt: true,
@@ -630,6 +660,8 @@ export type Appointment = typeof appointments.$inferSelect;
 export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
 export type SessionNote = typeof sessionNotes.$inferSelect;
 export type InsertSessionNote = z.infer<typeof insertSessionNoteSchema>;
+export type SessionPrepNote = typeof sessionPrepNotes.$inferSelect;
+export type InsertSessionPrepNote = z.infer<typeof insertSessionPrepNoteSchema>;
 export type ActionItem = typeof actionItems.$inferSelect;
 export type InsertActionItem = z.infer<typeof insertActionItemSchema>;
 export type TreatmentPlan = typeof treatmentPlans.$inferSelect;

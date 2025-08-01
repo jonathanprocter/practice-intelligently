@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient, type Appointment } from "@/lib/api";
-import { Play, Pause, MoreHorizontal, Calendar, ExternalLink, Clock, Edit, FileText, Users, Video, ChevronDown, ChevronUp, Lightbulb } from "lucide-react";
+import { Play, Pause, MoreHorizontal, Calendar, ExternalLink, Clock, Edit, FileText, Users, Video, ChevronDown, ChevronUp, Lightbulb, Brain, NotebookPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -14,10 +14,22 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { useLocation } from "wouter";
+import SessionPrepModal from "@/components/session-prep/session-prep-modal";
 
 export default function TodaysSchedule() {
   const [activeSession, setActiveSession] = useState<string | null>(null);
   const [expandedReminders, setExpandedReminders] = useState<Set<string>>(new Set());
+  const [sessionPrepModal, setSessionPrepModal] = useState<{
+    isOpen: boolean;
+    eventId: string;
+    clientName: string;
+    appointmentTime: string;
+  }>({
+    isOpen: false,
+    eventId: '',
+    clientName: '',
+    appointmentTime: ''
+  });
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
@@ -51,6 +63,49 @@ export default function TodaysSchedule() {
       newExpanded.add(appointmentId);
     }
     setExpandedReminders(newExpanded);
+  };
+
+  const openSessionPrep = (eventId: string, clientName: string, appointmentTime: string) => {
+    setSessionPrepModal({
+      isOpen: true,
+      eventId,
+      clientName,
+      appointmentTime
+    });
+  };
+
+  const closeSessionPrep = () => {
+    setSessionPrepModal({
+      isOpen: false,
+      eventId: '',
+      clientName: '',
+      appointmentTime: ''
+    });
+  };
+
+  const generateAIInsights = async (eventId: string, clientName: string) => {
+    try {
+      const response = await fetch(`/api/session-prep/${eventId}/ai-insights`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: eventId })
+      });
+
+      if (response.ok) {
+        toast({
+          title: "AI Insights Generated",
+          description: `Clinical insights generated for ${clientName}`,
+        });
+      } else {
+        throw new Error('Failed to generate insights');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate AI insights. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Mock AI-generated reminder notes based on client name
@@ -206,6 +261,35 @@ export default function TodaysSchedule() {
                 </div>
                   </div>
                   <div className="flex space-x-2">
+                {/* Session Prep Button */}
+                <Button 
+                  size="icon" 
+                  variant="ghost"
+                  className="w-8 h-8 bg-blue-50 text-blue-600 hover:bg-blue-100"
+                  onClick={() => openSessionPrep(
+                    appointment.googleEventId || appointment.id, 
+                    clientName, 
+                    formatTime(appointment.startTime)
+                  )}
+                  title="Session Prep Notes"
+                >
+                  <NotebookPen className="h-4 w-4" />
+                </Button>
+
+                {/* AI Insights Button */}
+                <Button 
+                  size="icon" 
+                  variant="ghost"
+                  className="w-8 h-8 bg-purple-50 text-purple-600 hover:bg-purple-100"
+                  onClick={() => generateAIInsights(
+                    appointment.googleEventId || appointment.id, 
+                    clientName
+                  )}
+                  title="AI Insights"
+                >
+                  <Brain className="h-4 w-4" />
+                </Button>
+
                 {/* Start/End Session Button */}
                 {activeSession === appointment.id ? (
                   <Button 
@@ -376,6 +460,14 @@ export default function TodaysSchedule() {
           </div>
         )}
       </div>
+
+      <SessionPrepModal
+        isOpen={sessionPrepModal.isOpen}
+        onClose={closeSessionPrep}
+        eventId={sessionPrepModal.eventId}
+        clientName={sessionPrepModal.clientName}
+        appointmentTime={sessionPrepModal.appointmentTime}
+      />
     </div>
   );
 }
