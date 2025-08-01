@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import SessionPrepModal from "@/components/session-prep/session-prep-modal";
+import ClientInfoModal from "./ClientInfoModal";
 import { getCalendarLocationDisplay } from "@/utils/locationUtils";
 
 export default function TodaysSchedule() {
@@ -43,6 +44,13 @@ export default function TodaysSchedule() {
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
+  const [clientInfoModal, setClientInfoModal] = useState<{
+    isOpen: boolean;
+    clientName: string;
+  }>({
+    isOpen: false,
+    clientName: ''
+  });
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
@@ -66,6 +74,13 @@ export default function TodaysSchedule() {
     toast({
       title: "Session Ended",
       description: "Session has been ended",
+    });
+  };
+
+  const handleClientNameClick = (clientName: string) => {
+    setClientInfoModal({
+      isOpen: true,
+      clientName: clientName
     });
   };
 
@@ -291,10 +306,20 @@ export default function TodaysSchedule() {
                   {appointment.clientId === 'calendar-event' ? (
                     <>
                       <Calendar className="h-4 w-4 text-therapy-primary" />
-                      {appointment.type}
+                      <button 
+                        onClick={() => handleClientNameClick(clientName)}
+                        className="text-left hover:text-therapy-primary hover:underline transition-colors"
+                      >
+                        {appointment.type}
+                      </button>
                     </>
                   ) : (
-                    'Client Session'
+                    <button 
+                      onClick={() => handleClientNameClick(clientName)}
+                      className="text-left hover:text-therapy-primary hover:underline transition-colors"
+                    >
+                      Client Session
+                    </button>
                   )}
                 </h4>
                 <p className="text-therapy-text/60 text-sm">
@@ -536,6 +561,12 @@ export default function TodaysSchedule() {
         eventId={sessionPrepModal.eventId}
         clientName={sessionPrepModal.clientName}
         appointmentTime={sessionPrepModal.appointmentTime}
+      />
+
+      <ClientInfoModal
+        clientName={clientInfoModal.clientName}
+        isOpen={clientInfoModal.isOpen}
+        onOpenChange={(open) => setClientInfoModal({ ...clientInfoModal, isOpen: open })}
       />
 
       {/* Delete Confirmation Dialog */}
