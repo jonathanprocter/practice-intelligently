@@ -2,6 +2,10 @@
 import { db } from "./server/db";
 import { clients } from "./shared/schema";
 import { eq } from "drizzle-orm";
+import { randomUUID } from 'crypto';
+
+// Generate a consistent therapist UUID for all clients
+const THERAPIST_ID = randomUUID();
 
 // Sample client data based on the dashboard information
 const clientsData = [
@@ -11,7 +15,7 @@ const clientsData = [
     email: "jason.laskin@example.com",
     phone: "(555) 123-4567",
     dateOfBirth: new Date("1985-03-15"),
-    therapistId: "therapist-1", // You'll need to replace this with actual therapist ID
+    therapistId: THERAPIST_ID,
     status: "active" as const,
     address: {
       street: "123 Main St",
@@ -31,7 +35,7 @@ const clientsData = [
     email: "maria.rodriguez@example.com", 
     phone: "(555) 234-5678",
     dateOfBirth: new Date("1992-08-14"),
-    therapistId: "therapist-1",
+    therapistId: THERAPIST_ID,
     status: "active" as const,
     address: {
       street: "456 Oak Ave",
@@ -51,7 +55,7 @@ const clientsData = [
     email: "david.chen@example.com",
     phone: "(555) 345-6789",
     dateOfBirth: new Date("1988-12-03"),
-    therapistId: "therapist-1",
+    therapistId: THERAPIST_ID,
     status: "active" as const,
     address: {
       street: "789 Pine St",
@@ -71,7 +75,7 @@ const clientsData = [
     email: "emily.johnson@example.com",
     phone: "(555) 456-7890",
     dateOfBirth: new Date("1995-05-28"),
-    therapistId: "therapist-1",
+    therapistId: THERAPIST_ID,
     status: "active" as const,
     address: {
       street: "321 Elm St",
@@ -91,7 +95,7 @@ const clientsData = [
     email: "robert.williams@example.com",
     phone: "(555) 567-8901",
     dateOfBirth: new Date("1980-09-17"),
-    therapistId: "therapist-1",
+    therapistId: THERAPIST_ID,
     status: "active" as const,
     address: {
       street: "654 Maple Ave",
@@ -109,30 +113,39 @@ const clientsData = [
 
 async function populateClients() {
   try {
-    console.log('Starting client population...');
-    
+    console.log("Starting client population...");
+    console.log(`Using therapist ID: ${THERAPIST_ID}`);
+
     for (const clientData of clientsData) {
-      const [existingClient] = await db
+      // Check if client already exists
+      const existingClient = await db
         .select()
         .from(clients)
-        .where(eq(clients.email, clientData.email));
-        
-      if (!existingClient) {
-        const [newClient] = await db
-          .insert(clients)
-          .values(clientData)
-          .returning();
-        console.log(`Created client: ${newClient.firstName} ${newClient.lastName}`);
-      } else {
-        console.log(`Client already exists: ${clientData.firstName} ${clientData.lastName}`);
+        .where(eq(clients.email, clientData.email))
+        .limit(1);
+
+      if (existingClient.length > 0) {
+        console.log(`Client ${clientData.firstName} ${clientData.lastName} already exists, skipping...`);
+        continue;
       }
+
+      // Insert new client
+      const [insertedClient] = await db
+        .insert(clients)
+        .values(clientData)
+        .returning();
+
+      console.log(`Created client: ${insertedClient.firstName} ${insertedClient.lastName} (ID: ${insertedClient.id})`);
     }
+
+    console.log("Client population completed successfully!");
+    console.log(`All clients are assigned to therapist ID: ${THERAPIST_ID}`);
+    console.log("Use this therapist ID in your application to see these clients.");
     
-    console.log('Client population completed successfully!');
   } catch (error) {
-    console.error('Error populating clients:', error);
+    console.error("Error populating clients:", error);
   }
 }
 
-// Run the script
+// Run the population
 populateClients();
