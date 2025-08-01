@@ -73,6 +73,11 @@ export const appointments = pgTable("appointments", {
   type: text("type").notNull(),
   status: text("status").notNull().default("scheduled"),
   location: text("location"),
+  // Google Calendar integration fields
+  googleEventId: text("google_event_id"),
+  googleCalendarId: text("google_calendar_id"),
+  googleCalendarName: text("google_calendar_name"),
+  lastGoogleSync: timestamp("last_google_sync"),
   isVirtual: boolean("is_virtual").default(false),
   meetingLink: text("meeting_link"),
   notes: text("notes"),
@@ -91,6 +96,7 @@ export const appointments = pgTable("appointments", {
   therapistIdx: index("appointments_therapist_idx").on(table.therapistId),
   dateIdx: index("appointments_date_idx").on(table.startTime),
   statusIdx: index("appointments_status_idx").on(table.status),
+  googleEventIdx: index("appointments_google_event_idx").on(table.googleEventId),
 }));
 
 export const sessionNotes = pgTable("session_notes", {
@@ -313,6 +319,37 @@ export const auditLogs = pgTable("audit_logs", {
   userIdx: index("audit_logs_user_idx").on(table.userId),
   entityIdx: index("audit_logs_entity_idx").on(table.entityType, table.entityId),
   timestampIdx: index("audit_logs_timestamp_idx").on(table.timestamp),
+}));
+
+// Google Calendar Events - separate table for storing calendar events from Google Calendar API
+export const calendarEvents = pgTable("calendar_events", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  googleEventId: text("google_event_id").notNull(),
+  googleCalendarId: text("google_calendar_id").notNull(),
+  calendarName: text("calendar_name"),
+  therapistId: uuid("therapist_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" }),
+  appointmentId: uuid("appointment_id").references(() => appointments.id, { onDelete: "set null" }),
+  summary: text("summary").notNull(),
+  description: text("description"),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  timeZone: text("time_zone"),
+  location: text("location"),
+  status: text("status").notNull().default("confirmed"),
+  attendees: jsonb("attendees"),
+  isAllDay: boolean("is_all_day").default(false),
+  recurringEventId: text("recurring_event_id"),
+  lastSyncTime: timestamp("last_sync_time").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  googleEventIdx: index("calendar_events_google_event_idx").on(table.googleEventId),
+  therapistIdx: index("calendar_events_therapist_idx").on(table.therapistId),
+  clientIdx: index("calendar_events_client_idx").on(table.clientId),
+  dateIdx: index("calendar_events_date_idx").on(table.startTime),
+  statusIdx: index("calendar_events_status_idx").on(table.status),
+  calendarIdx: index("calendar_events_calendar_idx").on(table.googleCalendarId),
 }));
 
 // Relations

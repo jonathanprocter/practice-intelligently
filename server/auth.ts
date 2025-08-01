@@ -1,5 +1,6 @@
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
+import { pool } from './db';
 
 // Get the correct redirect URI based on environment
 const getRedirectUri = () => {
@@ -60,7 +61,8 @@ export class GoogleCalendarService {
 
   generateAuthUrl(): string {
     const scopes = [
-      'https://www.googleapis.com/auth/calendar.readonly'
+      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/calendar.events'
     ];
 
     console.log('Generating OAuth URL with redirect URI:', getRedirectUri());
@@ -242,7 +244,7 @@ export class GoogleCalendarService {
       });
 
       const event = response.data;
-      return {
+      const calendarEvent: GoogleCalendarEvent = {
         id: event.id || '',
         summary: event.summary || 'Untitled Event',
         description: event.description || undefined,
@@ -261,6 +263,11 @@ export class GoogleCalendarService {
           responseStatus: a.responseStatus || 'needsAction'
         }))
       };
+
+      // Sync created event to database
+      await this.syncEventToDatabase(calendarEvent, calendarId);
+      
+      return calendarEvent;
     } catch (error: any) {
       console.error('Error creating calendar event:', error);
       if (error.code === 401 || error.code === 403) {
@@ -281,7 +288,7 @@ export class GoogleCalendarService {
       });
 
       const event = response.data;
-      return {
+      const calendarEvent: GoogleCalendarEvent = {
         id: event.id || '',
         summary: event.summary || 'Untitled Event',
         description: event.description || undefined,
@@ -300,6 +307,11 @@ export class GoogleCalendarService {
           responseStatus: a.responseStatus || 'needsAction'
         }))
       };
+
+      // Sync updated event to database
+      await this.syncEventToDatabase(calendarEvent, calendarId);
+      
+      return calendarEvent;
     } catch (error: any) {
       console.error('Error updating calendar event:', error);
       if (error.code === 401 || error.code === 403) {
@@ -317,6 +329,9 @@ export class GoogleCalendarService {
         calendarId,
         eventId
       });
+      
+      // Remove from database
+      await this.removeEventFromDatabase(eventId);
     } catch (error: any) {
       console.error('Error deleting calendar event:', error);
       if (error.code === 401 || error.code === 403) {
@@ -324,6 +339,137 @@ export class GoogleCalendarService {
         throw new Error('Google Calendar authentication required');
       }
       throw new Error('Failed to delete calendar event');
+    }
+  }
+
+  // Database integration methods
+  async syncEventToDatabase(event: GoogleCalendarEvent, calendarId: string, calendarName?: string, therapistId: string = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'): Promise<void> {
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query(`
+          INSERT INTO calendar_events (
+            google_event_id, google_calendar_id, calendar_name, therapist_id,
+            summary, description, start_time, end_time, time_zone, location,
+            status, attendees, is_all_day, last_sync_time
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
+          ON CONFLICT (google_event_id) DO UPDATE SET
+            summary = EXCLUDED.summary,
+            description = EXCLUDED.description,
+            start_time = EXCLUDED.start_time,
+            end_time = EXCLUDED.end_time,
+            time_zone = EXCLUDED.time_zone,
+            location = EXCLUDED.location,
+            status = EXCLUDED.status,
+            attendees = EXCLUDED.attendees,
+            is_all_day = EXCLUDED.is_all_day,
+            last_sync_time = NOW(),
+            updated_at = NOW()
+        `, [
+          event.id,
+          calendarId,
+          calendarName,
+          therapistId,
+          event.summary,
+          event.description || null,
+          event.start.dateTime,
+          event.end.dateTime,
+          event.start.timeZone || null,
+          null, // location - not provided in current GoogleCalendarEvent interface
+          event.status,
+          JSON.stringify(event.attendees || []),
+          false, // is_all_day - will be enhanced later
+        ]);
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('Error syncing event to database:', error);
+    }
+  }
+
+  async removeEventFromDatabase(eventId: string): Promise<void> {
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query('DELETE FROM calendar_events WHERE google_event_id = $1', [eventId]);
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('Error removing event from database:', error);
+    }
+  }
+
+  async syncAllEventsToDatabase(therapistId: string = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'): Promise<void> {
+    try {
+      console.log('Starting full calendar sync to database...');
+      const calendars = await this.listCalendars();
+      
+      for (const cal of calendars) {
+        console.log(`Syncing calendar: ${cal.summary} (${cal.id})`);
+        const events = await this.getEvents(cal.id);
+        
+        for (const event of events) {
+          await this.syncEventToDatabase(event, cal.id, cal.summary, therapistId);
+        }
+        console.log(`Synced ${events.length} events from ${cal.summary}`);
+      }
+      console.log('Calendar sync completed');
+    } catch (error) {
+      console.error('Error during calendar sync:', error);
+      throw error;
+    }
+  }
+
+  async getEventsFromDatabase(therapistId: string = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', timeMin?: string, timeMax?: string): Promise<any[]> {
+    try {
+      const client = await pool.connect();
+      try {
+        let query = `
+          SELECT * FROM calendar_events 
+          WHERE therapist_id = $1
+        `;
+        const params = [therapistId];
+        
+        if (timeMin) {
+          query += ` AND start_time >= $${params.length + 1}`;
+          params.push(timeMin);
+        }
+        
+        if (timeMax) {
+          query += ` AND start_time <= $${params.length + 1}`;
+          params.push(timeMax);
+        }
+        
+        query += ` ORDER BY start_time ASC`;
+        
+        const result = await client.query(query, params);
+        return result.rows.map(row => ({
+          id: row.google_event_id,
+          summary: row.summary,
+          description: row.description,
+          start: {
+            dateTime: row.start_time,
+            timeZone: row.time_zone
+          },
+          end: {
+            dateTime: row.end_time,
+            timeZone: row.time_zone
+          },
+          status: row.status,
+          attendees: row.attendees,
+          calendarId: row.google_calendar_id,
+          calendarName: row.calendar_name,
+          location: row.location,
+          isAllDay: row.is_all_day
+        }));
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('Error fetching events from database:', error);
+      return [];
     }
   }
 }

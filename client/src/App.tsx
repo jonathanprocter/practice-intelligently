@@ -7,6 +7,8 @@ import Dashboard from "@/pages/dashboard";
 import Clients from "@/pages/clients";
 import Appointments from "@/pages/appointments";
 import Calendar from "@/pages/calendar";
+import CalendarIntegration from "@/pages/calendar-integration";
+import GoogleCloudSetup from "@/pages/google-cloud-setup";
 import SessionNotes from "@/pages/session-notes";
 import ActionItems from "@/pages/action-items";
 import Analytics from "@/pages/analytics";
@@ -44,6 +46,8 @@ function Router() {
       <Route path="/clients" component={Clients} />
       <Route path="/appointments" component={Appointments} />
       <Route path="/calendar" component={Calendar} />
+      <Route path="/calendar/integration" component={CalendarIntegration} />
+      <Route path="/calendar/setup" component={GoogleCloudSetup} />
       <Route path="/session-notes" component={SessionNotes} />
       <Route path="/progress-notes" component={ProgressNotesPage} />
       <Route path="/action-items" component={ActionItems} />

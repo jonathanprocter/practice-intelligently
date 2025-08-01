@@ -6,6 +6,7 @@ import { getWeekStart, getWeekEnd, getWeekDays, addWeeks, isCurrentWeek, getWeek
 // Removed export imports - using direct PDF export now
 import { WeeklyCalendarGrid } from '../components/calendar/WeeklyCalendarGrid';
 import { CalendarHeader } from '../components/calendar/CalendarHeader';
+import { Link } from 'wouter';
 import { DailyView } from '../components/calendar/DailyView';
 import { AppointmentStatusView } from '../components/calendar/AppointmentStatusView';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings } from 'lucide-react';
 
 export default function Calendar() {
   const [currentWeek, setCurrentWeek] = useState(() => {
@@ -58,27 +59,36 @@ export default function Calendar() {
   };
 
   const { data: googleEvents = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['google-calendar-events', selectedCalendarId],
+    queryKey: ['google-calendar-events', selectedCalendarId, 'hybrid'],
     queryFn: async () => {
       // First check if Google Calendar is connected
       const statusResponse = await fetch('/api/auth/google/status');
       const status = await statusResponse.json();
       
       if (!status.connected) {
+        // Try to get events from database first
+        const dbResponse = await fetch('/api/calendar/events/local');
+        if (dbResponse.ok) {
+          return dbResponse.json();
+        }
         throw new Error('Google Calendar not connected');
       }
       
-      // Fetch all events with a much broader range to ensure we get everything
+      // Use hybrid endpoint to get fresh data and sync to database
       const timeMin = new Date('2020-01-01T00:00:00.000Z').toISOString();
       const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
       const calendarParam = selectedCalendarId === 'all' ? 'all' : selectedCalendarId;
       
-      // Use the new route without therapist ID since we're using Google Calendar directly
-      const response = await fetch(`/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}&calendarId=${calendarParam}`);
+      const response = await fetch(`/api/calendar/events/hybrid?source=live&timeMin=${timeMin}&timeMax=${timeMax}&calendarId=${calendarParam}`);
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         if (response.status === 401 || response.status === 403 || errorData.requiresAuth) {
+          // Fallback to database if API fails
+          const dbResponse = await fetch('/api/calendar/events/local');
+          if (dbResponse.ok) {
+            return dbResponse.json();
+          }
           throw new Error('Google Calendar not connected');
         }
         throw new Error(errorData.error || 'Failed to fetch calendar events');
@@ -320,13 +330,20 @@ export default function Calendar() {
               <Button onClick={connectGoogleCalendar} className="w-full">
                 Connect Google Calendar
               </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => refetch()} 
-                className="w-full"
-              >
-                Retry Connection
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => refetch()} 
+                  className="flex-1"
+                >
+                  Retry Connection
+                </Button>
+                <Link href="/calendar/integration">
+                  <Button variant="outline" size="sm">
+                    <Settings className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
               <div className="space-y-2">
                 <div className="grid grid-cols-2 gap-2">
                   <Button 
@@ -444,6 +461,12 @@ export default function Calendar() {
           </div>
           
           <div className="flex items-center space-x-3">
+            <Link href="/calendar/integration">
+              <Button variant="outline" size="sm">
+                <Settings className="w-4 h-4 mr-2" />
+                Integration
+              </Button>
+            </Link>
             <Button 
               onClick={handleNewAppointment}
               className="bg-therapy-primary hover:bg-therapy-primary/80 text-white flex items-center gap-2"

@@ -1110,6 +1110,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Calendar sync endpoints
+  app.post('/api/calendar/sync', async (req, res) => {
+    try {
+      if (!googleCalendarService.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
+      const { therapistId } = req.body;
+      const finalTherapistId = therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      
+      await googleCalendarService.syncAllEventsToDatabase(finalTherapistId);
+      res.json({ success: true, message: 'Calendar events synced to database' });
+    } catch (error: any) {
+      console.error('Error syncing calendar:', error);
+      if (error.message?.includes('authentication required')) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      res.status(500).json({ error: 'Failed to sync calendar events' });
+    }
+  });
+
+  // Get events from database (fast local access)
+  app.get('/api/calendar/events/local', async (req, res) => {
+    try {
+      const { timeMin, timeMax, therapistId } = req.query;
+      const finalTherapistId = (therapistId as string) || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      
+      const events = await googleCalendarService.getEventsFromDatabase(
+        finalTherapistId,
+        timeMin as string,
+        timeMax as string
+      );
+      
+      res.json(events);
+    } catch (error) {
+      console.error('Error fetching events from database:', error);
+      res.status(500).json({ error: 'Failed to fetch calendar events from database' });
+    }
+  });
+
+  // Enhanced events endpoint that can serve from database or live API
+  app.get('/api/calendar/events/hybrid', async (req, res) => {
+    try {
+      const { timeMin, timeMax, source = 'database', therapistId } = req.query;
+      const finalTherapistId = (therapistId as string) || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      
+      if (source === 'live' || source === 'api') {
+        // Fetch from Google Calendar API and sync to database
+        if (!googleCalendarService.isConnected()) {
+          return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+        }
+        
+        const events = await googleCalendarService.getAllEvents(
+          timeMin as string,
+          timeMax as string
+        );
+        
+        // Sync to database in background
+        setTimeout(async () => {
+          try {
+            await googleCalendarService.syncAllEventsToDatabase(finalTherapistId);
+          } catch (error) {
+            console.error('Background sync error:', error);
+          }
+        }, 100);
+        
+        res.json(events);
+      } else {
+        // Fetch from database (default and fastest)
+        const events = await googleCalendarService.getEventsFromDatabase(
+          finalTherapistId,
+          timeMin as string,
+          timeMax as string
+        );
+        res.json(events);
+      }
+    } catch (error: any) {
+      console.error('Error fetching hybrid calendar events:', error);
+      if (error.message?.includes('authentication required')) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      res.status(500).json({ error: 'Failed to fetch calendar events' });
+    }
+  });
+
   // Treatment Plans
   app.get("/api/treatment-plans/:clientId", async (req, res) => {
     try {
