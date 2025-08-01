@@ -504,19 +504,12 @@ Session Date: ${sessionDate}`;
     // More flexible regex patterns to match various formats
     const titleMatch = cleanedContent.match(/(?:^|\n).*?(?:Progress Note|Clinical Note|Comprehensive.*Note).*$/im);
     
-    // Look for section patterns with more flexibility
-    const sections: { [key: string]: string } = {};
-    
-    // The AI is generating comprehensive analysis rather than SOAP format
-    // So let's extract the therapeutic information and create a structured note
-    const content = cleanedContent;
-    
     // Extract meaningful clinical content from any section
-    const extractSectionFromContent = (content: string, keywords: string[]): string => {
+    const extractSectionFromContent = (textContent: string, keywords: string[]): string => {
       for (const keyword of keywords) {
         // Look for content after keywords
         const pattern = new RegExp(`${keyword}[:\s]*([^#]*?)(?=\\n\\s*(?:[A-Z][^\\n]*|$))`, 'gis');
-        const match = content.match(pattern);
+        const match = textContent.match(pattern);
         if (match && match[1] && match[1].trim().length > 20) {
           return match[1].trim().substring(0, 500); // Limit length
         }
@@ -525,49 +518,48 @@ Session Date: ${sessionDate}`;
     };
     
     // Extract therapy-relevant content
-    const sections: { [key: string]: string } = {
-      subjective: extractSectionFromContent(content, [
+    const extractedSections = {
+      subjective: extractSectionFromContent(cleanedContent, [
         'symptom documentation', 'client.*?reported', 'client.*?stated', 'client.*?expressed',
         'client.*?described', 'presenting concerns', 'current symptoms'
       ]) || 'Client presented for therapy session. Subjective reporting and self-assessment pending detailed analysis.',
       
-      objective: extractSectionFromContent(content, [
+      objective: extractSectionFromContent(cleanedContent, [
         'behavioral observations', 'psychomotor', 'observable', 'clinical observations',
         'presentation', 'affect', 'mood state', 'therapeutic alliance'
       ]) || 'Clinical observations and behavioral assessment documented during session.',
       
-      assessment: extractSectionFromContent(content, [
+      assessment: extractSectionFromContent(cleanedContent, [
         'diagnostic reasoning', 'clinical assessment', 'diagnostic', 'disorder',
         'clinical formulation', 'assessment', 'diagnosis'
       ]) || 'Clinical assessment and diagnostic considerations evaluated during session.',
       
-      plan: extractSectionFromContent(content, [
+      plan: extractSectionFromContent(cleanedContent, [
         'treatment planning', 'therapeutic modalities', 'interventions', 'cbt', 'act',
         'treatment', 'next session', 'homework', 'strategies'
       ]) || 'Treatment planning and therapeutic interventions implemented during session.',
       
-      tonalAnalysis: extractSectionFromContent(content, [
+      tonalAnalysis: extractSectionFromContent(cleanedContent, [
         'emotional tone', 'tonal', 'emotional shifts', 'presentation changes',
         'therapeutic relationship', 'engagement'
       ]) || 'Emotional tone and therapeutic relationship dynamics observed.',
       
-      narrative: extractSectionFromContent(content, [
+      narrative: extractSectionFromContent(cleanedContent, [
         'overall', 'synthesis', 'comprehensive', 'clinical competency',
         'therapeutic outcomes', 'treatment progress'
       ]) || 'Comprehensive clinical analysis and treatment synthesis documented.'
     };
     
-    // Extract key therapeutic insights as key points
-    const keyPointsText = content;
+    // Extract key therapeutic insights as key points  
     const keyPoints = [
       'Evidence-based therapeutic modalities implemented',
-      'Strong therapeutic alliance established',
+      'Strong therapeutic alliance established', 
       'Comprehensive clinical assessment completed',
       'Treatment planning aligned with client goals'
     ];
     
     // Extract significant quotes from the content
-    const significantQuotes = content.match(/"([^"]{15,})"/g)
+    const significantQuotes = cleanedContent.match(/"([^"]{15,})"/g)
       ?.map(quote => quote.replace(/"/g, '').trim())
       ?.slice(0, 5) || [];
 
@@ -576,14 +568,14 @@ Session Date: ${sessionDate}`;
 
     return {
       title: this.cleanContent(titleMatch?.[0] || `Clinical Progress Note - ${clientId} - ${sessionDate}`),
-      subjective: sections.subjective || 'Content analysis in progress - subjective data extraction pending.',
-      objective: sections.objective || 'Content analysis in progress - objective observations extraction pending.',
-      assessment: sections.assessment || 'Content analysis in progress - clinical assessment extraction pending.',
-      plan: sections.plan || 'Content analysis in progress - treatment plan extraction pending.',
-      tonalAnalysis: sections.tonalAnalysis || 'Tonal analysis in progress - emotional pattern recognition pending.',
+      subjective: extractedSections.subjective,
+      objective: extractedSections.objective,
+      assessment: extractedSections.assessment,
+      plan: extractedSections.plan,
+      tonalAnalysis: extractedSections.tonalAnalysis,
       keyPoints,
       significantQuotes,
-      narrativeSummary: sections.narrative || 'Comprehensive narrative analysis in progress.',
+      narrativeSummary: extractedSections.narrative,
       aiTags, // Add AI-generated tags
       clientId,
       sessionDate,
