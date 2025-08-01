@@ -1,16 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient, type Client } from "@/lib/api";
-import { Users, Plus, Search, Filter, Edit2, Calendar, Phone, Mail, UserCheck } from "lucide-react";
+import { Users, Plus, Search, Filter, Edit2, Calendar, Phone, Mail, UserCheck, Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ClientForm } from "@/components/forms/ClientForm";
+import { ClientListGenerator } from "@/components/clients/ClientListGenerator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
 import { format } from "date-fns";
 
 export default function Clients() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showClientForm, setShowClientForm] = useState(false);
+  const [showBulkImport, setShowBulkImport] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   
   const { data: clients, isLoading } = useQuery({
@@ -95,13 +98,32 @@ export default function Clients() {
           <h1 className="text-2xl font-bold text-therapy-text">Clients</h1>
           <p className="text-therapy-text/60">Manage your client roster and profiles</p>
         </div>
-        <Button 
-          className="bg-therapy-primary hover:bg-therapy-primary/90"
-          onClick={handleAddClient}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Client
-        </Button>
+        <div className="flex space-x-2">
+          <Dialog open={showBulkImport} onOpenChange={setShowBulkImport}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Upload className="w-4 h-4 mr-2" />
+                Import List
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden">
+              <DialogHeader>
+                <DialogTitle>Import Client List</DialogTitle>
+              </DialogHeader>
+              <div className="overflow-y-auto">
+                <ClientListGenerator />
+              </div>
+            </DialogContent>
+          </Dialog>
+          
+          <Button 
+            className="bg-therapy-primary hover:bg-therapy-primary/90"
+            onClick={handleAddClient}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Client
+          </Button>
+        </div>
       </div>
 
       <div className="flex space-x-4">
