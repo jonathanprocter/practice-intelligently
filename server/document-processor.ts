@@ -488,67 +488,54 @@ Session Date: ${sessionDate}`;
 
       const progressNoteContent = result.content;
 
-      
-      // Parse the generated content into structured sections
-      return this.parseProgressNote(progressNoteContent, clientId, sessionDate);
+      // Use the rich AI-generated content directly instead of parsing into limited sections
+      return this.createRichProgressNote(progressNoteContent, clientId, sessionDate);
     } catch (error) {
       console.error('Error generating progress note:', error);
       throw new Error('Failed to generate progress note with AI');
     }
   }
 
-  private parseProgressNote(content: string, clientId: string, sessionDate: string): ProgressNote {
+  private parseProgressNote_OLD(content: string, clientId: string, sessionDate: string): ProgressNote {
     // Clean content first
     const cleanedContent = this.cleanContent(content);
     
     // More flexible regex patterns to match various formats
     const titleMatch = cleanedContent.match(/(?:^|\n).*?(?:Progress Note|Clinical Note|Comprehensive.*Note).*$/im);
     
-    // Extract meaningful clinical content from any section
+    // Extract meaningful clinical content using improved parsing
     const extractSectionFromContent = (textContent: string, keywords: string[]): string => {
       for (const keyword of keywords) {
-        // Look for content after keywords
-        const pattern = new RegExp(`${keyword}[:\s]*([^#]*?)(?=\\n\\s*(?:[A-Z][^\\n]*|$))`, 'gis');
-        const match = textContent.match(pattern);
-        if (match && match[1] && match[1].trim().length > 20) {
-          return match[1].trim().substring(0, 500); // Limit length
+        // Look for content after keywords with more flexible matching
+        const patterns = [
+          new RegExp(`${keyword}[:\\s]*([\\s\\S]*?)(?=\\n\\s*(?:[A-Z][^\\n]*:|$))`, 'gis'),
+          new RegExp(`${keyword}[:\\s]*([\\s\\S]*?)(?=\\n\\n|$)`, 'gis'),
+          new RegExp(`${keyword}.*?\\n([\\s\\S]*?)(?=\\n[A-Z]|$)`, 'gis')
+        ];
+        
+        for (const pattern of patterns) {
+          const match = textContent.match(pattern);
+          if (match && match[1] && match[1].trim().length > 30) {
+            return match[1].trim().substring(0, 1500); // Increased length for more content
+          }
         }
       }
       return '';
     };
+
+    console.log('=== DEBUG: Cleaned Content for Parsing ===');
+    console.log(cleanedContent.substring(0, 1000));
+    console.log('=== END DEBUG ===');
     
-    // Extract therapy-relevant content
-    const extractedSections = {
-      subjective: extractSectionFromContent(cleanedContent, [
-        'symptom documentation', 'client.*?reported', 'client.*?stated', 'client.*?expressed',
-        'client.*?described', 'presenting concerns', 'current symptoms'
-      ]) || 'Client presented for therapy session. Subjective reporting and self-assessment pending detailed analysis.',
-      
-      objective: extractSectionFromContent(cleanedContent, [
-        'behavioral observations', 'psychomotor', 'observable', 'clinical observations',
-        'presentation', 'affect', 'mood state', 'therapeutic alliance'
-      ]) || 'Clinical observations and behavioral assessment documented during session.',
-      
-      assessment: extractSectionFromContent(cleanedContent, [
-        'diagnostic reasoning', 'clinical assessment', 'diagnostic', 'disorder',
-        'clinical formulation', 'assessment', 'diagnosis'
-      ]) || 'Clinical assessment and diagnostic considerations evaluated during session.',
-      
-      plan: extractSectionFromContent(cleanedContent, [
-        'treatment planning', 'therapeutic modalities', 'interventions', 'cbt', 'act',
-        'treatment', 'next session', 'homework', 'strategies'
-      ]) || 'Treatment planning and therapeutic interventions implemented during session.',
-      
-      tonalAnalysis: extractSectionFromContent(cleanedContent, [
-        'emotional tone', 'tonal', 'emotional shifts', 'presentation changes',
-        'therapeutic relationship', 'engagement'
-      ]) || 'Emotional tone and therapeutic relationship dynamics observed.',
-      
-      narrative: extractSectionFromContent(cleanedContent, [
-        'overall', 'synthesis', 'comprehensive', 'clinical competency',
-        'therapeutic outcomes', 'treatment progress'
-      ]) || 'Comprehensive clinical analysis and treatment synthesis documented.'
-    };
+    // For comprehensive AI-generated content, use intelligent parsing to extract SOAP sections
+    const extractedSections = this.extractSOAPSections(cleanedContent);
+    
+    console.log('=== DEBUG: Extracted Sections ===');
+    console.log('Subjective:', extractedSections.subjective.substring(0, 200));
+    console.log('Objective:', extractedSections.objective.substring(0, 200));
+    console.log('Assessment:', extractedSections.assessment.substring(0, 200));
+    console.log('Plan:', extractedSections.plan.substring(0, 200));
+    console.log('=== END DEBUG ===');
     
     // Extract key therapeutic insights as key points  
     const keyPoints = [
@@ -580,6 +567,72 @@ Session Date: ${sessionDate}`;
       clientId,
       sessionDate,
       createdAt: new Date(),
+    };
+  }
+
+  private extractSOAPSections(content: string): any {
+    // Split content into meaningful chunks
+    const chunks = content.split(/\n\s*\n/).filter(chunk => chunk.trim().length > 20);
+    
+    // Find the most clinically relevant content for each SOAP section
+    const findBestMatch = (keywords: string[], fallback: string): string => {
+      for (const chunk of chunks) {
+        const lowerChunk = chunk.toLowerCase();
+        for (const keyword of keywords) {
+          if (lowerChunk.includes(keyword.toLowerCase()) && chunk.length > 100) {
+            return chunk.trim().substring(0, 1200);
+          }
+        }
+      }
+      
+      // If no specific match, use chunks that contain clinical language
+      const clinicalChunk = chunks.find(chunk => {
+        const lower = chunk.toLowerCase();
+        return (lower.includes('client') || lower.includes('patient') || 
+                lower.includes('symptoms') || lower.includes('therapy') ||
+                lower.includes('treatment') || lower.includes('clinical')) && 
+               chunk.length > 100;
+      });
+      
+      return clinicalChunk ? clinicalChunk.trim().substring(0, 1200) : fallback;
+    };
+
+    return {
+      subjective: findBestMatch([
+        'client reported', 'client stated', 'client expressed', 'presenting concerns',
+        'subjective', 'symptoms', 'client described', 'reported feeling',
+        'client presentation', 'complaint', 'concern'
+      ], 'Client presented for therapy session with subjective reporting documented.'),
+
+      objective: findBestMatch([
+        'behavioral observations', 'clinical observations', 'objective', 
+        'mental status', 'appearance', 'affect', 'mood', 'presentation',
+        'observed', 'behavior', 'demeanor', 'therapeutic alliance'
+      ], 'Clinical observations and behavioral assessment documented during session.'),
+
+      assessment: findBestMatch([
+        'clinical assessment', 'diagnostic', 'assessment', 'formulation',
+        'clinical impression', 'disorder', 'condition', 'diagnosis',
+        'clinical reasoning', 'evaluation', 'analysis'
+      ], 'Clinical assessment and diagnostic considerations evaluated during session.'),
+
+      plan: findBestMatch([
+        'treatment plan', 'intervention', 'therapeutic', 'plan', 'strategies',
+        'recommendations', 'goals', 'objectives', 'next session',
+        'homework', 'cbt', 'therapy', 'treatment'
+      ], 'Treatment planning and therapeutic interventions implemented during session.'),
+
+      tonalAnalysis: findBestMatch([
+        'emotional tone', 'therapeutic relationship', 'engagement',
+        'emotional', 'relationship', 'alliance', 'rapport',
+        'connection', 'dynamics'
+      ], 'Emotional tone and therapeutic relationship dynamics observed.'),
+
+      narrative: findBestMatch([
+        'overall', 'comprehensive', 'synthesis', 'summary',
+        'clinical competency', 'outcomes', 'progress',
+        'integration', 'conclusion'
+      ], 'Comprehensive clinical analysis and treatment synthesis documented.')
     };
   }
 
