@@ -1,0 +1,108 @@
+Streamlined Appointments Tab Recommendations
+1. Snapshot Summary
+Display a summary header at the top:
+
+Appointments Today | This Week | No-Shows | New Clients
+
+Next available open time slot
+
+2. Appointment Cards/List
+For each appointment, display:
+
+Time
+
+Client Name (with avatar/initials and phone icon for call/text link)
+
+Session Type: Default “Individual Counseling,” unless you set it to something else (e.g., “Group,” “Family”)
+
+Location (auto-detected unless you override: e.g., Office/Telehealth)
+
+Quick Actions: [Session Prep], [Note], [Check-In], [Edit], [Delete]
+
+If you manually set a different session type, show a chip (e.g., “Group” in subtle color)
+
+3. Expanded Appointment Workflow
+On expand (accordion or modal):
+
+Session prep notes/questions
+
+Link to latest progress note, with [Start New Note] if needed
+
+One-click communications: send check-in, call client, etc.
+
+Option for your own custom fields/notes
+
+4. View Modes & Filters
+Agenda/List and optional Calendar grid
+
+Search/filter by client, date, or location
+
+Batch select for [Mark Complete], [Delete], [Send Check-in]
+
+5. Touches for Usability
+“Start Next” button for the next session (top-right sticky)
+
+Responsive cards on mobile
+
+Minimal, professional styling—no clinical/status/status/insurance/HIPAA/flag elements
+
+Example React/JSX Appointment Card Component
+jsx
+import { Button, Avatar, Chip } from "@radix-ui/react-xyz";
+
+function AppointmentCard({
+  time,
+  clientName,
+  clientInitials,
+  clientPhone,
+  location,
+  sessionType = "Individual Counseling",
+  isEditedType,
+  onPrep,
+  onNote,
+  onCheckIn,
+  onEdit,
+  onDelete,
+  ...props
+}) {
+  return (
+    <div className="appointment-card">
+      <div className="card-header">
+        <span className="time">{time}</span>
+        <Avatar>{clientInitials}</Avatar>
+        <span className="client-name">{clientName}</span>
+        {clientPhone && (
+          <a href={`tel:${clientPhone}`} title="Call client" className="phone-icon">
+            📞
+          </a>
+        )}
+        <span className="session-type">
+          {isEditedType ? <Chip>{sessionType}</Chip> : sessionType}
+        </span>
+        <span className="location">{location}</span>
+      </div>
+      <div className="card-actions">
+        <Button onClick={onPrep}>Session Prep</Button>
+        <Button onClick={onNote}>Note</Button>
+        <Button onClick={onCheckIn}>Check-In</Button>
+        <Button onClick={onEdit}>Edit</Button>
+        <Button onClick={onDelete} color="red">Delete</Button>
+      </div>
+      {/* Optional expanded content */}
+      {props.expanded && (
+        <div className="card-expanded">
+          {/* Insert session prep, progress note summary, communication, etc here */}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default AppointmentCard;
+Styling/UX Notes:
+
+Adjust styling classes as needed.
+
+The Chip only appears if you’ve manually set a non-default session type.
+
+Integrate as a map over your list of appointments; add expansion/modal state as desired for full workflows.
