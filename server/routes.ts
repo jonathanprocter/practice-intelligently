@@ -107,6 +107,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/clients/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const client = await storage.updateClient(id, updates);
+      res.json(client);
+    } catch (error) {
+      console.error("Error updating client:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid client data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to update client" });
+      }
+    }
+  });
+
   // Bulk client creation endpoint
   app.post("/api/clients/bulk", async (req, res) => {
     try {

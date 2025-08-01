@@ -9,12 +9,32 @@ export interface DashboardStats {
 
 export interface Client {
   id: string;
+  clientNumber?: string;
   firstName: string;
   lastName: string;
+  preferredName?: string;
+  pronouns?: string;
   email?: string;
   phone?: string;
+  alternatePhone?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  address?: any;
+  emergencyContact?: any;
+  insuranceInfo?: any;
+  medicalHistory?: any;
+  medications?: any;
+  allergies?: any;
+  referralSource?: string;
+  primaryConcerns?: any;
+  therapistId?: string;
   status: string;
+  riskLevel?: string;
+  consentStatus?: any;
+  hipaaSignedDate?: string;
+  lastContact?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Appointment {
@@ -89,11 +109,16 @@ export class ApiClient {
     return response.json();
   }
 
-  static async createClient(client: Omit<Client, 'id' | 'createdAt'>): Promise<Client> {
+  static async createClient(client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Promise<Client> {
     const response = await apiRequest('POST', '/api/clients', {
       ...client,
       therapistId: this.therapistId
     });
+    return response.json();
+  }
+
+  static async updateClient(id: string, updates: Partial<Client>): Promise<Client> {
+    const response = await apiRequest('PUT', `/api/clients/${id}`, updates);
     return response.json();
   }
 

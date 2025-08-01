@@ -1,13 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient, type Client } from "@/lib/api";
-import { Users, Plus, Search, Filter } from "lucide-react";
+import { Users, Plus, Search, Filter, Edit2, Calendar, Phone, Mail, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ClientForm } from "@/components/forms/ClientForm";
 import { useState } from "react";
+import { format } from "date-fns";
 
 export default function Clients() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showClientForm, setShowClientForm] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
   
   const { data: clients, isLoading } = useQuery({
     queryKey: ['clients'],
@@ -21,11 +25,40 @@ export default function Clients() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'inactive': return 'bg-gray-100 text-gray-800';
-      case 'archived': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'active': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'inactive': return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'archived': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
+  };
+
+  const getRiskLevelColor = (riskLevel: string) => {
+    switch (riskLevel) {
+      case 'high': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+      case 'low': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+    }
+  };
+
+  const handleAddClient = () => {
+    setEditingClient(null);
+    setShowClientForm(true);
+  };
+
+  const handleEditClient = (client: Client) => {
+    setEditingClient(client);
+    setShowClientForm(true);
+  };
+
+  const handleCloseForm = () => {
+    setShowClientForm(false);
+    setEditingClient(null);
+  };
+
+  const formatAge = (dateOfBirth: string) => {
+    const age = new Date().getFullYear() - new Date(dateOfBirth).getFullYear();
+    return age;
   };
 
   if (isLoading) {
@@ -62,7 +95,10 @@ export default function Clients() {
           <h1 className="text-2xl font-bold text-therapy-text">Clients</h1>
           <p className="text-therapy-text/60">Manage your client roster and profiles</p>
         </div>
-        <Button className="bg-therapy-primary hover:bg-therapy-primary/90">
+        <Button 
+          className="bg-therapy-primary hover:bg-therapy-primary/90"
+          onClick={handleAddClient}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add Client
         </Button>
@@ -87,30 +123,93 @@ export default function Clients() {
       <div className="grid gap-4">
         {filteredClients.length > 0 ? (
           filteredClients.map((client) => (
-            <div key={client.id} className="therapy-card p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-therapy-primary/10 rounded-full flex items-center justify-center">
+            <div key={client.id} className="therapy-card p-6 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-4 flex-1">
+                  <div className="w-12 h-12 bg-therapy-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                     <Users className="h-6 w-6 text-therapy-primary" />
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-therapy-text">
-                      {client.firstName} {client.lastName}
-                    </h3>
-                    <div className="flex items-center space-x-2 text-sm text-therapy-text/60">
-                      {client.email && <span>{client.email}</span>}
-                      {client.phone && client.email && <span>•</span>}
-                      {client.phone && <span>{client.phone}</span>}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h3 className="font-semibold text-therapy-text text-lg">
+                        {client.firstName} {client.lastName}
+                        {client.preferredName && (
+                          <span className="text-sm text-therapy-text/60 ml-2">
+                            "{client.preferredName}"
+                          </span>
+                        )}
+                      </h3>
+                      {client.pronouns && (
+                        <span className="text-xs bg-therapy-accent/10 text-therapy-accent px-2 py-1 rounded">
+                          {client.pronouns}
+                        </span>
+                      )}
                     </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-therapy-text/60 mb-3">
+                      {client.email && (
+                        <div className="flex items-center space-x-2">
+                          <Mail className="h-4 w-4" />
+                          <span className="truncate">{client.email}</span>
+                        </div>
+                      )}
+                      {client.phone && (
+                        <div className="flex items-center space-x-2">
+                          <Phone className="h-4 w-4" />
+                          <span>{client.phone}</span>
+                        </div>
+                      )}
+                      {client.dateOfBirth && (
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>
+                            {format(new Date(client.dateOfBirth), 'MMM d, yyyy')} 
+                            <span className="ml-1 text-therapy-text/40">
+                              (Age {formatAge(client.dateOfBirth)})
+                            </span>
+                          </span>
+                        </div>
+                      )}
+                      {client.gender && (
+                        <div className="flex items-center space-x-2">
+                          <UserCheck className="h-4 w-4" />
+                          <span className="capitalize">{client.gender}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {client.referralSource && (
+                      <div className="text-xs text-therapy-text/50 mb-2">
+                        Referred by: {client.referralSource}
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <Badge className={getStatusColor(client.status)}>
-                    {client.status}
-                  </Badge>
-                  <Button variant="outline" size="sm">
-                    View Profile
-                  </Button>
+                
+                <div className="flex items-center space-x-3 flex-shrink-0">
+                  <div className="flex flex-col space-y-2">
+                    <Badge className={getStatusColor(client.status)}>
+                      {client.status}
+                    </Badge>
+                    {client.riskLevel && client.riskLevel !== 'low' && (
+                      <Badge className={getRiskLevelColor(client.riskLevel)}>
+                        {client.riskLevel} risk
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex flex-col space-y-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleEditClient(client)}
+                    >
+                      <Edit2 className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      Profile
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -128,7 +227,10 @@ export default function Clients() {
               }
             </p>
             {!searchTerm && (
-              <Button className="bg-therapy-primary hover:bg-therapy-primary/90">
+              <Button 
+                className="bg-therapy-primary hover:bg-therapy-primary/90"
+                onClick={handleAddClient}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Your First Client
               </Button>
@@ -136,6 +238,12 @@ export default function Clients() {
           </div>
         )}
       </div>
+
+      <ClientForm
+        client={editingClient}
+        open={showClientForm}
+        onOpenChange={handleCloseForm}
+      />
     </div>
   );
 }
