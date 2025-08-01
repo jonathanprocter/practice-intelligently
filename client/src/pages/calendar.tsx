@@ -43,25 +43,26 @@ export default function Calendar() {
 
 
   const { data: googleEvents = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['google-calendar-events', currentWeek.toISOString()],
-    staleTime: 0, // Always consider data stale
-    gcTime: 0, // Don't cache data
+    queryKey: ['google-calendar-events', selectedCalendarId],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     queryFn: async () => {
-      // Fetching calendar events for the week
+      // Fetching calendar events for all time ranges to get thousands of events
       try {
-        // Get events for the entire current week from Simple Practice integration
-        const weekStart = currentWeek.toISOString();
-        const weekEndISO = weekEnd.toISOString();
+        // Get ALL events from 2019-2030 for comprehensive calendar view
+        const timeMin = new Date('2019-01-01T00:00:00.000Z').toISOString();
+        const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
+        const calendarParam = selectedCalendarId === 'all' ? '' : `&calendarId=${selectedCalendarId}`;
 
-        // First try to get calendar events for the week range
-        const weekResponse = await fetch(`/api/calendar/events?start=${encodeURIComponent(weekStart)}&end=${encodeURIComponent(weekEndISO)}`);
+        // First try to get ALL calendar events from the comprehensive endpoint
+        const allEventsResponse = await fetch(`/api/calendar/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}${calendarParam}`);
 
-        if (weekResponse.ok) {
-          const weekEvents = await weekResponse.json();
-          // Successfully fetched events for the week
+        if (allEventsResponse.ok) {
+          const allEvents = await allEventsResponse.json();
+          console.log(`Successfully loaded ${allEvents.length} events from calendar API`);
 
-          if (weekEvents.length > 0) {
-            return weekEvents.map((event: any) => ({
+          if (allEvents.length > 0) {
+            return allEvents.map((event: any) => ({
               id: event.id,
               title: event.title || event.summary || 'Appointment',
               startTime: new Date(event.startTime || event.start?.dateTime || event.start?.date),
@@ -123,12 +124,12 @@ export default function Calendar() {
         return []; // Return empty array instead of throwing error
       }
 
-      // Use hybrid endpoint to get fresh data and sync to database
-      const timeMin = new Date('2020-01-01T00:00:00.000Z').toISOString();
+      // Use the main calendar events endpoint to get comprehensive data
+      const timeMin = new Date('2019-01-01T00:00:00.000Z').toISOString();
       const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
-      const calendarParam = selectedCalendarId === 'all' ? 'all' : selectedCalendarId;
+      const calendarParam = selectedCalendarId === 'all' ? '' : `&calendarId=${selectedCalendarId}`;
 
-      const response = await fetch(`/api/calendar/events/hybrid?source=live&timeMin=${timeMin}&timeMax=${timeMax}&calendarId=${calendarParam}`);
+      const response = await fetch(`/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}${calendarParam}`);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -232,7 +233,7 @@ export default function Calendar() {
 
   // Calendar events processed and organized by week
 
-  // Create calendar days with events
+  // Create calendar days with events (filtered to current week for display)
   const calendarDays: CalendarDay[] = weekDays.map(date => {
     const dayEvents = calendarEvents.filter(event => {
       const eventDate = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
@@ -253,9 +254,10 @@ export default function Calendar() {
     };
   });
 
-  // Log total events for the current week
+  // Log statistics for both total events and current week
   const weekEventCount = calendarDays.reduce((total, day) => total + day.events.length, 0);
   console.log(`Events for current week (${currentWeek.toDateString()} - ${weekEnd.toDateString()}): ${weekEventCount}`);
+  console.log(`Total events loaded in calendar: ${calendarEvents.length}`);
 
   // Navigation handlers
   const handlePreviousWeek = () => {
