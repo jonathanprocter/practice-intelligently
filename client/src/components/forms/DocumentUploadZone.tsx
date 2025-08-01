@@ -36,62 +36,68 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
 
   const processDocumentMutation = useMutation({
     mutationFn: async (file: File) => {
-      try {
-        const formData = new FormData();
-        formData.append('document', file);
+      return new Promise(async (resolve, reject) => {
+        try {
+          const formData = new FormData();
+          formData.append('document', file);
 
-        const response = await fetch('/api/documents/process-clinical', {
-          method: 'POST',
-          body: formData,
-        });
+          const response = await fetch('/api/documents/process-clinical', {
+            method: 'POST',
+            body: formData,
+          });
 
-        if (!response.ok) {
-          let errorMessage = 'Unknown error occurred';
-          try {
-            const errorData = await response.text();
-            if (errorData) {
-              try {
-                const parsedError = JSON.parse(errorData);
-                // Try to extract the most helpful error message
-                if (parsedError.details) {
-                  errorMessage = parsedError.details;
-                } else if (parsedError.error) {
-                  errorMessage = parsedError.error;
-                } else {
+          if (!response.ok) {
+            let errorMessage = 'Unknown error occurred';
+            try {
+              const errorData = await response.text();
+              if (errorData) {
+                try {
+                  const parsedError = JSON.parse(errorData);
+                  // Try to extract the most helpful error message
+                  if (parsedError.details) {
+                    errorMessage = parsedError.details;
+                  } else if (parsedError.error) {
+                    errorMessage = parsedError.error;
+                  } else {
+                    errorMessage = errorData;
+                  }
+                } catch {
                   errorMessage = errorData;
                 }
-              } catch {
-                errorMessage = errorData;
+              } else {
+                errorMessage = `Request failed with status ${response.status}`;
               }
-            } else {
+            } catch {
               errorMessage = `Request failed with status ${response.status}`;
             }
-          } catch {
-            errorMessage = `Request failed with status ${response.status}`;
+            
+            // Create a proper error object with the message
+            const error = new Error(errorMessage);
+            error.name = 'DocumentProcessingError';
+            reject(error);
+            return;
           }
-          
-          // Create a proper error object with the message
-          const error = new Error(errorMessage);
-          error.name = 'DocumentProcessingError';
-          throw error;
-        }
 
-        let result;
-        try {
-          result = await response.json();
-        } catch (jsonError) {
-          console.warn('Failed to parse JSON response');
-          throw new Error('Invalid response format from server');
+          let result;
+          try {
+            result = await response.json();
+            resolve(result);
+          } catch (jsonError) {
+            const error = new Error('Invalid response format from server');
+            error.name = 'DocumentProcessingError';
+            reject(error);
+          }
+        } catch (error) {
+          // Catch any error and reject with proper handling
+          if (error instanceof Error) {
+            reject(error);
+          } else {
+            const processError = new Error('Document processing failed');
+            processError.name = 'DocumentProcessingError';
+            reject(processError);
+          }
         }
-        return result;
-      } catch (error) {
-        // Catch any error and re-throw with proper handling
-        if (error instanceof Error) {
-          throw error;
-        } else {
-          throw new Error('Document processing failed');
-        }
-      }
+      });
     },
     onSuccess: (data, file) => {
       setUploadedFiles(prev => prev.map(f => 

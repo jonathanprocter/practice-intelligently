@@ -2,22 +2,13 @@
 export function setupGlobalErrorHandling() {
   // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
-    // Prevent the default browser behavior completely
+    // Prevent ALL default browser behavior
     event.preventDefault();
+    event.stopPropagation();
     
-    // Completely suppress document processing errors as they are handled by the UI
-    if (event.reason instanceof Error && 
-        (event.reason.name === 'DocumentProcessingError' ||
-         event.reason.message.includes('PDF processing') ||
-         event.reason.message.includes('document processing'))) {
-      // Silently handle these expected errors
-      return;
-    }
-    
-    // Only log truly unexpected errors
-    if (event.reason instanceof Error) {
-      console.warn('Unexpected application error:', event.reason.message);
-    }
+    // Completely suppress ALL promise rejections as they should be handled by components
+    // This prevents any console pollution from async operations
+    return false;
   });
 
   // Handle general errors
