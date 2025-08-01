@@ -837,8 +837,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const startTime = (start as string) || (timeMin as string);
       const endTime = (end as string) || (timeMax as string);
 
-      console.log(`Fetching calendar events from ${startTime} to ${endTime}`);
-
       // Get events from all calendars if no specific calendar is requested
       if (!calendarId) {
         const calendars = await simpleOAuth.getCalendars();
@@ -851,8 +849,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
               startTime,
               endTime
             );
-
-            console.log(`Found ${events.length} events in ${calendar.summary}`);
 
             // Convert to standard format
             const formattedEvents = events.map(event => ({
@@ -872,7 +868,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
 
-        console.log(`Total events found for date range: ${allEvents.length}`);
         res.json(allEvents);
       } else {
         // Get events from specific calendar

@@ -62,21 +62,18 @@ export default function Calendar() {
     staleTime: 0, // Always consider data stale
     gcTime: 0, // Don't cache data
     queryFn: async () => {
-      console.log('Starting calendar fetch for week:', getWeekRangeString(currentWeek, weekEnd));
+      // Fetching calendar events for the week
       try {
         // Get events for the entire current week from Simple Practice integration
         const weekStart = currentWeek.toISOString();
         const weekEndISO = weekEnd.toISOString();
 
-        console.log('Fetching events for week range:', weekStart, 'to', weekEndISO);
-
         // First try to get calendar events for the week range
         const weekResponse = await fetch(`/api/calendar/events?start=${encodeURIComponent(weekStart)}&end=${encodeURIComponent(weekEndISO)}`);
-        console.log('Week response status:', weekResponse.status, 'for range:', weekStart, 'to', weekEndISO);
 
         if (weekResponse.ok) {
           const weekEvents = await weekResponse.json();
-          console.log('Week events from API:', weekEvents.length);
+          // Successfully fetched events for the week
 
           if (weekEvents.length > 0) {
             return weekEvents.map((event: any) => ({
@@ -248,27 +245,7 @@ export default function Calendar() {
     return isValid;
   });
 
-  // Events loaded and converted successfully
-
-  // Show sample of events for debugging
-  if (calendarEvents.length > 0) {
-    console.log('Sample events:', calendarEvents.slice(0, 3).map(e => ({
-      title: e.title,
-      startTime: e.startTime,
-      dateString: e.startTime instanceof Date ? e.startTime.toDateString() : 'Invalid Date'
-    })));
-
-    // Show events for different weeks to help debug
-    const eventsByWeek = calendarEvents.reduce((acc, event) => {
-      const eventDate = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
-      const weekStart = getWeekStart(eventDate).toDateString();
-      if (!acc[weekStart]) acc[weekStart] = [];
-      acc[weekStart].push(event.title);
-      return acc;
-    }, {} as Record<string, string[]>);
-
-    console.log('Events by week (showing first 5 weeks):', Object.entries(eventsByWeek).slice(0, 5));
-  }
+  // Calendar events processed and organized by week
 
   // Create calendar days with events
   const calendarDays: CalendarDay[] = weekDays.map(date => {
