@@ -2,14 +2,14 @@
 export function setupGlobalErrorHandling() {
   // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
-    console.error('Unhandled promise rejection:', event.reason);
-    
     // Prevent the default browser behavior (logging to console)
     event.preventDefault();
     
-    // Show a user-friendly notification for critical errors
+    // Log a simplified error message without exposing full error objects
     if (event.reason instanceof Error && event.reason.message) {
-      console.warn('Application error caught:', event.reason.message);
+      console.warn('Application handled error:', event.reason.message);
+    } else {
+      console.warn('Application handled an error');
     }
   });
 
