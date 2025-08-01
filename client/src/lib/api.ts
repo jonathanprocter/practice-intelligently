@@ -296,4 +296,20 @@ export class ApiClient {
     const response = await apiRequest('GET', `/api/session-notes/today/${this.therapistId}`);
     return response.json();
   }
+
+  static async getCalendarConnectionStatus(): Promise<{ connected: boolean }> {
+    const response = await apiRequest('GET', '/api/oauth/is-connected');
+    return response.json();
+  }
+
+  // User profile management
+  static async getUser(userId: string): Promise<any> {
+    const response = await apiRequest('GET', `/api/users/${userId}`);
+    return response.json();
+  }
+
+  static async updateUser(userId: string, userData: any): Promise<any> {
+    const response = await apiRequest('PATCH', `/api/users/${userId}`, userData);
+    return response.json();
+  }
 }
