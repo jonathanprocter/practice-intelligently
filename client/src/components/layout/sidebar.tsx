@@ -2,10 +2,12 @@ import { Link, useLocation } from "wouter";
 import { Brain, Users, Calendar, FileText, CheckSquare, BarChart, Bot, Settings, Menu } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { ApiClient } from "@/lib/api";
 
-const navigationItems = [
+const getNavigationItems = (clientCount: number) => [
   { path: "/", label: "Dashboard", icon: BarChart },
-  { path: "/clients", label: "Clients", icon: Users, badge: "24" },
+  { path: "/clients", label: "Clients", icon: Users, badge: clientCount > 0 ? clientCount.toString() : undefined },
   { path: "/appointments", label: "Appointments", icon: Calendar },
   { path: "/calendar", label: "Calendar", icon: Calendar },
   { path: "/session-notes", label: "Session Notes", icon: FileText },
@@ -18,6 +20,15 @@ const navigationItems = [
 export default function Sidebar() {
   const [location] = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  
+  // Get real client count
+  const { data: clients } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => ApiClient.getClients(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+  
+  const navigationItems = getNavigationItems(clients?.length || 0);
 
   const isActive = (path: string) => {
     if (path === "/") return location === "/";

@@ -31,10 +31,22 @@ export default function Clients() {
   
 
 
-  const filteredClients = clients?.filter(client =>
-    `${client.firstName} ${client.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredClients = clients?.filter(client => {
+    if (!searchTerm.trim()) return true;
+    
+    const searchLower = searchTerm.toLowerCase().trim();
+    const fullName = `${client.firstName || ''} ${client.lastName || ''}`.toLowerCase();
+    const preferredName = client.preferredName?.toLowerCase() || '';
+    const email = client.email?.toLowerCase() || '';
+    const phone = client.phone?.toLowerCase() || '';
+    
+    return fullName.includes(searchLower) ||
+           preferredName.includes(searchLower) ||
+           email.includes(searchLower) ||
+           phone.includes(searchLower) ||
+           client.firstName?.toLowerCase().includes(searchLower) ||
+           client.lastName?.toLowerCase().includes(searchLower);
+  }) || [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -123,7 +135,7 @@ export default function Clients() {
               <div className="overflow-y-auto">
                 <Tabs defaultValue="real-data" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="real-data">Your Real Clients (65)</TabsTrigger>
+                    <TabsTrigger value="real-data">Your Real Clients ({clients?.length || 0})</TabsTrigger>
                     <TabsTrigger value="manual-import">Manual Import</TabsTrigger>
                   </TabsList>
                   <TabsContent value="real-data" className="mt-4">
