@@ -55,7 +55,7 @@ export interface ProgressNote {
 }
 
 export class DocumentProcessor {
-  
+
   private async _fileExists(path: string): Promise<boolean> {
     try {
       await fs.promises.access(path);
@@ -64,7 +64,7 @@ export class DocumentProcessor {
       return false;
     }
   }
-  
+
   async processDocument(filePath: string, originalName: string): Promise<ProcessedDocument> {
     const fileExtension = path.extname(originalName).toLowerCase();
     let extractedText = '';
@@ -131,20 +131,20 @@ export class DocumentProcessor {
   private async processPDF(filePath: string): Promise<string> {
     // For now, disable PDF processing to avoid import issues
     throw new Error('PDF processing is currently unavailable. Please convert your PDF to a text file (.txt) or image format (.jpg, .png) for processing.');
-    
+
     try {
       if (!await this._fileExists(filePath)) {
         throw new Error('PDF file not found');
       }
-      
+
       // Debug logging removed for production
-      
+
       const pdfjsLib = await getPdfJS();
-      
+
       // Read PDF file as buffer and convert to Uint8Array
       const pdfBuffer = await fs.promises.readFile(filePath);
       const pdfData = new Uint8Array(pdfBuffer);
-      
+
       // Parse PDF document
       const pdfDocument = await pdfjsLib.getDocument({
         data: pdfData,
@@ -152,42 +152,42 @@ export class DocumentProcessor {
         isEvalSupported: false,
         useSystemFonts: true
       }).promise;
-      
+
       let fullText = '';
-      
+
       // Extract text from each page
       for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
         try {
           console.log(`Processing PDF page ${pageNum}...`);
-          
+
           const page = await pdfDocument.getPage(pageNum);
           const textContent = await page.getTextContent();
-          
+
           let pageText = '';
           for (const item of textContent.items) {
             if ('str' in item) {
               pageText += item.str + ' ';
             }
           }
-          
+
           if (pageText.trim()) {
             fullText += `Page ${pageNum}:\n${pageText.trim()}\n\n`;
           }
-          
+
           // Clean up page
           page.cleanup();
         } catch (pageError: any) {
           console.warn(`Failed to process PDF page ${pageNum}:`, pageError.message);
         }
       }
-      
+
       // Clean up document
       pdfDocument.destroy();
-      
+
       if (fullText.trim().length === 0) {
         throw new Error('No text could be extracted from PDF. The PDF might be image-based or encrypted.');
       }
-      
+
       console.log('Successfully extracted text from PDF, length:', fullText.length);
       return fullText;
     } catch (error: any) {
@@ -235,7 +235,7 @@ export class DocumentProcessor {
         .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
         .jpeg({ quality: 80 })
         .toBuffer();
-      
+
       const base64Image = imageBuffer.toString('base64');
 
       const result = await multiModelAI.analyzeMultimodalContent(
@@ -261,7 +261,7 @@ export class DocumentProcessor {
       workbook.SheetNames.forEach(sheetName => {
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
-        
+
         extractedText += `Sheet: ${sheetName}\n`;
         (jsonData as any[]).forEach((row: any) => {
           if (Array.isArray(row)) {
@@ -287,11 +287,11 @@ export class DocumentProcessor {
         if (!await this._fileExists(filePath)) {
           return reject(new Error('CSV file not found'));
         }
-        
+
         const csvParserModule = await getCsvParser();
         const results: any[] = [];
         const stream = fs.createReadStream(filePath);
-        
+
         stream
           .pipe(csvParserModule())
           .on('data', (data) => results.push(data))
@@ -300,18 +300,18 @@ export class DocumentProcessor {
               if (results.length === 0) {
                 return reject(new Error('No data found in CSV file'));
               }
-              
+
               const headers = Object.keys(results[0] || {});
               let text = headers.join('\t') + '\n';
-              
+
               results.forEach(row => {
                 text += headers.map(header => row[header] || '').join('\t') + '\n';
               });
-              
+
               if (!text || text.trim().length === 0) {
                 return reject(new Error('No content extracted from CSV file'));
               }
-              
+
               resolve(text);
             } catch (error) {
               reject(new Error(`Failed to process CSV data: ${error instanceof Error ? error.message : 'Unknown error'}`));
@@ -330,10 +330,10 @@ export class DocumentProcessor {
     try {
       // First, try to extract from filename - this is often more reliable
       const filenameData = this.extractFromFilename(filename || '');
-      
+
       // Then analyze content for missing information
       let contentData: { clientName?: string; sessionDate?: string } = {};
-      
+
       if (content && content.trim().length > 0) {
         const analysisPrompt = `Extract client name and session date from this clinical document. 
 
@@ -355,10 +355,10 @@ ${content.substring(0, 3000)}`;
         try {
           // Clean the AI response first
           let cleanResponse = result.content.trim();
-          
+
           // Remove any markdown formatting
           cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-          
+
           // Try to parse as JSON first
           const parsed = JSON.parse(cleanResponse);
           contentData = {
@@ -369,7 +369,7 @@ ${content.substring(0, 3000)}`;
           // Fallback: extract using regex patterns from AI response
           const clientMatch = result.content.match(/(?:client.*?name|name).*?[:"]\s*([^"\n,]+)/i);
           const dateMatch = result.content.match(/(?:session.*?date|date).*?[:"]\s*([^"\n,]+)/i);
-          
+
           contentData = {
             clientName: clientMatch?.[1]?.trim().replace(/['"]/g, '') || undefined,
             sessionDate: dateMatch?.[1]?.trim().replace(/['"]/g, '') || undefined,
@@ -390,12 +390,12 @@ ${content.substring(0, 3000)}`;
 
   private extractFromFilename(filename: string): { clientName?: string; sessionDate?: string } {
     if (!filename) return {};
-    
+
     // Remove file extension and common prefixes
     let cleanName = filename
       .replace(/\.(pdf|txt|docx?|xlsx?|csv)$/i, '')
       .replace(/^(session|note|transcript|clinical|therapy)[-_\s]*/i, '');
-    
+
     // Extract dates from filename (various formats)
     const datePatterns = [
       /(\d{4}[-/]\d{1,2}[-/]\d{1,2})/,           // 2025-01-15 or 2025/01/15
@@ -406,7 +406,7 @@ ${content.substring(0, 3000)}`;
       /((jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[-_\s]*\d{1,2}[-_\s]*\d{4})/i, // jan-20-2025
       /(\b\d{4}\b)/,                             // Just year as fallback
     ];
-    
+
     let extractedDate: string | undefined;
     for (const pattern of datePatterns) {
       const match = cleanName.match(pattern);
@@ -417,7 +417,7 @@ ${content.substring(0, 3000)}`;
         break;
       }
     }
-    
+
     // Extract client name from remaining filename
     let clientName: string | undefined;
     if (cleanName.length > 0) {
@@ -426,7 +426,7 @@ ${content.substring(0, 3000)}`;
         .replace(/[-_]+/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
-      
+
       // Filter out common clinical terms that might be in filename
       const clinicalTerms = /^(notes?|session|therapy|clinical|transcript|progress|soap|treatment)$/i;
       if (!clinicalTerms.test(clientName) && clientName.length > 1) {
@@ -439,7 +439,7 @@ ${content.substring(0, 3000)}`;
         clientName = undefined;
       }
     }
-    
+
     return {
       clientName,
       sessionDate: extractedDate,
@@ -511,26 +511,26 @@ Session Date: ${sessionDate}`;
   private parseProgressNote(content: string, clientId: string, sessionDate: string): ProgressNote {
     // Clean content but preserve rich clinical information
     const cleanedContent = this.cleanContent(content);
-    
+
     // Extract title from content or create appropriate one
     const titleMatch = cleanedContent.match(/(?:^|\n).*?(?:Progress Note|Clinical Note|Comprehensive.*Note).*$/im);
     const title = titleMatch?.[0] || `Comprehensive Clinical Progress Note - ${clientId}`;
-    
+
     // Split content into meaningful paragraphs for distribution across SOAP sections
     const paragraphs = cleanedContent
       .split(/\n\s*\n/)
       .filter(p => p.trim().length > 50)
       .map(p => p.trim());
-    
+
     // Intelligently distribute content across SOAP sections based on content analysis
     const soapSections = this.distributeContentToSOAP(paragraphs, cleanedContent);
-    
+
     // Extract key insights from the comprehensive analysis
     const keyPoints = this.extractKeyInsights(cleanedContent);
-    
+
     // Extract meaningful quotes
     const significantQuotes = this.extractSignificantQuotes(cleanedContent);
-    
+
     // Generate AI tags based on content
     const aiTags = this.generateAITags(cleanedContent);
 
@@ -554,10 +554,10 @@ Session Date: ${sessionDate}`;
   private parseProgressNote_OLD(content: string, clientId: string, sessionDate: string): ProgressNote {
     // Clean content first
     const cleanedContent = this.cleanContent(content);
-    
+
     // More flexible regex patterns to match various formats
     const titleMatch = cleanedContent.match(/(?:^|\n).*?(?:Progress Note|Clinical Note|Comprehensive.*Note).*$/im);
-    
+
     // Extract meaningful clinical content using improved parsing
     const extractSectionFromContent = (textContent: string, keywords: string[]): string => {
       for (const keyword of keywords) {
@@ -567,7 +567,7 @@ Session Date: ${sessionDate}`;
           new RegExp(`${keyword}[:\\s]*([\\s\\S]*?)(?=\\n\\n|$)`, 'gis'),
           new RegExp(`${keyword}.*?\\n([\\s\\S]*?)(?=\\n[A-Z]|$)`, 'gis')
         ];
-        
+
         for (const pattern of patterns) {
           const match = textContent.match(pattern);
           if (match && match[1] && match[1].trim().length > 30) {
@@ -581,17 +581,17 @@ Session Date: ${sessionDate}`;
     console.log('=== DEBUG: Cleaned Content for Parsing ===');
     console.log(cleanedContent.substring(0, 1000));
     console.log('=== END DEBUG ===');
-    
+
     // For comprehensive AI-generated content, use intelligent parsing to extract SOAP sections
     const extractedSections = this.extractSOAPSections(cleanedContent);
-    
+
     console.log('=== DEBUG: Extracted Sections ===');
     console.log('Subjective:', extractedSections.subjective.substring(0, 200));
     console.log('Objective:', extractedSections.objective.substring(0, 200));
     console.log('Assessment:', extractedSections.assessment.substring(0, 200));
     console.log('Plan:', extractedSections.plan.substring(0, 200));
     console.log('=== END DEBUG ===');
-    
+
     // Extract key therapeutic insights as key points  
     const keyPoints = [
       'Evidence-based therapeutic modalities implemented',
@@ -599,7 +599,7 @@ Session Date: ${sessionDate}`;
       'Comprehensive clinical assessment completed',
       'Treatment planning aligned with client goals'
     ];
-    
+
     // Extract significant quotes from the content
     const significantQuotes = cleanedContent.match(/"([^"]{15,})"/g)
       ?.map(quote => quote.replace(/"/g, '').trim())
@@ -628,7 +628,7 @@ Session Date: ${sessionDate}`;
   private extractSOAPSections(content: string): any {
     // Split content into meaningful chunks
     const chunks = content.split(/\n\s*\n/).filter(chunk => chunk.trim().length > 20);
-    
+
     // Find the most clinically relevant content for each SOAP section
     const findBestMatch = (keywords: string[], fallback: string): string => {
       for (const chunk of chunks) {
@@ -639,7 +639,7 @@ Session Date: ${sessionDate}`;
           }
         }
       }
-      
+
       // If no specific match, use chunks that contain clinical language
       const clinicalChunk = chunks.find(chunk => {
         const lower = chunk.toLowerCase();
@@ -648,7 +648,7 @@ Session Date: ${sessionDate}`;
                 lower.includes('treatment') || lower.includes('clinical')) && 
                chunk.length > 100;
       });
-      
+
       return clinicalChunk ? clinicalChunk.trim().substring(0, 1200) : fallback;
     };
 
@@ -694,14 +694,14 @@ Session Date: ${sessionDate}`;
   private generateAITags(content: string): string[] {
     const tags: string[] = [];
     const lowerContent = content.toLowerCase();
-    
+
     // Therapeutic modalities
     if (lowerContent.includes('cbt') || lowerContent.includes('cognitive behavioral')) tags.push('CBT');
     if (lowerContent.includes('dbt') || lowerContent.includes('dialectical')) tags.push('DBT');
     if (lowerContent.includes('act') || lowerContent.includes('acceptance commitment')) tags.push('ACT');
     if (lowerContent.includes('mindfulness')) tags.push('Mindfulness');
     if (lowerContent.includes('emdr')) tags.push('EMDR');
-    
+
     // Presenting issues
     if (lowerContent.includes('anxiety') || lowerContent.includes('anxious')) tags.push('Anxiety');
     if (lowerContent.includes('depression') || lowerContent.includes('depressed')) tags.push('Depression');
@@ -712,14 +712,14 @@ Session Date: ${sessionDate}`;
     if (lowerContent.includes('family') || lowerContent.includes('parent')) tags.push('Family Issues');
     if (lowerContent.includes('substance') || lowerContent.includes('addiction')) tags.push('Substance Use');
     if (lowerContent.includes('sleep') || lowerContent.includes('insomnia')) tags.push('Sleep Issues');
-    
+
     // Treatment progress indicators
     if (lowerContent.includes('improvement') || lowerContent.includes('progress') || lowerContent.includes('better')) tags.push('Progress');
     if (lowerContent.includes('crisis') || lowerContent.includes('emergency') || lowerContent.includes('risk')) tags.push('Crisis');
     if (lowerContent.includes('homework') || lowerContent.includes('assignment')) tags.push('Homework');
     if (lowerContent.includes('coping') || lowerContent.includes('strategies')) tags.push('Coping Skills');
     if (lowerContent.includes('medication') || lowerContent.includes('med') || lowerContent.includes('prescription')) tags.push('Medication');
-    
+
     return tags.slice(0, 8); // Limit to 8 most relevant tags
   }
 
@@ -750,7 +750,7 @@ Session Date: ${sessionDate}`;
 
     for (const paragraph of paragraphs) {
       const lowerPara = paragraph.toLowerCase();
-      
+
       // Classify paragraph based on clinical indicators
       if (this.containsSubjectiveIndicators(lowerPara)) {
         soapContent.subjective.push(paragraph);
@@ -781,7 +781,7 @@ Session Date: ${sessionDate}`;
 
   private containsSubjectiveIndicators(text: string): boolean {
     const indicators = ['client reported', 'client stated', 'client expressed', 'client described',
-                       'presenting', 'complaint', 'concern', 'symptoms', 'feeling', 'experiencing'];
+                       'presenting', 'complaint', 'concern',                        'symptoms', 'feeling', 'experiencing'];
     return indicators.some(indicator => text.includes(indicator));
   }
 
@@ -811,11 +811,11 @@ Session Date: ${sessionDate}`;
 
   private ensureMeaningfulContent(contentArray: string[], fallbackContext: string): string {
     const joinedContent = contentArray.join('\n\n').trim();
-    
+
     if (joinedContent.length > 50) {
       return joinedContent;
     }
-    
+
     // If no specific content, create a professional clinical note
     return `${fallbackContext.charAt(0).toUpperCase() + fallbackContext.slice(1)} documented during comprehensive therapeutic session with detailed clinical analysis conducted.`;
   }
@@ -824,7 +824,7 @@ Session Date: ${sessionDate}`;
     // Extract actual insights from the AI content
     const insights = [];
     const lowerContent = content.toLowerCase();
-    
+
     // Look for therapeutic modalities mentioned
     if (lowerContent.includes('cbt') || lowerContent.includes('cognitive')) {
       insights.push('Cognitive Behavioral Therapy techniques implemented');
@@ -841,14 +841,14 @@ Session Date: ${sessionDate}`;
     if (lowerContent.includes('progress') || lowerContent.includes('improvement')) {
       insights.push('Clinical progress documented and monitored');
     }
-    
+
     // Add default insights if none found
     if (insights.length === 0) {
       insights.push('Comprehensive clinical assessment completed');
       insights.push('Evidence-based therapeutic approach maintained');
       insights.push('Treatment planning aligned with client needs');
     }
-    
+
     return insights.slice(0, 5); // Limit to 5 key insights
   }
 
@@ -858,7 +858,7 @@ Session Date: ${sessionDate}`;
       ?.map(quote => quote.replace(/"/g, '').trim())
       ?.filter(quote => quote.length > 20 && quote.length < 200)
       ?.slice(0, 5) || [];
-    
+
     return quotes;
   }
 }

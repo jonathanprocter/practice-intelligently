@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,31 @@ import { CheckCircle, XCircle, Calendar, RefreshCw, LogOut } from 'lucide-react'
 import { apiRequest } from '@/lib/queryClient';
 
 export default function OAuthTestSimple() {
+  interface TokenInfo {
+    access_token?: string;
+    refresh_token?: string;
+    expiry_date?: number;
+  }
+
+  interface CalendarEvent {
+    id: string;
+    summary: string;
+    start: { dateTime?: string; date?: string };
+    end: { dateTime?: string; date?: string };
+  }
+
+  interface DebugInfo {
+    hasTokens: boolean;
+    tokenFile: boolean;
+    credentials: boolean;
+    [key: string]: unknown;
+  }
+
+  const [tokens, setTokens] = useState<TokenInfo | null>(null);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [testLogs, setTestLogs] = useState<string[]>([]);
   const queryClient = useQueryClient();
 
@@ -44,7 +69,7 @@ export default function OAuthTestSimple() {
     try {
       const response = await fetch('/api/calendar/calendars');
       const data = await response.json();
-      
+
       if (response.ok) {
         addLog(`✅ Calendar access successful! Found ${data.length} calendars`);
         data.forEach((cal: any, index: number) => {
@@ -64,7 +89,7 @@ export default function OAuthTestSimple() {
     try {
       const response = await fetch('/api/calendar/events?timeMin=' + new Date().toISOString());
       const data = await response.json();
-      
+
       if (response.ok) {
         addLog(`✅ Events access successful! Found ${data.length} events`);
         if (data.length > 0) {
@@ -129,7 +154,7 @@ export default function OAuthTestSimple() {
                 </Badge>
               </div>
             </div>
-            
+
             <div className="flex gap-2">
               {status?.connected ? (
                 <>

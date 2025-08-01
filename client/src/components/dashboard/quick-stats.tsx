@@ -6,7 +6,7 @@ interface QuickStatsProps {
 }
 
 export default function QuickStats({ stats }: QuickStatsProps) {
-  
+
   const statItems = [
     {
       icon: Calendar,

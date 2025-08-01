@@ -8,6 +8,22 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
+interface SessionStats {
+  todaysSessions?: number;
+  completedSessions?: number;
+  upcomingSessions?: number;
+  sessionData?: Array<{
+    id: string;
+    clientName: string;
+    time: string;
+    status: string;
+  }>;
+}
+
+interface TodaysSessionsProps {
+  stats: SessionStats;
+}
+
 export default function TodaysSessions() {
   const [showUpload, setShowUpload] = useState(false);
   const { toast } = useToast();
@@ -79,14 +95,14 @@ export default function TodaysSessions() {
           </div>
         </div>
       </div>
-      
+
       {/* Document Upload Zone */}
       {showUpload && (
         <div className="px-6 pb-4">
           <DocumentUploadZone onProgressNoteGenerated={handleSessionNoteGenerated} />
         </div>
       )}
-      
+
       <div className="p-6 space-y-4">
         {sessionNotes && sessionNotes.length > 0 ? (
           sessionNotes.map((note) => (

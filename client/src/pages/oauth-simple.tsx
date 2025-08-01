@@ -2,8 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function OAuthSimple() {
-  const connectGoogle = () => {
-    console.log('Redirecting to Google OAuth...');
+  const handleOAuthRedirect = () => {
     window.location.href = '/api/auth/google';
   };
 
@@ -29,16 +28,16 @@ export default function OAuthSimple() {
           <p className="text-sm text-gray-600">
             This page provides a simple way to connect your Google Calendar.
           </p>
-          
+
           <div className="space-y-2">
-            <Button onClick={connectGoogle} className="w-full">
+            <Button onClick={handleOAuthRedirect} className="w-full">
               Connect Google Calendar
             </Button>
-            
+
             <Button onClick={testConnection} variant="outline" className="w-full">
               Test Connection Status
             </Button>
-            
+
             <Button 
               onClick={() => window.location.href = '/calendar'} 
               variant="secondary" 
@@ -47,7 +46,7 @@ export default function OAuthSimple() {
               Back to Calendar
             </Button>
           </div>
-          
+
           <div className="text-xs text-gray-500 space-y-1">
             <p><strong>Current Domain:</strong> {window.location.origin}</p>
             <p><strong>Callback URL:</strong> {window.location.origin}/api/auth/google/callback</p>

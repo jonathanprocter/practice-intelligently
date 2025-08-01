@@ -89,6 +89,26 @@ interface ImportResult {
   error?: string;
 }
 
+interface ClientImportData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  dateOfBirth?: string;
+  status?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+  };
+  emergencyContact?: {
+    name?: string;
+    phone?: string;
+    relationship?: string;
+  };
+}
+
 export function RealClientImporter() {
   const [isImporting, setIsImporting] = useState(false);
   const [progress, setProgress] = useState(0);

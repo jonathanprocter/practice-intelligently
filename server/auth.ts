@@ -49,7 +49,7 @@ const getRedirectUri = () => {
     return uri;
   }
   // For local development
-  const uri = 'http://localhost:5000/api/auth/google/callback';
+  const uri = 'http://0.0.0.0:5000/api/auth/google/callback';
   // Using localhost redirect URI
   // Debug logging removed for production
   return uri;

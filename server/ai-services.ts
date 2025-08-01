@@ -215,4 +215,3 @@ export async function generateProgressInsights(clientData: unknown): Promise<AIA
   const content = `Client progress data: ${JSON.stringify(clientData, null, 2)}`;
   return analyzeContent(content, 'progress');
 }
-`
