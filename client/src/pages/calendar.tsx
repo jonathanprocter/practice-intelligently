@@ -19,9 +19,8 @@ import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calenda
 
 export default function Calendar() {
   const [currentWeek, setCurrentWeek] = useState(() => {
-    // Start with a week that might have events - let's try January 2025
-    const startDate = new Date('2025-01-27'); // Monday of this week
-    return getWeekStart(startDate);
+    // Start with the current week to show today's events
+    return getWeekStart(new Date());
   });
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState('week');
@@ -59,9 +58,55 @@ export default function Calendar() {
   };
 
   const { data: googleEvents = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['google-calendar-events', selectedCalendarId, 'hybrid'],
+    queryKey: ['google-calendar-events'],
     queryFn: async () => {
-      // First check if Google Calendar is connected
+      console.log('Starting calendar fetch...');
+      try {
+        // Get today's events from Simple Practice integration
+        const todayResponse = await fetch('/api/oauth/events/today');
+        console.log('Response status:', todayResponse.status);
+        
+        if (todayResponse.ok) {
+          const todayEvents = await todayResponse.json();
+          console.log('Raw events from API:', todayEvents.length);
+          
+          if (todayEvents.length > 0) {
+            console.log('First event sample:', {
+              id: todayEvents[0].id,
+              summary: todayEvents[0].summary,
+              start: todayEvents[0].start
+            });
+          }
+          
+          // Convert Google Calendar events to the expected format
+          const convertedEvents = todayEvents.map((event: any) => {
+            const startTime = new Date(event.start?.dateTime || event.start?.date);
+            const endTime = new Date(event.end?.dateTime || event.end?.date);
+            
+            return {
+              id: event.id,
+              title: event.summary || 'Appointment',
+              startTime,
+              endTime,
+              location: 'Simple Practice',
+              description: event.description || '',
+              calendarId: 'simple-practice',
+              calendarName: 'Simple Practice'
+            };
+          });
+          
+          console.log('Successfully converted', convertedEvents.length, 'events');
+          return convertedEvents;
+        } else {
+          console.error('API response not ok:', todayResponse.status);
+          return [];
+        }
+      } catch (err) {
+        console.error('Calendar fetch error:', err);
+        return [];
+      }
+      
+      // Fallback: First check if Google Calendar is connected
       const statusResponse = await fetch('/api/auth/google/status');
       const status = await statusResponse.json();
       
@@ -71,7 +116,7 @@ export default function Calendar() {
         if (dbResponse.ok) {
           return dbResponse.json();
         }
-        throw new Error('Google Calendar not connected');
+        return []; // Return empty array instead of throwing error
       }
       
       // Use hybrid endpoint to get fresh data and sync to database

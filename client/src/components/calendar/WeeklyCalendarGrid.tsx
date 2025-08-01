@@ -24,6 +24,9 @@ export const WeeklyCalendarGrid = ({
   onEventClick,
   onEventMove
 }: WeeklyCalendarGridProps) => {
+  
+  console.log('Total events after conversion:', events.length);
+  console.log('Sample events:', events.slice(0, 2));
   const timeSlots = generateTimeSlots();
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
   const [dropZone, setDropZone] = useState<{date: Date, time: string} | null>(null);
