@@ -28,6 +28,11 @@ export default function Clients() {
   if (error) {
     console.error('Clients API error:', error);
   }
+  
+  // Debug: log first client to see actual data structure
+  if (clients && clients.length > 0) {
+    console.log('First client data:', clients[0]);
+  }
 
   const filteredClients = clients?.filter(client =>
     `${client.firstName} ${client.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -192,7 +197,7 @@ export default function Clients() {
                       )}
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-therapy-text/60 mb-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-therapy-text/60 mb-3">
                       {client.email && (
                         <div className="flex items-center space-x-2">
                           <Mail className="h-4 w-4" />
@@ -217,9 +222,26 @@ export default function Clients() {
                         </div>
                       )}
                       {client.gender && (
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2">  
                           <UserCheck className="h-4 w-4" />
                           <span className="capitalize">{client.gender}</span>
+                        </div>
+                      )}
+                      {client.address && typeof client.address === 'object' && (client.address as any).street && (
+                        <div className="flex items-center space-x-2 col-span-full">
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <span className="truncate">
+                            {(client.address as any).street}, {(client.address as any).city}, {(client.address as any).state} {(client.address as any).zipCode}
+                          </span>
+                        </div>
+                      )}
+                      {client.alternatePhone && (
+                        <div className="flex items-center space-x-2">
+                          <Phone className="h-4 w-4" />
+                          <span className="text-xs">{client.alternatePhone} (alt)</span>
                         </div>
                       )}
                     </div>

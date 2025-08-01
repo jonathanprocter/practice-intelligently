@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
-    queryFn: ApiClient.getDashboardStats,
+    queryFn: () => ApiClient.getDashboardStats(),
   });
 
   if (statsLoading) {
