@@ -68,7 +68,7 @@ function Router() {
           <OAuthSimple />
         </Suspense>
       </Route>
-       <Route path="/oauth-test-simple">
+      <Route path="/oauth-test-simple">
         <Suspense fallback={<div className="p-6">Loading...</div>}>
           <OAuthTestSimple />
         </Suspense>

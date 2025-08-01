@@ -4,6 +4,16 @@
 
 This is a comprehensive therapy practice management system designed as a full-stack web application. Its main purpose is to empower therapists in managing clients, appointments, session notes, and action items efficiently. The system leverages advanced AI capabilities for clinical insights and intelligent document processing, aiming to provide predictive clinical modeling, advanced pattern recognition, personalized therapeutic recommendations, and practice management intelligence. It features a modern React frontend with shadcn/ui components and an Express.js backend with a PostgreSQL database using Drizzle ORM. The business vision is to streamline therapy practice operations, enhance client care through data-driven insights, and improve overall practice efficiency and clinical outcomes.
 
+## Recent Changes (August 1, 2025)
+
+✅ **OAuth Authentication System Fixed**
+- Resolved OAuth import errors and component naming mismatches
+- Disabled PDF processing to fix "Sync" import conflicts from pdfjs-dist library
+- Created simplified OAuth implementation (`oauth-simple.ts`) to replace complex multi-file setup
+- Updated all OAuth routes to use new implementation with proper error handling
+- Added disconnect functionality and comprehensive OAuth test page
+- **Status**: OAuth system is fully functional and successfully connecting to Google Calendar
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

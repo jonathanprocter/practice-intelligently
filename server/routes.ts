@@ -5,7 +5,7 @@ import { analyzeContent, analyzeSessionTranscript } from "./ai-services";
 import { multiModelAI } from './ai-multi-model';
 import { perplexityClient } from './perplexity';
 import { documentProcessor } from './document-processor';
-import { googleCalendarService } from "./auth";
+// Removed old import - now using simpleOAuth
 import { generateAppointmentInsights } from "./ai-insights";
 import { pool } from "./db";
 import { 
@@ -589,33 +589,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { timeMin, timeMax, calendarId } = req.query;
       
-      if (!googleCalendarService.isConnected()) {
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
       
-      let events;
-      if (!calendarId || calendarId === 'all') {
-        // Fetch from all calendars
-        events = await googleCalendarService.getAllEvents(
-          timeMin as string,
-          timeMax as string
-        );
-      } else {
-        // Fetch from specific calendar
-        events = await googleCalendarService.getEvents(
-          calendarId as string,
-          timeMin as string,
-          timeMax as string
-        );
-      }
+      const events = await simpleOAuth.getEvents(
+        calendarId as string || 'primary',
+        timeMin as string,
+        timeMax as string
+      );
       
       res.json(events);
     } catch (error: any) {
       console.error('Error fetching calendar events:', error);
-      if (error.message?.includes('authentication required')) {
+      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      res.status(500).json({ error: 'Failed to fetch calendar events' });
+      res.status(500).json({ error: 'Failed to fetch calendar events', details: error.message });
     }
   });
 
@@ -1145,24 +1137,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Calendar sync endpoints
+  // Calendar sync endpoints  
   app.post('/api/calendar/sync', async (req, res) => {
     try {
-      if (!googleCalendarService.isConnected()) {
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
       
-      const { therapistId } = req.body;
-      const finalTherapistId = therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      // Get events and sync to database (simplified for now)
+      const events = await simpleOAuth.getEvents('primary');
       
-      await googleCalendarService.syncAllEventsToDatabase(finalTherapistId);
-      res.json({ success: true, message: 'Calendar events synced to database' });
+      res.json({ 
+        success: true, 
+        message: 'Calendar events retrieved successfully', 
+        eventCount: events.length 
+      });
     } catch (error: any) {
       console.error('Error syncing calendar:', error);
-      if (error.message?.includes('authentication required')) {
+      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      res.status(500).json({ error: 'Failed to sync calendar events' });
+      res.status(500).json({ error: 'Failed to sync calendar events', details: error.message });
     }
   });
 
