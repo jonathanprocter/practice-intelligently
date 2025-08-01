@@ -85,7 +85,7 @@ export default function CalendarIntegration() {
   const syncMutation = useMutation({
     mutationFn: async () => {
       setSyncingEvents(true);
-      return apiRequest('/api/calendar/sync', 'POST', {});
+      return apiRequest('POST', '/api/calendar/sync', {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
