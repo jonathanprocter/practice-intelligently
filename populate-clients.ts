@@ -113,8 +113,8 @@ const clientsData = [
 
 async function populateClients() {
   try {
-    console.log("Starting client population...");
-    console.log(`Using therapist ID: ${THERAPIST_ID}`);
+    //     console.log("Starting client population...");
+    //     console.log(`Using therapist ID: ${THERAPIST_ID}`);
 
     for (const clientData of clientsData) {
       // Check if client already exists
@@ -125,7 +125,7 @@ async function populateClients() {
         .limit(1);
 
       if (existingClient.length > 0) {
-        console.log(`Client ${clientData.firstName} ${clientData.lastName} already exists, skipping...`);
+    //         console.log(`Client ${clientData.firstName} ${clientData.lastName} already exists, skipping...`);
         continue;
       }
 
@@ -135,12 +135,12 @@ async function populateClients() {
         .values(clientData)
         .returning();
 
-      console.log(`Created client: ${insertedClient.firstName} ${insertedClient.lastName} (ID: ${insertedClient.id})`);
+    //       console.log(`Created client: ${insertedClient.firstName} ${insertedClient.lastName} (ID: ${insertedClient.id})`);
     }
 
-    console.log("Client population completed successfully!");
-    console.log(`All clients are assigned to therapist ID: ${THERAPIST_ID}`);
-    console.log("Use this therapist ID in your application to see these clients.");
+    //     console.log("Client population completed successfully!");
+    //     console.log(`All clients are assigned to therapist ID: ${THERAPIST_ID}`);
+    //     console.log("Use this therapist ID in your application to see these clients.");
     
   } catch (error) {
     console.error("Error populating clients:", error);

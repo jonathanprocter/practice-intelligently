@@ -124,7 +124,7 @@ export class DocumentProcessor {
     throw new Error('PDF processing is currently unavailable. Please convert your PDF to a text file (.txt) or image format (.jpg, .png) for processing.');
     
     try {
-      if (!fs.existsSync(filePath)) {
+      if (!await this._fileExists(filePath)) {
         throw new Error('PDF file not found');
       }
       
@@ -133,7 +133,7 @@ export class DocumentProcessor {
       const pdfjsLib = await getPdfJS();
       
       // Read PDF file as buffer and convert to Uint8Array
-      const pdfBuffer = fs.readFileSync(filePath);
+      const pdfBuffer = await fs.promises.readFile(filePath);
       const pdfData = new Uint8Array(pdfBuffer);
       
       // Parse PDF document
@@ -189,7 +189,7 @@ export class DocumentProcessor {
 
   private async processWordDocument(filePath: string): Promise<string> {
     try {
-      if (!fs.existsSync(filePath)) {
+      if (!await this._fileExists(filePath)) {
         throw new Error('Word document file not found');
       }
       const result = await mammoth.extractRawText({ path: filePath });
@@ -205,10 +205,10 @@ export class DocumentProcessor {
 
   private async processTextFile(filePath: string): Promise<string> {
     try {
-      if (!fs.existsSync(filePath)) {
+      if (!await this._fileExists(filePath)) {
         throw new Error('Text file not found');
       }
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = await fs.promises.readFile(filePath, 'utf8');
       if (!content || content.trim().length === 0) {
         throw new Error('No content found in text file');
       }
@@ -243,7 +243,7 @@ export class DocumentProcessor {
 
   private async processExcel(filePath: string): Promise<string> {
     try {
-      if (!fs.existsSync(filePath)) {
+      if (!await this._fileExists(filePath)) {
         throw new Error('Excel file not found');
       }
       const workbook = xlsx.readFile(filePath);
@@ -275,7 +275,7 @@ export class DocumentProcessor {
   private async processCSV(filePath: string): Promise<string> {
     return new Promise(async (resolve, reject) => {
       try {
-        if (!fs.existsSync(filePath)) {
+        if (!await this._fileExists(filePath)) {
           return reject(new Error('CSV file not found'));
         }
         

@@ -879,7 +879,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Clean up uploaded file
       try {
-        fs.unlinkSync(req.file.path);
+        await fs.promises.unlink(req.file.path);
       } catch (cleanupError) {
         console.warn('Failed to cleanup uploaded file:', cleanupError);
       }
@@ -902,7 +902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Clean up uploaded file in case of error
       if (req.file?.path) {
         try {
-          fs.unlinkSync(req.file.path);
+          await fs.promises.unlink(req.file.path);
         } catch (cleanupError) {
           console.warn('Failed to cleanup uploaded file after error:', cleanupError);
         }

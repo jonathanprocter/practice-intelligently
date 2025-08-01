@@ -43,7 +43,7 @@ export class GoogleCalendarAPI {
     }
   }
 
-  static async getCalendars(): Promise<any[]> {
+  static async getCalendars(): Promise<GoogleCalendarItem[]> {
     try {
       const response = await fetch('/api/calendar/calendars');
       
@@ -89,7 +89,7 @@ export class GoogleCalendarAPI {
     }
   }
 
-  static async updateEvent(eventId: string, eventData: any): Promise<GoogleCalendarEvent> {
+  static async updateEvent(eventId: string, eventData: unknown): Promise<GoogleCalendarEvent> {
     try {
       const response = await fetch(`/api/calendar/events/${eventId}`, {
         method: 'PUT',
