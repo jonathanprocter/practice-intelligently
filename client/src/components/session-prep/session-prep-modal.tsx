@@ -60,6 +60,7 @@ export default function SessionPrepModal({
   const [sessionObjectives, setSessionObjectives] = useState<string[]>([]);
   const [newObjective, setNewObjective] = useState("");
   const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
+  const [aiGeneratedQuestions, setAiGeneratedQuestions] = useState<string[]>([]);
   const [newQuestion, setNewQuestion] = useState("");
   const [psychoeducationalMaterials, setPsychoeducationalMaterials] = useState<Array<{
     title: string;
@@ -86,6 +87,8 @@ export default function SessionPrepModal({
         setFocusAreas(note.keyFocusAreas || []);
         setSessionObjectives(note.sessionObjectives || []);
         setFollowUpQuestions(note.followUpQuestions || []);
+        // Initialize AI-generated questions from saved data - assume all saved questions are AI-generated initially
+        setAiGeneratedQuestions(note.followUpQuestions || []);
         setPsychoeducationalMaterials(note.psychoeducationalMaterials || []);
       } else if (response.status === 404) {
         // No prep note exists yet
@@ -94,6 +97,7 @@ export default function SessionPrepModal({
         setFocusAreas([]);
         setSessionObjectives([]);
         setFollowUpQuestions([]);
+        setAiGeneratedQuestions([]);
         setPsychoeducationalMaterials([]);
       }
     } catch (error) {
@@ -174,7 +178,12 @@ export default function SessionPrepModal({
         
         // Update local state with new AI-generated content
         if (result.followUpQuestions) {
-          setFollowUpQuestions(result.followUpQuestions);
+          // Keep existing manual questions and add AI questions
+          setAiGeneratedQuestions(result.followUpQuestions);
+          setFollowUpQuestions(prev => [
+            ...prev.filter(q => !aiGeneratedQuestions.includes(q)), // Keep manual questions
+            ...result.followUpQuestions // Add new AI questions
+          ]);
         }
         if (result.psychoeducationalMaterials) {
           setPsychoeducationalMaterials(result.psychoeducationalMaterials);
@@ -230,6 +239,8 @@ export default function SessionPrepModal({
 
   const removeFollowUpQuestion = (question: string) => {
     setFollowUpQuestions(followUpQuestions.filter(q => q !== question));
+    // Also remove from AI generated list if it exists there
+    setAiGeneratedQuestions(prev => prev.filter(q => q !== question));
   };
 
   const addPsychoeducationalMaterial = (material: {
@@ -327,48 +338,107 @@ export default function SessionPrepModal({
           <TabsContent value="questions" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Follow-up Questions Based on Previous Sessions
+                <CardTitle className="flex items-center gap-2 justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Follow-up Questions Based on Previous Sessions
+                  </div>
+                  <Button 
+                    onClick={generateAIInsights} 
+                    disabled={isGeneratingAI}
+                    variant="outline"
+                    size="sm"
+                  >
+                    {isGeneratingAI ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Brain className="h-4 w-4 mr-2" />
+                    )}
+                    {isGeneratingAI ? 'Generating...' : 'Generate AI Questions'}
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Label>Add Follow-up Question</Label>
-                  <div className="flex gap-2 mt-1">
+                {/* Manual Question Entry */}
+                <div className="border-b pb-4">
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">Add Manual Questions</Label>
+                  <div className="flex gap-2">
                     <Input
-                      placeholder="e.g., How did the homework assignment go? Any progress with anxiety management?"
+                      placeholder="Enter your follow-up question based on client history..."
                       value={newQuestion}
                       onChange={(e) => setNewQuestion(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && addFollowUpQuestion()}
+                      className="flex-1"
                     />
-                    <Button onClick={addFollowUpQuestion} variant="outline">Add</Button>
+                    <Button onClick={addFollowUpQuestion} variant="outline" disabled={!newQuestion.trim()}>
+                      Add Question
+                    </Button>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  {followUpQuestions.map((question, index) => (
-                    <div key={index} className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-blue-900">Q{index + 1}:</p>
-                        <p className="text-sm text-blue-800">{question}</p>
+
+                {/* Display All Questions */}
+                <div className="space-y-3">
+                  {followUpQuestions.map((question, index) => {
+                    // Check if this question is AI-generated
+                    const isAIGenerated = aiGeneratedQuestions.includes(question);
+                    
+                    return (
+                      <div key={index} className={`flex items-start justify-between p-4 rounded-lg border-l-4 ${
+                        isAIGenerated 
+                          ? 'bg-blue-50 border-l-blue-400' 
+                          : 'bg-gray-50 border-l-gray-400'
+                      }`}>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            {isAIGenerated ? (
+                              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
+                                <Brain className="h-3 w-3 mr-1" />
+                                AI Generated
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">
+                                Manual Entry
+                              </Badge>
+                            )}
+                            <span className="text-xs text-gray-500">Q{index + 1}</span>
+                          </div>
+                          <p className="text-sm leading-relaxed">{question}</p>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => removeFollowUpQuestion(question)}
+                          className="text-gray-500 hover:text-red-600 ml-3 shrink-0"
+                          title="Remove question"
+                        >
+                          ×
+                        </Button>
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => removeFollowUpQuestion(question)}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        ×
-                      </Button>
+                    );
+                  })}
+                </div>
+
+                {/* Empty State */}
+                {followUpQuestions.length === 0 && (
+                  <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-center gap-4 mb-3">
+                      <FileText className="h-8 w-8 opacity-50" />
+                      <Brain className="h-8 w-8 opacity-50" />
                     </div>
-                  ))}
-                  {followUpQuestions.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">
-                      <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                      <p>Add follow-up questions to guide your session</p>
-                      <p className="text-xs mt-1">Questions that help continue where you left off</p>
-                    </div>
-                  )}
+                    <p className="font-medium">No follow-up questions yet</p>
+                    <p className="text-xs mt-2">Add questions manually above, or click "Generate AI Questions" to get suggestions based on previous sessions</p>
+                  </div>
+                )}
+
+                {/* Help Text */}
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
+                  <p className="font-medium mb-1">💡 Tips for effective follow-up questions:</p>
+                  <ul className="space-y-1 text-blue-700">
+                    <li>• Reference specific homework or goals from previous sessions</li>
+                    <li>• Ask about progress on identified challenges</li>
+                    <li>• Check in on coping strategies discussed last time</li>
+                    <li>• Explore any changes in symptoms or circumstances</li>
+                  </ul>
                 </div>
               </CardContent>
             </Card>
