@@ -56,11 +56,7 @@ function Router() {
       <Route path="/analytics" component={Analytics} />
       <Route path="/ai-insights" component={AiInsights} />
       <Route path="/settings" component={Settings} />
-      <Route path="/oauth-debug">
-        <Suspense fallback={<div className="p-6">Loading...</div>}>
-          <OAuthDebug />
-        </Suspense>
-      </Route>
+
       <Route path="/oauth-test">
         <Suspense fallback={<div className="p-6">Loading...</div>}>
           <OAuthTest />
