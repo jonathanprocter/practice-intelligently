@@ -37,6 +37,7 @@ interface ExtendedAppointment extends Appointment {
   clientInitials?: string;
   isCustomType?: boolean;
   location?: string;
+  isCalendarEvent?: boolean; // Track if this is from Google Calendar
 }
 
 export default function Appointments() {
@@ -61,14 +62,20 @@ export default function Appointments() {
   });
 
   // Transform appointments data with client info
-  const appointments: ExtendedAppointment[] = (appointmentsData || []).map((apt: Appointment) => ({
-    ...apt,
-    clientName: apt.type?.replace(' Appointment', '') || 'Unknown Client',
-    clientPhone: '+1 (555) 123-4567', // Mock data - in real app would come from client records
-    clientInitials: (apt.type?.replace(' Appointment', '') || 'UC').split(' ').map(n => n[0]).join('').substring(0, 2),
-    isCustomType: apt.type !== 'Individual Counseling',
-    location: 'Office', // Would be determined by business logic
-  }));
+  const appointments: ExtendedAppointment[] = (appointmentsData || []).map((apt: Appointment) => {
+    // Check if this is a calendar event (non-UUID ID)
+    const isCalendarEvent = apt.id && !apt.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+    
+    return {
+      ...apt,
+      clientName: apt.type?.replace(' Appointment', '') || 'Unknown Client',
+      clientPhone: '+1 (555) 123-4567', // Mock data - in real app would come from client records
+      clientInitials: (apt.type?.replace(' Appointment', '') || 'UC').split(' ').map(n => n[0]).join('').substring(0, 2),
+      isCustomType: apt.type !== 'Individual Counseling',
+      location: 'Office', // Would be determined by business logic
+      isCalendarEvent,
+    };
+  });
 
   // Enhanced filtering
   const filteredAppointments = appointments.filter(apt => 
@@ -368,6 +375,11 @@ export default function Appointments() {
                           'Individual Counseling'
                         )}
                       </span>
+                      {appointment.isCalendarEvent && (
+                        <Badge variant="outline" className="text-xs text-blue-600 border-blue-200">
+                          Calendar Event
+                        </Badge>
+                      )}
                       <div className="flex items-center gap-1 text-sm text-therapy-text/60">
                         <MapPin className="h-3 w-3" />
                         <span>{appointment.location}</span>
@@ -393,14 +405,26 @@ export default function Appointments() {
                       <Button variant="outline" size="sm" className="text-xs h-7">
                         <Edit className="h-3 w-3" />
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-xs h-7 text-red-600 hover:bg-red-50"
-                        onClick={() => deleteAppointmentMutation.mutate(appointment.id)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                      {!appointment.isCalendarEvent ? (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-xs h-7 text-red-600 hover:bg-red-50"
+                          onClick={() => deleteAppointmentMutation.mutate(appointment.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-xs h-7 text-gray-400 cursor-not-allowed"
+                          disabled
+                          title="Calendar events cannot be deleted from here"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
 
                     {/* Expanded Content */}
