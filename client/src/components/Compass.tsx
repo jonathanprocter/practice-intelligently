@@ -36,7 +36,7 @@ export function Compass({ className }: CompassProps) {
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [continuousMode, setContinuousMode] = useState(false);
   const [voiceActivation, setVoiceActivation] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState('rachel');
+  const [selectedVoice, setSelectedVoice] = useState('josh');
   const [speechRate, setSpeechRate] = useState(1.0);
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
