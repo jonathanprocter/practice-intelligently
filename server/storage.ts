@@ -454,7 +454,7 @@ export class DatabaseStorage implements IStorage {
     await db
       .update(appointments)
       .set({ 
-        sessionPrep: sessionPrep,
+        // sessionPrep: sessionPrep, // Remove this line as sessionPrep doesn't exist in schema
         updatedAt: new Date()
       })
       .where(eq(appointments.id, appointmentId));
@@ -995,7 +995,7 @@ export class DatabaseStorage implements IStorage {
     noShowRate: number;
     cancellationRate: number;
   }> {
-    const appointments = await db
+    const appointments: any[] = await db
       .select()
       .from(appointments)
       .where(eq(appointments.therapistId, therapistId));
@@ -1004,7 +1004,7 @@ export class DatabaseStorage implements IStorage {
     const noShows = appointments.filter(apt => apt.status === 'no_show').length;
     const cancelled = appointments.filter(apt => apt.status === 'cancelled').length;
 
-    const allClients = await this.getClients(therapistsId);
+    const allClients = await this.getClients(therapistId);
     const activeClients = allClients.filter(client => client.status === 'active').length;
 
     const averageSessionsPerClient = activeClients > 0 ? totalSessions / activeClients : 0;
@@ -1031,7 +1031,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(billingRecords.therapistId, therapistId));
 
     if (startDate && endDate) {
-      query = query.where(
+      query = (query as any).where(
         and(
           eq(billingRecords.therapistId, therapistId),
           gte(billingRecords.serviceDate, startDate),

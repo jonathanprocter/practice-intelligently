@@ -148,12 +148,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // Get events from all calendars, especially Simple Practice
           const calendars = await simpleOAuth.getCalendars();
-          let allEvents = [];
+          let allEvents: any[] = [];
 
           for (const calendar of calendars) {
             try {
               const events = await simpleOAuth.getEvents(
-                calendar.id,
+                calendar.id || '',
                 today.toISOString(),
                 tomorrow.toISOString()
               );
@@ -175,8 +175,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
 
               allEvents = allEvents.concat(todaysEvents);
-            } catch (calError) {
-              console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError.message);
+            } catch (calError: any) {
+              console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError?.message || calError);
             }
           }
 
@@ -200,8 +200,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 console.log(`🇺🇸 Added today's US federal holiday to dashboard: ${holiday.summary}`);
               }
             }
-          } catch (holidayError) {
-            console.warn('Could not check for US holidays in dashboard stats:', holidayError.message);
+          } catch (holidayError: any) {
+            console.warn('Could not check for US holidays in dashboard stats:', holidayError?.message || holidayError);
           }
 
           const events = allEvents;
@@ -210,19 +210,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           stats.todaysSessions = (stats.todaysSessions || 0) + events.length;
 
           // Add a flag to indicate calendar integration is active
-          stats.calendarIntegrated = true;
-          stats.calendarEvents = events.length;
+          (stats as any).calendarIntegrated = true;
+          (stats as any).calendarEvents = events.length;
         } else {
-          stats.calendarIntegrated = false;
+          (stats as any).calendarIntegrated = false;
         }
-      } catch (calendarError) {
-        console.warn('Could not fetch calendar data for dashboard stats:', calendarError.message);
-        stats.calendarIntegrated = false;
+      } catch (calendarError: any) {
+        console.warn('Could not fetch calendar data for dashboard stats:', calendarError?.message || calendarError);
+        (stats as any).calendarIntegrated = false;
       }
 
       res.json(stats);
-    } catch (error) {
-      console.error("Error fetching dashboard stats:", error);
+    } catch (error: any) {
+      console.error("Error fetching dashboard stats:", error?.message || error);
       res.status(500).json({ error: "Failed to fetch dashboard stats" });
     }
   });
@@ -716,7 +716,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         insights: [result.content],
         recommendations: ['Analysis completed using ' + result.model],
         themes: ['Clinical analysis'],
-        priority: result.confidence > 0.8 ? 'high' : 'medium',
+        priority: (result.confidence || 0) > 0.8 ? 'high' : 'medium',
         nextSteps: ['Review analysis and implement recommendations']
       };
 
@@ -749,14 +749,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Ensure we return the expected format for transcript analysis
-      if (result.content) {
+      if ((result as any).content) {
         // Transform multiModelAI response to SessionTranscriptAnalysis format
         res.json({
-          summary: result.content.substring(0, 200) + '...',
-          keyPoints: [result.content],
+          summary: (result as any).content.substring(0, 200) + '...',
+          keyPoints: [(result as any).content],
           actionItems: ['Review session insights'],
           emotionalTone: 'Analysis completed',
-          progressIndicators: ['Session analyzed using ' + result.model],
+          progressIndicators: ['Session analyzed using ' + ((result as any).model || 'AI')],
           concernFlags: []
         });
       } else {
@@ -926,12 +926,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get events from ALL calendars, especially Simple Practice
       const calendars = await simpleOAuth.getCalendars();
-      let allEvents = [];
+      let allEvents: any[] = [];
 
       for (const calendar of calendars) {
         try {
           const events = await simpleOAuth.getEvents(
-            calendar.id,
+            calendar.id || '',
             todayEastern.toISOString(),
             tomorrowEastern.toISOString()
           );
@@ -972,8 +972,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             calendarId: calendar.id
           }));
           allEvents = allEvents.concat(eventsWithCalendar);
-        } catch (calError) {
-          console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError.message);
+        } catch (calError: any) {
+          console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError?.message || calError);
         }
       }
 
@@ -1003,8 +1003,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`🇺🇸 Added today's US federal holiday: ${holiday.summary}`);
           }
         }
-      } catch (holidayError) {
-        console.warn('Could not check for US holidays:', holidayError.message);
+      } catch (holidayError: any) {
+        console.warn('Could not check for US holidays:', holidayError?.message || holidayError);
       }
 
       // Total events found across all calendars: ${allEvents.length}
