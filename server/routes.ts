@@ -2428,6 +2428,23 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   });
   // ========== AUTH API ROUTES (Auto-generated) ==========
 
+  app.get('/api/oauth/is-connected', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      const isConnected = simpleOAuth.isConnected();
+      res.json({ 
+        connected: isConnected,
+        hasTokens: isConnected,
+        service: 'google',
+        status: isConnected ? 'connected' : 'disconnected'
+      });
+    } catch (error: any) {
+      console.error('Error checking OAuth connection:', error);
+      res.status(500).json({ error: 'Failed to check OAuth connection', details: error.message });
+    }
+  });
+
   app.get('/api/auth/google/status', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
@@ -2456,6 +2473,23 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     } catch (error: any) {
       console.error('Error clearing auth tokens:', error);
       res.status(500).json({ error: 'Failed to clear auth tokens', details: error.message });
+    }
+  });
+
+  app.get('/api/auth/google', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      // Generate OAuth URL for authentication
+      const authUrl = simpleOAuth.getAuthUrl();
+      
+      res.json({ 
+        authUrl,
+        message: 'Visit this URL to authenticate with Google'
+      });
+    } catch (error: any) {
+      console.error('Error generating auth URL:', error);
+      res.status(500).json({ error: 'Failed to generate auth URL', details: error.message });
     }
   });
   // ========== DOCUMENT PROCESSING ROUTES (Auto-generated) ==========
@@ -2619,6 +2653,116 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       res.status(500).json({ error: 'Failed to get Notion page content', details: error.message });
     }
   });
+  // ========== CLIENT CHECKINS API ROUTES (Auto-generated) ==========
+
+  app.get('/api/client-checkins', async (req, res) => {
+    try {
+      const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.query;
+      
+      // Get all client check-ins for therapist
+      const checkins = await storage.getClientCheckins(therapistId as string);
+      res.json(checkins);
+    } catch (error: any) {
+      console.error('Error getting client check-ins:', error);
+      res.status(500).json({ error: 'Failed to get client check-ins', details: error.message });
+    }
+  });
+
+  app.get('/api/client-checkins/:therapistId', async (req, res) => {
+    try {
+      const { therapistId } = req.params;
+      
+      // Get client check-ins for specific therapist
+      const checkins = await storage.getClientCheckins(therapistId);
+      res.json(checkins);
+    } catch (error: any) {
+      console.error('Error getting therapist client check-ins:', error);
+      res.status(500).json({ error: 'Failed to get therapist client check-ins', details: error.message });
+    }
+  });
+
+  app.post('/api/client-checkins', async (req, res) => {
+    try {
+      const checkinData = req.body;
+      
+      if (!checkinData.clientId || !checkinData.therapistId) {
+        return res.status(400).json({ error: 'Client ID and therapist ID are required' });
+      }
+      
+      // Create new client check-in
+      const checkin = await storage.createClientCheckin({
+        ...checkinData,
+        createdAt: new Date(),
+        status: checkinData.status || 'pending'
+      });
+      
+      res.json(checkin);
+    } catch (error: any) {
+      console.error('Error creating client check-in:', error);
+      res.status(500).json({ error: 'Failed to create client check-in', details: error.message });
+    }
+  });
+
+  app.put('/api/client-checkins', async (req, res) => {
+    try {
+      const { id, ...updates } = req.body;
+      
+      if (!id) {
+        return res.status(400).json({ error: 'Check-in ID is required' });
+      }
+      
+      // Update client check-in
+      const updatedCheckin = await storage.updateClientCheckin(id, updates);
+      res.json(updatedCheckin);
+    } catch (error: any) {
+      console.error('Error updating client check-in:', error);
+      res.status(500).json({ error: 'Failed to update client check-in', details: error.message });
+    }
+  });
+
+  app.delete('/api/client-checkins', async (req, res) => {
+    try {
+      const { id } = req.body;
+      
+      if (!id) {
+        return res.status(400).json({ error: 'Check-in ID is required' });
+      }
+      
+      // Delete client check-in
+      await storage.deleteClientCheckin(id);
+      res.json({ success: true, message: 'Client check-in deleted' });
+    } catch (error: any) {
+      console.error('Error deleting client check-in:', error);
+      res.status(500).json({ error: 'Failed to delete client check-in', details: error.message });
+    }
+  });
+
+  app.post('/api/client-checkins/generate', async (req, res) => {
+    try {
+      const { clientId, therapistId, type } = req.body;
+      
+      if (!clientId || !therapistId) {
+        return res.status(400).json({ error: 'Client ID and therapist ID are required' });
+      }
+      
+      // Generate AI-powered check-in questions
+      const checkInQuestions = await multiModelAI.generateClientCheckIn({
+        clientId,
+        therapistId,
+        type: type || 'standard'
+      });
+      
+      res.json({
+        questions: checkInQuestions,
+        generatedAt: new Date().toISOString(),
+        type: type || 'standard'
+      });
+    } catch (error: any) {
+      console.error('Error generating client check-in:', error);
+      res.status(500).json({ error: 'Failed to generate client check-in', details: error.message });
+    }
+  });
+
   // ========== OTHER API ROUTES (Auto-generated) ==========
 
   app.get('/api/session-notes', async (req, res) => {
