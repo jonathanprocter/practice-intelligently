@@ -284,15 +284,11 @@ export function Compass({ className }: CompassProps) {
       };
 
       audio.onerror = (e) => {
-        console.error('Audio playback error:', e);
+        console.log('Audio playback error (handled):', e);
         setIsSpeaking(false);
         setCurrentAudio(null);
         URL.revokeObjectURL(audioUrl);
-        toast({
-          title: "Voice playback error",
-          description: "Audio file could not be played. Please try again.",
-          variant: "destructive",
-        });
+        // Don't show toast for auto-play errors, just log them
       };
 
       audio.oncanplaythrough = () => {
@@ -309,22 +305,26 @@ export function Compass({ className }: CompassProps) {
           console.log('Audio started playing successfully');
         }
       } catch (playError) {
-        console.log('Auto-play blocked or failed:', playError);
+        console.log('Auto-play blocked by browser (expected behavior)');
         // Don't throw error - just log it and continue
         // User can still manually click speaker buttons
         setIsSpeaking(false);
         setCurrentAudio(null);
         URL.revokeObjectURL(audioUrl);
+        return; // Exit early on auto-play failure
       }
       
     } catch (error) {
-      console.error('Error in speakText:', error);
+      console.log('Voice generation failed:', error);
       setIsSpeaking(false);
-      toast({
-        title: "Voice generation failed",
-        description: error instanceof Error ? error.message : "Please try again or check your connection.",
-        variant: "destructive",
-      });
+      // Only show toast for actual generation errors, not browser auto-play blocks
+      if (!error.toString().includes('play')) {
+        toast({
+          title: "Voice generation failed",
+          description: error instanceof Error ? error.message : "Please try again or check your connection.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
