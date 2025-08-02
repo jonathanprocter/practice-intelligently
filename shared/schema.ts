@@ -453,6 +453,145 @@ export const calendarEvents = pgTable("calendar_events", {
   calendarIdx: index("calendar_events_calendar_idx").on(table.googleCalendarId),
 }));
 
+// Assessment Management System Tables
+// Master assessments catalog - stores available assessment templates
+export const assessmentCatalog = pgTable("assessment_catalog", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  url: text("url").notNull(),
+  type: text("type").notNull(), // intake, progress, outcome, screening, etc.
+  category: text("category").notNull(), // anxiety, depression, trauma, substance_use, etc.
+  provider: text("provider"), // google_forms, typeform, surveymonkey, custom, etc.
+  estimatedTimeMinutes: integer("estimated_time_minutes"),
+  cptCode: text("cpt_code"), // for billing integration
+  instructions: text("instructions"),
+  scoringMethod: text("scoring_method"),
+  interpretationGuide: jsonb("interpretation_guide"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  nameIdx: index("assessment_catalog_name_idx").on(table.name),
+  typeIdx: index("assessment_catalog_type_idx").on(table.type),
+  categoryIdx: index("assessment_catalog_category_idx").on(table.category),
+  activeIdx: index("assessment_catalog_active_idx").on(table.isActive),
+}));
+
+// Client assessment assignments - tracks which assessments are assigned to which clients
+export const clientAssessments = pgTable("client_assessments", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }).notNull(),
+  assessmentCatalogId: uuid("assessment_catalog_id").references(() => assessmentCatalog.id, { onDelete: "cascade" }).notNull(),
+  therapistId: uuid("therapist_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  appointmentId: uuid("appointment_id").references(() => appointments.id, { onDelete: "set null" }),
+  status: text("status").notNull().default("assigned"), // assigned, in_progress, completed, expired, cancelled
+  assignedDate: timestamp("assigned_date").defaultNow(),
+  startedDate: timestamp("started_date"),
+  completedDate: timestamp("completed_date"),
+  dueDate: timestamp("due_date"),
+  remindersSent: integer("reminders_sent").default(0),
+  lastReminderSent: timestamp("last_reminder_sent"),
+  accessToken: text("access_token"), // for secure assessment access
+  progressPercentage: integer("progress_percentage").default(0),
+  notes: text("notes"),
+  priority: text("priority").default("normal"), // low, normal, high, urgent
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  clientIdx: index("client_assessments_client_idx").on(table.clientId),
+  statusIdx: index("client_assessments_status_idx").on(table.status),
+  therapistIdx: index("client_assessments_therapist_idx").on(table.therapistId),
+  dueDateIdx: index("client_assessments_due_date_idx").on(table.dueDate),
+  appointmentIdx: index("client_assessments_appointment_idx").on(table.appointmentId),
+}));
+
+// Assessment responses - stores actual form responses
+export const assessmentResponses = pgTable("assessment_responses", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientAssessmentId: uuid("client_assessment_id").references(() => clientAssessments.id, { onDelete: "cascade" }).notNull(),
+  responsesJson: jsonb("responses_json").notNull(),
+  rawData: jsonb("raw_data"), // original response data from external forms
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  submissionSource: text("submission_source"), // web, mobile, email_link, etc.
+  isPartialSubmission: boolean("is_partial_submission").default(false),
+  submissionDuration: integer("submission_duration"), // in minutes
+  flaggedForReview: boolean("flagged_for_review").default(false),
+  reviewNotes: text("review_notes"),
+  encryptionKey: text("encryption_key"), // for HIPAA compliance
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  clientAssessmentIdx: index("assessment_responses_client_assessment_idx").on(table.clientAssessmentId),
+  createdAtIdx: index("assessment_responses_created_at_idx").on(table.createdAt),
+  reviewIdx: index("assessment_responses_review_idx").on(table.flaggedForReview),
+}));
+
+// Assessment scores - calculated scores and interpretations
+export const assessmentScores = pgTable("assessment_scores", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientAssessmentId: uuid("client_assessment_id").references(() => clientAssessments.id, { onDelete: "cascade" }).notNull(),
+  scoreType: text("score_type").notNull(), // total, subscale, percentile, t_score, etc.
+  scoreName: text("score_name").notNull(), // Depression, Anxiety, Total Score, etc.
+  scoreValue: decimal("score_value", { precision: 10, scale: 3 }).notNull(),
+  maxPossibleScore: decimal("max_possible_score", { precision: 10, scale: 3 }),
+  percentile: decimal("percentile", { precision: 5, scale: 2 }),
+  interpretation: text("interpretation"), // severe, moderate, mild, minimal, etc.
+  riskLevel: text("risk_level"), // low, moderate, high, critical
+  recommendedActions: jsonb("recommended_actions"),
+  comparisonData: jsonb("comparison_data"), // historical scores, norms, etc.
+  confidenceInterval: jsonb("confidence_interval"),
+  calculatedAt: timestamp("calculated_at").defaultNow(),
+  validatedBy: uuid("validated_by").references(() => users.id),
+  validatedAt: timestamp("validated_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  clientAssessmentIdx: index("assessment_scores_client_assessment_idx").on(table.clientAssessmentId),
+  scoreTypeIdx: index("assessment_scores_score_type_idx").on(table.scoreType),
+  riskLevelIdx: index("assessment_scores_risk_level_idx").on(table.riskLevel),
+}));
+
+// Assessment packages - groups of assessments commonly assigned together
+export const assessmentPackages = pgTable("assessment_packages", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  category: text("category"), // intake_battery, progress_monitoring, outcome_measures, etc.
+  assessmentIds: jsonb("assessment_ids").notNull(), // array of assessment_catalog ids
+  defaultOrder: jsonb("default_order"), // order to present assessments
+  estimatedTotalTime: integer("estimated_total_time"), // in minutes
+  isActive: boolean("is_active").default(true),
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  nameIdx: index("assessment_packages_name_idx").on(table.name),
+  categoryIdx: index("assessment_packages_category_idx").on(table.category),
+  activeIdx: index("assessment_packages_active_idx").on(table.isActive),
+}));
+
+// Assessment audit log - tracks all assessment-related activities for HIPAA compliance
+export const assessmentAuditLog = pgTable("assessment_audit_log", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id),
+  clientId: uuid("client_id").references(() => clients.id),
+  clientAssessmentId: uuid("client_assessment_id").references(() => clientAssessments.id),
+  action: text("action").notNull(), // assigned, started, completed, viewed, exported, deleted, etc.
+  entityType: text("entity_type").notNull(), // assessment, response, score, package
+  entityId: text("entity_id").notNull(),
+  details: jsonb("details"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  sessionId: text("session_id"),
+  timestamp: timestamp("timestamp").defaultNow(),
+}, (table) => ({
+  userIdx: index("assessment_audit_log_user_idx").on(table.userId),
+  clientIdx: index("assessment_audit_log_client_idx").on(table.clientId),
+  actionIdx: index("assessment_audit_log_action_idx").on(table.action),
+  timestampIdx: index("assessment_audit_log_timestamp_idx").on(table.timestamp),
+}));
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   clients: many(clients),
@@ -650,6 +789,72 @@ export const compassMemoryRelations = relations(compassMemory, ({ one }) => ({
   }),
 }));
 
+// Assessment Management System Relations
+export const assessmentCatalogRelations = relations(assessmentCatalog, ({ many }) => ({
+  clientAssessments: many(clientAssessments),
+}));
+
+export const clientAssessmentsRelations = relations(clientAssessments, ({ one, many }) => ({
+  client: one(clients, {
+    fields: [clientAssessments.clientId],
+    references: [clients.id],
+  }),
+  assessmentCatalog: one(assessmentCatalog, {
+    fields: [clientAssessments.assessmentCatalogId],
+    references: [assessmentCatalog.id],
+  }),
+  therapist: one(users, {
+    fields: [clientAssessments.therapistId],
+    references: [users.id],
+  }),
+  appointment: one(appointments, {
+    fields: [clientAssessments.appointmentId],
+    references: [appointments.id],
+  }),
+  responses: many(assessmentResponses),
+  scores: many(assessmentScores),
+}));
+
+export const assessmentResponsesRelations = relations(assessmentResponses, ({ one }) => ({
+  clientAssessment: one(clientAssessments, {
+    fields: [assessmentResponses.clientAssessmentId],
+    references: [clientAssessments.id],
+  }),
+}));
+
+export const assessmentScoresRelations = relations(assessmentScores, ({ one }) => ({
+  clientAssessment: one(clientAssessments, {
+    fields: [assessmentScores.clientAssessmentId],
+    references: [clientAssessments.id],
+  }),
+  validatedBy: one(users, {
+    fields: [assessmentScores.validatedBy],
+    references: [users.id],
+  }),
+}));
+
+export const assessmentPackagesRelations = relations(assessmentPackages, ({ one }) => ({
+  createdBy: one(users, {
+    fields: [assessmentPackages.createdBy],
+    references: [users.id],
+  }),
+}));
+
+export const assessmentAuditLogRelations = relations(assessmentAuditLog, ({ one }) => ({
+  user: one(users, {
+    fields: [assessmentAuditLog.userId],
+    references: [users.id],
+  }),
+  client: one(clients, {
+    fields: [assessmentAuditLog.clientId],
+    references: [clients.id],
+  }),
+  clientAssessment: one(clientAssessments, {
+    fields: [assessmentAuditLog.clientAssessmentId],
+    references: [clientAssessments.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -759,6 +964,43 @@ export const insertCompassMemorySchema = createInsertSchema(compassMemory).omit(
   updatedAt: true,
 });
 
+// Assessment Management System Insert Schemas
+export const insertAssessmentCatalogSchema = createInsertSchema(assessmentCatalog).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertClientAssessmentSchema = createInsertSchema(clientAssessments).omit({
+  id: true,
+  assignedDate: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAssessmentResponseSchema = createInsertSchema(assessmentResponses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAssessmentScoreSchema = createInsertSchema(assessmentScores).omit({
+  id: true,
+  calculatedAt: true,
+  createdAt: true,
+});
+
+export const insertAssessmentPackageSchema = createInsertSchema(assessmentPackages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAssessmentAuditLogSchema = createInsertSchema(assessmentAuditLog).omit({
+  id: true,
+  timestamp: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -798,3 +1040,17 @@ export type CompassConversation = typeof compassConversations.$inferSelect;
 export type InsertCompassConversation = z.infer<typeof insertCompassConversationSchema>;
 export type CompassMemory = typeof compassMemory.$inferSelect;
 export type InsertCompassMemory = z.infer<typeof insertCompassMemorySchema>;
+
+// Assessment Management System Types
+export type AssessmentCatalog = typeof assessmentCatalog.$inferSelect;
+export type InsertAssessmentCatalog = z.infer<typeof insertAssessmentCatalogSchema>;
+export type ClientAssessment = typeof clientAssessments.$inferSelect;
+export type InsertClientAssessment = z.infer<typeof insertClientAssessmentSchema>;
+export type AssessmentResponse = typeof assessmentResponses.$inferSelect;
+export type InsertAssessmentResponse = z.infer<typeof insertAssessmentResponseSchema>;
+export type AssessmentScore = typeof assessmentScores.$inferSelect;
+export type InsertAssessmentScore = z.infer<typeof insertAssessmentScoreSchema>;
+export type AssessmentPackage = typeof assessmentPackages.$inferSelect;
+export type InsertAssessmentPackage = z.infer<typeof insertAssessmentPackageSchema>;
+export type AssessmentAuditLog = typeof assessmentAuditLog.$inferSelect;
+export type InsertAssessmentAuditLog = z.infer<typeof insertAssessmentAuditLogSchema>;

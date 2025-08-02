@@ -18,6 +18,7 @@ import AiInsights from "@/pages/ai-insights";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 import { ProgressNotesPage } from "@/pages/progress-notes";
+import Assessments from "@/pages/assessments";
 import { lazy, Suspense } from "react";
 
 
@@ -59,6 +60,7 @@ function Router() {
       <Route path="/oauth/debug" component={OAuthDebug} />
       <Route path="/session-notes" component={SessionNotes} />
       <Route path="/progress-notes" component={ProgressNotesPage} />
+      <Route path="/assessments" component={Assessments} />
       <Route path="/client-checkins" component={ClientCheckins} />
       <Route path="/action-items" component={ActionItems} />
       <Route path="/analytics" component={Analytics} />

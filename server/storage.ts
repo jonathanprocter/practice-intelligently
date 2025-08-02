@@ -2,6 +2,7 @@ import {
   users, clients, appointments, sessionNotes, sessionPrepNotes, clientCheckins, actionItems, treatmentPlans, aiInsights,
   billingRecords, assessments, progressNotes, medications, communicationLogs, documents, auditLogs,
   compassConversations, compassMemory,
+  assessmentCatalog, clientAssessments, assessmentResponses, assessmentScores, assessmentPackages, assessmentAuditLog,
   type User, type InsertUser, type Client, type InsertClient, type Appointment, type InsertAppointment,
   type SessionNote, type InsertSessionNote, type SessionPrepNote, type InsertSessionPrepNote, 
   type ClientCheckin, type InsertClientCheckin, type ActionItem, type InsertActionItem,
@@ -10,7 +11,10 @@ import {
   type ProgressNote, type InsertProgressNote, type Medication, type InsertMedication,
   type CommunicationLog, type InsertCommunicationLog, type Document, type InsertDocument,
   type AuditLog, type InsertAuditLog, type CompassConversation, type InsertCompassConversation,
-  type CompassMemory, type InsertCompassMemory
+  type CompassMemory, type InsertCompassMemory,
+  type AssessmentCatalog, type InsertAssessmentCatalog, type ClientAssessment, type InsertClientAssessment,
+  type AssessmentResponse, type InsertAssessmentResponse, type AssessmentScore, type InsertAssessmentScore,
+  type AssessmentPackage, type InsertAssessmentPackage, type AssessmentAuditLog, type InsertAssessmentAuditLog
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, desc, and, gte, lte, count, like, or, sql } from "drizzle-orm";
@@ -169,6 +173,51 @@ export interface IStorage {
   setCompassMemory(memory: InsertCompassMemory): Promise<CompassMemory>;
   getCompassMemory(therapistId: string, contextType: string, contextKey?: string): Promise<CompassMemory[]>;
   updateCompassMemoryAccess(id: string): Promise<CompassMemory>;
+
+  // Assessment Management System methods
+  
+  // Assessment Catalog methods
+  getAssessmentCatalog(): Promise<AssessmentCatalog[]>;
+  getAssessmentCatalogByCategory(category: string): Promise<AssessmentCatalog[]>;
+  getAssessmentCatalogItem(id: string): Promise<AssessmentCatalog | undefined>;
+  createAssessmentCatalogItem(item: InsertAssessmentCatalog): Promise<AssessmentCatalog>;
+  updateAssessmentCatalogItem(id: string, item: Partial<AssessmentCatalog>): Promise<AssessmentCatalog>;
+  deactivateAssessmentCatalogItem(id: string): Promise<AssessmentCatalog>;
+
+  // Client Assessment methods
+  getClientAssessments(clientId: string): Promise<ClientAssessment[]>;
+  getTherapistAssignedAssessments(therapistId: string, status?: string): Promise<ClientAssessment[]>;
+  getClientAssessment(id: string): Promise<ClientAssessment | undefined>;
+  assignAssessmentToClient(assignment: InsertClientAssessment): Promise<ClientAssessment>;
+  updateClientAssessment(id: string, update: Partial<ClientAssessment>): Promise<ClientAssessment>;
+  startClientAssessment(id: string): Promise<ClientAssessment>;
+  completeClientAssessment(id: string, completedDate: Date): Promise<ClientAssessment>;
+  sendAssessmentReminder(id: string): Promise<ClientAssessment>;
+
+  // Assessment Response methods
+  getAssessmentResponses(clientAssessmentId: string): Promise<AssessmentResponse[]>;
+  getAssessmentResponse(id: string): Promise<AssessmentResponse | undefined>;
+  createAssessmentResponse(response: InsertAssessmentResponse): Promise<AssessmentResponse>;
+  updateAssessmentResponse(id: string, response: Partial<AssessmentResponse>): Promise<AssessmentResponse>;
+
+  // Assessment Score methods
+  getAssessmentScores(clientAssessmentId: string): Promise<AssessmentScore[]>;
+  getAssessmentScore(id: string): Promise<AssessmentScore | undefined>;
+  createAssessmentScore(score: InsertAssessmentScore): Promise<AssessmentScore>;
+  updateAssessmentScore(id: string, score: Partial<AssessmentScore>): Promise<AssessmentScore>;
+  validateAssessmentScore(id: string, validatedBy: string): Promise<AssessmentScore>;
+
+  // Assessment Package methods
+  getAssessmentPackages(): Promise<AssessmentPackage[]>;
+  getAssessmentPackage(id: string): Promise<AssessmentPackage | undefined>;
+  createAssessmentPackage(pkg: InsertAssessmentPackage): Promise<AssessmentPackage>;
+  updateAssessmentPackage(id: string, pkg: Partial<AssessmentPackage>): Promise<AssessmentPackage>;
+  deactivateAssessmentPackage(id: string): Promise<AssessmentPackage>;
+
+  // Assessment Audit methods
+  createAssessmentAuditLog(log: InsertAssessmentAuditLog): Promise<AssessmentAuditLog>;
+  getAssessmentAuditLogs(entityType: string, entityId: string): Promise<AssessmentAuditLog[]>;
+  getClientAssessmentAuditLogs(clientAssessmentId: string): Promise<AssessmentAuditLog[]>;
   getCompassLearningContext(therapistId: string): Promise<{
     preferences: any;
     patterns: any;
@@ -2664,6 +2713,239 @@ Jonathan`,
         frequentQueries: {}
       };
     }
+  }
+
+  // Assessment Management System Implementation
+
+  // Assessment Catalog methods
+  async getAssessmentCatalog(): Promise<AssessmentCatalog[]> {
+    return await db.select().from(assessmentCatalog).where(eq(assessmentCatalog.isActive, true));
+  }
+
+  async getAssessmentCatalogByCategory(category: string): Promise<AssessmentCatalog[]> {
+    return await db.select().from(assessmentCatalog)
+      .where(and(eq(assessmentCatalog.category, category), eq(assessmentCatalog.isActive, true)));
+  }
+
+  async getAssessmentCatalogItem(id: string): Promise<AssessmentCatalog | undefined> {
+    const [item] = await db.select().from(assessmentCatalog).where(eq(assessmentCatalog.id, id));
+    return item || undefined;
+  }
+
+  async createAssessmentCatalogItem(item: InsertAssessmentCatalog): Promise<AssessmentCatalog> {
+    const [newItem] = await db.insert(assessmentCatalog).values(item).returning();
+    return newItem;
+  }
+
+  async updateAssessmentCatalogItem(id: string, item: Partial<AssessmentCatalog>): Promise<AssessmentCatalog> {
+    const [updatedItem] = await db
+      .update(assessmentCatalog)
+      .set({ ...item, updatedAt: new Date() })
+      .where(eq(assessmentCatalog.id, id))
+      .returning();
+    return updatedItem;
+  }
+
+  async deactivateAssessmentCatalogItem(id: string): Promise<AssessmentCatalog> {
+    return await this.updateAssessmentCatalogItem(id, { isActive: false });
+  }
+
+  // Client Assessment methods
+  async getClientAssessments(clientId: string): Promise<ClientAssessment[]> {
+    return await db.select().from(clientAssessments)
+      .where(eq(clientAssessments.clientId, clientId))
+      .orderBy(desc(clientAssessments.assignedDate));
+  }
+
+  async getTherapistAssignedAssessments(therapistId: string, status?: string): Promise<ClientAssessment[]> {
+    const conditions = [eq(clientAssessments.therapistId, therapistId)];
+    if (status) {
+      conditions.push(eq(clientAssessments.status, status));
+    }
+    return await db.select().from(clientAssessments)
+      .where(and(...conditions))
+      .orderBy(desc(clientAssessments.assignedDate));
+  }
+
+  async getClientAssessment(id: string): Promise<ClientAssessment | undefined> {
+    const [assessment] = await db.select().from(clientAssessments).where(eq(clientAssessments.id, id));
+    return assessment || undefined;
+  }
+
+  async assignAssessmentToClient(assignment: InsertClientAssessment): Promise<ClientAssessment> {
+    const [newAssignment] = await db.insert(clientAssessments).values(assignment).returning();
+    
+    // Create audit log
+    await this.createAssessmentAuditLog({
+      userId: assignment.therapistId,
+      clientId: assignment.clientId,
+      clientAssessmentId: newAssignment.id,
+      action: 'assign',
+      entityType: 'client_assessment',
+      entityId: newAssignment.id,
+      details: { assessmentCatalogId: assignment.assessmentCatalogId }
+    });
+    
+    return newAssignment;
+  }
+
+  async updateClientAssessment(id: string, update: Partial<ClientAssessment>): Promise<ClientAssessment> {
+    const [updatedAssessment] = await db
+      .update(clientAssessments)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(clientAssessments.id, id))
+      .returning();
+    return updatedAssessment;
+  }
+
+  async startClientAssessment(id: string): Promise<ClientAssessment> {
+    return await this.updateClientAssessment(id, { 
+      status: 'in_progress', 
+      startedDate: new Date() 
+    });
+  }
+
+  async completeClientAssessment(id: string, completedDate: Date): Promise<ClientAssessment> {
+    return await this.updateClientAssessment(id, { 
+      status: 'completed', 
+      completedDate,
+      progressPercentage: 100
+    });
+  }
+
+  async sendAssessmentReminder(id: string): Promise<ClientAssessment> {
+    const assessment = await this.getClientAssessment(id);
+    if (!assessment) throw new Error('Assessment not found');
+    
+    return await this.updateClientAssessment(id, {
+      remindersSent: (assessment.remindersSent || 0) + 1,
+      lastReminderSent: new Date()
+    });
+  }
+
+  // Assessment Response methods
+  async getAssessmentResponses(clientAssessmentId: string): Promise<AssessmentResponse[]> {
+    return await db.select().from(assessmentResponses)
+      .where(eq(assessmentResponses.clientAssessmentId, clientAssessmentId))
+      .orderBy(desc(assessmentResponses.createdAt));
+  }
+
+  async getAssessmentResponse(id: string): Promise<AssessmentResponse | undefined> {
+    const [response] = await db.select().from(assessmentResponses).where(eq(assessmentResponses.id, id));
+    return response || undefined;
+  }
+
+  async createAssessmentResponse(response: InsertAssessmentResponse): Promise<AssessmentResponse> {
+    const [newResponse] = await db.insert(assessmentResponses).values(response).returning();
+    
+    // Create audit log
+    await this.createAssessmentAuditLog({
+      clientAssessmentId: response.clientAssessmentId,
+      action: 'submit_response',
+      entityType: 'assessment_response',
+      entityId: newResponse.id,
+      details: { isPartialSubmission: response.isPartialSubmission }
+    });
+    
+    return newResponse;
+  }
+
+  async updateAssessmentResponse(id: string, response: Partial<AssessmentResponse>): Promise<AssessmentResponse> {
+    const [updatedResponse] = await db
+      .update(assessmentResponses)
+      .set({ ...response, updatedAt: new Date() })
+      .where(eq(assessmentResponses.id, id))
+      .returning();
+    return updatedResponse;
+  }
+
+  // Assessment Score methods
+  async getAssessmentScores(clientAssessmentId: string): Promise<AssessmentScore[]> {
+    return await db.select().from(assessmentScores)
+      .where(eq(assessmentScores.clientAssessmentId, clientAssessmentId))
+      .orderBy(desc(assessmentScores.calculatedAt));
+  }
+
+  async getAssessmentScore(id: string): Promise<AssessmentScore | undefined> {
+    const [score] = await db.select().from(assessmentScores).where(eq(assessmentScores.id, id));
+    return score || undefined;
+  }
+
+  async createAssessmentScore(score: InsertAssessmentScore): Promise<AssessmentScore> {
+    const [newScore] = await db.insert(assessmentScores).values(score).returning();
+    
+    // Create audit log
+    await this.createAssessmentAuditLog({
+      clientAssessmentId: score.clientAssessmentId,
+      action: 'calculate_score',
+      entityType: 'assessment_score',
+      entityId: newScore.id,
+      details: { scoreType: score.scoreType, scoreValue: score.scoreValue }
+    });
+    
+    return newScore;
+  }
+
+  async updateAssessmentScore(id: string, score: Partial<AssessmentScore>): Promise<AssessmentScore> {
+    const [updatedScore] = await db
+      .update(assessmentScores)
+      .set(score)
+      .where(eq(assessmentScores.id, id))
+      .returning();
+    return updatedScore;
+  }
+
+  async validateAssessmentScore(id: string, validatedBy: string): Promise<AssessmentScore> {
+    return await this.updateAssessmentScore(id, {
+      validatedBy,
+      validatedAt: new Date()
+    });
+  }
+
+  // Assessment Package methods
+  async getAssessmentPackages(): Promise<AssessmentPackage[]> {
+    return await db.select().from(assessmentPackages).where(eq(assessmentPackages.isActive, true));
+  }
+
+  async getAssessmentPackage(id: string): Promise<AssessmentPackage | undefined> {
+    const [pkg] = await db.select().from(assessmentPackages).where(eq(assessmentPackages.id, id));
+    return pkg || undefined;
+  }
+
+  async createAssessmentPackage(pkg: InsertAssessmentPackage): Promise<AssessmentPackage> {
+    const [newPackage] = await db.insert(assessmentPackages).values(pkg).returning();
+    return newPackage;
+  }
+
+  async updateAssessmentPackage(id: string, pkg: Partial<AssessmentPackage>): Promise<AssessmentPackage> {
+    const [updatedPackage] = await db
+      .update(assessmentPackages)
+      .set({ ...pkg, updatedAt: new Date() })
+      .where(eq(assessmentPackages.id, id))
+      .returning();
+    return updatedPackage;
+  }
+
+  async deactivateAssessmentPackage(id: string): Promise<AssessmentPackage> {
+    return await this.updateAssessmentPackage(id, { isActive: false });
+  }
+
+  // Assessment Audit methods
+  async createAssessmentAuditLog(log: InsertAssessmentAuditLog): Promise<AssessmentAuditLog> {
+    const [newLog] = await db.insert(assessmentAuditLog).values(log).returning();
+    return newLog;
+  }
+
+  async getAssessmentAuditLogs(entityType: string, entityId: string): Promise<AssessmentAuditLog[]> {
+    return await db.select().from(assessmentAuditLog)
+      .where(and(eq(assessmentAuditLog.entityType, entityType), eq(assessmentAuditLog.entityId, entityId)))
+      .orderBy(desc(assessmentAuditLog.timestamp));
+  }
+
+  async getClientAssessmentAuditLogs(clientAssessmentId: string): Promise<AssessmentAuditLog[]> {
+    return await db.select().from(assessmentAuditLog)
+      .where(eq(assessmentAuditLog.clientAssessmentId, clientAssessmentId))
+      .orderBy(desc(assessmentAuditLog.timestamp));
   }
 }
 

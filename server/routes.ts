@@ -10,7 +10,9 @@ import { generateAppointmentInsights } from "./ai-insights";
 import { pool } from "./db";
 import { 
   insertClientSchema, insertAppointmentSchema, insertSessionNoteSchema, 
-  insertActionItemSchema, insertTreatmentPlanSchema 
+  insertActionItemSchema, insertTreatmentPlanSchema,
+  insertAssessmentCatalogSchema, insertClientAssessmentSchema, insertAssessmentResponseSchema,
+  insertAssessmentScoreSchema, insertAssessmentPackageSchema
 } from "@shared/schema";
 import { z } from "zod";
 import { randomUUID } from 'crypto';
@@ -1319,6 +1321,262 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to generate speech" });
     }
   });
+
+  // ========== ASSESSMENT MANAGEMENT SYSTEM API ROUTES ==========
+
+  // Assessment Catalog routes
+  app.get("/api/assessment-catalog", async (req, res) => {
+    try {
+      const { category } = req.query;
+      let catalogItems;
+      
+      if (category && typeof category === 'string') {
+        catalogItems = await storage.getAssessmentCatalogByCategory(category);
+      } else {
+        catalogItems = await storage.getAssessmentCatalog();
+      }
+      
+      res.json(catalogItems);
+    } catch (error: any) {
+      console.error('Error fetching assessment catalog:', error);
+      res.status(500).json({ error: 'Failed to fetch assessment catalog' });
+    }
+  });
+
+  app.get("/api/assessment-catalog/:id", async (req, res) => {
+    try {
+      const item = await storage.getAssessmentCatalogItem(req.params.id);
+      if (!item) {
+        return res.status(404).json({ error: 'Assessment catalog item not found' });
+      }
+      res.json(item);
+    } catch (error: any) {
+      console.error('Error fetching assessment catalog item:', error);
+      res.status(500).json({ error: 'Failed to fetch assessment catalog item' });
+    }
+  });
+
+  app.post("/api/assessment-catalog", async (req, res) => {
+    try {
+      const validatedData = insertAssessmentCatalogSchema.parse(req.body);
+      const item = await storage.createAssessmentCatalogItem(validatedData);
+      res.status(201).json(item);
+    } catch (error: any) {
+      console.error('Error creating assessment catalog item:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: 'Invalid data', details: error.errors });
+      }
+      res.status(500).json({ error: 'Failed to create assessment catalog item' });
+    }
+  });
+
+  app.patch("/api/assessment-catalog/:id", async (req, res) => {
+    try {
+      const item = await storage.updateAssessmentCatalogItem(req.params.id, req.body);
+      res.json(item);
+    } catch (error: any) {
+      console.error('Error updating assessment catalog item:', error);
+      res.status(500).json({ error: 'Failed to update assessment catalog item' });
+    }
+  });
+
+  // Client Assessment routes
+  app.get("/api/client-assessments/client/:clientId", async (req, res) => {
+    try {
+      const assessments = await storage.getClientAssessments(req.params.clientId);
+      res.json(assessments);
+    } catch (error: any) {
+      console.error('Error fetching client assessments:', error);
+      res.status(500).json({ error: 'Failed to fetch client assessments' });
+    }
+  });
+
+  app.get("/api/client-assessments/therapist/:therapistId", async (req, res) => {
+    try {
+      const { status } = req.query;
+      const assessments = await storage.getTherapistAssignedAssessments(
+        req.params.therapistId, 
+        status as string
+      );
+      res.json(assessments);
+    } catch (error: any) {
+      console.error('Error fetching therapist assessments:', error);
+      res.status(500).json({ error: 'Failed to fetch therapist assessments' });
+    }
+  });
+
+  app.get("/api/client-assessments/:id", async (req, res) => {
+    try {
+      const assessment = await storage.getClientAssessment(req.params.id);
+      if (!assessment) {
+        return res.status(404).json({ error: 'Client assessment not found' });
+      }
+      res.json(assessment);
+    } catch (error: any) {
+      console.error('Error fetching client assessment:', error);
+      res.status(500).json({ error: 'Failed to fetch client assessment' });
+    }
+  });
+
+  app.post("/api/client-assessments", async (req, res) => {
+    try {
+      const validatedData = insertClientAssessmentSchema.parse(req.body);
+      const assignment = await storage.assignAssessmentToClient(validatedData);
+      res.status(201).json(assignment);
+    } catch (error: any) {
+      console.error('Error assigning assessment to client:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: 'Invalid data', details: error.errors });
+      }
+      res.status(500).json({ error: 'Failed to assign assessment to client' });
+    }
+  });
+
+  app.patch("/api/client-assessments/:id", async (req, res) => {
+    try {
+      const assessment = await storage.updateClientAssessment(req.params.id, req.body);
+      res.json(assessment);
+    } catch (error: any) {
+      console.error('Error updating client assessment:', error);
+      res.status(500).json({ error: 'Failed to update client assessment' });
+    }
+  });
+
+  app.patch("/api/client-assessments/:id/start", async (req, res) => {
+    try {
+      const assessment = await storage.startClientAssessment(req.params.id);
+      res.json(assessment);
+    } catch (error: any) {
+      console.error('Error starting client assessment:', error);
+      res.status(500).json({ error: 'Failed to start client assessment' });
+    }
+  });
+
+  app.patch("/api/client-assessments/:id/complete", async (req, res) => {
+    try {
+      const { completedDate } = req.body;
+      const assessment = await storage.completeClientAssessment(
+        req.params.id, 
+        new Date(completedDate || Date.now())
+      );
+      res.json(assessment);
+    } catch (error: any) {
+      console.error('Error completing client assessment:', error);
+      res.status(500).json({ error: 'Failed to complete client assessment' });
+    }
+  });
+
+  app.patch("/api/client-assessments/:id/remind", async (req, res) => {
+    try {
+      const assessment = await storage.sendAssessmentReminder(req.params.id);
+      res.json(assessment);
+    } catch (error: any) {
+      console.error('Error sending assessment reminder:', error);
+      res.status(500).json({ error: 'Failed to send assessment reminder' });
+    }
+  });
+
+  // Assessment Response routes
+  app.get("/api/assessment-responses/assessment/:clientAssessmentId", async (req, res) => {
+    try {
+      const responses = await storage.getAssessmentResponses(req.params.clientAssessmentId);
+      res.json(responses);
+    } catch (error: any) {
+      console.error('Error fetching assessment responses:', error);
+      res.status(500).json({ error: 'Failed to fetch assessment responses' });
+    }
+  });
+
+  app.post("/api/assessment-responses", async (req, res) => {
+    try {
+      const validatedData = insertAssessmentResponseSchema.parse(req.body);
+      const response = await storage.createAssessmentResponse(validatedData);
+      res.status(201).json(response);
+    } catch (error: any) {
+      console.error('Error creating assessment response:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: 'Invalid data', details: error.errors });
+      }
+      res.status(500).json({ error: 'Failed to create assessment response' });
+    }
+  });
+
+  // Assessment Score routes
+  app.get("/api/assessment-scores/assessment/:clientAssessmentId", async (req, res) => {
+    try {
+      const scores = await storage.getAssessmentScores(req.params.clientAssessmentId);
+      res.json(scores);
+    } catch (error: any) {
+      console.error('Error fetching assessment scores:', error);
+      res.status(500).json({ error: 'Failed to fetch assessment scores' });
+    }
+  });
+
+  app.post("/api/assessment-scores", async (req, res) => {
+    try {
+      const validatedData = insertAssessmentScoreSchema.parse(req.body);
+      const score = await storage.createAssessmentScore(validatedData);
+      res.status(201).json(score);
+    } catch (error: any) {
+      console.error('Error creating assessment score:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: 'Invalid data', details: error.errors });
+      }
+      res.status(500).json({ error: 'Failed to create assessment score' });
+    }
+  });
+
+  app.patch("/api/assessment-scores/:id/validate", async (req, res) => {
+    try {
+      const { validatedBy } = req.body;
+      if (!validatedBy) {
+        return res.status(400).json({ error: 'validatedBy is required' });
+      }
+      const score = await storage.validateAssessmentScore(req.params.id, validatedBy);
+      res.json(score);
+    } catch (error: any) {
+      console.error('Error validating assessment score:', error);
+      res.status(500).json({ error: 'Failed to validate assessment score' });
+    }
+  });
+
+  // Assessment Package routes
+  app.get("/api/assessment-packages", async (req, res) => {
+    try {
+      const packages = await storage.getAssessmentPackages();
+      res.json(packages);
+    } catch (error: any) {
+      console.error('Error fetching assessment packages:', error);
+      res.status(500).json({ error: 'Failed to fetch assessment packages' });
+    }
+  });
+
+  app.post("/api/assessment-packages", async (req, res) => {
+    try {
+      const validatedData = insertAssessmentPackageSchema.parse(req.body);
+      const pkg = await storage.createAssessmentPackage(validatedData);
+      res.status(201).json(pkg);
+    } catch (error: any) {
+      console.error('Error creating assessment package:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: 'Invalid data', details: error.errors });
+      }
+      res.status(500).json({ error: 'Failed to create assessment package' });
+    }
+  });
+
+  // Assessment Audit routes
+  app.get("/api/assessment-audit/:clientAssessmentId", async (req, res) => {
+    try {
+      const auditLogs = await storage.getClientAssessmentAuditLogs(req.params.clientAssessmentId);
+      res.json(auditLogs);
+    } catch (error: any) {
+      console.error('Error fetching assessment audit logs:', error);
+      res.status(500).json({ error: 'Failed to fetch assessment audit logs' });
+    }
+  });
+
+  // ========== END ASSESSMENT MANAGEMENT SYSTEM ROUTES ==========
 
   // Compass AI Assistant Chat
   app.post('/api/compass/chat', async (req, res) => {
