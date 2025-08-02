@@ -331,7 +331,7 @@ export default function ContentViewer() {
                     ))}
                     
                     {/* Pages */}
-                    {(searchQuery ? notionSearchResults : notionPages) && (searchQuery ? notionSearchResults : notionPages).map((page: NotionPage) => (
+                    {(searchQuery ? notionSearchResults : notionPages) && (searchQuery ? notionSearchResults : notionPages)?.map((page: NotionPage) => (
                       <div
                         key={page.id}
                         className={`p-3 rounded-lg border cursor-pointer transition-colors ${

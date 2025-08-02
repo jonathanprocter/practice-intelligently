@@ -54,6 +54,15 @@ The system utilizes a comprehensive PostgreSQL database with 13 robust tables:
 - **Comprehensive US Holidays Integration**: Complete federal holidays system (2015-2030) with accurate calculations, integrated with Google Calendar OAuth as all-day events, includes holiday API endpoints and dashboard integration.
 - **Enhanced Calendar Layout**: Clean day headers with full day names positioned above All Day events section, military time format throughout, improved visual hierarchy.
 - **Compass AI Assistant**: Floating AI assistant with dapper gentleman avatar positioned on right middle of screen. Connected to all practice data with OpenAI primary, Anthropic fallback. Features minimizable chat interface, AI provider badges, and comprehensive practice context awareness.
+- **Google Drive & Notion Integration**: Complete content viewer with OAuth authentication supporting both Google Calendar and Drive access, plus Notion workspace integration with database and page content viewing.
+
+## Recent Changes (August 2025)
+
+### Authentication & Integration Fixes
+- **Google OAuth Restored**: Successfully re-authenticated with expanded scopes for both Calendar and Drive access
+- **Error Handling Improved**: Added defensive programming for therapistId access throughout API client
+- **Content Viewer Enhanced**: Updated with proper error states and re-authentication flows
+- **Calendar Integration Working**: Confirmed 4 calendars connected including Simple Practice, holidays, and personal calendars
 
 ### Data Flow
 Client requests from the React frontend are processed by the Express backend, which interacts with PostgreSQL via Drizzle ORM. External AI services process therapeutic content, and TanStack Query manages real-time UI updates.
