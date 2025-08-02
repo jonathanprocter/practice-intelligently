@@ -1,0 +1,71 @@
+Based on all available information from your Replit “RemarkablePlanner” project and the current web page/logs, these are the **current errors or warnings** detected:
+
+### 1. Google OAuth Not Connected (401 Unauthorized)
+
+- **Symptoms:**  
+  - Errors like `API response not ok: 401`, `"error":"Google Calendar not connected"`, and  
+    `"Error: Google OAuth not connected. Please connect your Google Calendar first."`
+  - Content Viewer cannot list or access Google Drive files.
+- **Root Cause:**  
+  - Your OAuth tokens are missing or lack the required expanded scopes (Calendar *and* Drive).
+  - Your backend expects valid and up-to-date OAuth tokens, but these have either expired, are missing, or were not issued with the required permissions for both services.
+- **Effect:**  
+  - Calendar and Drive integrations fail; certain API endpoints requiring Google auth throw 401 errors.
+  - Until you complete the new OAuth flow and approve both requested scopes, attempts to list or sync calendar/events/files will fail.
+
+### 2. Defensive Programming Fix for therapistId
+
+- **Symptoms:**  
+  - Previously:  
+    `TypeError: Cannot read properties of undefined (reading 'therapistId')`  
+    when fetching appointments.
+- **Current Status:**  
+  - Codebase was just patched for more robust error handling—by adding proper undefined/null checks—so this **should be fixed**.
+- **Effect:**  
+  - If user info is not available or partially incomplete, it will now be handled gracefully (expect to see error messages instead of a crash).
+
+### 3. [RESOLVED] API Request/Calendar Sync Arguments
+
+- **Symptoms:**  
+  - Old error:  
+    `Failed to execute 'fetch' on 'Window': '/api/calendar/sync' is not a valid HTTP method.`
+  - The `apiRequest` helper was being called with the wrong argument order somewhere in the codebase.
+- **Current Status:**  
+  - Recent log shows code is now in correct order and this error is fixed.
+- **Effect:**  
+  - Calendar sync method should now work properly.
+
+### 4. [NON-BLOCKING] General Warnings/Non-Critical Output
+
+- Some logs mention:
+  - Both GOOGLE_API_KEY and GEMINI_API_KEY are set (not an error if both are actually needed).
+  - Outdated Browserslist data:  
+    “Browserslist: browsers data (caniuse-lite) is 10 months old. Please run: npx update-browserslist-db@latest”.  
+    This is **not critical** for production but is a routine maintenance warning.
+
+## **Summary Table**
+
+| Error/Warning                          | Current Status     | Immediate Fix Needed?         |
+|----------------------------------------|--------------------|------------------------------|
+| Google OAuth (401/calendar/drive)      | Unresolved         | YES: Complete OAuth Flow      |
+| therapistId TypeError                  | Fixed              | No                           |
+| API fetch argument order (/calendar/sync) | Fixed           | No                           |
+| Browserslist data out of date          | Non-blocking       | No, maintenance only          |
+
+## **Actions You Need To Take**
+
+1. **Complete Google OAuth Re-Authentication**
+   - Go to the Content Viewer and click “Re-authenticate with Google Drive”, OR directly visit `/api/auth/google`.
+   - Approve **both** calendar and drive scopes when Google asks.
+   - After you do this, 401 errors for Calendar and Drive integrations will go away.
+
+2. **Monitor for New Errors**
+   - After re-authenticate, any recurring error messages should be strictly new issues.
+
+3. (Optional) **Update Browserslist**
+   - For best long-term performance: run `npx update-browserslist-db@latest` (not required to resolve bugs).
+
+**In summary:**  
+The **only remaining blocking error is the Google OAuth/401** issue for Calendar and Drive. All code-level JS/TypeScript errors or argument order problems have now been resolved. Finish re-authentication and all integrations should work as expected. If you see new errors after this, they’ll be strictly new bugs or integration edge cases.
+
+[1] https://replit.com/@jonathanprocter/RemarkablePlanner
