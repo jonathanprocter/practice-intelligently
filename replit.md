@@ -79,6 +79,10 @@ The system utilizes a comprehensive PostgreSQL database with 13 robust tables:
 - **Error Handling Improved**: Added defensive programming for therapistId access throughout API client
 - **Content Viewer Enhanced**: Updated with proper error states and re-authentication flows
 - **Calendar Integration Working**: Confirmed 4 calendars connected including Simple Practice, holidays, and personal calendars
+- **Deployment Infrastructure Crisis**: Resolved critical missing API routes issue affecting all AI and integration features after redeployment
+- **OAuth Connection Routes**: Added missing `/api/oauth/is-connected` route returning proper JSON status
+- **Client Check-ins Routes**: Implemented comprehensive client-checkins API endpoints (6 new routes)
+- **Authentication Flow Routes**: Added Google OAuth URL generation and callback handling routes
 
 ### Data Flow
 Client requests from the React frontend are processed by the Express backend, which interacts with PostgreSQL via Drizzle ORM. External AI services process therapeutic content, and TanStack Query manages real-time UI updates.

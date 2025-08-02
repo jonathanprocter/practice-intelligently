@@ -2480,8 +2480,18 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     try {
       const { simpleOAuth } = await import('./oauth-simple');
       
-      // Generate OAuth URL for authentication
-      const authUrl = simpleOAuth.getAuthUrl();
+      // Check if already connected
+      if (simpleOAuth.isConnected()) {
+        return res.json({
+          message: 'Already authenticated with Google',
+          connected: true,
+          authUrl: null
+        });
+      }
+      
+      // Generate OAuth URL for authentication (await the async call)
+      const authUrl = await simpleOAuth.getAuthUrl();
+      console.log('Generated OAuth URL:', authUrl);
       
       res.json({ 
         authUrl,
