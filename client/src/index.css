@@ -130,6 +130,44 @@
     background: linear-gradient(135deg, hsla(28, 43%, 70%, 0.1) 0%, hsla(212, 31%, 40%, 0.1) 100%);
     border-left: 4px solid var(--therapy-primary);
   }
+
+  /* Compass Avatar Activation Animations */
+  .compass-activated {
+    animation: compass-activate 2s ease-in-out forwards;
+    transform-origin: center center;
+  }
+
+  @keyframes compass-activate {
+    0% { 
+      transform: rotate(0deg) scale(1);
+    }
+    20% { 
+      transform: rotate(360deg) scale(1.1);
+    }
+    40% { 
+      transform: rotate(720deg) scale(1.2);
+    }
+    60% { 
+      transform: rotate(1080deg) scale(1.15);
+    }
+    80% { 
+      transform: rotate(1440deg) scale(1.1);
+    }
+    100% { 
+      transform: rotate(1800deg) scale(1);
+    }
+  }
+
+  /* Sparkle effects for activation */
+  .compass-sparkles-active {
+    opacity: 1 !important;
+    animation: sparkle-glow 2s ease-in-out;
+  }
+
+  @keyframes sparkle-glow {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+  }
 }
 
 /* Calendar-specific styles */

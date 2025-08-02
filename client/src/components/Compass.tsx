@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import compassAvatar from '@assets/generated-image (1)_1754094917944.png';
+import compassAvatar from '@assets/compass-avatar.svg';
 
 interface Message {
   id: string;
@@ -338,6 +338,40 @@ export function Compass({ className }: CompassProps) {
     }
   };
 
+  // Function to activate the compass animation when excited/successful
+  const activateCompass = () => {
+    // Find the compass avatar element and activate it
+    const avatarImages = document.querySelectorAll('img[src*="compass-avatar"]');
+    avatarImages.forEach(img => {
+      // Add activation class to trigger the excited animation
+      if (img.parentElement) {
+        img.parentElement.classList.add('compass-activated');
+        
+        // Remove the activation class after animation completes
+        setTimeout(() => {
+          img.parentElement?.classList.remove('compass-activated');
+        }, 2000);
+      }
+    });
+
+    // Also activate any SVG elements directly
+    const compassElements = document.querySelectorAll('.excited-needle, #compass-sparkles');
+    compassElements.forEach(element => {
+      if (element.classList.contains('excited-needle')) {
+        element.classList.add('activated');
+        setTimeout(() => {
+          element.classList.remove('activated');
+        }, 2000);
+      }
+      if (element.id === 'compass-sparkles') {
+        (element as HTMLElement).style.opacity = '1';
+        setTimeout(() => {
+          (element as HTMLElement).style.opacity = '0';
+        }, 2000);
+      }
+    });
+  };
+
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
       const response = await apiRequest('POST', '/api/compass/chat', { message });
@@ -352,6 +386,9 @@ export function Compass({ className }: CompassProps) {
         aiProvider: response.aiProvider
       };
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Activate compass animation when successfully finding information
+      activateCompass();
 
       // Automatically speak the response (but don't block on errors)
       try {

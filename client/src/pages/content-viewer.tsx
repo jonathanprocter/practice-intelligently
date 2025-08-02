@@ -132,8 +132,8 @@ export default function ContentViewer() {
     return 'Untitled';
   };
 
-  const currentDriveFiles = searchQuery ? driveSearchResults : driveFiles;
-  const currentNotionItems = searchQuery ? notionSearchResults : [...(notionDatabases || []), ...(notionPages || [])];
+  const currentDriveFiles = searchQuery ? (driveSearchResults || []) : (driveFiles || []);
+  const currentNotionItems = searchQuery ? (notionSearchResults || []) : [...(notionDatabases || []), ...(notionPages || [])];
 
   return (
     <div className="space-y-6">
