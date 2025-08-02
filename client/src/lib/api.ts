@@ -188,9 +188,8 @@ export class ApiClient {
       const therapistId = FALLBACK_THERAPIST_ID;
 
       // First try to get Google Calendar events for today
-      const calendarResponse = await fetch('/api/oauth/events/today');
-
-      if (calendarResponse.ok) {
+      try {
+        const calendarResponse = await apiRequest('GET', '/api/oauth/events/today');
         const calendarEvents = await calendarResponse.json();
 
         // Convert Google Calendar events to appointment format
@@ -215,7 +214,8 @@ export class ApiClient {
           console.warn('Database appointments fetch failed, returning calendar events only');
           return calendarAppointments;
         }
-      } else {
+      } catch (calendarError) {
+        console.warn('Calendar fetch failed, trying database appointments only');
         // Fallback to database appointments only
         const response = await apiRequest('GET', `/api/appointments/${therapistId}`);
         return response.json();
