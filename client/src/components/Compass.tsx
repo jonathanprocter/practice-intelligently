@@ -188,10 +188,17 @@ export function Compass({ className }: CompassProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate speech');
+        const errorText = await response.text();
+        throw new Error(`Failed to generate speech: ${response.status} - ${errorText}`);
       }
 
       const audioBlob = await response.blob();
+      
+      // Check if blob has content
+      if (audioBlob.size === 0) {
+        throw new Error('Received empty audio response');
+      }
+      
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
       
@@ -201,26 +208,39 @@ export function Compass({ className }: CompassProps) {
         URL.revokeObjectURL(audioUrl);
       };
 
-      audio.onerror = () => {
+      audio.onerror = (e) => {
+        console.error('Audio playback error:', e);
         setIsSpeaking(false);
         setCurrentAudio(null);
         URL.revokeObjectURL(audioUrl);
         toast({
           title: "Voice playback error",
-          description: "Please try again.",
+          description: "Audio file could not be played. Please try again.",
           variant: "destructive",
         });
       };
 
+      audio.oncanplaythrough = () => {
+        console.log('Audio ready to play');
+      };
+
       setCurrentAudio(audio);
-      await audio.play();
+      
+      // Use a promise to handle play() which returns a promise
+      try {
+        await audio.play();
+        console.log('Audio started playing successfully');
+      } catch (playError) {
+        console.error('Play error:', playError);
+        throw new Error(`Audio play failed: ${playError}`);
+      }
       
     } catch (error) {
-      console.error('Error playing speech:', error);
+      console.error('Error in speakText:', error);
       setIsSpeaking(false);
       toast({
         title: "Voice generation failed",
-        description: "Please try again or check your connection.",
+        description: error instanceof Error ? error.message : "Please try again or check your connection.",
         variant: "destructive",
       });
     }
@@ -249,8 +269,10 @@ export function Compass({ className }: CompassProps) {
       };
       setMessages(prev => [...prev, assistantMessage]);
       
-      // Automatically speak the response
-      speakText(response.content);
+      // Automatically speak the response (but don't block on errors)
+      speakText(response.content).catch(error => {
+        console.log('Auto-speak failed, voice will be available via speaker button:', error);
+      });
     },
     onError: () => {
       toast({
