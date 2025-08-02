@@ -1,0 +1,188 @@
+I need you to create a comprehensive Assessment Management System that integrates with my existing application. Here are the requirements:
+
+## 1. Create a New Tab/Section
+- Add a new tab called "Assessments" to the main navigation
+- This tab should be accessible from the main dashboard
+- Include an icon (clipboard or checklist icon) for the tab
+
+## 2. Assessment Management Interface
+Create an assessment management page with:
+- A list view showing all available assessments
+- Categories/tags for different assessment types (intake, progress, outcome measures, etc.)
+- Search and filter functionality
+- Ability to assign assessments to specific clients
+- Status indicators (not started, in progress, completed)
+
+## 3. Assessment Integration Structure
+Build a system that can:
+- Store assessment URLs (provided below)
+- Embed assessments in iframes or modal windows
+- Track which assessments are assigned to which clients
+- Monitor completion status
+
+## 4. Real-Time Data Capture
+Implement functionality to:
+- Capture form responses as clients complete them
+- Auto-save progress every 30 seconds
+- Show a progress indicator
+- Validate required fields before submission
+- Handle multiple assessment formats
+
+## 5. Client Record Integration
+Create a system that:
+- Links assessment results to specific client profiles
+- Stores responses in a structured format (JSON)
+- Timestamps all submissions
+- Allows viewing of historical assessment data
+- Generates summary reports
+
+## 6. Calendar/Appointment Integration
+Build features to:
+- Link assessments to specific appointments on the calendar
+- Auto-populate assessment results into session notes
+- Create templates for progress notes that include assessment data
+- Show assessment status in the appointment view
+- Send assessment links before appointments (optional)
+
+## 7. Database Schema
+Create tables/collections for:
+- assessments (id, name, url, type, category, description)
+- client_assessments (id, client_id, assessment_id, appointment_id, status, assigned_date, completed_date)
+- assessment_responses (id, client_assessment_id, responses_json, timestamp)
+- assessment_scores (id, client_assessment_id, score_type, score_value, interpretation)
+
+## 8. ASSESSMENT URLs TO INTEGRATE:
+
+### COGNITIVE & PSYCHOLOGICAL ASSESSMENTS
+
+**CCI-55 (Cognitive Complexity Instrument):**
+- URL: https://defeated-red-salamander.intern.rabbitos.app/final/index.html
+- Category: Cognitive Assessment
+- Scoring: Automated
+- Typical Duration: 20-30 minutes
+- Use Case: Initial evaluation, cognitive functioning assessment
+
+### PERSONALITY ASSESSMENTS
+
+**MBTI Assessment:**
+- URL: https://ministerial-amethyst-condor.intern.rabbitos.app/
+- Category: Personality Assessment
+- Scoring: Automated (16 personality types)
+- Typical Duration: 15-20 minutes
+- Use Case: Understanding personality style, team dynamics
+
+**General Personality Assessment (16PF & Others):**
+- URL: https://mechanical-amber-jaguar.intern.rabbitos.app
+- Category: Comprehensive Personality
+- Scoring: Multi-dimensional
+- Typical Duration: 30-40 minutes
+- Use Case: In-depth personality profiling
+
+**16PF (Sixteen Personality Factor Questionnaire):**
+- URL: https://vtjqmvpq.manus.space
+- Category: Personality Assessment
+- Scoring: 16 factor model
+- Typical Duration: 35-50 minutes
+- Use Case: Detailed personality analysis, career counseling
+
+### RELATIONSHIP ASSESSMENTS
+
+**Couples' Schema Questionnaire:**
+- URL: https://legal-coral-pig.intern.rabbitos.app
+- Category: Couples/Relationship Assessment
+- Scoring: Schema identification
+- Typical Duration: 25-35 minutes
+- Use Case: Couples therapy, relationship patterns, attachment styles
+
+### VALUES & LIFE ASSESSMENTS
+
+**VLQ-1 & VLQ-2 (Valued Living Questionnaire):**
+- URL: https://lxpsusjj.manus.space
+- Category: Values Assessment
+- Scoring: Values alignment scoring
+- Typical Duration: 15-20 minutes
+- Use Case: ACT therapy, values clarification, goal setting
+
+### EXISTENTIAL & MEANING ASSESSMENTS
+
+**Existential Assessment:**
+- URL: https://official-lime-clownfish.intern.rabbitos.app/project/final/index.html
+- Category: Existential/Meaning Assessment
+- Scoring: Thematic analysis
+- Typical Duration: 20-30 minutes
+- Use Case: Existential therapy, meaning-making, life purpose exploration
+
+### THERAPIST MATCHING
+
+**Personal Psychotherapy Form:**
+- URL: https://jonathanprocter.github.io/therapist-matcher/therapist_matcher.html
+- Category: Intake/Matching Tool
+- Scoring: Matching algorithm
+- Typical Duration: 10-15 minutes
+- Use Case: Initial client-therapist matching, preference assessment
+
+## 9. CREATE ASSESSMENT BUNDLES:
+
+1. **Initial Comprehensive Evaluation**: CCI-55 + 16PF + VLQ
+2. **Existential Exploration Package**: Existential Assessment + VLQ + Personal Psychotherapy Form
+3. **Couples Assessment Package**: Couples' Schema + VLQ (both partners)
+4. **Quick Personality Profile**: MBTI + Personal Psychotherapy Form
+5. **Full Personality Battery**: MBTI + 16PF + General Personality
+6. **Meaning & Values Assessment**: Existential Assessment + VLQ
+
+## 10. UI COMPONENTS NEEDED:
+- Assessment assignment modal
+- Progress tracking dashboard
+- Results viewer with graphs/charts
+- Print-friendly reports
+- Bulk assignment interface
+- Assessment bundle selector
+- Comparison view for repeated assessments
+
+## 11. API ENDPOINTS:
+- POST /api/assessments/assign
+- GET /api/assessments/client/:clientId
+- POST /api/assessments/responses/save
+- GET /api/assessments/results/:assessmentId
+- PUT /api/assessments/complete
+- GET /api/appointments/:appointmentId/assessments
+- GET /api/assessments/bundles
+- POST /api/assessments/bundle/assign
+
+## 12. SESSION NOTE TEMPLATES:
+- For CCI-55: Include cognitive functioning summary
+- For MBTI/16PF: Include personality insights relevant to treatment
+- For Couples' Schema: Include identified patterns and dynamics
+- For VLQ: Include values-goals alignment analysis
+- For Existential Assessment: Include themes of meaning, purpose, and existential concerns
+
+## 13. DISPLAY CONFIGURATION:
+- Use modal windows for shorter assessments (MBTI, VLQ, Personal Psychotherapy Form)
+- Use new tab for longer assessments (16PF, CCI-55, Couples' Schema)
+- Use iframe with proper sizing for Existential Assessment
+- Implement progress saving for all assessments over 20 minutes
+
+## 14. TECHNICAL REQUIREMENTS:
+- Handle different URL domains (intern.rabbitos.app, manus.space, github.io)
+- Implement CORS handling for cross-origin requests
+- Add iframe sandboxing for security
+- Create response parsers for different output formats
+- Implement heartbeat monitoring for long assessments
+- Add connection loss recovery
+
+## 15. VISUALIZATION FEATURES:
+- Radar charts for 16PF personality profiles
+- MBTI type display with description
+- Values-behavior alignment graphs for VLQ
+- Couples' pattern visualization for schema questionnaire
+- Existential themes word cloud
+- Progress tracking graphs over time
+
+## 16. SECURITY & COMPLIANCE:
+- Ensure HIPAA compliance
+- Encrypt all assessment data
+- Implement role-based access controls
+- Create audit trail for all assessment activities
+- Secure iframe implementation
+
+Please create this system with a clean, professional UI that matches the existing application design. Include error handling, loading states, and make it mobile-responsive. The system should be intuitive for both clinicians and clients to use.

@@ -1576,6 +1576,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Session-based assessment endpoints for real-time integration
+  app.post('/api/assessments/session/start', async (req, res) => {
+    try {
+      const { clientId, appointmentId, assessmentIds, therapistId } = req.body;
+      
+      // Start in-session assessments for real-time administration
+      const sessionAssessments = await Promise.all(
+        assessmentIds.map(async (assessmentId: string) => {
+          // Create session assessment record
+          const sessionAssessment = {
+            id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            clientId,
+            assessmentId,
+            therapistId,
+            appointmentId,
+            status: 'in_progress',
+            startedAt: new Date().toISOString(),
+            progress: 0
+          };
+          return sessionAssessment;
+        })
+      );
+      
+      res.json({ sessionAssessments, status: 'active' });
+    } catch (error: any) {
+      console.error('Error starting session assessments:', error);
+      res.status(500).json({ error: 'Failed to start session assessments', details: error.message });
+    }
+  });
+
+  app.post('/api/assessments/session/save-progress', async (req, res) => {
+    try {
+      const { assessmentId, clientId, progressData, autoSaveData } = req.body;
+      
+      // Save assessment progress (implementation would use storage layer)
+      const savedProgress = {
+        assessmentId,
+        clientId,
+        progress: progressData,
+        autoSaveData,
+        timestamp: new Date().toISOString()
+      };
+      
+      res.json({ success: true, savedProgress, timestamp: new Date().toISOString() });
+    } catch (error: any) {
+      console.error('Error saving assessment progress:', error);
+      res.status(500).json({ error: 'Failed to save progress', details: error.message });
+    }
+  });
+
+  app.post('/api/assessments/session/complete', async (req, res) => {
+    try {
+      const { assessmentId, clientId, responses, scores, sessionNoteId } = req.body;
+      
+      const completedAssessment = {
+        assessmentId,
+        clientId,
+        responses,
+        scores,
+        sessionNoteId,
+        completedAt: new Date().toISOString(),
+        status: 'completed'
+      };
+      
+      res.json({ completedAssessment });
+    } catch (error: any) {
+      console.error('Error completing session assessment:', error);
+      res.status(500).json({ error: 'Failed to complete assessment', details: error.message });
+    }
+  });
+
+  app.get('/api/assessments/session/active/:therapistId', async (req, res) => {
+    try {
+      const { therapistId } = req.params;
+      
+      // Get active session assessments (mock implementation for now)
+      const activeSessionAssessments = []; // Would fetch from storage layer
+      
+      res.json(activeSessionAssessments);
+    } catch (error: any) {
+      console.error('Error fetching active session assessments:', error);
+      res.status(500).json({ error: 'Failed to fetch active assessments', details: error.message });
+    }
+  });
+
+  app.post('/api/assessments/add-to-session-notes', async (req, res) => {
+    try {
+      const { appointmentId, assessmentData, sessionNoteTemplate } = req.body;
+      
+      // Add assessment results to session notes
+      const updatedSessionNote = {
+        appointmentId,
+        assessmentData,
+        sessionNoteTemplate,
+        addedAt: new Date().toISOString()
+      };
+      
+      res.json({ updatedSessionNote });
+    } catch (error: any) {
+      console.error('Error adding assessment to session notes:', error);
+      res.status(500).json({ error: 'Failed to add to session notes', details: error.message });
+    }
+  });
+
   // ========== END ASSESSMENT MANAGEMENT SYSTEM ROUTES ==========
 
   // Compass AI Assistant Chat

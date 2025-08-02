@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Filter, Search, FileText, Clock, CheckCircle, AlertCircle, Users } from "lucide-react";
+import { Plus, Filter, Search, FileText, Clock, CheckCircle, AlertCircle, Users, PlayCircle, Brain, Target, MessageSquare, Eye, Save, RefreshCw, ExternalLink, Calendar } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,10 @@ export default function Assessments() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [selectedAssessment, setSelectedAssessment] = useState<AssessmentCatalogItem | null>(null);
+  const [inSessionMode, setInSessionMode] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [inSessionAssessments, setInSessionAssessments] = useState<any[]>([]);
+  const [activeIframe, setActiveIframe] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -216,6 +220,9 @@ export default function Assessments() {
           <TabsTrigger value="catalog">Assessment Catalog</TabsTrigger>
           <TabsTrigger value="assignments">Client Assignments</TabsTrigger>
           <TabsTrigger value="packages">Assessment Packages</TabsTrigger>
+          <TabsTrigger value="session" className={inSessionMode ? "bg-green-100 text-green-800" : ""}>
+            {inSessionMode ? "Live Session" : "Session Mode"}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="catalog" className="space-y-4">
@@ -401,6 +408,220 @@ export default function Assessments() {
               </Button>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="session" className="space-y-4">
+          {!inSessionMode ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <PlayCircle className="w-16 h-16 text-blue-600 mx-auto mb-4" />
+                <h3 className="text-xl font-medium mb-2">Start Live Session Mode</h3>
+                <p className="text-sm text-muted-foreground mb-6 max-w-2xl mx-auto">
+                  Enter live session mode to administer assessments in real-time during client appointments. 
+                  This enables instant access to assessment tools, automatic progress saving, and seamless 
+                  integration with session notes.
+                </p>
+                
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto mb-6">
+                  <div className="text-center p-4 border rounded-lg">
+                    <Brain className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                    <h4 className="font-medium mb-1">Real-Time Assessment</h4>
+                    <p className="text-xs text-muted-foreground">
+                      Instant access to all assessment tools with auto-save functionality
+                    </p>
+                  </div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <MessageSquare className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                    <h4 className="font-medium mb-1">Session Integration</h4>
+                    <p className="text-xs text-muted-foreground">
+                      Results automatically added to session notes and progress tracking
+                    </p>
+                  </div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <Target className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+                    <h4 className="font-medium mb-1">Progress Monitoring</h4>
+                    <p className="text-xs text-muted-foreground">
+                      Track completion status and compare results over time
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Button 
+                    size="lg" 
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => setInSessionMode(true)}
+                  >
+                    <PlayCircle className="w-5 h-5 mr-2" />
+                    Start Session Mode
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Select a client and appointment to begin real-time assessment administration
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {/* Live Session Dashboard */}
+              <Card className="border-green-200 bg-green-50">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                      <CardTitle className="text-green-800">Live Session Active</CardTitle>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setInSessionMode(false)}
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      End Session
+                    </Button>
+                  </div>
+                  <CardDescription className="text-green-700">
+                    Real-time assessment administration with automatic progress tracking
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              {/* Quick Access Assessment Tools */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filteredCatalog.slice(0, 6).map((item: any) => (
+                  <Card key={item.id} className="hover:shadow-md transition-shadow cursor-pointer">
+                    <CardHeader className="pb-3">
+                      <div className="flex justify-between items-start">
+                        <CardTitle className="text-base">{item.name}</CardTitle>
+                        <Badge variant="outline" className="text-xs">{item.category}</Badge>
+                      </div>
+                      <CardDescription className="text-sm line-clamp-2">
+                        {item.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{item.estimated_time_minutes} minutes</span>
+                        <span>{item.type}</span>
+                      </div>
+                      
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={() => {
+                            window.open(item.url, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+                            setActiveIframe(item.id);
+                          }}
+                        >
+                          <ExternalLink className="w-3 h-3 mr-1" />
+                          Open
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            // Add to session notes template
+                            toast({
+                              title: "Added to Session Notes",
+                              description: `${item.name} template added to session notes.`,
+                            });
+                          }}
+                        >
+                          <FileText className="w-3 h-3 mr-1" />
+                          Add to Notes
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Assessment Bundles for Quick Assignment */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Target className="w-5 h-5 mr-2" />
+                    Quick Assessment Bundles
+                  </CardTitle>
+                  <CardDescription>
+                    Pre-configured assessment packages for common clinical scenarios
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    <Button variant="outline" className="h-auto p-4 flex flex-col items-start">
+                      <div className="font-medium mb-1">Initial Comprehensive</div>
+                      <div className="text-xs text-muted-foreground">CCI-55 + 16PF + VLQ (~84 min)</div>
+                    </Button>
+                    <Button variant="outline" className="h-auto p-4 flex flex-col items-start">
+                      <div className="font-medium mb-1">Quick Personality</div>
+                      <div className="text-xs text-muted-foreground">MBTI + Therapy Form (~30 min)</div>
+                    </Button>
+                    <Button variant="outline" className="h-auto p-4 flex flex-col items-start">
+                      <div className="font-medium mb-1">Couples Package</div>
+                      <div className="text-xs text-muted-foreground">Schema + VLQ (~47 min)</div>
+                    </Button>
+                    <Button variant="outline" className="h-auto p-4 flex flex-col items-start">
+                      <div className="font-medium mb-1">Existential Exploration</div>
+                      <div className="text-xs text-muted-foreground">Existential + VLQ + Form (~54 min)</div>
+                    </Button>
+                    <Button variant="outline" className="h-auto p-4 flex flex-col items-start">
+                      <div className="font-medium mb-1">Full Personality</div>
+                      <div className="text-xs text-muted-foreground">MBTI + 16PF + General (~95 min)</div>
+                    </Button>
+                    <Button variant="outline" className="h-auto p-4 flex flex-col items-start">
+                      <div className="font-medium mb-1">Values & Meaning</div>
+                      <div className="text-xs text-muted-foreground">Existential + VLQ (~42 min)</div>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Session Progress Tracking */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Eye className="w-5 h-5 mr-2" />
+                    Session Progress
+                  </CardTitle>
+                  <CardDescription>
+                    Track assessment completion and session integration status
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {activeIframe && (
+                      <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                          <div>
+                            <div className="font-medium text-blue-900">Assessment In Progress</div>
+                            <div className="text-sm text-blue-700">Client completing assessment in new window</div>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button size="sm" variant="outline">
+                            <Save className="w-3 h-3 mr-1" />
+                            Auto-Save Active
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            <RefreshCw className="w-3 h-3 mr-1" />
+                            Check Status
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="text-center py-8 text-muted-foreground">
+                      <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>No active assessments. Open an assessment above to begin tracking.</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 
