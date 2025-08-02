@@ -53,6 +53,7 @@ The system utilizes a comprehensive PostgreSQL database with 13 robust tables:
 - **Streamlined Appointments Tab**: Snapshot summary, enhanced appointment cards with quick actions, advanced search & filtering, bulk operations, and integration with session prep.
 - **Comprehensive US Holidays Integration**: Complete federal holidays system (2015-2030) with accurate calculations, integrated with Google Calendar OAuth as all-day events, includes holiday API endpoints and dashboard integration.
 - **Enhanced Calendar Layout**: Clean day headers with full day names positioned above All Day events section, military time format throughout, improved visual hierarchy.
+- **Compass AI Assistant**: Floating AI assistant with dapper gentleman avatar positioned on right middle of screen. Connected to all practice data with OpenAI primary, Anthropic fallback. Features minimizable chat interface, AI provider badges, and comprehensive practice context awareness.
 
 ### Data Flow
 Client requests from the React frontend are processed by the Express backend, which interacts with PostgreSQL via Drizzle ORM. External AI services process therapeutic content, and TanStack Query manages real-time UI updates.

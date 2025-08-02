@@ -115,18 +115,18 @@ export function Compass({ className }: CompassProps) {
       {/* Floating Action Button */}
       {!isOpen && (
         <div className={cn(
-          'fixed bottom-6 right-6 z-50',
+          'fixed right-6 top-1/2 transform -translate-y-1/2 z-50',
           className
         )}>
           <Button
             onClick={() => setIsOpen(true)}
-            className="w-16 h-16 rounded-full bg-therapy-primary hover:bg-therapy-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            className="w-24 h-24 rounded-full bg-therapy-primary hover:bg-therapy-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
             size="lg"
           >
-            <Avatar className="w-12 h-12">
+            <Avatar className="w-20 h-20">
               <AvatarImage src={compassAvatar} alt="Compass AI Assistant" />
               <AvatarFallback className="bg-therapy-primary/10 text-therapy-primary">
-                <MessageCircle className="w-6 h-6" />
+                <MessageCircle className="w-10 h-10" />
               </AvatarFallback>
             </Avatar>
           </Button>
@@ -136,7 +136,7 @@ export function Compass({ className }: CompassProps) {
       {/* Chat Interface */}
       {isOpen && (
         <div className={cn(
-          'fixed bottom-6 right-6 z-50 bg-white dark:bg-gray-900 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300',
+          'fixed right-6 top-1/2 transform -translate-y-1/2 z-50 bg-white dark:bg-gray-900 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300',
           isMinimized ? 'w-80 h-16' : 'w-96 h-[600px]',
           className
         )}>
