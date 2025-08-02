@@ -2442,6 +2442,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ElevenLabs text-to-speech endpoint
+  app.post("/api/compass/speak", async (req, res) => {
+    try {
+      const { text } = req.body;
+      
+      if (!text) {
+        return res.status(400).json({ error: "Text is required" });
+      }
+
+      const elevenLabsResponse = await fetch("https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM", {
+        method: "POST",
+        headers: {
+          "Accept": "audio/mpeg",
+          "Content-Type": "application/json",
+          "xi-api-key": process.env.ELEVENLABS_API_KEY || ""
+        },
+        body: JSON.stringify({
+          text: text,
+          model_id: "eleven_monolingual_v1",
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.8,
+            style: 0.0,
+            use_speaker_boost: true
+          }
+        })
+      });
+
+      if (!elevenLabsResponse.ok) {
+        throw new Error(`ElevenLabs API error: ${elevenLabsResponse.status}`);
+      }
+
+      const audioBuffer = await elevenLabsResponse.arrayBuffer();
+      
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Content-Length', audioBuffer.byteLength);
+      res.send(Buffer.from(audioBuffer));
+      
+    } catch (error) {
+      console.error("Error generating speech:", error);
+      res.status(500).json({ error: "Failed to generate speech" });
+    }
+  });
+
   // Compass AI Assistant Chat
   app.post('/api/compass/chat', async (req, res) => {
     try {

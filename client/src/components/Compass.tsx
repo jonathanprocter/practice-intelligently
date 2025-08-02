@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { MessageCircle, X, Send, Loader2, Minimize2, Maximize2, Mic, MicOff } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, Minimize2, Maximize2, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -29,7 +29,9 @@ export function Compass({ className }: CompassProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechRecognition, setSpeechRecognition] = useState<any>(null);
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -167,6 +169,71 @@ export function Compass({ className }: CompassProps) {
     }
   };
 
+  // Voice output functions
+  const speakText = async (text: string) => {
+    try {
+      if (currentAudio) {
+        currentAudio.pause();
+        setCurrentAudio(null);
+      }
+
+      setIsSpeaking(true);
+      
+      const response = await fetch('/api/compass/speak', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate speech');
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      
+      audio.onended = () => {
+        setIsSpeaking(false);
+        setCurrentAudio(null);
+        URL.revokeObjectURL(audioUrl);
+      };
+
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        setCurrentAudio(null);
+        URL.revokeObjectURL(audioUrl);
+        toast({
+          title: "Voice playback error",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+      };
+
+      setCurrentAudio(audio);
+      await audio.play();
+      
+    } catch (error) {
+      console.error('Error playing speech:', error);
+      setIsSpeaking(false);
+      toast({
+        title: "Voice generation failed",
+        description: "Please try again or check your connection.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopSpeaking = () => {
+    if (currentAudio) {
+      currentAudio.pause();
+      setCurrentAudio(null);
+      setIsSpeaking(false);
+    }
+  };
+
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
       const response = await apiRequest('POST', '/api/compass/chat', { message });
@@ -181,6 +248,9 @@ export function Compass({ className }: CompassProps) {
         aiProvider: response.aiProvider
       };
       setMessages(prev => [...prev, assistantMessage]);
+      
+      // Automatically speak the response
+      speakText(response.content);
     },
     onError: () => {
       toast({
@@ -333,14 +403,43 @@ export function Compass({ className }: CompassProps) {
                       >
                         <div className="flex items-start justify-between gap-2">
                           <p className="flex-1">{message.content}</p>
-                          {message.role === 'assistant' && getProviderBadge(message.aiProvider)}
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {message.role === 'assistant' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => speakText(message.content)}
+                                disabled={isSpeaking}
+                                className="w-6 h-6 p-0 opacity-70 hover:opacity-100"
+                              >
+                                {isSpeaking ? (
+                                  <VolumeX className="w-3 h-3" />
+                                ) : (
+                                  <Volume2 className="w-3 h-3" />
+                                )}
+                              </Button>
+                            )}
+                            {message.role === 'assistant' && getProviderBadge(message.aiProvider)}
+                          </div>
                         </div>
-                        <p className="text-xs opacity-70 mt-1">
-                          {message.timestamp.toLocaleTimeString([], { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
-                        </p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-xs opacity-70">
+                            {message.timestamp.toLocaleTimeString([], { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </p>
+                          {message.role === 'assistant' && isSpeaking && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={stopSpeaking}
+                              className="text-xs h-auto p-0 opacity-70 hover:opacity-100"
+                            >
+                              Stop
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
