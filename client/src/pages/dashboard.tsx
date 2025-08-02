@@ -68,16 +68,7 @@ export default function Dashboard() {
         <ProgressOverview />
       </div>
 
-      
-      {/* Floating Action Button */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <Button
-          className="w-14 h-14 rounded-full shadow-lg bg-therapy-primary hover:bg-therapy-primary/90 text-white"
-          size="icon"
-        >
-          <Plus className="h-6 w-6" />
-        </Button>
-      </div>
+
     </div>
   );
 }
