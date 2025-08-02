@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { MessageCircle, X, Send, Loader2, Minimize2, Maximize2 } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, Minimize2, Maximize2, Mic, MicOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -28,6 +28,8 @@ export function Compass({ className }: CompassProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const [speechRecognition, setSpeechRecognition] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -38,6 +40,37 @@ export function Compass({ className }: CompassProps) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+      const recognition = new (window as any).webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+      
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInputMessage(transcript);
+        setIsListening(false);
+      };
+      
+      recognition.onerror = () => {
+        setIsListening(false);
+        toast({
+          title: "Voice input error",
+          description: "Please try again or use text input.",
+          variant: "destructive",
+        });
+      };
+      
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+      
+      setSpeechRecognition(recognition);
+    }
+  }, []);
 
   // Send welcome message when first opened
   useEffect(() => {
@@ -111,6 +144,27 @@ export function Compass({ className }: CompassProps) {
     }
 
     return actions.slice(0, 4); // Limit to 4 actions
+  };
+
+  // Voice input functions
+  const startListening = () => {
+    if (speechRecognition && !isListening) {
+      setIsListening(true);
+      speechRecognition.start();
+    } else if (!speechRecognition) {
+      toast({
+        title: "Voice input not supported",
+        description: "Your browser doesn't support voice input. Please use text input.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopListening = () => {
+    if (speechRecognition && isListening) {
+      speechRecognition.stop();
+      setIsListening(false);
+    }
   };
 
   const chatMutation = useMutation({
@@ -327,19 +381,31 @@ export function Compass({ className }: CompassProps) {
                 </div>
                 
                 <div className="p-4">
-                  <div className="flex space-x-2">
-                    <Input
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Ask Compass anything... (Voice support coming soon!)"
-                      className="flex-1"
+                  <div className="flex space-x-2 items-center">
+                    <div className="flex-1 min-w-0">
+                      <Input
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder={isListening ? "Listening..." : "Ask Compass anything or use voice input"}
+                        className="w-full"
+                        disabled={chatMutation.isPending || isListening}
+                      />
+                    </div>
+                    <Button
+                      onClick={isListening ? stopListening : startListening}
+                      size="sm"
+                      variant={isListening ? "destructive" : "outline"}
                       disabled={chatMutation.isPending}
-                    />
+                      className="flex-shrink-0"
+                    >
+                      {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    </Button>
                     <Button
                       onClick={handleSendMessage}
                       disabled={!inputMessage.trim() || chatMutation.isPending}
                       size="sm"
+                      className="flex-shrink-0"
                     >
                       <Send className="w-4 h-4" />
                     </Button>
