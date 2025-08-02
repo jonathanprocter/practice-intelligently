@@ -58,6 +58,13 @@ The system utilizes a comprehensive PostgreSQL database with 13 robust tables:
 
 ## Recent Changes (August 2025)
 
+### Assessment Management System Enhancements
+- **Beck Depression Inventory (BDI-II)**: Successfully integrated from external URL with comprehensive clinical scoring, suicide risk protocols, and proper CPT coding
+- **Breathing Exercise Tool**: Added interactive tool with Box Breathing, 4-7-8 technique, and custom patterns for stress reduction
+- **Life in Weeks Visualization**: Created therapeutic tool for existential therapy and life perspective work
+- **Tools Category**: Established new category to distinguish therapeutic tools from clinical assessments with cyan styling and wrench icons
+- **Assessment Catalog Updates**: Corrected CCI-55 to "Comprehensive Coping Inventory" (not Cognitive Complexity Instrument)
+
 ### Authentication & Integration Fixes
 - **Google OAuth Restored**: Successfully re-authenticated with expanded scopes for both Calendar and Drive access
 - **Error Handling Improved**: Added defensive programming for therapistId access throughout API client
