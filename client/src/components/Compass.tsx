@@ -361,14 +361,14 @@ export function Compass({ className }: CompassProps) {
               {/* Input */}
               <div className="border-t border-gray-200 dark:border-gray-700">
                 {/* Quick Action Buttons */}
-                <div className="p-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                  <div className="flex flex-wrap gap-2">
+                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex flex-wrap gap-2 max-w-full overflow-hidden">
                     {getContextualQuickActions().map((action, index) => (
                       <Button
                         key={index}
                         variant="ghost"
                         size="sm"
-                        className="text-xs h-7 px-2 text-gray-700 dark:text-gray-300"
+                        className="text-xs h-8 px-3 py-1 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 flex-shrink-0"
                         onClick={() => {
                           chatMutation.mutate(action.query);
                         }}
@@ -381,14 +381,14 @@ export function Compass({ className }: CompassProps) {
                 </div>
                 
                 <div className="p-4">
-                  <div className="flex space-x-2 items-center">
-                    <div className="flex-1 min-w-0">
+                  <div className="flex gap-2 items-center w-full">
+                    <div className="flex-1 min-w-0 max-w-full">
                       <Input
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
                         onKeyPress={handleKeyPress}
                         placeholder={isListening ? "Listening..." : "Ask Compass anything or use voice input"}
-                        className="w-full"
+                        className="w-full min-w-0"
                         disabled={chatMutation.isPending || isListening}
                       />
                     </div>
@@ -397,7 +397,7 @@ export function Compass({ className }: CompassProps) {
                       size="sm"
                       variant={isListening ? "destructive" : "outline"}
                       disabled={chatMutation.isPending}
-                      className="flex-shrink-0"
+                      className="flex-shrink-0 w-10 h-10 p-0"
                     >
                       {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                     </Button>
@@ -405,7 +405,7 @@ export function Compass({ className }: CompassProps) {
                       onClick={handleSendMessage}
                       disabled={!inputMessage.trim() || chatMutation.isPending}
                       size="sm"
-                      className="flex-shrink-0"
+                      className="flex-shrink-0 w-10 h-10 p-0"
                     >
                       <Send className="w-4 h-4" />
                     </Button>
