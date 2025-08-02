@@ -1930,6 +1930,44 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     }
   });
 
+  // OAuth events today endpoint - the missing route causing console errors
+  app.get('/api/oauth/events/today', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+
+      if (!simpleOAuth.isConnected()) {
+        return res.json([]); // Return empty array instead of error to prevent frontend warnings
+      }
+
+      // Get today's events from all calendars
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const calendars = await simpleOAuth.getCalendars();
+      let allEvents: any[] = [];
+
+      for (const calendar of calendars) {
+        try {
+          const events = await simpleOAuth.getEvents(
+            calendar.id,
+            today.toISOString(),
+            tomorrow.toISOString()
+          );
+          allEvents = allEvents.concat(events);
+        } catch (error) {
+          console.warn(`Failed to fetch events from calendar ${calendar.summary}:`, error);
+        }
+      }
+
+      res.json(allEvents);
+    } catch (error: any) {
+      console.warn('OAuth events today error:', error);
+      res.json([]); // Return empty array to prevent frontend errors
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
