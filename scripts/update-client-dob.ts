@@ -55,6 +55,21 @@ const CLIENT_DOB_INFO = [
     firstName: "Trendall",
     lastName: "Storey",
     dateOfBirth: "2006-06-13"
+  },
+  {
+    firstName: "Zena",
+    lastName: "Frey",
+    dateOfBirth: "1959-09-16"
+  },
+  {
+    firstName: "Tom",
+    lastName: "Remy",
+    dateOfBirth: "1988-05-09"
+  },
+  {
+    firstName: "Susan",
+    lastName: "Hannigan",
+    dateOfBirth: "1990-07-04"
   }
 ];
 
