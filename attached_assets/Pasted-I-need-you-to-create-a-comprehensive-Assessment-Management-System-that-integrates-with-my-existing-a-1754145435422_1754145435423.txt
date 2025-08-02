@@ -1,0 +1,92 @@
+I need you to create a comprehensive Assessment Management System that integrates with my existing application. Here are the requirements:
+
+## 1. Create a New Tab/Section
+- Add a new tab called "Assessments" to the main navigation
+- This tab should be accessible from the main dashboard
+- Include an icon (clipboard or checklist icon) for the tab
+
+## 2. Assessment Management Interface
+Create an assessment management page with:
+- A list view showing all available assessments
+- Categories/tags for different assessment types (intake, progress, outcome measures, etc.)
+- Search and filter functionality
+- Ability to assign assessments to specific clients
+- Status indicators (not started, in progress, completed)
+
+## 3. Assessment Integration Structure
+Build a system that can:
+- Store assessment URLs (I will provide these)
+- Embed assessments in iframes or modal windows
+- Track which assessments are assigned to which clients
+- Monitor completion status
+
+## 4. Real-Time Data Capture
+Implement functionality to:
+- Capture form responses as clients complete them
+- Auto-save progress every 30 seconds
+- Show a progress indicator
+- Validate required fields before submission
+- Handle multiple assessment formats (Google Forms, Typeform, custom forms, etc.)
+
+## 5. Client Record Integration
+Create a system that:
+- Links assessment results to specific client profiles
+- Stores responses in a structured format (JSON)
+- Timestamps all submissions
+- Allows viewing of historical assessment data
+- Generates summary reports
+
+## 6. Calendar/Appointment Integration
+Build features to:
+- Link assessments to specific appointments on the calendar
+- Auto-populate assessment results into session notes
+- Create templates for progress notes that include assessment data
+- Show assessment status in the appointment view
+- Send assessment links before appointments (optional)
+
+## 7. Database Schema
+Create tables/collections for:
+- assessments (id, name, url, type, category, description)
+- client_assessments (id, client_id, assessment_id, appointment_id, status, assigned_date, completed_date)
+- assessment_responses (id, client_assessment_id, responses_json, timestamp)
+- assessment_scores (id, client_assessment_id, score_type, score_value, interpretation)
+
+## 8. UI Components Needed:
+- Assessment assignment modal
+- Progress tracking dashboard
+- Results viewer with graphs/charts
+- Print-friendly reports
+- Bulk assignment interface
+
+## 9. API Endpoints:
+- POST /api/assessments/assign
+- GET /api/assessments/client/:clientId
+- POST /api/assessments/responses/save
+- GET /api/assessments/results/:assessmentId
+- PUT /api/assessments/complete
+- GET /api/appointments/:appointmentId/assessments
+
+## 10. Security Requirements:
+- Ensure HIPAA compliance
+- Encrypt assessment responses
+- Implement access controls (only assigned clinician can view)
+- Audit trail for all assessment activities
+- Secure iframe implementation if embedding external forms
+
+## 11. Features for Session Notes:
+- Auto-populate assessment scores into SOAP notes
+- Create assessment summary sections
+- Link to full assessment results
+- Track changes over time
+- Generate outcome tracking graphs
+
+## 12. Additional Features:
+- Email/SMS reminders for incomplete assessments
+- Batch printing of assessment results
+- Export to PDF functionality
+- Integration with billing (CPT codes for assessments)
+- Customizable assessment packages (groups of assessments)
+
+Please create this system with a clean, professional UI that matches the existing application design. Use React components if the app is React-based, and ensure all data is properly validated and sanitized before storage. Include error handling and loading states for all operations.
+
+After you build the base structure, I will provide the assessment URLs to populate the system.
