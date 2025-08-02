@@ -1,28 +1,29 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Filter, Search, FileText, Clock, CheckCircle, AlertCircle, Users, PlayCircle, Brain, Target, MessageSquare, Eye, Save, RefreshCw, ExternalLink, Calendar } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { AssessmentCatalogItem, ClientAssessment, ClientSelect } from "@shared/schema";
+import { 
+  FileText, 
+  Users, 
+  Search, 
+  Plus, 
+  ExternalLink, 
+  Clock, 
+  Target, 
+  PlayCircle, 
+  Eye, 
+  Calendar,
+  CheckCircle,
+  Save,
+  RefreshCw,
+  MessageSquare,
+  Brain
+} from "lucide-react";
 import { format } from "date-fns";
 
 const therapistId = "e66b8b8e-e7a2-40b9-ae74-00c93ffe503c";
@@ -37,163 +38,188 @@ export default function Assessments() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [inSessionAssessments, setInSessionAssessments] = useState<any[]>([]);
   const [activeIframe, setActiveIframe] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('catalog');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch assessment catalog
-  const { data: assessmentCatalog = [], isLoading: isLoadingCatalog } = useQuery({
+  // Data fetching queries
+  const { data: catalogData, isLoading: isLoadingCatalog } = useQuery({
     queryKey: ["/api/assessment-catalog"],
   });
 
-  // Fetch client assessments for the therapist
-  const { data: clientAssessments = [], isLoading: isLoadingAssignments } = useQuery({
-    queryKey: ["/api/client-assessments/therapist", therapistId],
+  const { data: assignmentsData, isLoading: isLoadingAssignments } = useQuery({
+    queryKey: [`/api/client-assessments/therapist/${therapistId}`],
   });
 
-  // Fetch clients for assignment dropdown
-  const { data: clients = [] } = useQuery<ClientSelect[]>({
-    queryKey: ["/api/clients", therapistId],
+  const { data: clientsData } = useQuery({
+    queryKey: [`/api/clients/${therapistId}`],
   });
 
-  const filteredCatalog = assessmentCatalog.filter((item: any) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.description?.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filtering logic
+  const getUniqueCategories = () => {
+    if (!catalogData) return [];
+    return [...new Set(catalogData.map((item: any) => item.category))];
+  };
+
+  const filteredCatalog = catalogData?.filter((item: any) => {
+    const matchesSearch = !searchTerm || 
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === "all" || item.category === categoryFilter;
     return matchesSearch && matchesCategory;
-  });
+  }) || [];
 
-  const filteredAssignments = clientAssessments.filter((assignment: ClientAssessment) => {
+  const filteredAssignments = assignmentsData?.filter((assignment: any) => {
     return statusFilter === "all" || assignment.status === statusFilter;
-  });
+  }) || [];
+
+  // Helper functions
+  const getCategoryColor = (category: string) => {
+    const colors: Record<string, string> = {
+      "Depression": "bg-purple-50 text-purple-700 border-purple-200",
+      "Anxiety": "bg-blue-50 text-blue-700 border-blue-200",
+      "Personality": "bg-green-50 text-green-700 border-green-200",
+      "Trauma": "bg-red-50 text-red-700 border-red-200",
+      "Substance Use": "bg-orange-50 text-orange-700 border-orange-200",
+      "Couples": "bg-pink-50 text-pink-700 border-pink-200",
+      "General": "bg-gray-50 text-gray-700 border-gray-200"
+    };
+    return colors[category] || "bg-gray-50 text-gray-700 border-gray-200";
+  };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      pending: { variant: "secondary" as const, icon: Clock, text: "Pending" },
-      in_progress: { variant: "default" as const, icon: FileText, text: "In Progress" },
-      completed: { variant: "default" as const, icon: CheckCircle, text: "Completed" },
-      overdue: { variant: "destructive" as const, icon: AlertCircle, text: "Overdue" },
+    const statusConfig: Record<string, { variant: any; text: string; className?: string }> = {
+      assigned: { variant: "secondary", text: "Assigned" },
+      in_progress: { variant: "default", text: "In Progress", className: "bg-blue-500" },
+      completed: { variant: "default", text: "Completed", className: "bg-green-500" },
+      overdue: { variant: "destructive", text: "Overdue" }
     };
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-    const Icon = config.icon;
-    
+    const config = statusConfig[status] || statusConfig.assigned;
     return (
-      <Badge variant={config.variant} className="flex items-center gap-1">
-        <Icon className="w-3 h-3" />
+      <Badge variant={config.variant} className={config.className}>
         {config.text}
       </Badge>
     );
   };
 
-  const getUniqueCategories = () => {
-    const categories = assessmentCatalog.map((item: any) => item.category);
-    return [...new Set(categories)];
+  // Session management functions
+  const startLiveSession = () => {
+    const sessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    setCurrentSessionId(sessionId);
+    setInSessionMode(true);
+    setActiveTab('session');
+    toast({
+      title: "Live Session Started",
+      description: "Assessment session is now active for real-time administration."
+    });
   };
 
-  const assignAssessmentMutation = useMutation({
-    mutationFn: async (data: { catalogId: string; clientId: string; dueDate?: string; notes?: string }) => {
+  const endLiveSession = () => {
+    setInSessionMode(false);
+    setCurrentSessionId(null);
+    setInSessionAssessments([]);
+    setActiveIframe(null);
+    toast({
+      title: "Session Ended",
+      description: "Assessment session has been completed and progress saved."
+    });
+  };
+
+  // Assignment logic
+  const assignMutation = useMutation({
+    mutationFn: async (assignmentData: any) => {
       const response = await fetch("/api/client-assessments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          catalogId: data.catalogId,
-          clientId: data.clientId,
-          therapistId,
-          assignedDate: new Date().toISOString(),
-          dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
-          notes: data.notes,
-          status: "pending"
-        }),
+        body: JSON.stringify(assignmentData),
       });
       if (!response.ok) throw new Error("Failed to assign assessment");
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/client-assessments/therapist", therapistId] });
-      setIsAssignDialogOpen(false);
-      setSelectedAssessment(null);
+      queryClient.invalidateQueries({ queryKey: [`/api/client-assessments/therapist/${therapistId}`] });
       toast({
         title: "Assessment Assigned",
-        description: "The assessment has been successfully assigned to the client.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to assign assessment. Please try again.",
-        variant: "destructive",
+        description: "The assessment has been successfully assigned to the client."
       });
     },
   });
 
-  const AssignmentDialog = () => {
+  const handleAssign = (clientId: string, dueDate?: string, notes?: string) => {
+    if (!selectedAssessment) return;
+    
+    assignMutation.mutate({
+      clientId,
+      catalogId: selectedAssessment.id,
+      therapistId,
+      assignedDate: new Date().toISOString(),
+      dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+      status: "assigned",
+      notes,
+    });
+    
+    setIsAssignDialogOpen(false);
+    setSelectedAssessment(null);
+  };
+
+  // Assignment Dialog Component
+  const AssignAssessmentDialog = ({ isOpen, onClose, assessment, clients, onAssign }: any) => {
     const [selectedClient, setSelectedClient] = useState("");
     const [dueDate, setDueDate] = useState("");
     const [notes, setNotes] = useState("");
 
-    const handleAssign = () => {
-      if (!selectedAssessment || !selectedClient) return;
-      
-      assignAssessmentMutation.mutate({
-        catalogId: selectedAssessment.id,
-        clientId: selectedClient,
-        dueDate,
-        notes,
-      });
-    };
+    if (!assessment) return null;
 
     return (
-      <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Assign Assessment</DialogTitle>
             <DialogDescription>
-              Assign "{selectedAssessment?.name}" to a client
+              Assign "{assessment.name}" to a client with optional due date and notes.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <label>Client</label>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Select Client</label>
               <Select value={selectedClient} onValueChange={setSelectedClient}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a client" />
+                  <SelectValue placeholder="Choose a client" />
                 </SelectTrigger>
                 <SelectContent>
-                  {clients.map((client) => (
+                  {clients?.map((client: any) => (
                     <SelectItem key={client.id} value={client.id}>
-                      {client.firstName} {client.lastName}
+                      {client.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
-              <label>Due Date (Optional)</label>
+            <div>
+              <label className="text-sm font-medium">Due Date (Optional)</label>
               <Input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
               />
             </div>
-            <div className="grid gap-2">
-              <label>Notes (Optional)</label>
+            <div>
+              <label className="text-sm font-medium">Notes (Optional)</label>
               <Input
-                placeholder="Add any specific instructions..."
+                placeholder="Add any specific instructions or notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
             </div>
-          </div>
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleAssign} 
-              disabled={!selectedClient || assignAssessmentMutation.isPending}
-            >
-              {assignAssessmentMutation.isPending ? "Assigning..." : "Assign"}
-            </Button>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={onClose}>Cancel</Button>
+              <Button 
+                onClick={() => onAssign(selectedClient, dueDate, notes)}
+                disabled={!selectedClient}
+              >
+                Assign Assessment
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -201,431 +227,643 @@ export default function Assessments() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Assessment Management</h1>
-          <p className="text-muted-foreground">
-            Manage assessment templates and track client progress
-          </p>
+    <div className="flex h-screen bg-gray-50">
+      {/* Left Sidebar Navigation */}
+      <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
+        <div className="p-6 border-b border-gray-200">
+          <h1 className="text-xl font-bold text-gray-900">Assessment Center</h1>
+          <p className="text-sm text-gray-600 mt-1">Comprehensive assessment management</p>
         </div>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Template
-        </Button>
+        
+        <nav className="flex-1 p-4 space-y-2">
+          <button
+            onClick={() => setActiveTab('catalog')}
+            className={`w-full flex items-center px-3 py-2 rounded-lg text-left transition-colors ${
+              activeTab === 'catalog' 
+                ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <FileText className="w-4 h-4 mr-3" />
+            Assessment Catalog
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('assignments')}
+            className={`w-full flex items-center px-3 py-2 rounded-lg text-left transition-colors ${
+              activeTab === 'assignments' 
+                ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <Users className="w-4 h-4 mr-3" />
+            Assigned Assessments
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('packages')}
+            className={`w-full flex items-center px-3 py-2 rounded-lg text-left transition-colors ${
+              activeTab === 'packages' 
+                ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <Target className="w-4 h-4 mr-3" />
+            Assessment Bundles
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('session')}
+            className={`w-full flex items-center px-3 py-2 rounded-lg text-left transition-colors ${
+              activeTab === 'session' 
+                ? 'bg-green-50 text-green-700 border border-green-200' 
+                : inSessionMode 
+                ? 'bg-green-100 text-green-800' 
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <PlayCircle className="w-4 h-4 mr-3" />
+            {inSessionMode ? 'Live Session Active' : 'Session Mode'}
+            {inSessionMode && <div className="w-2 h-2 bg-green-500 rounded-full ml-auto animate-pulse"></div>}
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('progress')}
+            className={`w-full flex items-center px-3 py-2 rounded-lg text-left transition-colors ${
+              activeTab === 'progress' 
+                ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <Eye className="w-4 h-4 mr-3" />
+            Progress & Notes
+          </button>
+        </nav>
+        
+        <div className="p-4 border-t border-gray-200">
+          <div className="text-xs text-gray-500 mb-2">Quick Actions</div>
+          <div className="space-y-2">
+            <Button size="sm" className="w-full justify-start" variant="outline">
+              <Plus className="w-3 h-3 mr-2" />
+              Create Template
+            </Button>
+            <Button size="sm" className="w-full justify-start" variant="outline">
+              <Calendar className="w-3 h-3 mr-2" />
+              View Schedule
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <Tabs defaultValue="catalog" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="catalog">Assessment Catalog</TabsTrigger>
-          <TabsTrigger value="assignments">Client Assignments</TabsTrigger>
-          <TabsTrigger value="packages">Assessment Packages</TabsTrigger>
-          <TabsTrigger value="session" className={inSessionMode ? "bg-green-100 text-green-800" : ""}>
-            {inSessionMode ? "Live Session" : "Session Mode"}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="catalog" className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search assessments..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Filter by category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {getUniqueCategories().map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {isLoadingCatalog ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardHeader>
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-20 bg-gray-200 rounded"></div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : filteredCatalog.length === 0 ? (
-              <div className="col-span-full text-center py-8">
-                <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">No assessments found</h3>
-                <p className="text-sm text-muted-foreground">
-                  {searchTerm || categoryFilter !== "all" 
-                    ? "Try adjusting your search or filter criteria" 
-                    : "Create your first assessment template to get started"}
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Sticky Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {activeTab === 'catalog' && 'Assessment Catalog'}
+                  {activeTab === 'assignments' && 'Client Assignments'}
+                  {activeTab === 'packages' && 'Assessment Bundles'}
+                  {activeTab === 'session' && (inSessionMode ? 'Live Session' : 'Session Mode')}
+                  {activeTab === 'progress' && 'Progress & Notes'}
+                </h2>
+                <p className="text-sm text-gray-600">
+                  {activeTab === 'catalog' && 'Professional assessment tools and templates'}
+                  {activeTab === 'assignments' && 'Track client assessment progress and completion'}
+                  {activeTab === 'packages' && 'Pre-configured assessment packages for clinical workflows'}
+                  {activeTab === 'session' && (inSessionMode ? 'Real-time assessment administration' : 'Start live assessment sessions')}
+                  {activeTab === 'progress' && 'Assessment history and progress note integration'}
                 </p>
               </div>
-            ) : (
-              filteredCatalog.map((item: any) => (
-                <Card key={item.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg">{item.name}</CardTitle>
-                      <Badge variant="outline">{item.category}</Badge>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              {inSessionMode && (
+                <div className="flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                  Session Active
+                </div>
+              )}
+              
+              <Button size="sm" variant="outline">
+                <Plus className="w-4 h-4 mr-2" />
+                Assign Assessment
+              </Button>
+              
+              {!inSessionMode ? (
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={startLiveSession}>
+                  <PlayCircle className="w-4 h-4 mr-2" />
+                  Start Live Session
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={endLiveSession}>
+                  End Session
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 p-6 overflow-auto">
+          {renderActiveTab()}
+        </div>
+      </div>
+
+      {/* Assign Assessment Dialog */}
+      {selectedAssessment && (
+        <AssignAssessmentDialog
+          isOpen={isAssignDialogOpen}
+          onClose={() => {
+            setIsAssignDialogOpen(false);
+            setSelectedAssessment(null);
+          }}
+          assessment={selectedAssessment}
+          clients={clientsData || []}
+          onAssign={handleAssign}
+        />
+      )}
+    </div>
+  );
+
+  function renderActiveTab() {
+    switch (activeTab) {
+      case 'catalog':
+        return renderCatalogTab();
+      case 'assignments':
+        return renderAssignmentsTab();
+      case 'packages':
+        return renderPackagesTab();
+      case 'session':
+        return renderSessionTab();
+      case 'progress':
+        return renderProgressTab();
+      default:
+        return renderCatalogTab();
+    }
+  }
+
+  function renderCatalogTab() {
+    return (
+      <div className="space-y-6">
+        {/* Search and Filter Bar */}
+        <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg border border-gray-200">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search assessments..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectValue placeholder="Filter by category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {getUniqueCategories().map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Assessment Cards Grid */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {isLoadingCatalog ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-16 bg-gray-200 rounded mb-4"></div>
+                  <div className="flex space-x-2">
+                    <div className="h-8 bg-gray-200 rounded flex-1"></div>
+                    <div className="h-8 bg-gray-200 rounded w-20"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : filteredCatalog.length === 0 ? (
+            <div className="col-span-full">
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No assessments found</h3>
+                  <p className="text-gray-600 mb-6">
+                    {searchTerm || categoryFilter !== "all" 
+                      ? "Try adjusting your search or filter criteria" 
+                      : "Create your first assessment template to get started"}
+                  </p>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Assessment
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            filteredCatalog.map((item: any) => (
+              <Card key={item.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-blue-500">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start mb-2">
+                    <CardTitle className="text-base font-semibold text-gray-900">{item.name}</CardTitle>
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs px-2 py-1 ${getCategoryColor(item.category)}`}
+                    >
+                      {item.category}
+                    </Badge>
+                  </div>
+                  <CardDescription className="text-sm text-gray-600 line-clamp-2">
+                    {item.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <div className="flex items-center">
+                      <Clock className="w-3 h-3 mr-1" />
+                      {item.estimated_time_minutes} min
                     </div>
-                    <CardDescription className="line-clamp-2">
-                      {item.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>{item.estimated_time_minutes} minutes</span>
-                      <span>{item.type}</span>
+                    <div className="flex items-center">
+                      <Target className="w-3 h-3 mr-1" />
+                      {item.type}
                     </div>
+                  </div>
+                  
+                  <div className="flex space-x-2">
                     <Button 
-                      className="w-full" 
-                      variant="outline"
+                      size="sm" 
+                      className="flex-1"
                       onClick={() => {
                         setSelectedAssessment(item);
                         setIsAssignDialogOpen(true);
                       }}
                     >
-                      <Users className="w-4 h-4 mr-2" />
-                      Assign to Client
+                      <Users className="w-3 h-3 mr-1" />
+                      Assign
                     </Button>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
-        </TabsContent>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => window.open(item.url, '_blank')}
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      Preview
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
 
-        <TabsContent value="assignments" className="space-y-4">
-          <div className="flex justify-between items-center">
+  function renderAssignmentsTab() {
+    return (
+      <div className="space-y-6">
+        {/* Filter Bar */}
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <h3 className="font-medium text-gray-900">Client Assignments</h3>
+              <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                {filteredAssignments.length} total
+              </Badge>
+            </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="assigned">Assigned</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="overdue">Overdue</SelectItem>
               </SelectContent>
             </Select>
           </div>
+        </div>
 
-          <div className="space-y-4">
-            {isLoadingAssignments ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-6">
-                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/4"></div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : filteredAssignments.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium">No assignments found</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {statusFilter !== "all" 
-                      ? "No assignments match the selected status filter" 
-                      : "Start by assigning assessments to clients from the catalog"}
-                  </p>
+        {/* Assignments Table/Cards */}
+        <div className="space-y-4">
+          {isLoadingAssignments ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-6">
+                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/4"></div>
                 </CardContent>
               </Card>
-            ) : (
-              filteredAssignments.map((assignment: ClientAssessment) => (
-                <Card key={assignment.id}>
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="font-medium">{assignment.catalogId}</h3>
-                        <p className="text-sm text-muted-foreground">Client: {assignment.clientId}</p>
-                      </div>
-                      {getStatusBadge(assignment.status)}
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Assigned:</span>
-                        <p>{format(new Date(assignment.assignedDate), "MMM d, yyyy")}</p>
-                      </div>
-                      {assignment.dueDate && (
-                        <div>
-                          <span className="text-muted-foreground">Due:</span>
-                          <p>{format(new Date(assignment.dueDate), "MMM d, yyyy")}</p>
-                        </div>
-                      )}
-                      {assignment.startedDate && (
-                        <div>
-                          <span className="text-muted-foreground">Started:</span>
-                          <p>{format(new Date(assignment.startedDate), "MMM d, yyyy")}</p>
-                        </div>
-                      )}
-                      {assignment.completedDate && (
-                        <div>
-                          <span className="text-muted-foreground">Completed:</span>
-                          <p>{format(new Date(assignment.completedDate), "MMM d, yyyy")}</p>
-                        </div>
-                      )}
-                    </div>
-                    {assignment.notes && (
-                      <div className="mt-4 p-3 bg-muted rounded-md">
-                        <p className="text-sm">{assignment.notes}</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="packages" className="space-y-4">
-          <Card>
-            <CardContent className="p-8 text-center">
-              <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium">Assessment Packages</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Create and manage assessment packages for common treatment protocols
-              </p>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Package
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="session" className="space-y-4">
-          {!inSessionMode ? (
+            ))
+          ) : filteredAssignments.length === 0 ? (
             <Card>
-              <CardContent className="p-8 text-center">
-                <PlayCircle className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-                <h3 className="text-xl font-medium mb-2">Start Live Session Mode</h3>
-                <p className="text-sm text-muted-foreground mb-6 max-w-2xl mx-auto">
-                  Enter live session mode to administer assessments in real-time during client appointments. 
-                  This enables instant access to assessment tools, automatic progress saving, and seamless 
-                  integration with session notes.
+              <CardContent className="p-12 text-center">
+                <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No assignments found</h3>
+                <p className="text-gray-600 mb-6">
+                  {statusFilter !== "all" 
+                    ? "No assignments match the selected status filter" 
+                    : "Start by assigning assessments to clients from the catalog"}
                 </p>
-                
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto mb-6">
-                  <div className="text-center p-4 border rounded-lg">
-                    <Brain className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                    <h4 className="font-medium mb-1">Real-Time Assessment</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Instant access to all assessment tools with auto-save functionality
-                    </p>
-                  </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <MessageSquare className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                    <h4 className="font-medium mb-1">Session Integration</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Results automatically added to session notes and progress tracking
-                    </p>
-                  </div>
-                  <div className="text-center p-4 border rounded-lg">
-                    <Target className="w-8 h-8 text-orange-600 mx-auto mb-2" />
-                    <h4 className="font-medium mb-1">Progress Monitoring</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Track completion status and compare results over time
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Button 
-                    size="lg" 
-                    className="bg-blue-600 hover:bg-blue-700"
-                    onClick={() => setInSessionMode(true)}
-                  >
-                    <PlayCircle className="w-5 h-5 mr-2" />
-                    Start Session Mode
-                  </Button>
-                  <p className="text-xs text-muted-foreground">
-                    Select a client and appointment to begin real-time assessment administration
-                  </p>
-                </div>
+                <Button onClick={() => setActiveTab('catalog')}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Browse Catalog
+                </Button>
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
-              {/* Live Session Dashboard */}
-              <Card className="border-green-200 bg-green-50">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                      <CardTitle className="text-green-800">Live Session Active</CardTitle>
+            filteredAssignments.map((assignment: any) => (
+              <Card key={assignment.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 mb-1">{assignment.catalogId}</h3>
+                      <p className="text-sm text-gray-600">Client: {assignment.clientId}</p>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setInSessionMode(false)}
-                      className="text-red-600 border-red-200 hover:bg-red-50"
-                    >
-                      End Session
-                    </Button>
+                    {getStatusBadge(assignment.status)}
                   </div>
-                  <CardDescription className="text-green-700">
-                    Real-time assessment administration with automatic progress tracking
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-
-              {/* Quick Access Assessment Tools */}
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredCatalog.slice(0, 6).map((item: any) => (
-                  <Card key={item.id} className="hover:shadow-md transition-shadow cursor-pointer">
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-base">{item.name}</CardTitle>
-                        <Badge variant="outline" className="text-xs">{item.category}</Badge>
-                      </div>
-                      <CardDescription className="text-sm line-clamp-2">
-                        {item.description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>{item.estimated_time_minutes} minutes</span>
-                        <span>{item.type}</span>
-                      </div>
-                      
-                      <div className="flex space-x-2">
-                        <Button 
-                          size="sm" 
-                          className="flex-1"
-                          onClick={() => {
-                            window.open(item.url, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
-                            setActiveIframe(item.id);
-                          }}
-                        >
-                          <ExternalLink className="w-3 h-3 mr-1" />
-                          Open
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => {
-                            // Add to session notes template
-                            toast({
-                              title: "Added to Session Notes",
-                              description: `${item.name} template added to session notes.`,
-                            });
-                          }}
-                        >
-                          <FileText className="w-3 h-3 mr-1" />
-                          Add to Notes
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              {/* Assessment Bundles for Quick Assignment */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Target className="w-5 h-5 mr-2" />
-                    Quick Assessment Bundles
-                  </CardTitle>
-                  <CardDescription>
-                    Pre-configured assessment packages for common clinical scenarios
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                    <Button variant="outline" className="h-auto p-4 flex flex-col items-start">
-                      <div className="font-medium mb-1">Initial Comprehensive</div>
-                      <div className="text-xs text-muted-foreground">CCI-55 + 16PF + VLQ (~84 min)</div>
-                    </Button>
-                    <Button variant="outline" className="h-auto p-4 flex flex-col items-start">
-                      <div className="font-medium mb-1">Quick Personality</div>
-                      <div className="text-xs text-muted-foreground">MBTI + Therapy Form (~30 min)</div>
-                    </Button>
-                    <Button variant="outline" className="h-auto p-4 flex flex-col items-start">
-                      <div className="font-medium mb-1">Couples Package</div>
-                      <div className="text-xs text-muted-foreground">Schema + VLQ (~47 min)</div>
-                    </Button>
-                    <Button variant="outline" className="h-auto p-4 flex flex-col items-start">
-                      <div className="font-medium mb-1">Existential Exploration</div>
-                      <div className="text-xs text-muted-foreground">Existential + VLQ + Form (~54 min)</div>
-                    </Button>
-                    <Button variant="outline" className="h-auto p-4 flex flex-col items-start">
-                      <div className="font-medium mb-1">Full Personality</div>
-                      <div className="text-xs text-muted-foreground">MBTI + 16PF + General (~95 min)</div>
-                    </Button>
-                    <Button variant="outline" className="h-auto p-4 flex flex-col items-start">
-                      <div className="font-medium mb-1">Values & Meaning</div>
-                      <div className="text-xs text-muted-foreground">Existential + VLQ (~42 min)</div>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Session Progress Tracking */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Eye className="w-5 h-5 mr-2" />
-                    Session Progress
-                  </CardTitle>
-                  <CardDescription>
-                    Track assessment completion and session integration status
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {activeIframe && (
-                      <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                          <div>
-                            <div className="font-medium text-blue-900">Assessment In Progress</div>
-                            <div className="text-sm text-blue-700">Client completing assessment in new window</div>
-                          </div>
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button size="sm" variant="outline">
-                            <Save className="w-3 h-3 mr-1" />
-                            Auto-Save Active
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <RefreshCw className="w-3 h-3 mr-1" />
-                            Check Status
-                          </Button>
-                        </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
+                    <div>
+                      <span className="text-gray-500 block">Assigned:</span>
+                      <span className="font-medium">{format(new Date(assignment.assignedDate), "MMM d, yyyy")}</span>
+                    </div>
+                    {assignment.dueDate && (
+                      <div>
+                        <span className="text-gray-500 block">Due:</span>
+                        <span className="font-medium">{format(new Date(assignment.dueDate), "MMM d, yyyy")}</span>
                       </div>
                     )}
-                    
-                    <div className="text-center py-8 text-muted-foreground">
-                      <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p>No active assessments. Open an assessment above to begin tracking.</p>
-                    </div>
                   </div>
+                  
+                  {assignment.notes && (
+                    <div className="p-3 bg-gray-50 rounded-lg mb-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-1">Notes:</h4>
+                      <p className="text-sm text-gray-700">{assignment.notes}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-            </div>
+            ))
           )}
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
+    );
+  }
 
-      <AssignmentDialog />
-    </div>
-  );
+  function renderPackagesTab() {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Assessment Bundles</h3>
+          <p className="text-gray-600 mb-6">
+            Pre-configured assessment packages for common therapeutic protocols and clinical workflows.
+          </p>
+          
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <Card className="border-l-4 border-l-purple-500">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Initial Comprehensive</CardTitle>
+                <CardDescription>Complete intake assessment package</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-gray-600 mb-3">
+                  CCI-55 + 16PF + VLQ (~84 min)
+                </div>
+                <Button size="sm" className="w-full">
+                  <Target className="w-3 h-3 mr-2" />
+                  Assign Bundle
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-green-500">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Quick Personality</CardTitle>
+                <CardDescription>Efficient personality assessment</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-gray-600 mb-3">
+                  MBTI + Therapy Form (~30 min)
+                </div>
+                <Button size="sm" className="w-full">
+                  <Target className="w-3 h-3 mr-2" />
+                  Assign Bundle
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-orange-500">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Couples Package</CardTitle>
+                <CardDescription>Relationship assessment bundle</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-gray-600 mb-3">
+                  Schema + VLQ (~47 min)
+                </div>
+                <Button size="sm" className="w-full">
+                  <Target className="w-3 h-3 mr-2" />
+                  Assign Bundle
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderSessionTab() {
+    if (!inSessionMode) {
+      return (
+        <div className="space-y-6">
+          <Card className="border-l-4 border-l-green-500">
+            <CardHeader>
+              <CardTitle className="flex items-center text-green-700">
+                <PlayCircle className="w-5 h-5 mr-2" />
+                Live Session Mode
+              </CardTitle>
+              <CardDescription>
+                Start a real-time assessment session for immediate client administration during appointments.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <h4 className="font-medium text-green-900 mb-2">Session Benefits</h4>
+                  <ul className="text-sm text-green-800 space-y-1">
+                    <li>• Real-time assessment administration</li>
+                    <li>• Automatic progress tracking</li>
+                    <li>• Direct session note integration</li>
+                    <li>• Client engagement monitoring</li>
+                  </ul>
+                </div>
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-2">How It Works</h4>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• Select assessments to administer</li>
+                    <li>• Client completes in real-time</li>
+                    <li>• Results auto-save to notes</li>
+                    <li>• Session summary generated</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t">
+                <Button 
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  onClick={startLiveSession}
+                >
+                  <PlayCircle className="w-4 h-4 mr-2" />
+                  Start Live Assessment Session
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {/* Live Session Header */}
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <div className="w-3 h-3 bg-green-500 rounded-full mr-3 animate-pulse"></div>
+              <h3 className="text-lg font-semibold text-gray-900">Live Session Active</h3>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Badge variant="outline" className="bg-green-100 text-green-800">
+                Session: {currentSessionId?.substring(0, 8)}
+              </Badge>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="text-red-600 border-red-200 hover:bg-red-50"
+                onClick={endLiveSession}
+              >
+                End Session
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Access Assessment Tools */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredCatalog.slice(0, 6).map((item: any) => (
+            <Card key={item.id} className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-base">{item.name}</CardTitle>
+                  <Badge variant="outline" className="text-xs">{item.category}</Badge>
+                </div>
+                <CardDescription className="text-sm line-clamp-2">
+                  {item.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between text-xs text-gray-600">
+                  <span>{item.estimated_time_minutes} minutes</span>
+                  <span>{item.type}</span>
+                </div>
+                
+                <div className="flex space-x-2">
+                  <Button 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => {
+                      window.open(item.url, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+                      setActiveIframe(item.id);
+                    }}
+                  >
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    Open
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      toast({
+                        title: "Added to Session Notes",
+                        description: "Assessment template added to session notes for this client."
+                      });
+                    }}
+                  >
+                    <FileText className="w-3 h-3 mr-1" />
+                    Add to Notes
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function renderProgressTab() {
+    return (
+      <div className="space-y-6">
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Assessment History & Progress Notes</h3>
+          <p className="text-gray-600 mb-6">
+            View completed assessments and their integration with session notes and treatment progress.
+          </p>
+          
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Eye className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Assessment History</h3>
+                <p className="text-gray-600 mb-6">
+                  Completed assessments and progress notes will appear here as clients complete their assignments.
+                </p>
+                <Button onClick={() => setActiveTab('assignments')}>
+                  <Target className="w-4 h-4 mr-2" />
+                  View Assignments
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+
+// Define types for better TypeScript support
+interface AssessmentCatalogItem {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  type: string;
+  estimated_time_minutes: number;
+  url: string;
+}
+
+interface ClientAssessment {
+  id: string;
+  clientId: string;
+  catalogId: string;
+  therapistId: string;
+  status: string;
+  assignedDate: string;
+  dueDate?: string;
+  startedDate?: string;
+  completedDate?: string;
+  notes?: string;
 }
