@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ApiClient } from '@/lib/api';
-import { Search, File, Folder, ExternalLink, Eye, Download, FileText, Database, Calendar } from 'lucide-react';
+import { Search, File, Folder, ExternalLink, Eye, FileText, Database, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,14 +39,30 @@ export default function ContentViewer() {
   const [activeTab, setActiveTab] = useState('drive');
 
   // Google Drive queries
-  const { data: driveFiles, isLoading: driveLoading } = useQuery({
+  const { data: driveFiles, isLoading: driveLoading, error: driveError } = useQuery({
     queryKey: ['drive-files'],
-    queryFn: () => fetch('/api/drive/files').then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch('/api/drive/files');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to fetch files');
+      }
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
   });
 
   const { data: driveSearchResults, isLoading: driveSearchLoading } = useQuery({
     queryKey: ['drive-search', searchQuery],
-    queryFn: () => fetch(`/api/drive/search?q=${encodeURIComponent(searchQuery)}`).then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch(`/api/drive/search?q=${encodeURIComponent(searchQuery)}`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to search files');
+      }
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: searchQuery.length > 2,
   });
 
@@ -60,17 +75,29 @@ export default function ContentViewer() {
   // Notion queries
   const { data: notionPages, isLoading: notionPagesLoading } = useQuery({
     queryKey: ['notion-pages'],
-    queryFn: () => fetch('/api/notion/pages').then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch('/api/notion/pages');
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
   });
 
   const { data: notionDatabases, isLoading: notionDbLoading } = useQuery({
     queryKey: ['notion-databases'],
-    queryFn: () => fetch('/api/notion/databases').then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch('/api/notion/databases');
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
   });
 
   const { data: notionSearchResults, isLoading: notionSearchLoading } = useQuery({
     queryKey: ['notion-search', searchQuery],
-    queryFn: () => fetch(`/api/notion/search?q=${encodeURIComponent(searchQuery)}`).then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch(`/api/notion/search?q=${encodeURIComponent(searchQuery)}`);
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: searchQuery.length > 2 && activeTab === 'notion',
   });
 
@@ -104,6 +131,9 @@ export default function ContentViewer() {
     }
     return 'Untitled';
   };
+
+  const currentDriveFiles = searchQuery ? driveSearchResults : driveFiles;
+  const currentNotionItems = searchQuery ? notionSearchResults : [...(notionDatabases || []), ...(notionPages || [])];
 
   return (
     <div className="space-y-6">
@@ -147,15 +177,34 @@ export default function ContentViewer() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {driveLoading || driveSearchLoading ? (
+                {driveError ? (
+                  <div className="text-center py-8">
+                    <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                    <div className="text-red-500 mb-4">
+                      <p>{(driveError as Error).message}</p>
+                    </div>
+                    <Button 
+                      onClick={() => window.location.href = '/api/auth/google'}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Re-authenticate with Google Drive
+                    </Button>
+                  </div>
+                ) : driveLoading || driveSearchLoading ? (
                   <div className="space-y-2">
                     {[...Array(5)].map((_, i) => (
                       <div key={i} className="h-12 bg-gray-200 rounded animate-pulse" />
                     ))}
                   </div>
+                ) : !currentDriveFiles || currentDriveFiles.length === 0 ? (
+                  <div className="text-center py-8">
+                    <File className="h-12 w-12 text-therapy-text/30 mx-auto mb-4" />
+                    <p className="text-therapy-text/60">No files found</p>
+                    <p className="text-therapy-text/40 text-sm">Try searching or check your Google Drive access</p>
+                  </div>
                 ) : (
                   <div className="space-y-2">
-                    {(searchQuery ? driveSearchResults : driveFiles)?.map((file: DriveFile) => (
+                    {currentDriveFiles.map((file: DriveFile) => (
                       <div
                         key={file.id}
                         className={`p-3 rounded-lg border cursor-pointer transition-colors ${
@@ -253,10 +302,16 @@ export default function ContentViewer() {
                       <div key={i} className="h-12 bg-gray-200 rounded animate-pulse" />
                     ))}
                   </div>
+                ) : !currentNotionItems || currentNotionItems.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Database className="h-12 w-12 text-therapy-text/30 mx-auto mb-4" />
+                    <p className="text-therapy-text/60">No content found</p>
+                    <p className="text-therapy-text/40 text-sm">Check your Notion workspace connection</p>
+                  </div>
                 ) : (
                   <div className="space-y-4">
                     {/* Databases */}
-                    {(searchQuery ? [] : notionDatabases)?.map((db: NotionDatabase) => (
+                    {!searchQuery && notionDatabases && notionDatabases.map((db: NotionDatabase) => (
                       <div
                         key={db.id}
                         className="p-3 rounded-lg border hover:bg-gray-50 cursor-pointer"
@@ -276,7 +331,7 @@ export default function ContentViewer() {
                     ))}
                     
                     {/* Pages */}
-                    {(searchQuery ? notionSearchResults : notionPages)?.map((page: NotionPage) => (
+                    {(searchQuery ? notionSearchResults : notionPages) && (searchQuery ? notionSearchResults : notionPages).map((page: NotionPage) => (
                       <div
                         key={page.id}
                         className={`p-3 rounded-lg border cursor-pointer transition-colors ${
