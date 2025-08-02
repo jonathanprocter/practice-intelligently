@@ -1918,7 +1918,25 @@ Respond in JSON format:
         daysSince: Math.floor((Date.now() - new Date(note.createdAt).getTime()) / (24 * 60 * 60 * 1000))
       }));
 
-      const prompt = `Analyze the following therapy session notes for a client named ${client.firstName} ${client.lastName} and determine if a check-in message would be beneficial:
+      const prompt = `You are writing a check-in message on behalf of Jonathan, a licensed mental health counselor. Your tone must sound like Jonathan himself is speaking - warm, clear, professional, conversational but composed, with occasional dry wit when appropriate.
+
+TONE GUIDELINES:
+- Warm, clear, and professional but never stiff or corporate
+- Use contractions (I'll, that's, you're)
+- Conversational but composed (not too casual)
+- Emotionally attuned, not sentimental
+- Structured and efficient—but never cold or rushed
+- Keep paragraphs short and balanced
+- Vary sentence rhythm to avoid sounding robotic
+
+AVOID:
+- Overusing exclamation marks, emojis, or filler
+- Stiff formality ("Dear Sir or Madam," "Pursuant to...")
+- Vague corporate or "over-polished" phrasing
+- Over-apologizing or sounding unsure
+- Generic, ChatGPT-style AI responses
+
+Analyze the following therapy session notes for ${client.firstName} ${client.lastName} and determine if a check-in message would be beneficial:
 
 Recent Sessions:
 ${sessionContext.map(s => `- ${s.daysSince} days ago: ${s.content}`).join('\n')}
@@ -1929,7 +1947,13 @@ Based on the session content, determine:
 1. Should we generate a check-in? (consider: homework assignments, crisis indicators, progress milestones, emotional state)
 2. What type of check-in? (midweek, followup, crisis_support, goal_reminder, homework_reminder)
 3. Priority level? (low, medium, high, urgent)
-4. Appropriate subject line and personalized message
+4. Write a subject line and message that sounds like Jonathan's authentic voice
+
+Example phrases to reference:
+- "Hi [Name] — just wanted to check in briefly."
+- "Hope things have been going okay since we last met."
+- "No pressure to reply right away—just wanted to touch base."
+- "Let me know if you'd like to chat about anything before our next session."
 
 Respond with JSON:
 {
@@ -1976,15 +2000,15 @@ Respond with JSON:
         shouldGenerateCheckin: true,
         checkinType: 'midweek',
         priority: 'medium',
-        subject: `Midweek check-in`,
-        messageContent: `Hi ${client.firstName},
+        subject: `Quick check-in`,
+        messageContent: `Hi ${client.firstName} — just wanted to check in briefly.
 
-I hope you're doing well since our last session. I wanted to check in and see how you've been feeling and if you've had a chance to work on the strategies we discussed.
+Hope things have been going okay since we last met. No pressure to reply right away, but I'd love to hear how you're feeling about the things we discussed.
 
-Remember, you can always reach out if you need support between sessions.
+Let me know if you'd like to chat about anything before our next session.
 
-Best regards,
-Your therapist`,
+Take care,
+Jonathan`,
         reasoning: `Generated midweek check-in because it's been ${daysSinceLastSession} days since last session`,
         triggerContext: { daysSinceSession: daysSinceLastSession, lastSessionDate: lastSession.createdAt }
       };
