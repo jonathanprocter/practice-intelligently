@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient, type Client } from "@/lib/api";
-import { Users, Plus, Search, Filter, Edit2, Calendar, Phone, Mail, UserCheck, Upload, FileText } from "lucide-react";
+import { Users, Plus, Search, Filter, Edit2, Calendar, Phone, Mail, UserCheck, Upload, FileText, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -31,22 +31,31 @@ export default function Clients() {
   
 
 
-  const filteredClients = clients?.filter(client => {
-    if (!searchTerm.trim()) return true;
+  // Filter clients by status
+  const activeClients = clients?.filter(client => client.status === 'active') || [];
+  const archivedClients = clients?.filter(client => client.status === 'archived') || [];
+  
+  const filterClientsBySearch = (clientList: Client[]) => {
+    if (!searchTerm.trim()) return clientList;
     
     const searchLower = searchTerm.toLowerCase().trim();
-    const fullName = `${client.firstName || ''} ${client.lastName || ''}`.toLowerCase();
-    const preferredName = client.preferredName?.toLowerCase() || '';
-    const email = client.email?.toLowerCase() || '';
-    const phone = client.phone?.toLowerCase() || '';
-    
-    return fullName.includes(searchLower) ||
-           preferredName.includes(searchLower) ||
-           email.includes(searchLower) ||
-           phone.includes(searchLower) ||
-           client.firstName?.toLowerCase().includes(searchLower) ||
-           client.lastName?.toLowerCase().includes(searchLower);
-  }) || [];
+    return clientList.filter(client => {
+      const fullName = `${client.firstName || ''} ${client.lastName || ''}`.toLowerCase();
+      const preferredName = client.preferredName?.toLowerCase() || '';
+      const email = client.email?.toLowerCase() || '';
+      const phone = client.phone?.toLowerCase() || '';
+      
+      return fullName.includes(searchLower) ||
+             preferredName.includes(searchLower) ||
+             email.includes(searchLower) ||
+             phone.includes(searchLower) ||
+             client.firstName?.toLowerCase().includes(searchLower) ||
+             client.lastName?.toLowerCase().includes(searchLower);
+    });
+  };
+
+  const filteredActiveClients = filterClientsBySearch(activeClients);
+  const filteredArchivedClients = filterClientsBySearch(archivedClients);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -85,6 +94,149 @@ export default function Clients() {
     const age = new Date().getFullYear() - new Date(dateOfBirth).getFullYear();
     return age;
   };
+
+  const renderClientList = (clientList: Client[], emptyMessage: string, emptyDescription: string) => (
+    <div className="grid gap-4">
+      {clientList.length > 0 ? (
+        clientList.map((client) => (
+          <div key={client.id} className="therapy-card p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start space-x-4 flex-1">
+                <div className="w-12 h-12 bg-therapy-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Users className="h-6 w-6 text-therapy-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <h3 className="font-semibold text-therapy-text text-lg">
+                      {client.firstName} {client.lastName}
+                      {client.preferredName && (
+                        <span className="text-sm text-therapy-text/60 ml-2">
+                          "{client.preferredName}"
+                        </span>
+                      )}
+                    </h3>
+                    {client.pronouns && (
+                      <span className="text-xs bg-therapy-accent/10 text-therapy-accent px-2 py-1 rounded">
+                        {client.pronouns}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-therapy-text/60 mb-3">
+                    {client.email && (
+                      <div className="flex items-center space-x-2">
+                        <Mail className="h-4 w-4" />
+                        <span className="truncate">{client.email}</span>
+                      </div>
+                    )}
+                    {client.phone && (
+                      <div className="flex items-center space-x-2">
+                        <Phone className="h-4 w-4" />
+                        <span>{client.phone}</span>
+                      </div>
+                    )}
+                    {client.dateOfBirth && (
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="h-4 w-4" />
+                        <span>
+                          {format(new Date(client.dateOfBirth), 'MMM d, yyyy')} 
+                          <span className="ml-1 text-therapy-text/40">
+                            (Age {formatAge(client.dateOfBirth)})
+                          </span>
+                        </span>
+                      </div>
+                    )}
+                    {client.gender && (
+                      <div className="flex items-center space-x-2">  
+                        <UserCheck className="h-4 w-4" />
+                        <span className="capitalize">{client.gender}</span>
+                      </div>
+                    )}
+                    {client.address && typeof client.address === 'object' && (client.address as any).street && (
+                      <div className="flex items-center space-x-2 col-span-full">
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span className="truncate">
+                          {(client.address as any).street}, {(client.address as any).city}, {(client.address as any).state} {(client.address as any).zipCode}
+                        </span>
+                      </div>
+                    )}
+                    {client.alternatePhone && (
+                      <div className="flex items-center space-x-2">
+                        <Phone className="h-4 w-4" />
+                        <span className="text-xs">{client.alternatePhone} (alt)</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {client.referralSource && (
+                    <div className="text-xs text-therapy-text/50 mb-2">
+                      Referred by: {client.referralSource}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-3 flex-shrink-0">
+                <div className="flex flex-col space-y-2">
+                  <Badge className={getStatusColor(client.status)}>
+                    {client.status}
+                  </Badge>
+                  {client.riskLevel && client.riskLevel !== 'low' && (
+                    <Badge className={getRiskLevelColor(client.riskLevel)}>
+                      {client.riskLevel} risk
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex flex-col space-y-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleEditClient(client)}
+                  >
+                    <Edit2 className="w-4 h-4 mr-1" />
+                    Edit
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open(`tel:${client.phone}`, '_self')}
+                    disabled={!client.phone}
+                  >
+                    Call
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="therapy-card p-12 text-center">
+          <Users className="h-12 w-12 text-therapy-text/30 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-therapy-text mb-2">
+            {searchTerm ? 'No clients found' : emptyMessage}
+          </h3>
+          <p className="text-therapy-text/60 mb-4">
+            {searchTerm 
+              ? 'Try adjusting your search terms'
+              : emptyDescription
+            }
+          </p>
+          {!searchTerm && emptyMessage === 'No clients yet' && (
+            <Button 
+              className="bg-therapy-primary hover:bg-therapy-primary/90"
+              onClick={handleAddClient}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Your First Client
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
 
   if (isLoading) {
     return (
@@ -176,153 +328,41 @@ export default function Clients() {
       </div>
 
       {/* Quick Update Component for existing clients missing data */}
-      {clients && clients.length > 0 && (
-        <QuickClientUpdate clients={clients} />
+      {activeClients && activeClients.length > 0 && (
+        <QuickClientUpdate clients={activeClients} />
       )}
 
-      <div className="grid gap-4">
-        {filteredClients.length > 0 ? (
-          filteredClients.map((client) => (
-            <div key={client.id} className="therapy-card p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-4 flex-1">
-                  <div className="w-12 h-12 bg-therapy-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Users className="h-6 w-6 text-therapy-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="font-semibold text-therapy-text text-lg">
-                        {client.firstName} {client.lastName}
-                        {client.preferredName && (
-                          <span className="text-sm text-therapy-text/60 ml-2">
-                            "{client.preferredName}"
-                          </span>
-                        )}
-                      </h3>
-                      {client.pronouns && (
-                        <span className="text-xs bg-therapy-accent/10 text-therapy-accent px-2 py-1 rounded">
-                          {client.pronouns}
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-therapy-text/60 mb-3">
-                      {client.email && (
-                        <div className="flex items-center space-x-2">
-                          <Mail className="h-4 w-4" />
-                          <span className="truncate">{client.email}</span>
-                        </div>
-                      )}
-                      {client.phone && (
-                        <div className="flex items-center space-x-2">
-                          <Phone className="h-4 w-4" />
-                          <span>{client.phone}</span>
-                        </div>
-                      )}
-                      {client.dateOfBirth && (
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="h-4 w-4" />
-                          <span>
-                            {format(new Date(client.dateOfBirth), 'MMM d, yyyy')} 
-                            <span className="ml-1 text-therapy-text/40">
-                              (Age {formatAge(client.dateOfBirth)})
-                            </span>
-                          </span>
-                        </div>
-                      )}
-                      {client.gender && (
-                        <div className="flex items-center space-x-2">  
-                          <UserCheck className="h-4 w-4" />
-                          <span className="capitalize">{client.gender}</span>
-                        </div>
-                      )}
-                      {client.address && typeof client.address === 'object' && (client.address as any).street && (
-                        <div className="flex items-center space-x-2 col-span-full">
-                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          <span className="truncate">
-                            {(client.address as any).street}, {(client.address as any).city}, {(client.address as any).state} {(client.address as any).zipCode}
-                          </span>
-                        </div>
-                      )}
-                      {client.alternatePhone && (
-                        <div className="flex items-center space-x-2">
-                          <Phone className="h-4 w-4" />
-                          <span className="text-xs">{client.alternatePhone} (alt)</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {client.referralSource && (
-                      <div className="text-xs text-therapy-text/50 mb-2">
-                        Referred by: {client.referralSource}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-3 flex-shrink-0">
-                  <div className="flex flex-col space-y-2">
-                    <Badge className={getStatusColor(client.status)}>
-                      {client.status}
-                    </Badge>
-                    {client.riskLevel && client.riskLevel !== 'low' && (
-                      <Badge className={getRiskLevelColor(client.riskLevel)}>
-                        {client.riskLevel} risk
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex flex-col space-y-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleEditClient(client)}
-                    >
-                      <Edit2 className="w-4 h-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => window.open(`tel:${client.phone}`, '_self')}
-                      disabled={!client.phone}
-                    >
-                      Call
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="therapy-card p-12 text-center">
-            <Users className="h-12 w-12 text-therapy-text/30 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-therapy-text mb-2">
-              {searchTerm ? 'No clients found' : 'No clients yet'}
-            </h3>
-            <p className="text-therapy-text/60 mb-4">
-              {searchTerm 
-                ? 'Try adjusting your search terms'
-                : 'Start by adding your first client to begin managing their therapy journey'
-              }
-            </p>
-            {!searchTerm && (
-              <Button 
-                className="bg-therapy-primary hover:bg-therapy-primary/90"
-                onClick={handleAddClient}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Your First Client
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
+      <Tabs defaultValue="active" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="active" className="flex items-center space-x-2">
+            <Users className="h-4 w-4" />
+            <span>Active Clients ({activeClients.length})</span>
+          </TabsTrigger>
+          <TabsTrigger value="archived" className="flex items-center space-x-2">
+            <Archive className="h-4 w-4" />
+            <span>Archived ({archivedClients.length})</span>
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="active" className="mt-6">
+          {renderClientList(
+            filteredActiveClients,
+            'No active clients yet',
+            'Start by adding your first client to begin managing their therapy journey'
+          )}
+        </TabsContent>
+        
+        <TabsContent value="archived" className="mt-6">
+          {renderClientList(
+            filteredArchivedClients,
+            'No archived clients',
+            'Archived clients will appear here when you archive them'
+          )}
+        </TabsContent>
+      </Tabs>
 
       <ClientForm
-        client={editingClient}
+        client={editingClient || undefined}
         open={showClientForm}
         onOpenChange={handleCloseForm}
       />
