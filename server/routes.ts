@@ -2442,6 +2442,141 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Compass AI Assistant Chat
+  app.post('/api/compass/chat', async (req, res) => {
+    try {
+      const { message, therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.body;
+
+      if (!message) {
+        return res.status(400).json({ error: 'Message is required' });
+      }
+
+      // Get comprehensive context about the practice
+      const [clients, appointments, sessionNotes, actionItems] = await Promise.all([
+        storage.getClients(),
+        storage.getAppointments(),
+        storage.getSessionNotes(),
+        storage.getActionItems()
+      ]);
+
+      // Create context summary for Compass
+      const practiceContext = {
+        totalClients: clients.length,
+        activeClients: clients.filter(c => c.status === 'active').length,
+        archivedClients: clients.filter(c => c.status === 'archived').length,
+        todayAppointments: appointments.filter(a => {
+          const today = new Date().toDateString();
+          return new Date(a.dateTime).toDateString() === today;
+        }).length,
+        totalAppointments: appointments.length,
+        recentNotes: sessionNotes.slice(0, 5),
+        pendingActionItems: actionItems.filter(a => a.status === 'pending').length,
+        totalActionItems: actionItems.length
+      };
+
+      // Try OpenAI first (primary), then fallback to Anthropic
+      let response;
+      let aiProvider = 'openai';
+
+      try {
+        const openaiResponse = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: `You are Compass, an expert AI assistant for Dr. Jonathan Procter's therapy practice management system. You have complete access to all practice data and can provide insights, answer questions, and help with clinical decisions.
+
+Current Practice Overview:
+- Total Clients: ${practiceContext.totalClients} (${practiceContext.activeClients} active, ${practiceContext.archivedClients} archived)
+- Today's Appointments: ${practiceContext.todayAppointments}
+- Total Appointments: ${practiceContext.totalAppointments}
+- Pending Action Items: ${practiceContext.pendingActionItems}/${practiceContext.totalActionItems}
+- Recent Session Notes: ${practiceContext.recentNotes.length} available
+
+You can help with:
+- Client management and insights
+- Appointment scheduling and analysis
+- Session note analysis and suggestions
+- Treatment planning recommendations
+- Practice analytics and trends
+- Clinical insights and patterns
+- Administrative tasks and workflows
+
+Always provide helpful, professional, and clinically relevant responses. Reference specific data when appropriate and offer actionable insights.`
+            },
+            {
+              role: "user",
+              content: message
+            }
+          ],
+          max_tokens: 800,
+          temperature: 0.7
+        });
+
+        response = openaiResponse.choices[0].message.content;
+      } catch (error) {
+        console.log('OpenAI failed, trying Anthropic...', error);
+        
+        try {
+          // Fallback to Anthropic
+          const { Anthropic } = await import('@anthropic-ai/sdk');
+          const anthropic = new Anthropic({
+            apiKey: process.env.ANTHROPIC_API_KEY,
+          });
+
+          const anthropicResponse = await anthropic.messages.create({
+            model: "claude-3-5-sonnet-20241022",
+            max_tokens: 800,
+            messages: [
+              {
+                role: "user",
+                content: `You are Compass, an expert AI assistant for Dr. Jonathan Procter's therapy practice. 
+
+Practice Overview:
+- Total Clients: ${practiceContext.totalClients} (${practiceContext.activeClients} active, ${practiceContext.archivedClients} archived)
+- Today's Appointments: ${practiceContext.todayAppointments}
+- Pending Action Items: ${practiceContext.pendingActionItems}
+
+User question: ${message}
+
+Provide a helpful, professional response with clinical insights and actionable recommendations.`
+              }
+            ],
+          });
+
+          response = anthropicResponse.content[0].type === 'text' ? anthropicResponse.content[0].text : 'Unable to generate response';
+          aiProvider = 'anthropic';
+        } catch (anthropicError) {
+          console.log('Anthropic also failed, using fallback response');
+          response = `I'm Compass, your AI assistant. I understand you're asking about: "${message}". 
+
+Based on your practice data:
+- You have ${practiceContext.totalClients} total clients (${practiceContext.activeClients} active)
+- ${practiceContext.todayAppointments} appointments scheduled for today
+- ${practiceContext.pendingActionItems} pending action items
+
+I can help you analyze this data, provide insights, and assist with clinical decisions. Could you be more specific about what you'd like to know?`;
+          aiProvider = 'fallback';
+        }
+      }
+
+      res.json({
+        content: response,
+        aiProvider,
+        practiceContext: {
+          clientCount: practiceContext.totalClients,
+          activeClients: practiceContext.activeClients,
+          todayAppointments: practiceContext.todayAppointments,
+          pendingActionItems: practiceContext.pendingActionItems
+        }
+      });
+
+    } catch (error: any) {
+      console.error('Error in Compass chat:', error);
+      res.status(500).json({ error: 'Failed to process Compass request', details: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
