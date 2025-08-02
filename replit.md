@@ -64,6 +64,7 @@ The system utilizes a comprehensive PostgreSQL database with 13 robust tables:
 - **Life in Weeks Visualization**: Created therapeutic tool for existential therapy and life perspective work
 - **Tools Category**: Established new category to distinguish therapeutic tools from clinical assessments with cyan styling and wrench icons
 - **Assessment Catalog Updates**: Corrected CCI-55 to "Comprehensive Coping Inventory" (not Cognitive Complexity Instrument)
+- **Personal Psychotherapy Form**: Reclassified as therapeutic tool rather than traditional assessment for better categorization
 
 ### Authentication & Integration Fixes
 - **Google OAuth Restored**: Successfully re-authenticated with expanded scopes for both Calendar and Drive access
