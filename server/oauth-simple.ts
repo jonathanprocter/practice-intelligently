@@ -59,7 +59,8 @@ class SimpleOAuth {
     // Generating OAuth URL
     const scopes = [
       'https://www.googleapis.com/auth/calendar.readonly',
-      'https://www.googleapis.com/auth/calendar.events'
+      'https://www.googleapis.com/auth/calendar.events',
+      'https://www.googleapis.com/auth/drive.readonly'
     ];
 
     const authUrl = this.oauth2Client.generateAuthUrl({

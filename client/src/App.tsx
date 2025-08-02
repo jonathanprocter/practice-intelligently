@@ -29,6 +29,7 @@ import Header from "@/components/layout/header";
 import { Compass } from "@/components/Compass";
 import OAuthTestSimple from './pages/oauth-test-simple';
 import OAuthQuickTest from './pages/oauth-quick-test';
+import ContentViewer from './pages/content-viewer';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -61,6 +62,7 @@ function Router() {
       <Route path="/action-items" component={ActionItems} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/ai-insights" component={AiInsights} />
+      <Route path="/content-viewer" component={ContentViewer} />
       <Route path="/settings" component={Settings} />
 
       <Route path="/oauth-test">

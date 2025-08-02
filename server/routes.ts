@@ -1871,6 +1871,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add PATCH endpoint for partial updates (drag and drop)
+  // Google Drive API endpoints
+  app.get('/api/drive/files', async (req, res) => {
+    try {
+      const { query } = req.query;
+      const { googleDriveService } = await import('./google-drive');
+      const files = await googleDriveService.listFiles(query as string);
+      res.json(files);
+    } catch (error: any) {
+      console.error('Error listing Drive files:', error);
+      res.status(500).json({ error: error.message || 'Failed to list Drive files' });
+    }
+  });
+
+  app.get('/api/drive/files/:fileId', async (req, res) => {
+    try {
+      const { fileId } = req.params;
+      const { googleDriveService } = await import('./google-drive');
+      const fileData = await googleDriveService.getFileContent(fileId);
+      res.json(fileData);
+    } catch (error: any) {
+      console.error('Error getting Drive file content:', error);
+      res.status(500).json({ error: error.message || 'Failed to get file content' });
+    }
+  });
+
+  app.get('/api/drive/search', async (req, res) => {
+    try {
+      const { q } = req.query;
+      if (!q) {
+        return res.status(400).json({ error: 'Search query is required' });
+      }
+      const { googleDriveService } = await import('./google-drive');
+      const files = await googleDriveService.searchFiles(q as string);
+      res.json(files);
+    } catch (error: any) {
+      console.error('Error searching Drive files:', error);
+      res.status(500).json({ error: error.message || 'Failed to search Drive files' });
+    }
+  });
+
+  app.get('/api/drive/folders/:folderId', async (req, res) => {
+    try {
+      const { folderId } = req.params;
+      const { googleDriveService } = await import('./google-drive');
+      const files = await googleDriveService.getFolderContents(folderId);
+      res.json(files);
+    } catch (error: any) {
+      console.error('Error getting folder contents:', error);
+      res.status(500).json({ error: error.message || 'Failed to get folder contents' });
+    }
+  });
+
+  // Notion API endpoints
+  app.get('/api/notion/databases', async (req, res) => {
+    try {
+      const { getNotionDatabases } = await import('./notion');
+      const databases = await getNotionDatabases();
+      res.json(databases);
+    } catch (error: any) {
+      console.error('Error fetching Notion databases:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch Notion databases' });
+    }
+  });
+
+  app.get('/api/notion/pages', async (req, res) => {
+    try {
+      const { getNotionPages } = await import('./notion');
+      const pages = await getNotionPages();
+      res.json(pages);
+    } catch (error: any) {
+      console.error('Error fetching Notion pages:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch Notion pages' });
+    }
+  });
+
+  app.get('/api/notion/pages/:pageId/content', async (req, res) => {
+    try {
+      const { pageId } = req.params;
+      const { getPageContent } = await import('./notion');
+      const content = await getPageContent(pageId);
+      res.json(content);
+    } catch (error: any) {
+      console.error('Error fetching Notion page content:', error);
+      res.status(500).json({ error: error.message || 'Failed to fetch page content' });
+    }
+  });
+
+  app.get('/api/notion/search', async (req, res) => {
+    try {
+      const { q } = req.query;
+      if (!q) {
+        return res.status(400).json({ error: 'Search query is required' });
+      }
+      const { searchNotion } = await import('./notion');
+      const results = await searchNotion(q as string);
+      res.json(results);
+    } catch (error: any) {
+      console.error('Error searching Notion:', error);
+      res.status(500).json({ error: error.message || 'Failed to search Notion' });
+    }
+  });
+
   app.patch('/api/calendar/events/:eventId', async (req, res) => {
     try {
       const { eventId } = req.params;

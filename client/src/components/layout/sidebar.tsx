@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Brain, Users, Calendar, FileText, CheckSquare, BarChart, Bot, Settings, Menu, MessageSquare } from "lucide-react";
+import { Brain, Users, Calendar, FileText, CheckSquare, BarChart, Bot, Settings, Menu, MessageSquare, FolderOpen } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -16,6 +16,7 @@ const getNavigationItems = (clientCount: number, urgentActionItemCount: number) 
   { path: "/action-items", label: "Action Items", icon: CheckSquare, badge: urgentActionItemCount > 0 ? urgentActionItemCount.toString() : undefined, badgeColor: "bg-red-500" },
   { path: "/analytics", label: "Analytics", icon: BarChart },
   { path: "/ai-insights", label: "AI Intelligence", icon: Brain },
+  { path: "/content-viewer", label: "Content Viewer", icon: FolderOpen },
 ];
 
 export default function Sidebar() {
