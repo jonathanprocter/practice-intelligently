@@ -256,8 +256,8 @@ export function Compass({ className }: CompassProps) {
       {/* Chat Interface */}
       {isOpen && (
         <div className={cn(
-          'fixed right-6 top-1/2 transform -translate-y-1/2 z-50 bg-white dark:bg-gray-900 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300',
-          isMinimized ? 'w-80 h-16' : 'w-96 h-[600px]',
+          'fixed right-6 top-1/2 transform -translate-y-1/2 z-50 bg-white dark:bg-gray-900 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300 overflow-hidden',
+          isMinimized ? 'w-80 h-16' : 'w-96 h-[600px] max-w-[calc(100vw-3rem)]',
           className
         )}>
           {/* Header */}
@@ -380,35 +380,37 @@ export function Compass({ className }: CompassProps) {
                   </div>
                 </div>
                 
-                <div className="p-4">
-                  <div className="flex gap-2 items-center w-full">
-                    <div className="flex-1 min-w-0 max-w-full">
+                <div className="p-4 max-w-full">
+                  <div className="flex gap-2 items-center max-w-full">
+                    <div className="flex-1 min-w-0 overflow-hidden">
                       <Input
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
                         onKeyPress={handleKeyPress}
                         placeholder={isListening ? "Listening..." : "Ask Compass anything or use voice input"}
-                        className="w-full min-w-0"
+                        className="w-full min-w-0 max-w-full"
                         disabled={chatMutation.isPending || isListening}
                       />
                     </div>
-                    <Button
-                      onClick={isListening ? stopListening : startListening}
-                      size="sm"
-                      variant={isListening ? "destructive" : "outline"}
-                      disabled={chatMutation.isPending}
-                      className="flex-shrink-0 w-10 h-10 p-0"
-                    >
-                      {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                    </Button>
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={!inputMessage.trim() || chatMutation.isPending}
-                      size="sm"
-                      className="flex-shrink-0 w-10 h-10 p-0"
-                    >
-                      <Send className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-1 flex-shrink-0">
+                      <Button
+                        onClick={isListening ? stopListening : startListening}
+                        size="sm"
+                        variant={isListening ? "destructive" : "outline"}
+                        disabled={chatMutation.isPending}
+                        className="w-9 h-9 p-0"
+                      >
+                        {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                      </Button>
+                      <Button
+                        onClick={handleSendMessage}
+                        disabled={!inputMessage.trim() || chatMutation.isPending}
+                        size="sm"
+                        className="w-9 h-9 p-0"
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
