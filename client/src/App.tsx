@@ -30,6 +30,7 @@ import { Compass } from "@/components/Compass";
 import OAuthTestSimple from './pages/oauth-test-simple';
 import OAuthQuickTest from './pages/oauth-quick-test';
 import ContentViewer from './pages/content-viewer';
+import ReauthGoogle from './pages/reauth-google';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -63,6 +64,7 @@ function Router() {
       <Route path="/analytics" component={Analytics} />
       <Route path="/ai-insights" component={AiInsights} />
       <Route path="/content-viewer" component={ContentViewer} />
+      <Route path="/reauth-google" component={ReauthGoogle} />
       <Route path="/settings" component={Settings} />
 
       <Route path="/oauth-test">
