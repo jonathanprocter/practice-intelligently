@@ -368,7 +368,7 @@ export function Compass({ className }: CompassProps) {
       // Add activation class to trigger the excited animation
       if (img.parentElement) {
         img.parentElement.classList.add('compass-activated');
-        
+
         // Remove the activation class after animation completes
         setTimeout(() => {
           img.parentElement?.classList.remove('compass-activated');
@@ -482,17 +482,34 @@ export function Compass({ className }: CompassProps) {
         if (inputRef.current) {
           inputRef.current.blur();
         }
+        // Stop voice recognition if active
+        if (speechRecognition && isListening && !voiceActivation) {
+          try {
+            speechRecognition.stop();
+            setIsListening(false);
+          } catch (error) {
+            console.log('Error stopping speech recognition:', error);
+          }
+        }
       }
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      // Add a small delay to prevent immediate closing when opening
+      const timer = setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside, true);
+      }, 100);
+
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener('mousedown', handleClickOutside, true);
+      };
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside, true);
     };
-  }, [isOpen]);
+  }, [isOpen, isListening, voiceActivation]);
 
   return (
     <>
