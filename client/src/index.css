@@ -168,6 +168,27 @@
     0%, 100% { opacity: 0; }
     50% { opacity: 1; }
   }
+
+  /* Touch-friendly improvements for Compass */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Improve button touch targets */
+  [data-compass-fab] {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Ensure proper pointer events for mobile */
+  @media (pointer: coarse) {
+    .compass-interface button {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
 }
 
 /* Calendar-specific styles */

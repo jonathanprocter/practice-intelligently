@@ -474,42 +474,35 @@ export function Compass({ className }: CompassProps) {
   };
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (isOpen && compassRef.current && !compassRef.current.contains(event.target as Node)) {
+        // Check if the click is on the floating action button
+        const fabButton = document.querySelector('[data-compass-fab]');
+        if (fabButton && fabButton.contains(event.target as Node)) {
+          return; // Don't close if clicking the FAB
+        }
+
         setIsOpen(false);
-        setShowVoiceSettings(false);
-        // Also blur the input if it's focused
         if (inputRef.current) {
           inputRef.current.blur();
-        }
-        // Stop voice recognition if active
-        if (speechRecognition && isListening && !voiceActivation) {
-          try {
-            speechRecognition.stop();
-            setIsListening(false);
-          } catch (error) {
-            console.log('Error stopping speech recognition:', error);
-          }
         }
       }
     };
 
     if (isOpen) {
-      // Add a small delay to prevent immediate closing when opening
+      // Add slight delay to prevent immediate closing when opening
       const timer = setTimeout(() => {
-        document.addEventListener('mousedown', handleClickOutside, true);
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside);
       }, 100);
 
       return () => {
         clearTimeout(timer);
-        document.removeEventListener('mousedown', handleClickOutside, true);
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('touchstart', handleClickOutside);
       };
     }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside, true);
-    };
-  }, [isOpen, isListening, voiceActivation]);
+  }, [isOpen]);
 
   return (
     <>
@@ -523,6 +516,7 @@ export function Compass({ className }: CompassProps) {
             onClick={() => setIsOpen(true)}
             className="w-24 h-24 rounded-full bg-therapy-primary hover:bg-therapy-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
             size="lg"
+            data-compass-fab
           >
             <Avatar className="w-20 h-20">
               <AvatarImage src={compassAvatar} alt="Compass AI Assistant" />
