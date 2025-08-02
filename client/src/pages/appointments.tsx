@@ -48,7 +48,7 @@ export default function Appointments() {
   const [expandedAppointment, setExpandedAppointment] = useState<string | null>(null);
   const [sessionPrepModal, setSessionPrepModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<ExtendedAppointment | null>(null);
-  
+
   // Advanced filtering states
   const [dateRange, setDateRange] = useState<{start: string, end: string}>({
     start: new Date().toISOString().split('T')[0],
@@ -61,7 +61,7 @@ export default function Appointments() {
   const [quickFilterType, setQuickFilterType] = useState<'today' | 'week' | 'month' | 'custom'>('today');
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // Enhanced query for date range and comprehensive filtering
   const { data: appointmentsData, isLoading } = useQuery({
     queryKey: ['appointments', quickFilterType, dateRange, selectedDate],
@@ -73,7 +73,7 @@ export default function Appointments() {
         const appointments = [];
         const start = new Date(dateRange.start);
         const end = new Date(dateRange.end);
-        
+
         for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
           const dateStr = d.toISOString().split('T')[0];
           try {
@@ -94,7 +94,7 @@ export default function Appointments() {
   const appointments: ExtendedAppointment[] = (appointmentsData || []).map((apt: Appointment) => {
     // Check if this is a calendar event (non-UUID ID)
     const isCalendarEvent = apt.id && !apt.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
-    
+
     return {
       ...apt,
       clientName: apt.type?.replace(' Appointment', '') || 'Unknown Client',
@@ -113,18 +113,18 @@ export default function Appointments() {
       apt.clientName?.toLowerCase().includes(searchFilter.toLowerCase()) ||
       apt.type.toLowerCase().includes(searchFilter.toLowerCase()) ||
       apt.notes?.toLowerCase().includes(searchFilter.toLowerCase());
-    
+
     // Status filter
     const statusMatch = statusFilter.length === 0 || statusFilter.includes(apt.status);
-    
+
     // Client name filter
     const clientMatch = clientFilter === "" || 
       apt.clientName?.toLowerCase().includes(clientFilter.toLowerCase());
-    
+
     // Location filter
     const locationMatch = locationFilter === "" || 
       apt.location?.toLowerCase().includes(locationFilter.toLowerCase());
-    
+
     return textMatch && statusMatch && clientMatch && locationMatch;
   });
 
@@ -171,7 +171,7 @@ export default function Appointments() {
   const setQuickFilter = (type: 'today' | 'week' | 'month' | 'custom') => {
     setQuickFilterType(type);
     const now = new Date();
-    
+
     switch (type) {
       case 'today':
         setSelectedDate(now.toISOString().split('T')[0]);
@@ -227,7 +227,7 @@ export default function Appointments() {
 
   const handleBulkAction = (action: string) => {
     if (selectedAppointments.length === 0) return;
-    
+
     switch (action) {
       case 'complete':
         selectedAppointments.forEach(id => handleMarkComplete(id));
@@ -602,7 +602,7 @@ export default function Appointments() {
                 )}
               </div>
             </div>
-            
+
             {/* Filter Summary */}
             <div className="mt-4 pt-4 border-t border-therapy-border/30">
               <div className="flex items-center justify-between text-sm text-therapy-text/60">

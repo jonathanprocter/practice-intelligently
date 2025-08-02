@@ -399,7 +399,7 @@ export class DatabaseStorage implements IStorage {
     if (updateData.createdAt && typeof updateData.createdAt === 'string') {
       updateData.createdAt = new Date(updateData.createdAt);
     }
-    
+
     const [updatedNote] = await db
       .update(sessionNotes)
       .set(updateData)
@@ -1446,17 +1446,17 @@ export class DatabaseStorage implements IStorage {
       // Get previous session notes for this client
       const previousNotes = await this.getSessionNotesByClientId(clientId);
       const progressNotes = await this.getProgressNotes(clientId);
-      
+
       // Get current client information
       const client = await this.getClient(clientId);
-      
+
       if (!client) {
         return this.getDefaultSessionPrepInsights();
       }
 
       // Use AI to generate comprehensive session prep
       const { generateClinicalAnalysis } = await import('./ai-services');
-      
+
       const sessionContext = previousNotes.slice(0, 3).map(note => ({
         date: note.createdAt,
         content: note.content,
@@ -1491,7 +1491,7 @@ Respond in JSON format:
 }`;
 
       const analysis = await generateClinicalAnalysis(prompt);
-      
+
       try {
         const result = JSON.parse(analysis);
         return {
@@ -1753,6 +1753,7 @@ Respond in JSON format:
         subject: row.subject,
         messageContent: row.message_content,
         aiReasoning: row.ai_reasoning,
+```tool_code
         triggerContext: row.trigger_context || {},
         deliveryMethod: row.delivery_method,
         status: row.status,
@@ -1781,7 +1782,7 @@ Respond in JSON format:
       if (checkin.status !== undefined) {
         updateFields.push(`status = $${paramIndex++}`);
         values.push(checkin.status);
-        
+
         if (checkin.status === 'reviewed') {
           updateFields.push(`reviewed_at = $${paramIndex++}`);
           values.push(new Date());
@@ -1866,7 +1867,7 @@ Respond in JSON format:
 
         // Analyze session notes to determine if a check-in is needed
         const analysis = await this.analyzeSessionForCheckin(client, recentNotes);
-        
+
         if (analysis.shouldGenerateCheckin) {
           const checkin = await this.createClientCheckin({
             clientId: client.id,
@@ -1907,10 +1908,10 @@ Respond in JSON format:
     try {
       // Use OpenAI to analyze session notes for check-in opportunities
       const { generateClinicalAnalysis } = await import('./ai-services');
-      
+
       const lastSession = sessionNotes[0];
       const daysSinceLastSession = Math.floor((Date.now() - new Date(lastSession.createdAt).getTime()) / (24 * 60 * 60 * 1000));
-      
+
       // Prepare context for AI analysis
       const sessionContext = sessionNotes.slice(0, 2).map(note => ({
         date: note.createdAt,
@@ -1966,7 +1967,7 @@ Respond with JSON:
 }`;
 
       const analysis = await generateClinicalAnalysis(prompt);
-      
+
       try {
         const result = JSON.parse(analysis);
         return {
@@ -1993,7 +1994,7 @@ Respond with JSON:
 
   private getSimpleCheckinAnalysis(client: any, sessionNotes: any[], daysSinceLastSession: number) {
     const lastSession = sessionNotes[0];
-    
+
     // Simple rule-based logic
     if (daysSinceLastSession >= 3 && daysSinceLastSession <= 5) {
       return {
@@ -2045,7 +2046,7 @@ Jonathan`,
           checkin.subject,
           checkin.messageContent
         );
-        
+
         if (!emailSent) {
           console.error('Failed to send email');
           return false;
@@ -2055,7 +2056,7 @@ Jonathan`,
         console.log('SMS functionality not yet implemented');
         return false;
       }
-      
+
       await this.updateClientCheckin(id, { status: 'sent' });
       return true;
     } catch (error) {
@@ -2072,7 +2073,7 @@ Jonathan`,
          WHERE expires_at < NOW() AND status = 'generated' 
          RETURNING id`
       );
-      
+
       return result.rowCount || 0;
     } catch (error) {
       console.error('Error cleaning up expired check-ins:', error);
@@ -2224,30 +2225,58 @@ Jonathan`,
   /**
    * Generates AI tags for session notes based on unified narrative content
    */
-  async generateAITags(unifiedNarrative: string): Promise<string[]> {
+  async generateAITags(content: string): Promise<string[]> {
     try {
-      // Use AI to generate tags for searchable clinical themes
-      const { generateClinicalAnalysis } = await import('./ai-services');
-      
-      const prompt = `Analyze the following clinical session narrative and generate 5-8 searchable tags that capture the key clinical themes, modalities, and content areas. Focus on therapeutic modalities used, clinical presentations, intervention types, and major themes.
+      console.log('🏷️  Generating AI tags for unified narrative...');
 
-Clinical Narrative:
-${unifiedNarrative}
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert clinical AI assistant. Analyze the therapy session content and generate relevant therapeutic tags that will help with appointment and progress note organization.
 
-Return only a JSON array of strings, like: ["CBT", "anxiety", "EMDR", "trauma processing", "behavioral activation"]`;
+            Focus on identifying:
+            - Therapeutic modalities used (CBT, DBT, ACT, EMDR, Narrative Therapy, etc.)
+            - Clinical presentations (Anxiety, Depression, PTSD, Bipolar, OCD, etc.)
+            - Treatment components (Homework, Mindfulness, Coping Skills, Exposure, etc.)
+            - Progress indicators (Improvement, Setback, Breakthrough, Maintenance, etc.)
+            - Session focus (Crisis, Intake, Follow-up, Treatment Planning, etc.)
+            - Therapeutic techniques (Cognitive Restructuring, Behavioral Activation, etc.)
+            - Client demographics/context (Adult, Adolescent, Family, Couples, etc.)
 
-      const response = await generateClinicalAnalysis(prompt);
-      
-      try {
-        const tags = JSON.parse(response);
-        return Array.isArray(tags) ? tags : [];
-      } catch (parseError) {
-        console.warn('Could not parse AI tags, using fallback approach');
-        return this.extractBasicTags(unifiedNarrative);
-      }
+            RESPOND ONLY WITH VALID JSON in this format:
+            {"tags": ["tag1", "tag2", "tag3"]}
+
+            Return 6-10 most relevant tags. Be specific and clinically accurate.`
+          },
+          {
+            role: "user", 
+            content: `Generate therapeutic tags for this progress note content:\n\n${content.substring(0, 3000)}`
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.2,
+        max_tokens: 300
+      });
+
+      const result = JSON.parse(response.choices[0].message.content || '{"tags":[]}');
+      const tags = result.tags || result.therapeuticTags || [];
+
+      // Ensure tags are strings and filter out empty ones
+      const validTags = tags.filter((tag: any) => typeof tag === 'string' && tag.trim().length > 0)
+                           .slice(0, 10); // Limit to 10 tags
+
+      console.log(`✅ Generated ${validTags.length} AI tags: ${validTags.join(', ')}`);
+      return validTags;
+
     } catch (error) {
-      console.warn('AI tag generation failed, using fallback approach');
-      return this.extractBasicTags(unifiedNarrative);
+      console.error('❌ AI tag generation failed:', error);
+
+      // Fallback: extract basic tags from content
+      const fallbackTags = this.extractBasicTags(content);
+      console.log(`🔄 Using fallback tags: ${fallbackTags.join(', ')}`);
+      return fallbackTags;
     }
   }
 
@@ -2255,17 +2284,45 @@ Return only a JSON array of strings, like: ["CBT", "anxiety", "EMDR", "trauma pr
    * Fallback method for basic tag extraction
    */
   private extractBasicTags(content: string): string[] {
-    const commonTags = [
-      'CBT', 'DBT', 'ACT', 'EMDR', 'anxiety', 'depression', 'trauma', 
-      'mindfulness', 'behavioral activation', 'cognitive restructuring',
-      'emotional regulation', 'coping skills', 'homework', 'progress'
-    ];
+    const tags: string[] = [];
+    const lowerContent = content.toLowerCase();
 
-    const extractedTags = commonTags.filter(tag => 
-      content.toLowerCase().includes(tag.toLowerCase())
-    );
+    // Therapeutic modalities
+    if (lowerContent.includes('cbt') || lowerContent.includes('cognitive behavioral')) tags.push('CBT');
+    if (lowerContent.includes('dbt') || lowerContent.includes('dialectical')) tags.push('DBT');
+    if (lowerContent.includes('act') || lowerContent.includes('acceptance commitment')) tags.push('ACT');
+    if (lowerContent.includes('mindfulness') || lowerContent.includes('meditation')) tags.push('Mindfulness');
+    if (lowerContent.includes('emdr')) tags.push('EMDR');
+    if (lowerContent.includes('narrative therapy')) tags.push('Narrative Therapy');
+    if (lowerContent.includes('exposure') || lowerContent.includes('systematic desensitization')) tags.push('Exposure Therapy');
 
-    return extractedTags.slice(0, 8); // Limit to 8 tags
+    // Clinical presentations
+    if (lowerContent.includes('anxiety') || lowerContent.includes('anxious') || lowerContent.includes('panic')) tags.push('Anxiety');
+    if (lowerContent.includes('depression') || lowerContent.includes('depressed') || lowerContent.includes('mood')) tags.push('Depression');
+    if (lowerContent.includes('trauma') || lowerContent.includes('ptsd') || lowerContent.includes('traumatic')) tags.push('Trauma');
+    if (lowerContent.includes('grief') || lowerContent.includes('loss') || lowerContent.includes('bereavement')) tags.push('Grief/Loss');
+    if (lowerContent.includes('relationship') || lowerContent.includes('couple') || lowerContent.includes('marriage')) tags.push('Relationships');
+    if (lowerContent.includes('work') || lowerContent.includes('job') || lowerContent.includes('career') || lowerContent.includes('employment')) tags.push('Work Stress');
+    if (lowerContent.includes('family') || lowerContent.includes('parent') || lowerContent.includes('child')) tags.push('Family Issues');
+    if (lowerContent.includes('substance') || lowerContent.includes('addiction') || lowerContent.includes('alcohol')) tags.push('Substance Use');
+    if (lowerContent.includes('sleep') || lowerContent.includes('insomnia') || lowerContent.includes('nightmare')) tags.push('Sleep Issues');
+    if (lowerContent.includes('anger') || lowerContent.includes('aggression') || lowerContent.includes('irritability')) tags.push('Anger Management');
+
+    // Treatment components and progress
+    if (lowerContent.includes('improvement') || lowerContent.includes('progress') || lowerContent.includes('better') || lowerContent.includes('healing')) tags.push('Progress');
+    if (lowerContent.includes('crisis') || lowerContent.includes('emergency') || lowerContent.includes('suicidal') || lowerContent.includes('risk')) tags.push('Crisis');
+    if (lowerContent.includes('homework') || lowerContent.includes('assignment') || lowerContent.includes('practice')) tags.push('Homework');
+    if (lowerContent.includes('coping') || lowerContent.includes('strategies') || lowerContent.includes('skills')) tags.push('Coping Skills');
+    if (lowerContent.includes('medication') || lowerContent.includes('med') || lowerContent.includes('prescription') || lowerContent.includes('psychiatrist')) tags.push('Medication');
+    if (lowerContent.includes('breakthrough') || lowerContent.includes('insight') || lowerContent.includes('awareness')) tags.push('Breakthrough');
+    if (lowerContent.includes('setback') || lowerContent.includes('relapse') || lowerContent.includes('regression')) tags.push('Setback');
+
+    // Session types
+    if (lowerContent.includes('intake') || lowerContent.includes('initial') || lowerContent.includes('assessment')) tags.push('Intake');
+    if (lowerContent.includes('follow-up') || lowerContent.includes('follow up') || lowerContent.includes('continuing')) tags.push('Follow-up');
+    if (lowerContent.includes('termination') || lowerContent.includes('discharge') || lowerContent.includes('ending')) tags.push('Termination');
+
+    return tags.slice(0, 10); // Allow up to 10 fallback tags
   }
 
   async createProgressNote(data: {
@@ -2330,7 +2387,7 @@ Return only a JSON array of strings, like: ["CBT", "anxiety", "EMDR", "trauma pr
       // AUTOMATED WORKFLOW: Create unified narrative and session note
       try {
         console.log('🤖 Creating unified narrative from progress note sections...');
-        
+
         // Create unified narrative from all sections
         const unifiedNarrative = this.createUnifiedNarrative({
           subjective: data.subjective,
