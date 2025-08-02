@@ -17,40 +17,7 @@ interface QuickUpdateData {
   phone?: string;
 }
 
-const SAMPLE_CLIENTS: QuickUpdateData[] = [
-  {
-    id: '', // Will be filled from database
-    firstName: 'Sarah',
-    lastName: 'Johnson',
-    dateOfBirth: '1985-03-15',
-    email: 'sarah.j@email.com',
-    phone: '555-0101'
-  },
-  {
-    id: '',
-    firstName: 'Michael',
-    lastName: 'Chen',
-    dateOfBirth: '1990-08-22',
-    email: 'michael.c@email.com',
-    phone: '555-0102'
-  },
-  {
-    id: '',
-    firstName: 'Emma',
-    lastName: 'Davis',
-    dateOfBirth: '1988-12-08',
-    email: 'emma.d@email.com',
-    phone: '555-0103'
-  },
-  {
-    id: '',
-    firstName: 'Jason',
-    lastName: 'Laskin',
-    dateOfBirth: '1992-06-18',
-    email: 'jason.laskin@email.com',
-    phone: '555-0104'
-  }
-];
+// Note: This component now works exclusively with real client data from the database
 
 interface Props {
   clients: Client[];
@@ -105,29 +72,7 @@ export function QuickClientUpdate({ clients }: Props) {
     });
   };
 
-  const fillSampleData = () => {
-    const newUpdates: Record<string, Partial<Client>> = {};
-    
-    clients.forEach(client => {
-      const sampleClient = SAMPLE_CLIENTS.find(
-        s => s.firstName === client.firstName && s.lastName === client.lastName
-      );
-      
-      if (sampleClient) {
-        newUpdates[client.id] = {
-          dateOfBirth: sampleClient.dateOfBirth,
-          email: sampleClient.email,
-          phone: sampleClient.phone
-        };
-      }
-    });
-    
-    setUpdates(newUpdates);
-    toast({
-      title: 'Sample Data Loaded',
-      description: 'Sample dates of birth and contact info have been filled in. Review and save to update.',
-    });
-  };
+  // Note: Sample data functionality removed - component now works exclusively with real data
 
   const clientsNeedingUpdates = clients.filter(client => 
     !client.dateOfBirth || !client.email || !client.phone
@@ -140,14 +85,9 @@ export function QuickClientUpdate({ clients }: Props) {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Users className="h-5 w-5" />
-            <span>Complete Client Information</span>
-          </div>
-          <Button variant="outline" onClick={fillSampleData}>
-            Fill Sample Data
-          </Button>
+        <CardTitle className="flex items-center space-x-2">
+          <Users className="h-5 w-5" />
+          <span>Complete Client Information</span>
         </CardTitle>
       </CardHeader>
       <CardContent>

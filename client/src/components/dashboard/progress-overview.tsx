@@ -1,25 +1,55 @@
-const progressMetrics = [
-  {
-    title: "Goal Achievement",
-    description: "Clients meeting treatment objectives",
-    percentage: 0,
-    progress: 0
-  },
-  {
-    title: "Session Attendance",
-    description: "Client engagement rate",
-    percentage: 0,
-    progress: 0
-  },
-  {
-    title: "Documentation",
-    description: "Notes completion rate",
-    percentage: 0,
-    progress: 0
-  }
-];
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { ApiClient } from "@/lib/api";
 
 export default function ProgressOverview() {
+  const { data: progressData, isLoading } = useQuery({
+    queryKey: ['progress-metrics'],
+    queryFn: ApiClient.getProgressMetrics,
+  });
+
+  const progressMetrics = progressData || [
+    {
+      title: "Goal Achievement",
+      description: "Clients meeting treatment objectives",
+      percentage: 0,
+      progress: 0
+    },
+    {
+      title: "Session Attendance",
+      description: "Client engagement rate",
+      percentage: 0,
+      progress: 0
+    },
+    {
+      title: "Documentation",
+      description: "Notes completion rate",
+      percentage: 0,
+      progress: 0
+    }
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="therapy-card">
+        <div className="p-6 border-b border-therapy-border">
+          <h3 className="text-xl font-bold text-therapy-text">Treatment Progress Overview</h3>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="text-center animate-pulse">
+                <div className="w-24 h-24 mx-auto mb-4 bg-gray-200 rounded-full"></div>
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="therapy-card">
       <div className="p-6 border-b border-therapy-border">
@@ -57,8 +87,8 @@ export default function ProgressOverview() {
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xl font-bold text-therapy-text/30">
-                    --%
+                  <span className="text-xl font-bold text-therapy-text">
+                    {metric.percentage}%
                   </span>
                 </div>
               </div>

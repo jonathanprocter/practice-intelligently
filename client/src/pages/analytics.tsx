@@ -50,20 +50,21 @@ export default function Analytics() {
            createdDate.getFullYear() === thisMonth.getFullYear();
   }).length || 0;
   
-  const attendanceRate = 85; // Mock data - would come from appointments analysis
-  const monthlyRevenue = 4150; // Mock data - would come from billing
-  const revenueChange = -3; // Mock data - percentage change
+  // Calculate real metrics from database data
+  const attendanceRate = stats?.attendanceRate || 0;
+  const monthlyRevenue = stats?.monthlyRevenue || 0;
+  const revenueChange = stats?.revenueChange || 0;
   
-  // Mock trend data for demonstration
-  const weeklyTrend = [12, 15, 18, 14, 16, 20, 22]; // Last 7 days sessions
-  const currentWeekSessions = weeklyTrend[weeklyTrend.length - 1];
-  const lastWeekSessions = weeklyTrend[weeklyTrend.length - 2];
+  // Calculate weekly trend from actual session data
+  const weeklyTrend = stats?.weeklySessionTrend || [];
+  const currentWeekSessions = weeklyTrend.length > 0 ? weeklyTrend[weeklyTrend.length - 1] : 0;
+  const lastWeekSessions = weeklyTrend.length > 1 ? weeklyTrend[weeklyTrend.length - 2] : 0;
   const sessionChange = currentWeekSessions - lastWeekSessions;
   
-  // Smart insights and alerts
+  // Smart insights and alerts based on real data
   const weekTotal = weeklyTrend.reduce((a, b) => a + b, 0);
-  const lastWeekTotal = 105; // Mock last week's total
-  const weeklyGrowth = Math.round(((weekTotal - lastWeekTotal) / lastWeekTotal) * 100);
+  const lastWeekTotal = stats?.lastWeekTotal || 0;
+  const weeklyGrowth = lastWeekTotal > 0 ? Math.round(((weekTotal - lastWeekTotal) / lastWeekTotal) * 100) : 0;
   
   // Generate smart alerts
   const smartAlerts = [];
@@ -89,20 +90,20 @@ export default function Analytics() {
     });
   }
   
-  // Top referral sources
-  const topReferrals = [
-    { source: "Psychology Today", count: 7 },
-    { source: "Word of Mouth", count: 5 },
-    { source: "Insurance Directory", count: 3 },
-    { source: "Healthcare Provider", count: 2 }
-  ];
+  // Calculate real referral sources from client data
+  const referralCounts = clients?.reduce((acc: Record<string, number>, client) => {
+    const source = client.referralSource || 'Unknown';
+    acc[source] = (acc[source] || 0) + 1;
+    return acc;
+  }, {}) || {};
   
-  // Office location breakdown
-  const locationStats = [
-    { location: "Rockville Centre", sessions: 45, percentage: 56 },
-    { location: "Woodbury", sessions: 20, percentage: 25 },
-    { location: "Telehealth", sessions: 15, percentage: 19 }
-  ];
+  const topReferrals = Object.entries(referralCounts)
+    .map(([source, count]) => ({ source, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 4);
+  
+  // Location stats would need to be calculated from appointment/session data
+  const locationStats = stats?.locationBreakdown || [];
 
   if (isLoading) {
     return (
