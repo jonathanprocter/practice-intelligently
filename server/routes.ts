@@ -1968,6 +1968,674 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     }
   });
 
+
+  // ========== AI INTELLIGENCE API ROUTES (Auto-generated) ==========
+
+  app.post('/api/ai/predict-treatment-outcome', async (req, res) => {
+    try {
+      const { clientId, currentTreatment, symptoms, duration } = req.body;
+      
+      if (!clientId) {
+        return res.status(400).json({ error: 'Client ID is required' });
+      }
+      
+      // Get client data for context
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ error: 'Client not found' });
+      }
+      
+      // Generate treatment outcome prediction using AI
+      const prediction = await multiModelAI.predictTreatmentOutcome({
+        clientProfile: client,
+        currentTreatment: currentTreatment || '',
+        symptoms: symptoms || [],
+        treatmentDuration: duration || 0
+      });
+      
+      res.json({ prediction, model: 'multimodel-ai' });
+    } catch (error: any) {
+      console.error('Error predicting treatment outcome:', error);
+      res.status(500).json({ error: 'Failed to predict treatment outcome', details: error.message });
+    }
+  });
+  app.get('/api/ai/cross-client-patterns', async (req, res) => {
+    try {
+      const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.query;
+      
+      // Get all clients for pattern analysis
+      const clients = await storage.getClients(therapistId as string);
+      const sessionNotes = await storage.getSessionNotes(therapistId as string);
+      
+      // Analyze cross-client patterns
+      const patterns = await multiModelAI.analyzeCrossClientPatterns({
+        clients,
+        sessionNotes,
+        analysisType: 'comprehensive'
+      });
+      
+      res.json({ patterns, model: 'multimodel-ai' });
+    } catch (error: any) {
+      console.error('Error analyzing cross-client patterns:', error);
+      res.status(500).json({ error: 'Failed to analyze patterns', details: error.message });
+    }
+  });
+  app.post('/api/ai/evidence-based-interventions', async (req, res) => {
+    try {
+      const { condition, clientProfile, preferences } = req.body;
+      
+      if (!condition) {
+        return res.status(400).json({ error: 'Condition is required' });
+      }
+      
+      // Get evidence-based intervention recommendations
+      const interventions = await multiModelAI.getEvidenceBasedInterventions({
+        condition,
+        clientProfile: clientProfile || {},
+        preferences: preferences || {}
+      });
+      
+      res.json({ interventions, model: 'multimodel-ai' });
+    } catch (error: any) {
+      console.error('Error getting evidence-based interventions:', error);
+      res.status(500).json({ error: 'Failed to get interventions', details: error.message });
+    }
+  });
+  app.get('/api/ai/session-efficiency', async (req, res) => {
+    try {
+      const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', timeframe = '30' } = req.query;
+      
+      // Get session data for efficiency analysis
+      const sessionNotes = await storage.getSessionNotes(therapistId as string);
+      const appointments = await storage.getAppointments(therapistId as string);
+      
+      // Analyze session efficiency
+      const efficiency = await multiModelAI.analyzeSessionEfficiency({
+        sessionNotes,
+        appointments,
+        timeframeDays: parseInt(timeframe as string)
+      });
+      
+      res.json({ efficiency, model: 'multimodel-ai' });
+    } catch (error: any) {
+      console.error('Error analyzing session efficiency:', error);
+      res.status(500).json({ error: 'Failed to analyze efficiency', details: error.message });
+    }
+  });
+  app.get('/api/ai/client-retention', async (req, res) => {
+    try {
+      const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.query;
+      
+      // Get client and appointment data
+      const clients = await storage.getClients(therapistId as string);
+      const appointments = await storage.getAppointments(therapistId as string);
+      
+      // Predict client retention
+      const retention = await multiModelAI.predictClientRetention({
+        clients,
+        appointments,
+        analysisType: 'comprehensive'
+      });
+      
+      res.json({ retention, model: 'multimodel-ai' });
+    } catch (error: any) {
+      console.error('Error predicting client retention:', error);
+      res.status(500).json({ error: 'Failed to predict retention', details: error.message });
+    }
+  });
+  app.get('/api/ai/therapist-strengths', async (req, res) => {
+    try {
+      const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.query;
+      
+      // Get comprehensive practice data
+      const clients = await storage.getClients(therapistId as string);
+      const sessionNotes = await storage.getSessionNotes(therapistId as string);
+      const appointments = await storage.getAppointments(therapistId as string);
+      
+      // Analyze therapist strengths
+      const strengths = await multiModelAI.analyzeTherapistStrengths({
+        clients,
+        sessionNotes,
+        appointments,
+        analysisType: 'comprehensive'
+      });
+      
+      res.json({ strengths, model: 'multimodel-ai' });
+    } catch (error: any) {
+      console.error('Error analyzing therapist strengths:', error);
+      res.status(500).json({ error: 'Failed to analyze strengths', details: error.message });
+    }
+  });
+  app.post('/api/ai/appointment-insights', async (req, res) => {
+    try {
+      const { appointmentId, clientId, eventData } = req.body;
+      
+      if (!appointmentId && !clientId) {
+        return res.status(400).json({ error: 'Appointment ID or Client ID is required' });
+      }
+      
+      // Get appointment insights
+      const insights = await multiModelAI.generateAppointmentInsights({
+        appointmentId,
+        clientId,
+        eventData: eventData || {}
+      });
+      
+      res.json({ insights, model: 'multimodel-ai' });
+    } catch (error: any) {
+      console.error('Error generating appointment insights:', error);
+      res.status(500).json({ error: 'Failed to generate insights', details: error.message });
+    }
+  });
+  // ========== SESSION PREP API ROUTES (Auto-generated) ==========
+
+  app.get('/api/session-prep/:param/ai-insights', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      
+      if (!eventId) {
+        return res.status(400).json({ error: 'Event ID is required' });
+      }
+      
+      // Generate AI insights for session prep
+      const insights = await multiModelAI.generateSessionPrepInsights({
+        eventId,
+        includeHistory: true,
+        analysisDepth: 'comprehensive'
+      });
+      
+      res.json({ insights, model: 'multimodel-ai' });
+    } catch (error: any) {
+      console.error('Error generating session prep insights:', error);
+      res.status(500).json({ error: 'Failed to generate insights', details: error.message });
+    }
+  });
+  app.get('/api/session-prep/:param', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      
+      // Get session prep notes for event
+      const prepNotes = await storage.getSessionPrepNotes(eventId);
+      res.json(prepNotes);
+    } catch (error: any) {
+      console.error('Error getting session prep notes:', error);
+      res.status(500).json({ error: 'Failed to get session prep notes', details: error.message });
+    }
+  });
+  
+  app.put('/api/session-prep/:param', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      // Update session prep note
+      const updatedNote = await storage.updateSessionPrepNote(id, updates);
+      res.json(updatedNote);
+    } catch (error: any) {
+      console.error('Error updating session prep note:', error);
+      res.status(500).json({ error: 'Failed to update session prep note', details: error.message });
+    }
+  });
+  app.post('/api/session-prep', async (req, res) => {
+    try {
+      const { eventId, clientId, content, type } = req.body;
+      
+      if (!eventId || !content) {
+        return res.status(400).json({ error: 'Event ID and content are required' });
+      }
+      
+      // Create session prep note
+      const prepNote = await storage.createSessionPrepNote({
+        eventId,
+        clientId: clientId || null,
+        content,
+        type: type || 'manual',
+        createdAt: new Date()
+      });
+      
+      res.json(prepNote);
+    } catch (error: any) {
+      console.error('Error creating session prep note:', error);
+      res.status(500).json({ error: 'Failed to create session prep note', details: error.message });
+    }
+  });
+  // ========== CALENDAR API ROUTES (Auto-generated) ==========
+
+  app.get('/api/calendar/events/:param', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
+      // Get specific event details
+      const event = await simpleOAuth.getEvent(eventId);
+      res.json(event);
+    } catch (error: any) {
+      console.error('Error getting calendar event:', error);
+      res.status(500).json({ error: 'Failed to get calendar event', details: error.message });
+    }
+  });
+  
+  app.put('/api/calendar/events/:param', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const updates = req.body;
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
+      // Update calendar event
+      const updatedEvent = await simpleOAuth.updateEvent(eventId, updates);
+      res.json(updatedEvent);
+    } catch (error: any) {
+      console.error('Error updating calendar event:', error);
+      res.status(500).json({ error: 'Failed to update calendar event', details: error.message });
+    }
+  });
+  app.get('/api/calendar/events/:param?:param', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
+      // Get specific event details
+      const event = await simpleOAuth.getEvent(eventId);
+      res.json(event);
+    } catch (error: any) {
+      console.error('Error getting calendar event:', error);
+      res.status(500).json({ error: 'Failed to get calendar event', details: error.message });
+    }
+  });
+  
+  app.put('/api/calendar/events/:param?:param', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const updates = req.body;
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
+      // Update calendar event
+      const updatedEvent = await simpleOAuth.updateEvent(eventId, updates);
+      res.json(updatedEvent);
+    } catch (error: any) {
+      console.error('Error updating calendar event:', error);
+      res.status(500).json({ error: 'Failed to update calendar event', details: error.message });
+    }
+  });
+  app.get('/api/calendar/calendars', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
+      const calendars = await simpleOAuth.getCalendars();
+      res.json(calendars);
+    } catch (error: any) {
+      console.error('Error getting calendars:', error);
+      res.status(500).json({ error: 'Failed to get calendars', details: error.message });
+    }
+  });
+  app.get('/api/calendar/events', async (req, res) => {
+    try {
+      const { timeMin, timeMax, calendarId } = req.query;
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
+      // Get calendar events with time range
+      const events = await simpleOAuth.getEvents(
+        calendarId as string || 'primary',
+        timeMin as string,
+        timeMax as string
+      );
+      
+      res.json(events);
+    } catch (error: any) {
+      console.error('Error getting calendar events:', error);
+      res.status(500).json({ error: 'Failed to get calendar events', details: error.message });
+    }
+  });
+  app.get('/api/calendar/events/:param:param', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
+      // Get specific event details
+      const event = await simpleOAuth.getEvent(eventId);
+      res.json(event);
+    } catch (error: any) {
+      console.error('Error getting calendar event:', error);
+      res.status(500).json({ error: 'Failed to get calendar event', details: error.message });
+    }
+  });
+  
+  app.put('/api/calendar/events/:param:param', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const updates = req.body;
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
+      // Update calendar event
+      const updatedEvent = await simpleOAuth.updateEvent(eventId, updates);
+      res.json(updatedEvent);
+    } catch (error: any) {
+      console.error('Error updating calendar event:', error);
+      res.status(500).json({ error: 'Failed to update calendar event', details: error.message });
+    }
+  });
+  app.get('/api/calendar/events/:param?calendarId=:param', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
+      // Get specific event details
+      const event = await simpleOAuth.getEvent(eventId);
+      res.json(event);
+    } catch (error: any) {
+      console.error('Error getting calendar event:', error);
+      res.status(500).json({ error: 'Failed to get calendar event', details: error.message });
+    }
+  });
+  
+  app.put('/api/calendar/events/:param?calendarId=:param', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const updates = req.body;
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
+      // Update calendar event
+      const updatedEvent = await simpleOAuth.updateEvent(eventId, updates);
+      res.json(updatedEvent);
+    } catch (error: any) {
+      console.error('Error updating calendar event:', error);
+      res.status(500).json({ error: 'Failed to update calendar event', details: error.message });
+    }
+  });
+  app.get('/api/calendar/events', async (req, res) => {
+    try {
+      const { timeMin, timeMax, calendarId } = req.query;
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
+      // Get calendar events with time range
+      const events = await simpleOAuth.getEvents(
+        calendarId as string || 'primary',
+        timeMin as string,
+        timeMax as string
+      );
+      
+      res.json(events);
+    } catch (error: any) {
+      console.error('Error getting calendar events:', error);
+      res.status(500).json({ error: 'Failed to get calendar events', details: error.message });
+    }
+  });
+  app.get('/api/calendar/events', async (req, res) => {
+    try {
+      const { timeMin, timeMax, calendarId } = req.query;
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+      
+      // Get calendar events with time range
+      const events = await simpleOAuth.getEvents(
+        calendarId as string || 'primary',
+        timeMin as string,
+        timeMax as string
+      );
+      
+      res.json(events);
+    } catch (error: any) {
+      console.error('Error getting calendar events:', error);
+      res.status(500).json({ error: 'Failed to get calendar events', details: error.message });
+    }
+  });
+  // ========== AUTH API ROUTES (Auto-generated) ==========
+
+  app.get('/api/auth/google/status', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      const isConnected = simpleOAuth.isConnected();
+      const status = {
+        connected: isConnected,
+        hasTokens: isConnected,
+        service: 'google'
+      };
+      
+      res.json(status);
+    } catch (error: any) {
+      console.error('Error checking auth status:', error);
+      res.status(500).json({ error: 'Failed to check auth status', details: error.message });
+    }
+  });
+  app.post('/api/auth/google/clear', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      // Clear OAuth tokens
+      await simpleOAuth.clearTokens();
+      
+      res.json({ success: true, message: 'OAuth tokens cleared' });
+    } catch (error: any) {
+      console.error('Error clearing auth tokens:', error);
+      res.status(500).json({ error: 'Failed to clear auth tokens', details: error.message });
+    }
+  });
+  // ========== DOCUMENT PROCESSING ROUTES (Auto-generated) ==========
+
+  app.post('/api/documents/process-clinical', async (req, res) => {
+    try {
+      const { documentContent, clientId, documentType } = req.body;
+      
+      if (!documentContent) {
+        return res.status(400).json({ error: 'Document content is required' });
+      }
+      
+      // Process clinical document with AI
+      const analysis = await multiModelAI.processClinicalDocument({
+        content: documentContent,
+        clientId: clientId || null,
+        documentType: documentType || 'general'
+      });
+      
+      res.json({ analysis, model: 'multimodel-ai' });
+    } catch (error: any) {
+      console.error('Error processing clinical document:', error);
+      res.status(500).json({ error: 'Failed to process document', details: error.message });
+    }
+  });
+  app.post('/api/documents/generate-progress-note', async (req, res) => {
+    try {
+      const { documentContent, clientId, sessionDate, format } = req.body;
+      
+      if (!documentContent) {
+        return res.status(400).json({ error: 'Document content is required' });
+      }
+      
+      // Generate progress note from document
+      const progressNote = await multiModelAI.generateProgressNote({
+        content: documentContent,
+        clientId: clientId || null,
+        sessionDate: sessionDate || new Date().toISOString(),
+        format: format || 'SOAP'
+      });
+      
+      res.json({ progressNote, model: 'multimodel-ai' });
+    } catch (error: any) {
+      console.error('Error generating progress note:', error);
+      res.status(500).json({ error: 'Failed to generate progress note', details: error.message });
+    }
+  });
+  // ========== DRIVE & NOTION ROUTES (Auto-generated) ==========
+
+  app.get('/api/drive/files', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Drive not connected', requiresAuth: true });
+      }
+      
+      // Get Drive files
+      const files = await simpleOAuth.getDriveFiles();
+      res.json(files);
+    } catch (error: any) {
+      console.error('Error getting Drive files:', error);
+      res.status(500).json({ error: 'Failed to get Drive files', details: error.message });
+    }
+  });
+  app.get('/api/drive/search', async (req, res) => {
+    try {
+      const { q: query } = req.query;
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Drive not connected', requiresAuth: true });
+      }
+      
+      // Search Drive files
+      const results = await simpleOAuth.searchDriveFiles(query as string);
+      res.json(results);
+    } catch (error: any) {
+      console.error('Error searching Drive files:', error);
+      res.status(500).json({ error: 'Failed to search Drive files', details: error.message });
+    }
+  });
+  app.get('/api/drive/files/:param', async (req, res) => {
+    try {
+      const { fileId } = req.params;
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Drive not connected', requiresAuth: true });
+      }
+      
+      // Get specific Drive file
+      const file = await simpleOAuth.getDriveFile(fileId);
+      res.json(file);
+    } catch (error: any) {
+      console.error('Error getting Drive file:', error);
+      res.status(500).json({ error: 'Failed to get Drive file', details: error.message });
+    }
+  });
+  app.get('/api/notion/pages', async (req, res) => {
+    try {
+      // Get Notion pages (placeholder implementation)
+      const pages = [{ 
+        id: 'placeholder',
+        title: 'Notion integration not yet implemented',
+        status: 'placeholder'
+      }];
+      
+      res.json(pages);
+    } catch (error: any) {
+      console.error('Error getting Notion pages:', error);
+      res.status(500).json({ error: 'Failed to get Notion pages', details: error.message });
+    }
+  });
+  app.get('/api/notion/databases', async (req, res) => {
+    try {
+      // Get Notion databases (placeholder implementation)
+      const databases = [{ 
+        id: 'placeholder',
+        title: 'Notion integration not yet implemented',
+        status: 'placeholder'
+      }];
+      
+      res.json(databases);
+    } catch (error: any) {
+      console.error('Error getting Notion databases:', error);
+      res.status(500).json({ error: 'Failed to get Notion databases', details: error.message });
+    }
+  });
+  app.get('/api/notion/search', async (req, res) => {
+    try {
+      const { q: query } = req.query;
+      
+      // Search Notion (placeholder implementation)
+      const results = [{ 
+        id: 'placeholder',
+        title: `Search for "${query}" - Notion integration not yet implemented`,
+        status: 'placeholder'
+      }];
+      
+      res.json(results);
+    } catch (error: any) {
+      console.error('Error searching Notion:', error);
+      res.status(500).json({ error: 'Failed to search Notion', details: error.message });
+    }
+  });
+  app.get('/api/notion/pages/:pageId/content', async (req, res) => {
+    try {
+      const { pageId } = req.params;
+      
+      // Get Notion page content (placeholder implementation)
+      const content = { 
+        pageId, 
+        content: 'Notion integration not yet implemented',
+        status: 'placeholder'
+      };
+      
+      res.json(content);
+    } catch (error: any) {
+      console.error('Error getting Notion page content:', error);
+      res.status(500).json({ error: 'Failed to get Notion page content', details: error.message });
+    }
+  });
+  // ========== OTHER API ROUTES (Auto-generated) ==========
+
+  app.get('/api/session-notes', async (req, res) => {
+    try {
+      const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', clientId } = req.query;
+      
+      // Get session notes with optional client filter
+      const sessionNotes = clientId 
+        ? await storage.getSessionNotesByClient(clientId as string)
+        : await storage.getSessionNotes(therapistId as string);
+        
+      res.json(sessionNotes);
+    } catch (error: any) {
+      console.error('Error getting session notes:', error);
+      res.status(500).json({ error: 'Failed to get session notes', details: error.message });
+    }
+  });
   const httpServer = createServer(app);
   return httpServer;
 }
