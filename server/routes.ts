@@ -1880,7 +1880,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(files);
     } catch (error: any) {
       console.error('Error listing Drive files:', error);
-      res.status(500).json({ error: error.message || 'Failed to list Drive files' });
+      if (error.message?.includes('insufficient authentication scopes') || error.code === 403) {
+        res.status(403).json({ error: 'Drive access not authorized. Please re-authenticate with Google and ensure Drive access is granted.' });
+      } else {
+        res.status(500).json({ error: error.message || 'Failed to list Drive files' });
+      }
     }
   });
 
@@ -1920,6 +1924,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error getting folder contents:', error);
       res.status(500).json({ error: error.message || 'Failed to get folder contents' });
+    }
+  });
+
+  // Clear tokens endpoint for re-authentication
+  app.post('/api/auth/google/clear', async (req, res) => {
+    try {
+      await simpleOAuth.disconnect();
+      res.json({ message: 'Google tokens cleared successfully' });
+    } catch (error: any) {
+      console.error('Error clearing Google tokens:', error);
+      res.status(500).json({ error: error.message || 'Failed to clear tokens' });
     }
   });
 
