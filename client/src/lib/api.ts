@@ -156,7 +156,8 @@ export class ApiClient {
   }
 
   static async getClients(): Promise<Client[]> {
-    const response = await apiRequest('GET', `/api/clients/${this.therapistId}`);
+    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+    const response = await apiRequest('GET', `/api/clients/${FALLBACK_THERAPIST_ID}`);
     return response.json();
   }
 
@@ -166,9 +167,10 @@ export class ApiClient {
   }
 
   static async createClient(client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Promise<Client> {
+    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
     const response = await apiRequest('POST', '/api/clients', {
       ...client,
-      therapistId: this.therapistId
+      therapistId: FALLBACK_THERAPIST_ID
     });
     return response.json();
   }
@@ -179,14 +181,11 @@ export class ApiClient {
   }
 
   static async getTodaysAppointments(): Promise<Appointment[]> {
+    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+    
     try {
-      // Use hardcoded therapist ID - safe fallback
-      const therapistId = this.therapistId;
-      
-      if (!therapistId) {
-        console.warn('No therapist ID available, returning empty appointments');
-        return [];
-      }
+      // Use the hardcoded demo therapist ID consistently
+      const therapistId = FALLBACK_THERAPIST_ID;
 
       // First try to get Google Calendar events for today
       const calendarResponse = await fetch('/api/oauth/events/today');
@@ -198,7 +197,6 @@ export class ApiClient {
         const calendarAppointments: Appointment[] = calendarEvents.map((event: any) => ({
           id: event.id || `calendar-${Date.now()}`,
           clientId: 'calendar-event',
-          therapistId: therapistId,
           startTime: event.start?.dateTime || event.start?.date,
           endTime: event.end?.dateTime || event.end?.date,
           type: event.summary || 'Calendar Event',
@@ -214,7 +212,7 @@ export class ApiClient {
           // Combine and return both
           return [...calendarAppointments, ...dbAppointments];
         } catch (dbError) {
-          // If database fails, return just calendar events
+          console.warn('Database appointments fetch failed, returning calendar events only');
           return calendarAppointments;
         }
       } else {
@@ -224,26 +222,20 @@ export class ApiClient {
       }
     } catch (error) {
       console.error('Error fetching appointments:', error);
-      // Final fallback to database with safe therapist ID
-      try {
-        const therapistId = this.therapistId;
-        if (therapistId) {
-          const response = await apiRequest('GET', `/api/appointments/${therapistId}`);
-          return response.json();
-        }
-        return [];
-      } catch (dbError) {
-        return [];
-      }
+      // Final fallback - return empty array to prevent crashes
+      return [];
     }
   }
 
   static async getGoogleCalendarEvents(): Promise<any[]> {
-    const response = await apiRequest('GET', `/api/appointments/today/${this.therapistId}`);
+    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+    const response = await apiRequest('GET', `/api/appointments/today/${FALLBACK_THERAPIST_ID}`);
     return response.json();
   }
 
   static async getAppointments(date?: string): Promise<Appointment[]> {
+    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+    
     // If asking for today's date, use the combined approach
     const today = new Date().toISOString().split('T')[0];
     if (date === today) {
@@ -251,16 +243,18 @@ export class ApiClient {
     }
 
     const url = date 
-      ? `/api/appointments/${this.therapistId}?date=${date}`
-      : `/api/appointments/${this.therapistId}`;
+      ? `/api/appointments/${FALLBACK_THERAPIST_ID}?date=${date}`
+      : `/api/appointments/${FALLBACK_THERAPIST_ID}`;
     const response = await apiRequest('GET', url);
     return response.json();
   }
 
   static async createAppointment(appointment: Omit<Appointment, 'id'>): Promise<Appointment> {
+    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+    
     const response = await apiRequest('POST', '/api/appointments', {
       ...appointment,
-      therapistId: this.therapistId
+      therapistId: FALLBACK_THERAPIST_ID
     });
     return response.json();
   }
