@@ -22,7 +22,9 @@ import {
   Save,
   RefreshCw,
   MessageSquare,
-  Brain
+  Brain,
+  Wrench,
+  Stethoscope
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -57,21 +59,21 @@ export default function Assessments() {
 
   // Filtering logic
   const getUniqueCategories = () => {
-    if (!catalogData) return [];
+    if (!catalogData || !Array.isArray(catalogData)) return [];
     return [...new Set(catalogData.map((item: any) => item.category))];
   };
 
-  const filteredCatalog = catalogData?.filter((item: any) => {
+  const filteredCatalog = (catalogData && Array.isArray(catalogData) ? catalogData : []).filter((item: any) => {
     const matchesSearch = !searchTerm || 
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === "all" || item.category === categoryFilter;
     return matchesSearch && matchesCategory;
-  }) || [];
+  });
 
-  const filteredAssignments = assignmentsData?.filter((assignment: any) => {
+  const filteredAssignments = (assignmentsData && Array.isArray(assignmentsData) ? assignmentsData : []).filter((assignment: any) => {
     return statusFilter === "all" || assignment.status === statusFilter;
-  }) || [];
+  });
 
   // Helper functions
   const getCategoryColor = (category: string) => {
@@ -82,6 +84,7 @@ export default function Assessments() {
       "Trauma": "bg-red-50 text-red-700 border-red-200",
       "Substance Use": "bg-orange-50 text-orange-700 border-orange-200",
       "Couples": "bg-pink-50 text-pink-700 border-pink-200",
+      "Tools": "bg-cyan-50 text-cyan-700 border-cyan-200",
       "General": "bg-gray-50 text-gray-700 border-gray-200"
     };
     return colors[category] || "bg-gray-50 text-gray-700 border-gray-200";
@@ -472,10 +475,17 @@ export default function Assessments() {
             </div>
           ) : (
             filteredCatalog.map((item: any) => (
-              <Card key={item.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-blue-500">
+              <Card key={item.id} className={`hover:shadow-lg transition-shadow border-l-4 ${item.category === 'Tools' ? 'border-l-cyan-500' : 'border-l-blue-500'}`}>
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start mb-2">
-                    <CardTitle className="text-base font-semibold text-gray-900">{item.name}</CardTitle>
+                    <div className="flex items-center">
+                      {item.category === 'Tools' ? (
+                        <Wrench className="w-4 h-4 mr-2 text-cyan-600" />
+                      ) : (
+                        <Stethoscope className="w-4 h-4 mr-2 text-blue-600" />
+                      )}
+                      <CardTitle className="text-base font-semibold text-gray-900">{item.name}</CardTitle>
+                    </div>
                     <Badge 
                       variant="outline" 
                       className={`text-xs px-2 py-1 ${getCategoryColor(item.category)}`}
