@@ -13,6 +13,10 @@ import {
 import { db, pool } from "./db";
 import { eq, desc, and, gte, lte, count, like, or, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import OpenAI from 'openai';
+
+// Initialize OpenAI instance
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export interface IStorage {
   // User methods
@@ -703,13 +707,7 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
-  async createProgressNote(note: InsertProgressNote): Promise<ProgressNote> {
-    const [newNote] = await db
-      .insert(progressNotes)
-      .values(note)
-      .returning();
-    return newNote;
-  }
+
 
   async updateProgressNote(id: string, note: Partial<ProgressNote>): Promise<ProgressNote> {
     const [updatedNote] = await db
@@ -1753,7 +1751,6 @@ Respond in JSON format:
         subject: row.subject,
         messageContent: row.message_content,
         aiReasoning: row.ai_reasoning,
-```tool_code
         triggerContext: row.trigger_context || {},
         deliveryMethod: row.delivery_method,
         status: row.status,
@@ -2444,7 +2441,7 @@ Jonathan`,
     }
   }
 
-  async getProgressNotes(therapistId: string): Promise<ProgressNote[]> {
+  async getProgressNotesByTherapist(therapistId: string): Promise<ProgressNote[]> {
     try {
       const result = await pool.query(
         `SELECT pn.*, c.first_name, c.last_name 

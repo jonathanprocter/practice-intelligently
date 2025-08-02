@@ -200,10 +200,11 @@ interface AppointmentData {
 // Generate appointment insights
 export async function generateAppointmentInsights(appointments: AppointmentData[]): Promise<AIAnalysisResult> {
   const appointmentData = appointments.map(apt => ({
-    type: apt.type,
+    id: apt.id,
+    clientId: apt.clientId,
+    therapistId: apt.therapistId,
     status: apt.status,
-    date: apt.startTime,
-    duration: apt.endTime ? new Date(apt.endTime).getTime() - new Date(apt.startTime).getTime() : 0,
+    date: apt.appointmentDate,
     notes: apt.notes
   }));
 
@@ -215,4 +216,29 @@ export async function generateAppointmentInsights(appointments: AppointmentData[
 export async function generateProgressInsights(clientData: unknown): Promise<AIAnalysisResult> {
   const content = `Client progress data: ${JSON.stringify(clientData, null, 2)}`;
   return analyzeContent(content, 'progress');
+}
+
+// Clinical analysis for various therapeutic tasks
+export async function generateClinicalAnalysis(content: string, context?: string): Promise<string> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // Latest OpenAI model
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert clinical therapist. Provide detailed, evidence-based insights and analysis."
+        },
+        {
+          role: "user",
+          content: `Analyze the following content${context ? ` in the context of: ${context}` : ''}:\n\n${content}`
+        }
+      ],
+      max_tokens: 2000,
+    });
+
+    return response.choices[0].message.content || '';
+  } catch (error) {
+    console.error('OpenAI clinical analysis failed:', error);
+    throw error;
+  }
 }
