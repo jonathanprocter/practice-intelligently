@@ -318,7 +318,7 @@ export function Compass({ className }: CompassProps) {
       console.log('Voice generation failed:', error);
       setIsSpeaking(false);
       // Only show toast for actual generation errors, not browser auto-play blocks
-      if (!error.toString().includes('play')) {
+      if (!(error instanceof Error) || !error.toString().includes('play')) {
         toast({
           title: "Voice generation failed",
           description: error instanceof Error ? error.message : "Please try again or check your connection.",
