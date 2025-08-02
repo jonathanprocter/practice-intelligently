@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { MessageCircle, X, Send, Loader2, Minimize2, Maximize2, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, Minimize2, Maximize2, Mic, MicOff, Volume2, VolumeX, Settings, Play, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +34,11 @@ export function Compass({ className }: CompassProps) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechRecognition, setSpeechRecognition] = useState<any>(null);
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
+  const [continuousMode, setContinuousMode] = useState(false);
+  const [voiceActivation, setVoiceActivation] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState('rachel');
+  const [speechRate, setSpeechRate] = useState(1.0);
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -52,8 +59,26 @@ export function Compass({ className }: CompassProps) {
       recognition.lang = 'en-US';
       
       recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
+        const transcript = event.results[0][0].transcript.trim();
+        
+        // Check for voice activation phrase
+        if (voiceActivation && transcript.toLowerCase().includes('hey compass')) {
+          const query = transcript.toLowerCase().replace('hey compass', '').trim();
+          if (query) {
+            chatMutation.mutate(query);
+          }
+          setIsListening(false);
+          return;
+        }
+        
         setInputMessage(transcript);
+        
+        // In continuous mode, automatically send the message
+        if (continuousMode && transcript) {
+          chatMutation.mutate(transcript);
+          setInputMessage('');
+        }
+        
         setIsListening(false);
       };
       
@@ -68,6 +93,16 @@ export function Compass({ className }: CompassProps) {
       
       recognition.onend = () => {
         setIsListening(false);
+        
+        // In voice activation mode, keep listening
+        if (voiceActivation && isOpen) {
+          setTimeout(() => {
+            if (speechRecognition && voiceActivation) {
+              speechRecognition.start();
+              setIsListening(true);
+            }
+          }, 1000);
+        }
       };
       
       setSpeechRecognition(recognition);
@@ -80,6 +115,42 @@ export function Compass({ className }: CompassProps) {
       sendWelcomeMessage();
     }
   }, [isOpen]);
+
+  // Start voice activation listening when enabled
+  useEffect(() => {
+    if (voiceActivation && isOpen && speechRecognition && !isListening) {
+      try {
+        speechRecognition.start();
+        setIsListening(true);
+      } catch (error) {
+        console.log('Voice activation start failed:', error);
+      }
+    } else if (!voiceActivation && speechRecognition && isListening) {
+      try {
+        speechRecognition.stop();
+        setIsListening(false);
+      } catch (error) {
+        console.log('Voice activation stop failed:', error);
+      }
+    }
+  }, [voiceActivation, isOpen]);
+
+  // Clean up when component unmounts or window closes
+  useEffect(() => {
+    return () => {
+      if (speechRecognition) {
+        try {
+          speechRecognition.stop();
+        } catch (error) {
+          console.log('Cleanup speech recognition failed:', error);
+        }
+      }
+      if (currentAudio) {
+        currentAudio.pause();
+        setCurrentAudio(null);
+      }
+    };
+  }, []);
 
   // Send welcome message when first opened
   const sendWelcomeMessage = () => {
@@ -184,7 +255,11 @@ export function Compass({ className }: CompassProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ 
+          text,
+          voice: selectedVoice,
+          speed: speechRate
+        }),
       });
 
       if (!response.ok) {
@@ -363,10 +438,36 @@ export function Compass({ className }: CompassProps) {
               </Avatar>
               <div>
                 <h3 className="font-semibold text-sm">Compass</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">AI Assistant</p>
+                <div className="flex items-center space-x-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">AI Assistant</p>
+                  {voiceActivation && (
+                    <div className="flex items-center space-x-1">
+                      <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-red-600 dark:text-red-400">Listening</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-center space-x-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowVoiceSettings(!showVoiceSettings)}
+                className="w-8 h-8 p-0"
+                title="Voice Settings"
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setVoiceActivation(!voiceActivation)}
+                className={cn("w-8 h-8 p-0", voiceActivation && "bg-gray-200 dark:bg-gray-600")}
+                title={voiceActivation ? "Disable Hey Compass" : "Enable Hey Compass"}
+              >
+                {voiceActivation ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -389,6 +490,65 @@ export function Compass({ className }: CompassProps) {
               </Button>
             </div>
           </div>
+
+          {/* Voice Settings Panel */}
+          {showVoiceSettings && !isMinimized && (
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Voice Selection</label>
+                  <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="rachel">Rachel (Professional Female)</SelectItem>
+                      <SelectItem value="adam">Adam (Warm Male)</SelectItem>
+                      <SelectItem value="bella">Bella (Young Female)</SelectItem>
+                      <SelectItem value="josh">Josh (Deep Male)</SelectItem>
+                      <SelectItem value="sam">Sam (Raspy Male)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Speech Speed: {speechRate}x</label>
+                  <Slider
+                    value={[speechRate]}
+                    onValueChange={(value) => setSpeechRate(value[0])}
+                    min={0.5}
+                    max={2.0}
+                    step={0.1}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <Button
+                    variant={continuousMode ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setContinuousMode(!continuousMode)}
+                    className="flex-1"
+                  >
+                    {continuousMode ? "Continuous ON" : "Continuous OFF"}
+                  </Button>
+                  <Button
+                    variant={voiceActivation ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setVoiceActivation(!voiceActivation)}
+                    className="flex-1"
+                  >
+                    {voiceActivation ? "Hey Compass ON" : "Hey Compass OFF"}
+                  </Button>
+                </div>
+                
+                <div className="text-xs text-gray-600 dark:text-gray-400">
+                  {voiceActivation && "Say 'Hey Compass' followed by your question"}
+                  {continuousMode && "Voice input automatically sends messages"}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Messages */}
           {!isMinimized && (

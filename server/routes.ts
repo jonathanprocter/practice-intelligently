@@ -2445,13 +2445,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ElevenLabs text-to-speech endpoint
   app.post("/api/compass/speak", async (req, res) => {
     try {
-      const { text } = req.body;
+      const { text, voice = 'rachel', speed = 1.0 } = req.body;
       
       if (!text) {
         return res.status(400).json({ error: "Text is required" });
       }
 
-      const elevenLabsResponse = await fetch("https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM", {
+      // Voice ID mapping for ElevenLabs
+      const voiceMap = {
+        'rachel': '21m00Tcm4TlvDq8ikWAM', // Rachel - professional female
+        'adam': 'pNInz6obpgDQGcFmaJgB',   // Adam - warm male
+        'bella': 'EXAVITQu4vr4xnSDxMaL',  // Bella - young female
+        'josh': 'TxGEqnHWrfWFTfGW9XjX',   // Josh - deep male
+        'sam': 'yoZ06aMxZJJ28mfd3POQ'     // Sam - raspy male
+      };
+
+      const selectedVoiceId = voiceMap[voice as keyof typeof voiceMap] || voiceMap.rachel;
+
+      const elevenLabsResponse = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}`, {
         method: "POST",
         headers: {
           "Accept": "audio/mpeg",
@@ -2465,7 +2476,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             stability: 0.5,
             similarity_boost: 0.8,
             style: 0.0,
-            use_speaker_boost: true
+            use_speaker_boost: true,
+            speaking_rate: Math.max(0.25, Math.min(4.0, speed)) // Clamp speed between 0.25x and 4x
           }
         })
       });
