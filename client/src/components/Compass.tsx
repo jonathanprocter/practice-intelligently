@@ -481,12 +481,13 @@ export function Compass({ className }: CompassProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsMinimized(!isMinimized)}
-                className="w-8 h-8 p-0"
+                className="w-8 h-8 p-0 hover:bg-gray-200 dark:hover:bg-gray-600"
+                title={isMinimized ? "Maximize" : "Minimize"}
               >
                 {isMinimized ? (
-                  <Maximize2 className="w-4 h-4" />
+                  <Maximize2 className="w-5 h-5 text-gray-700 dark:text-gray-300" />
                 ) : (
-                  <Minimize2 className="w-4 h-4" />
+                  <Minimize2 className="w-5 h-5 text-gray-700 dark:text-gray-300" />
                 )}
               </Button>
               <Button
