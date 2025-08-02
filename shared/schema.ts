@@ -268,33 +268,21 @@ export const assessments = pgTable("assessments", {
 
 export const progressNotes = pgTable("progress_notes", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }).notNull(),
-  therapistId: uuid("therapist_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  appointmentId: uuid("appointment_id").references(() => appointments.id, { onDelete: "cascade" }),
-  treatmentPlanId: uuid("treatment_plan_id").references(() => treatmentPlans.id, { onDelete: "set null" }),
-  // AI-generated comprehensive progress note fields
+  clientId: text("client_id").notNull(), // Match existing database structure
+  therapistId: text("therapist_id").notNull(), // Match existing database structure  
+  appointmentId: text("appointment_id"), // Match existing database structure
+  // Core SOAP note fields that exist in the database
   title: text("title").notNull(),
-  subjective: text("subjective"),
-  objective: text("objective"),
-  assessment: text("assessment"),
-  plan: text("plan"),
+  subjective: text("subjective").notNull(),
+  objective: text("objective").notNull(),
+  assessment: text("assessment").notNull(),
+  plan: text("plan").notNull(),
   tonalAnalysis: text("tonal_analysis"),
   keyPoints: jsonb("key_points"),
-  significantQuotes: jsonb("significant_quotes"),
+  significantQuotes: jsonb("significant_quotes"),  
   narrativeSummary: text("narrative_summary"),
-  aiTags: jsonb("ai_tags"), // AI-generated tags for categorization
-  sessionDate: timestamp("session_date"),
-  // Legacy fields for backward compatibility
-  progressSummary: text("progress_summary"),
-  currentMood: text("current_mood"),
-  behavioralObservations: text("behavioral_observations"),
-  interventionsUsed: jsonb("interventions_used"),
-  clientResponse: text("client_response"),
-  homeworkAssigned: text("homework_assigned"),
-  riskAssessment: jsonb("risk_assessment"),
-  nextSteps: text("next_steps"),
-  goals: jsonb("goals"),
-  goalsProgress: jsonb("goals_progress"),
+  aiTags: jsonb("ai_tags"),
+  sessionDate: timestamp("session_date").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
@@ -732,10 +720,6 @@ export const progressNotesRelations = relations(progressNotes, ({ one }) => ({
   appointment: one(appointments, {
     fields: [progressNotes.appointmentId],
     references: [appointments.id],
-  }),
-  treatmentPlan: one(treatmentPlans, {
-    fields: [progressNotes.treatmentPlanId],
-    references: [treatmentPlans.id],
   }),
 }));
 
