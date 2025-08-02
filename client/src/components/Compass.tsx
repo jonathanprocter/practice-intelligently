@@ -40,6 +40,8 @@ export function Compass({ className }: CompassProps) {
   const [speechRate, setSpeechRate] = useState(1.0);
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const compassRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const scrollToBottom = () => {
@@ -406,10 +408,6 @@ export function Compass({ className }: CompassProps) {
     );
   };
 
-  // Handle click outside to close Compass
-  const compassRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (compassRef.current && !compassRef.current.contains(event.target as Node)) {
@@ -456,11 +454,13 @@ export function Compass({ className }: CompassProps) {
 
       {/* Chat Interface */}
       {isOpen && (
-        <div className={cn(
-          'fixed right-6 top-1/2 transform -translate-y-1/2 z-50 bg-white dark:bg-gray-900 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300 overflow-hidden',
-          isMinimized ? 'w-80 h-16' : 'w-96 h-[600px] max-w-[calc(100vw-3rem)]',
-          className
-        )} ref={compassRef}>
+        <div
+          ref={compassRef}
+          className={cn(
+            'fixed right-6 top-1/2 transform -translate-y-1/2 z-50 bg-white dark:bg-gray-900 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300 overflow-hidden',
+            isMinimized ? 'w-80 h-16' : 'w-96 h-[600px] max-w-[calc(100vw-3rem)]',
+            className
+          )}>
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
