@@ -303,11 +303,18 @@ export function Compass({ className }: CompassProps) {
       
       // Use a promise to handle play() which returns a promise
       try {
-        await audio.play();
-        console.log('Audio started playing successfully');
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+          console.log('Audio started playing successfully');
+        }
       } catch (playError) {
-        console.error('Play error:', playError);
-        throw new Error(`Audio play failed: ${playError}`);
+        console.log('Auto-play blocked or failed:', playError);
+        // Don't throw error - just log it and continue
+        // User can still manually click speaker buttons
+        setIsSpeaking(false);
+        setCurrentAudio(null);
+        URL.revokeObjectURL(audioUrl);
       }
       
     } catch (error) {
@@ -345,9 +352,11 @@ export function Compass({ className }: CompassProps) {
       setMessages(prev => [...prev, assistantMessage]);
       
       // Automatically speak the response (but don't block on errors)
-      speakText(response.content).catch(error => {
+      try {
+        speakText(response.content);
+      } catch (error) {
         console.log('Auto-speak failed, voice will be available via speaker button:', error);
-      });
+      }
     },
     onError: () => {
       toast({
