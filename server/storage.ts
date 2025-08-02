@@ -1,6 +1,7 @@
 import { 
   users, clients, appointments, sessionNotes, sessionPrepNotes, clientCheckins, actionItems, treatmentPlans, aiInsights,
   billingRecords, assessments, progressNotes, medications, communicationLogs, documents, auditLogs,
+  compassConversations, compassMemory,
   type User, type InsertUser, type Client, type InsertClient, type Appointment, type InsertAppointment,
   type SessionNote, type InsertSessionNote, type SessionPrepNote, type InsertSessionPrepNote, 
   type ClientCheckin, type InsertClientCheckin, type ActionItem, type InsertActionItem,
@@ -8,7 +9,8 @@ import {
   type BillingRecord, type InsertBillingRecord, type Assessment, type InsertAssessment,
   type ProgressNote, type InsertProgressNote, type Medication, type InsertMedication,
   type CommunicationLog, type InsertCommunicationLog, type Document, type InsertDocument,
-  type AuditLog, type InsertAuditLog
+  type AuditLog, type InsertAuditLog, type CompassConversation, type InsertCompassConversation,
+  type CompassMemory, type InsertCompassMemory
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, desc, and, gte, lte, count, like, or, sql } from "drizzle-orm";
@@ -156,6 +158,21 @@ export interface IStorage {
     paidAmount: number;
     pendingAmount: number;
     overdueAmount: number;
+  }>;
+
+  // Compass AI conversation and memory methods
+  createCompassConversation(conversation: InsertCompassConversation): Promise<CompassConversation>;
+  getCompassConversations(therapistId: string, sessionId?: string, limit?: number): Promise<CompassConversation[]>;
+  getCompassConversationHistory(therapistId: string, limit?: number): Promise<CompassConversation[]>;
+  
+  // Compass memory methods
+  setCompassMemory(memory: InsertCompassMemory): Promise<CompassMemory>;
+  getCompassMemory(therapistId: string, contextType: string, contextKey?: string): Promise<CompassMemory[]>;
+  updateCompassMemoryAccess(id: string): Promise<CompassMemory>;
+  getCompassLearningContext(therapistId: string): Promise<{
+    preferences: any;
+    patterns: any;
+    frequentQueries: any;
   }>;
 }
 
@@ -2473,6 +2490,179 @@ Jonathan`,
     } catch (error) {
       console.error('Error fetching progress notes:', error);
       return [];
+    }
+  }
+
+  // Compass AI conversation and memory methods implementation
+  async createCompassConversation(conversation: InsertCompassConversation): Promise<CompassConversation> {
+    try {
+      const [newConversation] = await db
+        .insert(compassConversations)
+        .values(conversation)
+        .returning();
+      return newConversation;
+    } catch (error) {
+      console.error('Error creating compass conversation:', error);
+      throw error;
+    }
+  }
+
+  async getCompassConversations(therapistId: string, sessionId?: string, limit: number = 50): Promise<CompassConversation[]> {
+    try {
+      let query = db
+        .select()
+        .from(compassConversations)
+        .where(eq(compassConversations.therapistId, therapistId));
+
+      if (sessionId) {
+        query = query.where(eq(compassConversations.sessionId, sessionId));
+      }
+
+      const conversations = await query
+        .orderBy(desc(compassConversations.createdAt))
+        .limit(limit);
+
+      return conversations;
+    } catch (error) {
+      console.error('Error fetching compass conversations:', error);
+      return [];
+    }
+  }
+
+  async getCompassConversationHistory(therapistId: string, limit: number = 100): Promise<CompassConversation[]> {
+    try {
+      const conversations = await db
+        .select()
+        .from(compassConversations)
+        .where(eq(compassConversations.therapistId, therapistId))
+        .orderBy(desc(compassConversations.createdAt))
+        .limit(limit);
+
+      return conversations;
+    } catch (error) {
+      console.error('Error fetching compass conversation history:', error);
+      return [];
+    }
+  }
+
+  async setCompassMemory(memory: InsertCompassMemory): Promise<CompassMemory> {
+    try {
+      // Check if memory already exists for this context
+      const [existing] = await db
+        .select()
+        .from(compassMemory)
+        .where(
+          and(
+            eq(compassMemory.therapistId, memory.therapistId),
+            eq(compassMemory.contextType, memory.contextType),
+            eq(compassMemory.contextKey, memory.contextKey)
+          )
+        );
+
+      if (existing) {
+        // Update existing memory
+        const [updated] = await db
+          .update(compassMemory)
+          .set({
+            contextValue: memory.contextValue,
+            confidence: memory.confidence || existing.confidence,
+            lastAccessed: new Date(),
+            accessCount: (existing.accessCount || 0) + 1,
+            updatedAt: new Date()
+          })
+          .where(eq(compassMemory.id, existing.id))
+          .returning();
+        return updated;
+      } else {
+        // Create new memory
+        const [newMemory] = await db
+          .insert(compassMemory)
+          .values(memory)
+          .returning();
+        return newMemory;
+      }
+    } catch (error) {
+      console.error('Error setting compass memory:', error);
+      throw error;
+    }
+  }
+
+  async getCompassMemory(therapistId: string, contextType: string, contextKey?: string): Promise<CompassMemory[]> {
+    try {
+      let query = db
+        .select()
+        .from(compassMemory)
+        .where(
+          and(
+            eq(compassMemory.therapistId, therapistId),
+            eq(compassMemory.contextType, contextType),
+            eq(compassMemory.isActive, true)
+          )
+        );
+
+      if (contextKey) {
+        query = query.where(eq(compassMemory.contextKey, contextKey));
+      }
+
+      const memories = await query.orderBy(desc(compassMemory.lastAccessed));
+
+      return memories;
+    } catch (error) {
+      console.error('Error fetching compass memory:', error);
+      return [];
+    }
+  }
+
+  async updateCompassMemoryAccess(id: string): Promise<CompassMemory> {
+    try {
+      const [updated] = await db
+        .update(compassMemory)
+        .set({
+          lastAccessed: new Date(),
+          accessCount: sql`${compassMemory.accessCount} + 1`
+        })
+        .where(eq(compassMemory.id, id))
+        .returning();
+      return updated;
+    } catch (error) {
+      console.error('Error updating compass memory access:', error);
+      throw error;
+    }
+  }
+
+  async getCompassLearningContext(therapistId: string): Promise<{
+    preferences: any;
+    patterns: any;
+    frequentQueries: any;
+  }> {
+    try {
+      const [preferences, patterns, queries] = await Promise.all([
+        this.getCompassMemory(therapistId, 'user_preference'),
+        this.getCompassMemory(therapistId, 'workflow_pattern'),
+        this.getCompassMemory(therapistId, 'frequent_query')
+      ]);
+
+      return {
+        preferences: preferences.reduce((acc, p) => ({
+          ...acc,
+          [p.contextKey]: p.contextValue
+        }), {}),
+        patterns: patterns.reduce((acc, p) => ({
+          ...acc,
+          [p.contextKey]: p.contextValue
+        }), {}),
+        frequentQueries: queries.reduce((acc, q) => ({
+          ...acc,
+          [q.contextKey]: q.contextValue
+        }), {})
+      };
+    } catch (error) {
+      console.error('Error fetching compass learning context:', error);
+      return {
+        preferences: {},
+        patterns: {},
+        frequentQueries: {}
+      };
     }
   }
 }

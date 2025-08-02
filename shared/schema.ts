@@ -379,6 +379,49 @@ export const auditLogs = pgTable("audit_logs", {
   timestampIdx: index("audit_logs_timestamp_idx").on(table.timestamp),
 }));
 
+// Compass AI Conversations - for persistent memory and context
+export const compassConversations = pgTable("compass_conversations", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  therapistId: uuid("therapist_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  sessionId: text("session_id").notNull(), // Unique session identifier
+  messageId: text("message_id").notNull(), // Unique message identifier
+  role: text("role", { enum: ["user", "assistant"] }).notNull(),
+  content: text("content").notNull(),
+  context: jsonb("context"), // Context data like client info, appointment info, etc.
+  aiProvider: text("ai_provider"), // openai, anthropic, etc.
+  tokenCount: integer("token_count"),
+  processingTime: integer("processing_time"), // in milliseconds
+  feedback: text("feedback"), // user feedback on response quality
+  metadata: jsonb("metadata"), // additional metadata like voice settings, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  therapistIdx: index("compass_conversations_therapist_idx").on(table.therapistId),
+  sessionIdx: index("compass_conversations_session_idx").on(table.sessionId),
+  dateIdx: index("compass_conversations_date_idx").on(table.createdAt),
+  roleIdx: index("compass_conversations_role_idx").on(table.role),
+}));
+
+// Compass Memory Context - for long-term memory and learning
+export const compassMemory = pgTable("compass_memory", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  therapistId: uuid("therapist_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  contextType: text("context_type").notNull(), // client_preference, workflow_pattern, frequent_query, etc.
+  contextKey: text("context_key").notNull(), // specific identifier
+  contextValue: jsonb("context_value").notNull(), // the actual data/preference
+  confidence: decimal("confidence", { precision: 3, scale: 2 }).default("1.0"), // confidence score 0-1
+  lastAccessed: timestamp("last_accessed").defaultNow(),
+  accessCount: integer("access_count").default(1),
+  isActive: boolean("is_active").default(true),
+  expiresAt: timestamp("expires_at"), // optional expiration
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  therapistIdx: index("compass_memory_therapist_idx").on(table.therapistId),
+  contextIdx: index("compass_memory_context_idx").on(table.contextType, table.contextKey),
+  activeIdx: index("compass_memory_active_idx").on(table.isActive),
+  accessedIdx: index("compass_memory_accessed_idx").on(table.lastAccessed),
+}));
+
 // Google Calendar Events - separate table for storing calendar events from Google Calendar API
 export const calendarEvents = pgTable("calendar_events", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -593,6 +636,20 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
   }),
 }));
 
+export const compassConversationsRelations = relations(compassConversations, ({ one }) => ({
+  therapist: one(users, {
+    fields: [compassConversations.therapistId],
+    references: [users.id],
+  }),
+}));
+
+export const compassMemoryRelations = relations(compassMemory, ({ one }) => ({
+  therapist: one(users, {
+    fields: [compassMemory.therapistId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -691,6 +748,17 @@ export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
   timestamp: true,
 });
 
+export const insertCompassConversationSchema = createInsertSchema(compassConversations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCompassMemorySchema = createInsertSchema(compassMemory).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -726,3 +794,7 @@ export type Document = typeof documents.$inferSelect;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type CompassConversation = typeof compassConversations.$inferSelect;
+export type InsertCompassConversation = z.infer<typeof insertCompassConversationSchema>;
+export type CompassMemory = typeof compassMemory.$inferSelect;
+export type InsertCompassMemory = z.infer<typeof insertCompassMemorySchema>;

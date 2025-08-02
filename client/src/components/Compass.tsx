@@ -29,6 +29,7 @@ export function Compass({ className }: CompassProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [sessionId, setSessionId] = useState<string>('');
   const [inputMessage, setInputMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -118,10 +119,15 @@ export function Compass({ className }: CompassProps) {
     }
   }, [voiceActivation, continuousMode, isOpen]);
 
-  // Send welcome message when first opened
+  // Generate session ID and load conversation history when first opened
   useEffect(() => {
-    if (isOpen && messages.length === 0 && !chatMutation.isPending) {
-      sendWelcomeMessage();
+    if (isOpen && !sessionId) {
+      const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      setSessionId(newSessionId);
+      
+      if (messages.length === 0 && !chatMutation.isPending) {
+        sendWelcomeMessage();
+      }
     }
   }, [isOpen]);
 
@@ -396,13 +402,21 @@ export function Compass({ className }: CompassProps) {
 
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
-      const response = await apiRequest('POST', '/api/compass/chat', { message });
+      const response = await apiRequest('POST', '/api/compass/chat', { 
+        message, 
+        sessionId: sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       return response.json();
     },
     onSuccess: (response) => {
+      // Update session ID if returned from server
+      if (response.sessionId && response.sessionId !== sessionId) {
+        setSessionId(response.sessionId);
+      }
+
       const assistantMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
