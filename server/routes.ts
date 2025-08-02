@@ -2539,6 +2539,20 @@ Always be specific, helpful, and ready to dive deeper into any topic. Show genui
         });
 
         response = openaiResponse.choices[0].message.content;
+        
+        // Post-process to strip any remaining markdown formatting aggressively
+        if (response) {
+          response = response
+            .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove **bold**
+            .replace(/\*(.*?)\*/g, '$1')      // Remove *italics*
+            .replace(/`(.*?)`/g, '$1')        // Remove `code`
+            .replace(/#{1,6}\s*/g, '')        // Remove # headers
+            .replace(/^\s*[-*+•]\s*/gm, '')   // Remove bullet points (including unicode bullets)
+            .replace(/^\s*\d+\.\s*/gm, '')    // Remove numbered lists
+            .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Remove [links](url)
+            .replace(/(\r\n|\r|\n){3,}/g, '\n\n') // Limit consecutive line breaks
+            .trim(); // Clean up whitespace
+        }
       } catch (error) {
         console.log('OpenAI failed, trying Anthropic...', error);
         
@@ -2596,6 +2610,21 @@ Provide a helpful, professional response with clinical insights and actionable r
           });
 
           response = anthropicResponse.content[0].type === 'text' ? anthropicResponse.content[0].text : 'Unable to generate response';
+          
+          // Post-process to strip any remaining markdown formatting aggressively
+          if (response) {
+            response = response
+              .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove **bold**
+              .replace(/\*(.*?)\*/g, '$1')      // Remove *italics*
+              .replace(/`(.*?)`/g, '$1')        // Remove `code`
+              .replace(/#{1,6}\s*/g, '')        // Remove # headers
+              .replace(/^\s*[-*+•]\s*/gm, '')   // Remove bullet points (including unicode bullets)
+              .replace(/^\s*\d+\.\s*/gm, '')    // Remove numbered lists
+              .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Remove [links](url)
+              .replace(/(\r\n|\r|\n){3,}/g, '\n\n') // Limit consecutive line breaks
+              .trim(); // Clean up whitespace
+          }
+          
           aiProvider = 'anthropic';
         } catch (anthropicError) {
           console.log('Anthropic also failed, using fallback response');
