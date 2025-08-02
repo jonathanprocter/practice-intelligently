@@ -26,15 +26,7 @@ interface CompassProps {
 export function Compass({ className }: CompassProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: "Hello! I'm Compass, your AI assistant. I have access to all your therapy practice data and can help you with clients, appointments, notes, analytics, and more. How can I assist you today?",
-      timestamp: new Date(),
-      aiProvider: 'openai'
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -46,6 +38,20 @@ export function Compass({ className }: CompassProps) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Send welcome message when first opened
+  useEffect(() => {
+    if (isOpen && messages.length === 0 && !chatMutation.isPending) {
+      sendWelcomeMessage();
+    }
+  }, [isOpen]);
+
+  // Send welcome message when first opened
+  const sendWelcomeMessage = () => {
+    if (messages.length === 0) {
+      chatMutation.mutate('Hello! Please give me a warm welcome and tell me what you can help with based on my current practice data.');
+    }
+  };
 
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
@@ -183,6 +189,69 @@ export function Compass({ className }: CompassProps) {
             <>
               <ScrollArea className="flex-1 p-4" style={{ height: 'calc(600px - 140px)' }}>
                 <div className="space-y-4">
+                  {/* Quick Action Buttons - Show when no messages */}
+                  {messages.length === 0 && !chatMutation.isPending && (
+                    <div className="space-y-3">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+                        Hi! I'm Compass. Click any suggestion below to get started:
+                      </p>
+                      <div className="grid grid-cols-1 gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-left justify-start h-auto p-3"
+                          onClick={() => {
+                            chatMutation.mutate("What should I focus on today?");
+                          }}
+                        >
+                          <div className="text-xs">
+                            <div className="font-medium">🎯 Today's Focus</div>
+                            <div className="text-gray-500">What should I prioritize today?</div>
+                          </div>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-left justify-start h-auto p-3"
+                          onClick={() => {
+                            chatMutation.mutate("Help me prepare for today's sessions");
+                          }}
+                        >
+                          <div className="text-xs">
+                            <div className="font-medium">📅 Session Prep</div>
+                            <div className="text-gray-500">Prepare for today's appointments</div>
+                          </div>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-left justify-start h-auto p-3"
+                          onClick={() => {
+                            chatMutation.mutate("Show me insights from recent client data");
+                          }}
+                        >
+                          <div className="text-xs">
+                            <div className="font-medium">📊 Client Insights</div>
+                            <div className="text-gray-500">Analyze patterns and trends</div>
+                          </div>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-left justify-start h-auto p-3"
+                          onClick={() => {
+                            chatMutation.mutate("Help me manage my action items");
+                          }}
+                        >
+                          <div className="text-xs">
+                            <div className="font-medium">✅ Action Items</div>
+                            <div className="text-gray-500">Organize and prioritize tasks</div>
+                          </div>
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  
                   {messages.map((message) => (
                     <div
                       key={message.id}
@@ -233,7 +302,7 @@ export function Compass({ className }: CompassProps) {
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Ask Compass anything..."
+                    placeholder="Ask Compass anything... (Voice support coming soon!)"
                     className="flex-1"
                     disabled={chatMutation.isPending}
                   />
