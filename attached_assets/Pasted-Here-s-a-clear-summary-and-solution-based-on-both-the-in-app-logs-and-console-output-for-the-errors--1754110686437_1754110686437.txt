@@ -1,0 +1,83 @@
+Here’s a clear summary and solution—based on both the in-app logs and console output—for the errors you’re encountering right now in your Replit project “RemarkablePlanner”:
+
+## 1. Google Calendar and Drive Authentication Errors
+
+**Error Messages:**
+- "401 Unauthorized"
+- "Google Calendar not connected"
+- "Google OAuth not connected. Please connect your Google Calendar first."
+- "Error: Google OAuth not connected. Please connect your Google Calendar first."
+- Content Viewer shows a Drive re-auth button or permissions message.
+
+**Root Cause:**
+- Your app is attempting to access Google Calendar and Google Drive APIs, but the OAuth tokens do not have the required permissions for Drive, and the Calendar tokens either expired or were never properly established for the new scopes.
+
+**How to Fix:**
+- You must re-authenticate with Google, granting permissions for **both** Calendar and Drive.
+- The code correctly prompts a re-auth flow when needed. Steps:
+  1. Go to the Content Viewer page and **click the “Re-authenticate with Google Drive” button**, or
+  2. Directly visit `/api/auth/google` in your browser as instructed in the UI/logs.
+  3. Approve **both** Calendar and Drive scopes in the Google OAuth prompt.
+
+*Once complete, your tokens will be refreshed, and the app will have full access. 401 errors will be resolved.*
+
+## 2. Backend/API TypeError: therapistId
+
+**Error Message:**
+- `TypeError: Cannot read properties of undefined (reading 'therapistId')`
+- Stack traces referencing getTodaysAppointments or getCurrentUser in client/src/lib/api.ts
+
+**Root Cause:**
+- Somewhere in your API code, it assumes that a user object is returned and always has a `therapistId` property. But, under some conditions (like missing authentication or user profile population failure), you get `undefined`, and then the code tries to read `user.therapistId` causing a crash.
+
+**How to Fix:**
+- Defensive Programming: Update the getTodaysAppointments method, and anywhere else you access therapistId, to **check that user is defined** before accessing its properties.
+- Example fix:
+
+```typescript
+// Before:
+const therapistId = user.therapistId;
+```
+```typescript
+// After:
+const therapistId = user?.therapistId;
+if (!therapistId) {
+  // Handle the missing case gracefully
+  // e.g., redirect to login or show an informative error
+}
+```
+
+- Ensure that authentication returns a user object, and handle cases where it’s not present or incomplete.
+
+## 3. API Request Method Error (Calendar Sync)
+
+**Error Message:**
+- `[plugin:runtime-error-plugin] Failed to execute 'fetch' on 'Window': '/api/calendar/sync' is not a valid HTTP method.`
+- In calendar-integration.tsx, related to calling apiRequest
+
+**Root Cause:**
+- The `apiRequest` helper is called with arguments in the wrong order: `(url, method, data)` instead of expected `(method, url, data)`.
+- This results in passing the URL as the HTTP method, which is invalid.
+
+**How to Fix:**
+- Correct the `apiRequest` call to match its signature:
+```typescript
+// Incorrect:
+apiRequest('/api/calendar/sync', 'POST', data);
+// Correct:
+apiRequest('POST', '/api/calendar/sync', data);
+```
+
+*Fix this wherever apiRequest is used throughout your codebase.*
+
+## Summary Table
+
+| Error                                | Root Cause              | How to Fix                                                                           |
+|---------------------------------------|-------------------------|--------------------------------------------------------------------------------------|
+| Google Calendar/Drive 401             | Missing/expired OAuth   | Re-authenticate; grant both Calendar and Drive scopes via Content Viewer or /api/auth/google |
+| therapistId TypeError                 | Accessing null user     | Add null/undefined checks before reading therapistId; handle missing user cases       |
+| API Method Error (/api/calendar/sync) | apiRequest arguments    | Ensure call is apiRequest('POST', '/api/calendar/sync', data)                        |
+
+By applying these targeted fixes, you’ll resolve all the current blocking errors and allow your integrations and calendar sync features to function smoothly. If you need step-by-step coding help for any one of these, let me know!
+
+[1] https://replit.com/@jonathanprocter/RemarkablePlanner

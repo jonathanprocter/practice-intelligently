@@ -180,6 +180,14 @@ export class ApiClient {
 
   static async getTodaysAppointments(): Promise<Appointment[]> {
     try {
+      // Use hardcoded therapist ID - safe fallback
+      const therapistId = this.therapistId;
+      
+      if (!therapistId) {
+        console.warn('No therapist ID available, returning empty appointments');
+        return [];
+      }
+
       // First try to get Google Calendar events for today
       const calendarResponse = await fetch('/api/oauth/events/today');
 
@@ -190,6 +198,7 @@ export class ApiClient {
         const calendarAppointments: Appointment[] = calendarEvents.map((event: any) => ({
           id: event.id || `calendar-${Date.now()}`,
           clientId: 'calendar-event',
+          therapistId: therapistId,
           startTime: event.start?.dateTime || event.start?.date,
           endTime: event.end?.dateTime || event.end?.date,
           type: event.summary || 'Calendar Event',
@@ -199,7 +208,7 @@ export class ApiClient {
 
         // Also get database appointments
         try {
-          const dbResponse = await apiRequest('GET', `/api/appointments/${this.therapistId}`);
+          const dbResponse = await apiRequest('GET', `/api/appointments/${therapistId}`);
           const dbAppointments = await dbResponse.json();
 
           // Combine and return both
@@ -210,15 +219,19 @@ export class ApiClient {
         }
       } else {
         // Fallback to database appointments only
-        const response = await apiRequest('GET', `/api/appointments/${this.therapistId}`);
+        const response = await apiRequest('GET', `/api/appointments/${therapistId}`);
         return response.json();
       }
     } catch (error) {
       console.error('Error fetching appointments:', error);
-      // Final fallback to database
+      // Final fallback to database with safe therapist ID
       try {
-        const response = await apiRequest('GET', `/api/appointments/${this.therapistId}`);
-        return response.json();
+        const therapistId = this.therapistId;
+        if (therapistId) {
+          const response = await apiRequest('GET', `/api/appointments/${therapistId}`);
+          return response.json();
+        }
+        return [];
       } catch (dbError) {
         return [];
       }
