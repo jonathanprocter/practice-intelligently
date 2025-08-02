@@ -84,13 +84,16 @@ export function Compass({ className }: CompassProps) {
         setIsListening(false);
       };
 
-      recognition.onerror = () => {
+      recognition.onerror = (event: any) => {
+        console.log('Speech recognition error:', event.error);
         setIsListening(false);
-        toast({
-          title: "Voice input error",
-          description: "Please try again or use text input.",
-          variant: "destructive",
-        });
+        if (event.error !== 'no-speech' && event.error !== 'aborted') {
+          toast({
+            title: "Voice input error",
+            description: "Please try again or use text input.",
+            variant: "destructive",
+          });
+        }
       };
 
       recognition.onend = () => {
@@ -99,9 +102,13 @@ export function Compass({ className }: CompassProps) {
         // In voice activation mode, keep listening
         if (voiceActivation && isOpen) {
           setTimeout(() => {
-            if (speechRecognition && voiceActivation) {
-              speechRecognition.start();
-              setIsListening(true);
+            if (speechRecognition && voiceActivation && isOpen) {
+              try {
+                speechRecognition.start();
+                setIsListening(true);
+              } catch (error) {
+                console.log('Failed to restart speech recognition:', error);
+              }
             }
           }, 1000);
         }
@@ -109,7 +116,7 @@ export function Compass({ className }: CompassProps) {
 
       setSpeechRecognition(recognition);
     }
-  }, []);
+  }, [voiceActivation, continuousMode, isOpen]);
 
   // Send welcome message when first opened
   useEffect(() => {
@@ -224,8 +231,18 @@ export function Compass({ className }: CompassProps) {
   // Voice input functions
   const startListening = () => {
     if (speechRecognition && !isListening) {
-      setIsListening(true);
-      speechRecognition.start();
+      try {
+        setIsListening(true);
+        speechRecognition.start();
+      } catch (error) {
+        console.log('Failed to start speech recognition:', error);
+        setIsListening(false);
+        toast({
+          title: "Voice input error",
+          description: "Please try again or use text input.",
+          variant: "destructive",
+        });
+      }
     } else if (!speechRecognition) {
       toast({
         title: "Voice input not supported",
@@ -237,8 +254,13 @@ export function Compass({ className }: CompassProps) {
 
   const stopListening = () => {
     if (speechRecognition && isListening) {
-      speechRecognition.stop();
-      setIsListening(false);
+      try {
+        speechRecognition.stop();
+        setIsListening(false);
+      } catch (error) {
+        console.log('Failed to stop speech recognition:', error);
+        setIsListening(false);
+      }
     }
   };
 
@@ -375,13 +397,16 @@ export function Compass({ className }: CompassProps) {
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
       const response = await apiRequest('POST', '/api/compass/chat', { message });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       return response.json();
     },
     onSuccess: (response) => {
       const assistantMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: response.content,
+        content: response.content || 'I received your message but had trouble generating a response.',
         timestamp: new Date(),
         aiProvider: response.aiProvider
       };
@@ -391,13 +416,16 @@ export function Compass({ className }: CompassProps) {
       activateCompass();
 
       // Automatically speak the response (but don't block on errors)
-      try {
-        speakText(response.content);
-      } catch (error) {
-        console.log('Auto-speak failed, voice will be available via speaker button:', error);
+      if (response.content) {
+        try {
+          speakText(response.content);
+        } catch (error) {
+          console.log('Auto-speak failed, voice will be available via speaker button:', error);
+        }
       }
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Chat mutation error:', error);
       toast({
         title: 'Error',
         description: 'Failed to get response from Compass. Please try again.',
@@ -447,8 +475,9 @@ export function Compass({ className }: CompassProps) {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (compassRef.current && !compassRef.current.contains(event.target as Node)) {
+      if (isOpen && compassRef.current && !compassRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setShowVoiceSettings(false);
         // Also blur the input if it's focused
         if (inputRef.current) {
           inputRef.current.blur();
@@ -457,12 +486,11 @@ export function Compass({ className }: CompassProps) {
     };
 
     if (isOpen) {
-      // Use capture phase to ensure we catch the event before other handlers
-      document.addEventListener('mousedown', handleClickOutside, true);
+      document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside, true);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
 
@@ -533,7 +561,18 @@ export function Compass({ className }: CompassProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setVoiceActivation(!voiceActivation)}
+                onClick={() => {
+                  const newVoiceActivation = !voiceActivation;
+                  setVoiceActivation(newVoiceActivation);
+                  if (!newVoiceActivation && speechRecognition && isListening) {
+                    try {
+                      speechRecognition.stop();
+                      setIsListening(false);
+                    } catch (error) {
+                      console.log('Failed to stop speech recognition:', error);
+                    }
+                  }
+                }}
                 className={cn("w-8 h-8 p-0", voiceActivation && "bg-gray-200 dark:bg-gray-600")}
                 title={voiceActivation ? "Disable Hey Compass" : "Enable Hey Compass"}
               >
