@@ -321,10 +321,53 @@ export default function Calendar() {
     setSelectedEvent(event);
   };
 
-  const handleEventMove = (eventId: string, newStartTime: Date, newEndTime: Date) => {
-    // Implement event rescheduling
-    console.log(`Moving event ${eventId} to ${newStartTime.toISOString()}`);
-    // This would call an API to update the appointment
+  const handleEventMove = async (eventId: string, newStartTime: Date, newEndTime: Date) => {
+    try {
+      console.log(`Moving event ${eventId} to ${newStartTime.toISOString()}`);
+      
+      // Find the event to get its calendar information
+      const event = calendarEvents.find(e => e.id === eventId);
+      if (!event) {
+        console.error('Event not found for move operation');
+        return;
+      }
+
+      // Determine the correct calendar ID from the event
+      let calendarId = 'primary';
+      if (event.calendarId) {
+        calendarId = event.calendarId;
+      } else if (event.calendarName?.includes('Simple Practice')) {
+        calendarId = '79dfcb90ce59b1b0345b24f5c8d342bd308eac9521d063a684a8bbd377f2b822@group.calendar.google.com';
+      } else if (event.calendarName?.includes('TrevorAI')) {
+        calendarId = 'c2ffec13aa77af8e71cac14a327928e34da57bddaadf18c4e0f669827e1454ff@group.calendar.google.com';
+      }
+      
+      console.log(`Moving event in calendar: ${calendarId}`);
+      
+      // Call the API to update the calendar event
+      const response = await fetch(`/api/calendar/events/${eventId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          calendarId,
+          startTime: newStartTime.toISOString(),
+          endTime: newEndTime.toISOString(),
+        }),
+      });
+
+      if (response.ok) {
+        // Refresh calendar data to show the updated event
+        refetch();
+        console.log(`Successfully moved event ${eventId}`);
+      } else {
+        const error = await response.text();
+        console.error('Failed to move event:', error);
+      }
+    } catch (error) {
+      console.error('Error moving event:', error);
+    }
   };
 
   const handleNewAppointment = () => {

@@ -1860,12 +1860,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { eventId } = req.params;
       const { calendarId = 'primary', ...eventData } = req.body;
-      // Note: updateEvent method needs to be implemented in simpleOAuth
-      const event = { error: 'updateEvent method not implemented in simpleOAuth' };
-      res.json(event);
-    } catch (error) {
+      
+      // Update event using Google Calendar service
+      const updatedEvent = await simpleOAuth.updateEvent(calendarId, eventId, eventData);
+      res.json(updatedEvent);
+    } catch (error: any) {
       console.error('Error updating calendar event:', error);
-      res.status(500).json({ error: 'Failed to update calendar event' });
+      res.status(500).json({ error: 'Failed to update calendar event', details: error.message });
+    }
+  });
+
+  // Add PATCH endpoint for partial updates (drag and drop)
+  app.patch('/api/calendar/events/:eventId', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const { calendarId = 'primary', startTime, endTime } = req.body;
+      
+      console.log(`Updating event ${eventId} in calendar ${calendarId}`);
+      console.log('New times:', { startTime, endTime });
+      
+      // Prepare event data for Google Calendar API
+      const eventData = {
+        start: {
+          dateTime: startTime,
+          timeZone: 'America/New_York'
+        },
+        end: {
+          dateTime: endTime,
+          timeZone: 'America/New_York'
+        }
+      };
+      
+      // Update event using Google Calendar service
+      const updatedEvent = await simpleOAuth.updateEvent(calendarId, eventId, eventData);
+      console.log(`Successfully updated event ${eventId}`);
+      res.json(updatedEvent);
+    } catch (error: any) {
+      console.error('Error updating calendar event:', error);
+      res.status(500).json({ error: 'Failed to update calendar event', details: error.message });
     }
   });
 

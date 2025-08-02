@@ -336,7 +336,7 @@ export const WeeklyCalendarGrid = ({
                       >
                         {event.calendarName?.includes('Simple Practice') ? 'SimplePractice' : 
                          event.calendarName?.includes('Google') ? 'Google Calendar' : 
-                         event.source === 'google' ? 'Google Calendar' : 'SimplePractice'} | {(getLocationDisplay(event.location) || getDefaultLocation(new Date(event.startTime)))}
+                         event.source === 'google' ? 'Google Calendar' : 'SimplePractice'} | {(getLocationDisplay(event.location) || getDefaultLocation(new Date(event.startTime || new Date())))}
                       </div>
                       <div 
                         className="appointment-time text-gray-600"
