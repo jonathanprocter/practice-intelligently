@@ -53,6 +53,66 @@ export function Compass({ className }: CompassProps) {
     }
   };
 
+  // Generate contextual quick actions based on conversation history
+  const getContextualQuickActions = () => {
+    const userMessages = messages.filter(m => m.role === 'user').map(m => m.content.toLowerCase());
+    const hasAskedAbout = (topic: string) => userMessages.some(msg => msg.includes(topic));
+
+    // Default quick actions for new conversations
+    if (messages.length === 0) {
+      return [
+        { label: "Today's Focus", query: "What should I focus on today?" },
+        { label: "Session Prep", query: "Help me prepare for today's sessions" },
+        { label: "Client Insights", query: "Show me insights from recent client data" },
+        { label: "Action Items", query: "Help me manage my action items" }
+      ];
+    }
+
+    // Adaptive quick actions based on conversation context
+    const actions: Array<{ label: string; query: string }> = [];
+
+    if (!hasAskedAbout('appointment') && !hasAskedAbout('session')) {
+      actions.push({ label: "Session Prep", query: "Help me prepare for today's sessions" });
+    }
+
+    if (!hasAskedAbout('insight') && !hasAskedAbout('pattern') && !hasAskedAbout('trend')) {
+      actions.push({ label: "Client Patterns", query: "What patterns do you see in my recent client data?" });
+    }
+
+    if (!hasAskedAbout('action item') && !hasAskedAbout('task')) {
+      actions.push({ label: "Priority Tasks", query: "What are my most important tasks today?" });
+    }
+
+    if (!hasAskedAbout('medication') && !hasAskedAbout('treatment')) {
+      actions.push({ label: "Treatment Notes", query: "Help me review treatment progress for my clients" });
+    }
+
+    if (hasAskedAbout('client') || hasAskedAbout('session')) {
+      actions.push({ label: "Documentation Help", query: "Help me with session documentation and notes" });
+    }
+
+    if (hasAskedAbout('schedule') || hasAskedAbout('appointment')) {
+      actions.push({ label: "Schedule Review", query: "Review my upcoming appointments and suggest optimizations" });
+    }
+
+    // Ensure we always have at least 3 actions
+    if (actions.length < 3) {
+      const defaultActions = [
+        { label: "Practice Overview", query: "Give me an overview of my practice status" },
+        { label: "Weekly Summary", query: "Summarize this week's client progress" },
+        { label: "Billing Check", query: "Help me review billing and administrative tasks" }
+      ];
+      
+      defaultActions.forEach(action => {
+        if (actions.length < 4 && !actions.some(a => a.label === action.label)) {
+          actions.push(action);
+        }
+      });
+    }
+
+    return actions.slice(0, 4); // Limit to 4 actions
+  };
+
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
       const response = await apiRequest('POST', '/api/compass/chat', { message });
@@ -187,68 +247,17 @@ export function Compass({ className }: CompassProps) {
           {/* Messages */}
           {!isMinimized && (
             <>
-              <ScrollArea className="flex-1 p-4" style={{ height: 'calc(600px - 140px)' }}>
+              <ScrollArea className="flex-1 p-4" style={{ height: 'calc(600px - 200px)' }}>
                 <div className="space-y-4">
-                  {/* Quick Action Buttons - Show when no messages */}
+                  {/* Welcome message when no messages */}
                   {messages.length === 0 && !chatMutation.isPending && (
-                    <div className="space-y-3">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                        Hi! I'm Compass. Click any suggestion below to get started:
+                    <div className="text-center py-8">
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Hi! I'm Compass, your AI assistant. I have access to all your practice data and can help with clients, appointments, insights, and more.
                       </p>
-                      <div className="grid grid-cols-1 gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-left justify-start h-auto p-3"
-                          onClick={() => {
-                            chatMutation.mutate("What should I focus on today?");
-                          }}
-                        >
-                          <div className="text-xs">
-                            <div className="font-medium">🎯 Today's Focus</div>
-                            <div className="text-gray-500">What should I prioritize today?</div>
-                          </div>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-left justify-start h-auto p-3"
-                          onClick={() => {
-                            chatMutation.mutate("Help me prepare for today's sessions");
-                          }}
-                        >
-                          <div className="text-xs">
-                            <div className="font-medium">📅 Session Prep</div>
-                            <div className="text-gray-500">Prepare for today's appointments</div>
-                          </div>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-left justify-start h-auto p-3"
-                          onClick={() => {
-                            chatMutation.mutate("Show me insights from recent client data");
-                          }}
-                        >
-                          <div className="text-xs">
-                            <div className="font-medium">📊 Client Insights</div>
-                            <div className="text-gray-500">Analyze patterns and trends</div>
-                          </div>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-left justify-start h-auto p-3"
-                          onClick={() => {
-                            chatMutation.mutate("Help me manage my action items");
-                          }}
-                        >
-                          <div className="text-xs">
-                            <div className="font-medium">✅ Action Items</div>
-                            <div className="text-gray-500">Organize and prioritize tasks</div>
-                          </div>
-                        </Button>
-                      </div>
+                      <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+                        Try the quick suggestions below or ask me anything!
+                      </p>
                     </div>
                   )}
                   
@@ -296,23 +305,45 @@ export function Compass({ className }: CompassProps) {
               </ScrollArea>
 
               {/* Input */}
-              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex space-x-2">
-                  <Input
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Ask Compass anything... (Voice support coming soon!)"
-                    className="flex-1"
-                    disabled={chatMutation.isPending}
-                  />
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={!inputMessage.trim() || chatMutation.isPending}
-                    size="sm"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
+              <div className="border-t border-gray-200 dark:border-gray-700">
+                {/* Quick Action Buttons */}
+                <div className="p-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex flex-wrap gap-2">
+                    {getContextualQuickActions().map((action, index) => (
+                      <Button
+                        key={index}
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-7 px-2 text-gray-700 dark:text-gray-300"
+                        onClick={() => {
+                          chatMutation.mutate(action.query);
+                        }}
+                        disabled={chatMutation.isPending}
+                      >
+                        {action.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="p-4">
+                  <div className="flex space-x-2">
+                    <Input
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Ask Compass anything... (Voice support coming soon!)"
+                      className="flex-1"
+                      disabled={chatMutation.isPending}
+                    />
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={!inputMessage.trim() || chatMutation.isPending}
+                      size="sm"
+                    >
+                      <Send className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </>

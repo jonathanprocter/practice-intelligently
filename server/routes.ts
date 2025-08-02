@@ -2471,7 +2471,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalAppointments: appointments.length,
         recentNotes: sessionNotes.slice(0, 5),
         pendingActionItems: actionItems.filter(a => a.status === 'pending').length,
-        totalActionItems: actionItems.length
+        totalActionItems: actionItems.length,
+        todayNames: appointments.filter(a => {
+          const today = new Date().toDateString();
+          return new Date(a.dateTime).toDateString() === today;
+        }).map(a => a.clientName).join(', ')
       };
 
       // Try OpenAI first (primary), then fallback to Anthropic
@@ -2495,7 +2499,7 @@ PERSONALITY TRAITS:
 
 Current Practice Overview:
 - Total Clients: ${practiceContext.totalClients} (${practiceContext.activeClients} active, ${practiceContext.archivedClients} archived)
-- Today's Appointments: ${practiceContext.todayAppointments}
+- Today's Appointments: ${practiceContext.todayAppointments}${practiceContext.todayNames ? ` (${practiceContext.todayNames})` : ''}
 - Total Appointments: ${practiceContext.totalAppointments}
 - Pending Action Items: ${practiceContext.pendingActionItems}/${practiceContext.totalActionItems}
 - Recent Session Notes: ${practiceContext.recentNotes.length} available
