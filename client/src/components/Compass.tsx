@@ -57,10 +57,10 @@ export function Compass({ className }: CompassProps) {
       recognition.continuous = false;
       recognition.interimResults = false;
       recognition.lang = 'en-US';
-      
+
       recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript.trim();
-        
+
         // Check for voice activation phrase
         if (voiceActivation && transcript.toLowerCase().includes('hey compass')) {
           const query = transcript.toLowerCase().replace('hey compass', '').trim();
@@ -70,18 +70,18 @@ export function Compass({ className }: CompassProps) {
           setIsListening(false);
           return;
         }
-        
+
         setInputMessage(transcript);
-        
+
         // In continuous mode, automatically send the message
         if (continuousMode && transcript) {
           chatMutation.mutate(transcript);
           setInputMessage('');
         }
-        
+
         setIsListening(false);
       };
-      
+
       recognition.onerror = () => {
         setIsListening(false);
         toast({
@@ -90,10 +90,10 @@ export function Compass({ className }: CompassProps) {
           variant: "destructive",
         });
       };
-      
+
       recognition.onend = () => {
         setIsListening(false);
-        
+
         // In voice activation mode, keep listening
         if (voiceActivation && isOpen) {
           setTimeout(() => {
@@ -104,7 +104,7 @@ export function Compass({ className }: CompassProps) {
           }, 1000);
         }
       };
-      
+
       setSpeechRecognition(recognition);
     }
   }, []);
@@ -208,7 +208,7 @@ export function Compass({ className }: CompassProps) {
         { label: "Weekly Summary", query: "Summarize this week's client progress" },
         { label: "Billing Check", query: "Help me review billing and administrative tasks" }
       ];
-      
+
       defaultActions.forEach(action => {
         if (actions.length < 4 && !actions.some(a => a.label === action.label)) {
           actions.push(action);
@@ -249,7 +249,7 @@ export function Compass({ className }: CompassProps) {
       }
 
       setIsSpeaking(true);
-      
+
       const response = await fetch('/api/compass/speak', {
         method: 'POST',
         headers: {
@@ -268,15 +268,15 @@ export function Compass({ className }: CompassProps) {
       }
 
       const audioBlob = await response.blob();
-      
+
       // Check if blob has content
       if (audioBlob.size === 0) {
         throw new Error('Received empty audio response');
       }
-      
+
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
-      
+
       audio.onended = () => {
         setIsSpeaking(false);
         setCurrentAudio(null);
@@ -296,7 +296,7 @@ export function Compass({ className }: CompassProps) {
       };
 
       setCurrentAudio(audio);
-      
+
       // Use a promise to handle play() which returns a promise
       try {
         const playPromise = audio.play();
@@ -313,7 +313,7 @@ export function Compass({ className }: CompassProps) {
         URL.revokeObjectURL(audioUrl);
         return; // Exit early on auto-play failure
       }
-      
+
     } catch (error) {
       console.log('Voice generation failed:', error);
       setIsSpeaking(false);
@@ -350,7 +350,7 @@ export function Compass({ className }: CompassProps) {
         aiProvider: response.aiProvider
       };
       setMessages(prev => [...prev, assistantMessage]);
-      
+
       // Automatically speak the response (but don't block on errors)
       try {
         speakText(response.content);
@@ -406,6 +406,31 @@ export function Compass({ className }: CompassProps) {
     );
   };
 
+  // Handle click outside to close Compass
+  const compassRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (compassRef.current && !compassRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        // Also blur the input if it's focused
+        if (inputRef.current) {
+          inputRef.current.blur();
+        }
+      }
+    };
+
+    if (isOpen) {
+      // Use capture phase to ensure we catch the event before other handlers
+      document.addEventListener('mousedown', handleClickOutside, true);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+    };
+  }, [isOpen]);
+
   return (
     <>
       {/* Floating Action Button */}
@@ -435,7 +460,7 @@ export function Compass({ className }: CompassProps) {
           'fixed right-6 top-1/2 transform -translate-y-1/2 z-50 bg-white dark:bg-gray-900 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 transition-all duration-300 overflow-hidden',
           isMinimized ? 'w-80 h-16' : 'w-96 h-[600px] max-w-[calc(100vw-3rem)]',
           className
-        )}>
+        )} ref={compassRef}>
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
@@ -520,7 +545,7 @@ export function Compass({ className }: CompassProps) {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium mb-2 block">Speech Speed: {speechRate}x</label>
                   <Slider
@@ -532,7 +557,7 @@ export function Compass({ className }: CompassProps) {
                     className="w-full"
                   />
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
                   <Button
                     variant={continuousMode ? "default" : "outline"}
@@ -551,7 +576,7 @@ export function Compass({ className }: CompassProps) {
                     {voiceActivation ? "Hey Compass ON" : "Hey Compass OFF"}
                   </Button>
                 </div>
-                
+
                 <div className="text-xs text-gray-600 dark:text-gray-400">
                   {voiceActivation && "Say 'Hey Compass' followed by your question"}
                   {continuousMode && "Voice input automatically sends messages"}
@@ -576,7 +601,7 @@ export function Compass({ className }: CompassProps) {
                       </p>
                     </div>
                   )}
-                  
+
                   {messages.map((message) => (
                     <div
                       key={message.id}
@@ -670,7 +695,7 @@ export function Compass({ className }: CompassProps) {
                     ))}
                   </div>
                 </div>
-                
+
                 <div className="p-4 max-w-full">
                   <div className="flex gap-2 items-center max-w-full">
                     <div className="flex-1 min-w-0 overflow-hidden">
@@ -681,6 +706,7 @@ export function Compass({ className }: CompassProps) {
                         placeholder={isListening ? "Listening..." : "Ask Compass anything or use voice input"}
                         className="w-full min-w-0 max-w-full"
                         disabled={chatMutation.isPending || isListening}
+                        ref={inputRef}
                       />
                     </div>
                     <div className="flex gap-1 flex-shrink-0">
