@@ -348,7 +348,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                               <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                               {factor}
                             </li>
-                          ))}
+                          )) || []}
                         </ul>
                       </div>
                       
@@ -360,7 +360,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                               <AlertCircle className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
                               {barrier}
                             </li>
-                          ))}
+                          )) || []}
                         </ul>
                       </div>
                     </div>
