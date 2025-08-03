@@ -343,7 +343,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                       <div>
                         <p className="text-sm font-medium text-gray-700 mb-2">Success Factors</p>
                         <ul className="space-y-1">
-                          {predictiveInsights.treatmentOutcomePrediction.keySuccessFactors.map((factor, index) => (
+                          {predictiveInsights.treatmentOutcomePrediction.keySuccessFactors?.map((factor, index) => (
                             <li key={index} className="text-sm flex items-start gap-2">
                               <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                               {factor}
@@ -355,7 +355,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                       <div>
                         <p className="text-sm font-medium text-gray-700 mb-2">Potential Barriers</p>
                         <ul className="space-y-1">
-                          {predictiveInsights.treatmentOutcomePrediction.potentialBarriers.map((barrier, index) => (
+                          {predictiveInsights.treatmentOutcomePrediction.potentialBarriers?.map((barrier, index) => (
                             <li key={index} className="text-sm flex items-start gap-2">
                               <AlertCircle className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
                               {barrier}
@@ -401,7 +401,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                     <div>
                       <p className="text-sm font-medium text-gray-700 mb-2">Recommended Next Interventions</p>
                       <ul className="space-y-1">
-                        {predictiveInsights.optimalInterventionTiming.recommendedNextInterventions.map((intervention, index) => (
+                        {predictiveInsights.optimalInterventionTiming.recommendedNextInterventions?.map((intervention, index) => (
                           <li key={index} className="text-sm p-2 bg-purple-50 rounded">
                             {intervention}
                           </li>
@@ -431,7 +431,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {patternAnalysis.successfulInterventionPatterns.map((pattern, index) => (
+                    {patternAnalysis.successfulInterventionPatterns?.map((pattern, index) => (
                       <div key={index} className="border border-gray-200 rounded-lg p-3">
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-medium">{pattern.pattern}</h4>
@@ -443,7 +443,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                           Optimal timing: {pattern.optimalTiming}
                         </p>
                         <div className="flex flex-wrap gap-1">
-                          {pattern.clientTypes.map((type, idx) => (
+                          {pattern.clientTypes?.map((type, idx) => (
                             <Badge key={idx} variant="outline" className="text-xs">
                               {type}
                             </Badge>
@@ -461,7 +461,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {patternAnalysis.breakthroughIndicators.map((indicator, index) => (
+                    {patternAnalysis.breakthroughIndicators?.map((indicator, index) => (
                       <li key={index} className="flex items-start gap-2">
                         <Star className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
                         <span className="text-sm">{indicator}</span>
@@ -490,7 +490,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {personalizedRecs.primaryModalities.map((modality, index) => (
+                    {personalizedRecs.primaryModalities?.map((modality, index) => (
                       <div key={index} className="border border-gray-200 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-medium">{modality.approach}</h4>
@@ -511,7 +511,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                         <div>
                           <p className="text-sm font-medium mb-1">Specific Techniques:</p>
                           <ul className="text-sm space-y-1">
-                            {modality.specificTechniques.map((technique, idx) => (
+                            {modality.specificTechniques?.map((technique, idx) => (
                               <li key={idx} className="text-gray-600">• {technique}</li>
                             ))}
                           </ul>
@@ -522,14 +522,14 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                 </CardContent>
               </Card>
 
-              {personalizedRecs.contraindications.length > 0 && (
+              {personalizedRecs.contraindications?.length > 0 && (
                 <Card className="border-orange-200 bg-orange-50">
                   <CardHeader>
                     <CardTitle className="text-orange-800">Important Contraindications</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-1">
-                      {personalizedRecs.contraindications.map((contraindication, index) => (
+                      {personalizedRecs.contraindications?.map((contraindication, index) => (
                         <li key={index} className="text-sm text-orange-700 flex items-start gap-2">
                           <AlertTriangle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
                           {contraindication}
@@ -590,7 +590,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {practiceIntelligence.optimizationOpportunities.map((opportunity, index) => (
+                    {practiceIntelligence.optimizationOpportunities?.map((opportunity, index) => (
                       <div key={index} className="border border-gray-200 rounded-lg p-3">
                         <h4 className="font-medium text-gray-900 mb-1">{opportunity.area}</h4>
                         <p className="text-sm text-gray-600 mb-2">
@@ -632,10 +632,10 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                         </span>
                       </div>
 
-                      {practiceIntelligence.retentionAnalysis.retentionStrategies.length > 0 && (
+                      {practiceIntelligence.retentionAnalysis.retentionStrategies?.length > 0 && (
                         <div>
                           <p className="text-sm font-medium text-gray-700 mb-2">Retention Strategies</p>
-                          {practiceIntelligence.retentionAnalysis.retentionStrategies.map((strategy, index) => (
+                          {practiceIntelligence.retentionAnalysis.retentionStrategies?.map((strategy, index) => (
                             <div key={index} className="text-sm p-2 bg-indigo-50 rounded-lg mb-2">
                               <p className="font-medium">{strategy.strategy}</p>
                               <p className="text-gray-600">{strategy.rationale}</p>
@@ -670,7 +670,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {therapistInsights.clinicalStrengths.map((strength, index) => (
+                    {therapistInsights.clinicalStrengths?.map((strength, index) => (
                       <div key={index} className="border border-gray-200 rounded-lg p-3">
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-medium">{strength.strength}</h4>
@@ -680,7 +680,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                         </div>
                         <p className="text-sm text-gray-600 mb-2">{strength.evidenceBase}</p>
                         <div className="flex flex-wrap gap-1">
-                          {strength.clientTypes.map((type, idx) => (
+                          {strength.clientTypes?.map((type, idx) => (
                             <Badge key={idx} variant="outline" className="text-xs">
                               {type}
                             </Badge>
@@ -701,7 +701,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {therapistInsights.professionalGrowthAreas.map((area, index) => (
+                    {therapistInsights.professionalGrowthAreas?.map((area, index) => (
                       <div key={index} className="border border-gray-200 rounded-lg p-3">
                         <h4 className="font-medium text-gray-900 mb-1">{area.area}</h4>
                         <p className="text-sm text-gray-600 mb-2">
@@ -713,7 +713,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                         <div>
                           <p className="text-sm font-medium mb-1">Recommended Resources:</p>
                           <ul className="text-sm space-y-1">
-                            {area.resources.map((resource, idx) => (
+                            {area.resources?.map((resource, idx) => (
                               <li key={idx} className="text-gray-600">• {resource}</li>
                             ))}
                           </ul>
@@ -741,7 +741,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                     <div>
                       <p className="text-sm font-medium text-gray-700 mb-2">Your Unique Therapeutic Gifts</p>
                       <div className="flex flex-wrap gap-2">
-                        {therapistInsights.uniqueTherapeuticGifts.map((gift, index) => (
+                        {therapistInsights.uniqueTherapeuticGifts?.map((gift, index) => (
                           <Badge key={index} className="bg-purple-100 text-purple-800">
                             {gift}
                           </Badge>
@@ -752,7 +752,7 @@ export function AIIntelligenceDashboard({ therapistId, clientId }: AIIntelligenc
                     <div>
                       <p className="text-sm font-medium text-gray-700 mb-2">Areas of Excellence</p>
                       <div className="flex flex-wrap gap-2">
-                        {therapistInsights.specializations.map((spec, index) => (
+                        {therapistInsights.specializations?.map((spec, index) => (
                           <Badge key={index} className="bg-blue-100 text-blue-800">
                             {spec}
                           </Badge>
