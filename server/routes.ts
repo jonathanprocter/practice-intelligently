@@ -2140,12 +2140,16 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         return res.json([]); // Return empty array instead of error to prevent frontend warnings
       }
 
-      // Get all events from all calendars (2015-2030 range as required)
-      const timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
-      const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
+      // Get today's events only - set time range for today
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+      
+      const timeMin = todayStart.toISOString();
+      const timeMax = todayEnd.toISOString();
 
       const calendars = await simpleOAuth.getCalendars();
-      let allEvents: any[] = [];
+      let todaysEvents: any[] = [];
 
       for (const calendar of calendars) {
         try {
@@ -2154,13 +2158,19 @@ I can help you analyze this data, provide insights, and assist with clinical dec
             timeMin,
             timeMax
           );
-          allEvents = allEvents.concat(events);
+          todaysEvents = todaysEvents.concat(events);
         } catch (error) {
           console.warn(`Failed to fetch events from calendar ${calendar.summary}:`, error);
         }
       }
 
-      res.json(allEvents);
+      // Filter events to ensure they're actually for today (double-check)
+      const filteredEvents = todaysEvents.filter(event => {
+        const eventDate = new Date(event.start?.dateTime || event.start?.date);
+        return eventDate.toDateString() === now.toDateString();
+      });
+
+      res.json(filteredEvents);
     } catch (error: any) {
       console.warn('OAuth events today error:', error);
       res.json([]); // Return empty array to prevent frontend errors

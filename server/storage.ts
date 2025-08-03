@@ -314,9 +314,15 @@ export class DatabaseStorage implements IStorage {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
 
-      return await db
-        .select()
+      const appointmentsWithClients = await db
+        .select({
+          ...appointments,
+          clientName: sql<string>`${clients.firstName} || ' ' || ${clients.lastName}`.as('clientName'),
+          clientFirstName: clients.firstName,
+          clientLastName: clients.lastName,
+        })
         .from(appointments)
+        .leftJoin(clients, eq(appointments.clientId, clients.id))
         .where(
           and(
             eq(appointments.therapistId, therapistId),
@@ -325,13 +331,29 @@ export class DatabaseStorage implements IStorage {
           )
         )
         .orderBy(appointments.startTime);
+
+      return appointmentsWithClients.map(apt => ({
+        ...apt,
+        clientName: apt.clientName || 'Unknown Client'
+      })) as any;
     }
 
-    return await db
-      .select()
+    const appointmentsWithClients = await db
+      .select({
+        ...appointments,
+        clientName: sql<string>`${clients.firstName} || ' ' || ${clients.lastName}`.as('clientName'),
+        clientFirstName: clients.firstName,
+        clientLastName: clients.lastName,
+      })
       .from(appointments)
+      .leftJoin(clients, eq(appointments.clientId, clients.id))
       .where(eq(appointments.therapistId, therapistId))
       .orderBy(appointments.startTime);
+
+    return appointmentsWithClients.map(apt => ({
+      ...apt,
+      clientName: apt.clientName || 'Unknown Client'
+    })) as any;
   }
 
   async getTodaysAppointments(therapistId: string): Promise<Appointment[]> {
