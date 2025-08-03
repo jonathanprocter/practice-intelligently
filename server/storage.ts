@@ -59,7 +59,16 @@ export interface IStorage {
   getSessionPrepNoteByEventId(eventId: string): Promise<SessionPrepNote | undefined>;
   createSessionPrepNote(note: InsertSessionPrepNote): Promise<SessionPrepNote>;
   updateSessionPrepNote(id: string, note: Partial<SessionPrepNote>): Promise<SessionPrepNote>;
-  generateAIInsightsForSession(eventId: string, clientId: string): Promise<string>;
+  generateAIInsightsForSession(eventId: string, clientId: string): Promise<{
+    insights: string;
+    followUpQuestions: string[];
+    psychoeducationalMaterials: {
+      title: string;
+      description: string;
+      type: "handout" | "worksheet" | "reading" | "video" | "app";
+      url?: string;
+    }[];
+  }>;
 
   // Client check-ins methods
   getClientCheckins(therapistId: string, status?: string): Promise<ClientCheckin[]>;
@@ -1059,21 +1068,21 @@ export class DatabaseStorage implements IStorage {
     noShowRate: number;
     cancellationRate: number;
   }> {
-    const appointments: any[] = await db
+    const appointmentsList = await db
       .select()
       .from(appointments)
       .where(eq(appointments.therapistId, therapistId));
 
-    const totalSessions = appointments.filter(apt => apt.status === 'completed').length;
-    const noShows = appointments.filter(apt => apt.status === 'no_show').length;
-    const cancelled = appointments.filter(apt => apt.status === 'cancelled').length;
+    const totalSessions = appointmentsList.filter(apt => apt.status === 'completed').length;
+    const noShows = appointmentsList.filter(apt => apt.status === 'no_show').length;
+    const cancelled = appointmentsList.filter(apt => apt.status === 'cancelled').length;
 
     const allClients = await this.getClients(therapistId);
     const activeClients = allClients.filter(client => client.status === 'active').length;
 
     const averageSessionsPerClient = activeClients > 0 ? totalSessions / activeClients : 0;
-    const noShowRate = appointments.length > 0 ? (noShows / appointments.length) * 100 : 0;
-    const cancellationRate = appointments.length > 0 ? (cancelled / appointments.length) * 100 : 0;
+    const noShowRate = appointmentsList.length > 0 ? (noShows / appointmentsList.length) * 100 : 0;
+    const cancellationRate = appointmentsList.length > 0 ? (cancelled / appointmentsList.length) * 100 : 0;
 
     return {
       totalSessions,
@@ -1279,6 +1288,8 @@ export class DatabaseStorage implements IStorage {
         homeworkReview: row.homework_review,
         sessionObjectives: row.session_objectives || [],
         aiGeneratedInsights: row.ai_generated_insights,
+        followUpQuestions: row.follow_up_questions || [],
+        psychoeducationalMaterials: row.psychoeducational_materials || [],
         lastUpdatedBy: row.last_updated_by,
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at)
