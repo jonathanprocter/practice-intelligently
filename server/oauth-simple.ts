@@ -169,9 +169,12 @@ class SimpleOAuth {
     try {
       const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
       
-      // Use provided time range or comprehensive defaults for full historical data
+      // Use provided time range or comprehensive defaults for full historical data (2015-2030)
       const startTime = timeMin || new Date('2015-01-01T00:00:00.000Z').toISOString();
-      const endTime = timeMax || new Date('2035-12-31T23:59:59.999Z').toISOString();
+      const endTime = timeMax || new Date('2030-12-31T23:59:59.999Z').toISOString();
+      
+      // Debug: Log the actual parameters being used
+      console.log(`🔍 Calendar fetch params: timeMin=${timeMin || 'DEFAULT'}, timeMax=${timeMax || 'DEFAULT'}`);
       
       const response = await calendar.events.list({
         calendarId,
@@ -239,6 +242,131 @@ class SimpleOAuth {
     }
 
     console.log('OAuth session disconnected');
+  }
+  // Google Drive methods
+  async getDriveFiles(options: { 
+    query?: string; 
+    fields?: string; 
+    pageSize?: number; 
+    orderBy?: string 
+  } = {}): Promise<any[]> {
+    if (!this.isConnected()) {
+      throw new Error('Not authenticated. Please complete OAuth flow first.');
+    }
+
+    try {
+      const drive = google.drive({ version: 'v3', auth: this.oauth2Client });
+      
+      const response = await drive.files.list({
+        q: options.query || "trashed=false",
+        fields: options.fields || "files(id,name,mimeType,modifiedTime,size,webViewLink,thumbnailLink)",
+        pageSize: options.pageSize || 100,
+        orderBy: options.orderBy || "modifiedTime desc"
+      });
+
+      return response.data.files || [];
+    } catch (error: any) {
+      console.error('Error fetching Drive files:', error);
+      if (error.code === 401 || error.code === 403) {
+        this.isAuthenticated = false;
+        throw new Error('Authentication expired. Please re-authenticate.');
+      }
+      throw error;
+    }
+  }
+
+  async getDriveFile(fileId: string): Promise<any> {
+    if (!this.isConnected()) {
+      throw new Error('Not authenticated. Please complete OAuth flow first.');
+    }
+
+    try {
+      const drive = google.drive({ version: 'v3', auth: this.oauth2Client });
+      
+      const response = await drive.files.get({
+        fileId,
+        fields: "id,name,mimeType,modifiedTime,size,webViewLink,thumbnailLink,parents"
+      });
+
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching Drive file:', error);
+      if (error.code === 401 || error.code === 403) {
+        this.isAuthenticated = false;
+        throw new Error('Authentication expired. Please re-authenticate.');
+      }
+      throw error;
+    }
+  }
+
+  async searchDriveFiles(query: string): Promise<any[]> {
+    if (!this.isConnected()) {
+      throw new Error('Not authenticated. Please complete OAuth flow first.');
+    }
+
+    try {
+      const drive = google.drive({ version: 'v3', auth: this.oauth2Client });
+      
+      const response = await drive.files.list({
+        q: `name contains '${query}' and trashed=false`,
+        fields: "files(id,name,mimeType,modifiedTime,size,webViewLink,thumbnailLink)",
+        pageSize: 50,
+        orderBy: "modifiedTime desc"
+      });
+
+      return response.data.files || [];
+    } catch (error: any) {
+      console.error('Error searching Drive files:', error);
+      if (error.code === 401 || error.code === 403) {
+        this.isAuthenticated = false;
+        throw new Error('Authentication expired. Please re-authenticate.');
+      }
+      throw error;
+    }
+  }
+
+  async getFileContent(fileId: string): Promise<string> {
+    if (!this.isConnected()) {
+      throw new Error('Not authenticated. Please complete OAuth flow first.');
+    }
+
+    try {
+      const drive = google.drive({ version: 'v3', auth: this.oauth2Client });
+      
+      // Get file metadata first
+      const fileInfo = await drive.files.get({ fileId });
+      const mimeType = fileInfo.data.mimeType;
+
+      let response;
+      if (mimeType === 'application/vnd.google-apps.document') {
+        // Google Docs - export as plain text
+        response = await drive.files.export({
+          fileId,
+          mimeType: 'text/plain'
+        });
+      } else if (mimeType === 'application/vnd.google-apps.spreadsheet') {
+        // Google Sheets - export as CSV
+        response = await drive.files.export({
+          fileId,
+          mimeType: 'text/csv'
+        });
+      } else {
+        // Regular file - get content directly
+        response = await drive.files.get({
+          fileId,
+          alt: 'media'
+        });
+      }
+
+      return response.data as string;
+    } catch (error: any) {
+      console.error('Error getting file content:', error);
+      if (error.code === 401 || error.code === 403) {
+        this.isAuthenticated = false;
+        throw new Error('Authentication expired. Please re-authenticate.');
+      }
+      throw error;
+    }
   }
 }
 

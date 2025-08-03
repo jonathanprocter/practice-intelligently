@@ -2140,11 +2140,9 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         return res.json([]); // Return empty array instead of error to prevent frontend warnings
       }
 
-      // Get today's events from all calendars
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      // Get all events from all calendars (2015-2030 range as required)
+      const timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
+      const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
 
       const calendars = await simpleOAuth.getCalendars();
       let allEvents: any[] = [];
@@ -2153,8 +2151,8 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         try {
           const events = await simpleOAuth.getEvents(
             calendar.id,
-            today.toISOString(),
-            tomorrow.toISOString()
+            timeMin,
+            timeMax
           );
           allEvents = allEvents.concat(events);
         } catch (error) {
@@ -2802,13 +2800,8 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   });
   app.get('/api/notion/pages', async (req, res) => {
     try {
-      // Get Notion pages (placeholder implementation)
-      const pages = [{ 
-        id: 'placeholder',
-        title: 'Notion integration not yet implemented',
-        status: 'placeholder'
-      }];
-      
+      const { getNotionPages } = await import('./notion');
+      const pages = await getNotionPages();
       res.json(pages);
     } catch (error: any) {
       console.error('Error getting Notion pages:', error);
@@ -2817,13 +2810,8 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   });
   app.get('/api/notion/databases', async (req, res) => {
     try {
-      // Get Notion databases (placeholder implementation)
-      const databases = [{ 
-        id: 'placeholder',
-        title: 'Notion integration not yet implemented',
-        status: 'placeholder'
-      }];
-      
+      const { getNotionDatabases } = await import('./notion');
+      const databases = await getNotionDatabases();
       res.json(databases);
     } catch (error: any) {
       console.error('Error getting Notion databases:', error);
@@ -2833,14 +2821,8 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.get('/api/notion/search', async (req, res) => {
     try {
       const { q: query } = req.query;
-      
-      // Search Notion (placeholder implementation)
-      const results = [{ 
-        id: 'placeholder',
-        title: `Search for "${query}" - Notion integration not yet implemented`,
-        status: 'placeholder'
-      }];
-      
+      const { searchNotion } = await import('./notion');
+      const results = await searchNotion(query as string || '');
       res.json(results);
     } catch (error: any) {
       console.error('Error searching Notion:', error);
@@ -2850,15 +2832,9 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.get('/api/notion/pages/:pageId/content', async (req, res) => {
     try {
       const { pageId } = req.params;
-      
-      // Get Notion page content (placeholder implementation)
-      const content = { 
-        pageId, 
-        content: 'Notion integration not yet implemented',
-        status: 'placeholder'
-      };
-      
-      res.json(content);
+      const { getPageContent } = await import('./notion');
+      const content = await getPageContent(pageId);
+      res.json({ pageId, content });
     } catch (error: any) {
       console.error('Error getting Notion page content:', error);
       res.status(500).json({ error: 'Failed to get Notion page content', details: error.message });
