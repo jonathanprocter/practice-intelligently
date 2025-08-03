@@ -83,8 +83,10 @@ The system utilizes a comprehensive PostgreSQL database with 13 robust tables:
 - **OAuth Connection Routes**: Added missing `/api/oauth/is-connected` route returning proper JSON status
 - **Client Check-ins Routes**: Implemented comprehensive client-checkins API endpoints (6 new routes)
 - **Authentication Flow Routes**: Added Google OAuth URL generation and callback handling routes
-- **AI Intelligence Routes Restored**: Added missing pattern analysis, practice intelligence, and therapist insights endpoints
-- **Complete API Coverage**: Now 112+ total API routes with full AI functionality restored
+- **AI Intelligence Routes Restored**: Comprehensive fix with both GET and POST endpoints for all AI features
+- **Database Schema Fix**: Fixed session_notes vs progress_notes table name mismatch causing 500 errors
+- **Frontend-Backend Integration**: Added all missing AI endpoints that frontend dashboard requires
+- **Complete API Coverage**: Now 118+ total API routes covering all AI intelligence features (cross-client patterns, therapist strengths, session efficiency, client retention, treatment prediction, evidence-based interventions)
 
 ### Data Flow
 Client requests from the React frontend are processed by the Express backend, which interacts with PostgreSQL via Drizzle ORM. External AI services process therapeutic content, and TanStack Query manages real-time UI updates.
