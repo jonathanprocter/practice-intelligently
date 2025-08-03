@@ -1902,7 +1902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage.getSessionNotes(therapistId),
         storage.getActionItems(therapistId),
         storage.getCompassConversations(therapistId),
-        storage.getCompassLearning(therapistId)
+        storage.getCompassLearningContext(therapistId)
       ]);
 
       // Create context summary for Compass
