@@ -175,7 +175,7 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
           sessionDate,
           detectedClientName,
           detectedSessionDate,
-          therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', // Add default therapist ID
+          therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
         }),
       });
 
@@ -220,9 +220,13 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
         onProgressNoteGenerated(data.progressNote);
       }
 
+      const message = data.message || "Clinical progress note created successfully!";
+      const isLinked = data.linkedToAppointment;
+      const clientFound = data.clientFound;
+      
       toast({
         title: "Progress Note Generated",
-        description: "Clinical progress note created successfully!",
+        description: `${message}${isLinked ? ' 📅' : ''}${clientFound ? ' 👤' : ''}`,
       });
 
       queryClient.invalidateQueries({ queryKey: ['progressNotes'] });

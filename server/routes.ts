@@ -2728,6 +2728,9 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         extractedText: processed.extractedText,
         detectedClientName: processed.detectedClientName,
         detectedSessionDate: processed.detectedSessionDate,
+        fullContent: processed.extractedText,
+        fileName: req.file.originalname,
+        requiresConfirmation: true,
         model: 'document-processor' 
       });
     } catch (error: any) {
@@ -2786,13 +2789,17 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   });
   app.post('/api/documents/generate-progress-note', async (req, res) => {
     try {
-      const { documentContent, clientId, sessionDate, format } = req.body;
+      const { content, clientId, sessionDate, detectedClientName, detectedSessionDate, therapistId } = req.body;
       
-      if (!documentContent) {
+      if (!content) {
         return res.status(400).json({ error: 'Document content is required' });
       }
       
-      // Use OpenAI directly for faster progress note generation
+      // Use provided values or defaults
+      const finalTherapistId = therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      const finalSessionDate = sessionDate || detectedSessionDate || new Date().toISOString().split('T')[0];
+      
+      // Use OpenAI to generate progress note
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
@@ -2813,7 +2820,7 @@ Format your response as JSON with these fields:
           },
           {
             role: "user", 
-            content: `Generate a progress note for this session content:\n\n${documentContent}\n\nClient ID: ${clientId}\nSession Date: ${sessionDate}`
+            content: `Generate a progress note for this session content:\n\n${content}\n\nClient: ${detectedClientName || clientId || 'Client'}\nSession Date: ${finalSessionDate}`
           }
         ],
         response_format: { type: "json_object" },
@@ -2821,17 +2828,73 @@ Format your response as JSON with these fields:
         max_tokens: 1500
       });
 
-      const progressNote = {
-        ...JSON.parse(response.choices[0].message.content || '{}'),
-        clientId: clientId || 'unknown',
-        sessionDate: sessionDate || new Date().toISOString(),
-        createdAt: new Date(),
-        aiTags: ['openai-generated', 'soap-format'],
-        tonalAnalysis: 'Generated via OpenAI GPT-4o',
-        significantQuotes: []
+      const aiResponse = JSON.parse(response.choices[0].message.content || '{}');
+      
+      // Find client by name if provided
+      let finalClientId = clientId;
+      let finalClientName = detectedClientName;
+      
+      if (detectedClientName && !clientId) {
+        // Try to find client by name
+        const foundClientId = await storage.getClientIdByName(detectedClientName);
+        if (foundClientId) {
+          finalClientId = foundClientId;
+        } else {
+          // Client name detected but not found in database
+          finalClientName = detectedClientName;
+        }
+      }
+      
+      // Find appointment on the session date for this client if we have a valid client ID
+      let appointmentId = null;
+      if (finalClientId && finalClientId !== 'unknown') {
+        const sessionDateStart = new Date(finalSessionDate);
+        sessionDateStart.setHours(0, 0, 0, 0);
+        const sessionDateEnd = new Date(finalSessionDate);
+        sessionDateEnd.setHours(23, 59, 59, 999);
+        
+        // Try to find appointment on this date for this client
+        const appointments = await storage.getAppointments(finalTherapistId, sessionDateStart);
+        const clientAppointment = appointments.find(apt => apt.clientId === finalClientId);
+        if (clientAppointment) {
+          appointmentId = clientAppointment.id;
+        }
+      }
+      
+      // Create progress note data for database
+      const progressNoteData = {
+        title: aiResponse.title || `Clinical Progress Note - ${finalSessionDate}`,
+        subjective: aiResponse.subjective || 'No subjective information provided.',
+        objective: aiResponse.objective || 'No objective observations recorded.',
+        assessment: aiResponse.assessment || 'Assessment pending further evaluation.',
+        plan: aiResponse.plan || 'Treatment plan to be developed.',
+        tonalAnalysis: `Generated via OpenAI GPT-4o from document processing${finalClientName ? ` for ${finalClientName}` : ''}`,
+        keyPoints: aiResponse.keyPoints || [],
+        significantQuotes: [],
+        narrativeSummary: aiResponse.narrativeSummary || 'Session summary generated from processed document.',
+        aiTags: ['openai-generated', 'soap-format', 'document-processed', finalClientName ? 'client-identified' : 'client-unknown'],
+        clientId: finalClientId || 'unknown',
+        therapistId: finalTherapistId,
+        appointmentId: appointmentId, // Link to appointment if found
+        sessionDate: new Date(finalSessionDate)
       };
       
-      res.json({ progressNote, model: 'openai-direct' });
+      // Save to database
+      const savedNote = await storage.createProgressNote(progressNoteData);
+      
+      res.json({ 
+        success: true,
+        progressNote: savedNote, 
+        model: 'openai-direct',
+        message: `Progress note saved successfully${appointmentId ? ' and linked to appointment' : ''}${finalClientName ? ` for ${finalClientName}` : ''}`,
+        linkedToAppointment: !!appointmentId,
+        clientFound: finalClientId !== 'unknown',
+        detectedInfo: {
+          clientName: finalClientName,
+          sessionDate: finalSessionDate,
+          appointmentLinked: !!appointmentId
+        }
+      });
     } catch (error: any) {
       console.error('Error generating progress note:', error);
       res.status(500).json({ error: 'Failed to generate progress note', details: error.message });
