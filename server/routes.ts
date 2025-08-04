@@ -2798,106 +2798,78 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       // Use provided values or defaults
       const finalTherapistId = therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
       const finalSessionDate = sessionDate || detectedSessionDate || new Date().toISOString().split('T')[0];
+      const finalClientName = detectedClientName || clientId || 'Client';
       
-      // Use OpenAI to generate progress note
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert clinical therapist creating a comprehensive progress note. Generate a structured SOAP format progress note from the session content provided.
-
-Format your response as JSON with these fields:
-{
-  "title": "Clinical Progress Note - [Date]",
-  "subjective": "Client's reported experience and direct quotes",
-  "objective": "Observable behaviors and clinical presentation", 
-  "assessment": "Clinical formulation and diagnostic considerations",
-  "plan": "Treatment interventions and next steps",
-  "keyPoints": ["Key insight 1", "Key insight 2"],
-  "narrativeSummary": "Overall session synthesis"
-}`
-          },
-          {
-            role: "user", 
-            content: `Generate a progress note for this session content:\n\n${content}\n\nClient: ${detectedClientName || clientId || 'Client'}\nSession Date: ${finalSessionDate}`
-          }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.3,
-        max_tokens: 1500
-      });
-
-      const aiResponse = JSON.parse(response.choices[0].message.content || '{}');
+      // Use the full document processor for comprehensive analysis
+      console.log('Using comprehensive document processor for full analysis...');
+      const comprehensiveNote = await documentProcessor.generateProgressNote(
+        content, 
+        finalClientName, 
+        finalSessionDate
+      );
       
       // Find client by name if provided
       let finalClientId = clientId;
-      let finalClientName = detectedClientName;
       
       if (detectedClientName && !clientId) {
-        // Try to find client by name
         const foundClientId = await storage.getClientIdByName(detectedClientName);
         if (foundClientId) {
           finalClientId = foundClientId;
-        } else {
-          // Client name detected but not found in database
-          finalClientName = detectedClientName;
         }
       }
       
-      // Find appointment on the session date for this client if we have a valid client ID
+      // Find appointment on the session date for this client
       let appointmentId = null;
       if (finalClientId && finalClientId !== 'unknown') {
-        const sessionDateStart = new Date(finalSessionDate);
-        sessionDateStart.setHours(0, 0, 0, 0);
-        const sessionDateEnd = new Date(finalSessionDate);
-        sessionDateEnd.setHours(23, 59, 59, 999);
-        
-        // Try to find appointment on this date for this client
-        const appointments = await storage.getAppointments(finalTherapistId, sessionDateStart);
+        const appointments = await storage.getAppointments(finalTherapistId, new Date(finalSessionDate));
         const clientAppointment = appointments.find(apt => apt.clientId === finalClientId);
         if (clientAppointment) {
           appointmentId = clientAppointment.id;
         }
       }
       
-      // Create progress note data for database
-      const progressNoteData = {
-        title: aiResponse.title || `Clinical Progress Note - ${finalSessionDate}`,
-        subjective: aiResponse.subjective || 'No subjective information provided.',
-        objective: aiResponse.objective || 'No objective observations recorded.',
-        assessment: aiResponse.assessment || 'Assessment pending further evaluation.',
-        plan: aiResponse.plan || 'Treatment plan to be developed.',
-        tonalAnalysis: `Generated via OpenAI GPT-4o from document processing${finalClientName ? ` for ${finalClientName}` : ''}`,
-        keyPoints: aiResponse.keyPoints || [],
-        significantQuotes: [],
-        narrativeSummary: aiResponse.narrativeSummary || 'Session summary generated from processed document.',
-        aiTags: ['openai-generated', 'soap-format', 'document-processed', finalClientName ? 'client-identified' : 'client-unknown'],
+      // Enhance the comprehensive note with database linking
+      const enhancedProgressNote = {
+        ...comprehensiveNote,
         clientId: finalClientId || 'unknown',
         therapistId: finalTherapistId,
-        appointmentId: appointmentId, // Link to appointment if found
-        sessionDate: new Date(finalSessionDate)
+        appointmentId: appointmentId,
+        sessionDate: new Date(finalSessionDate),
+        // Enhance AI tags with linking information
+        aiTags: [
+          ...(comprehensiveNote.aiTags || []),
+          'document-processed',
+          finalClientId !== 'unknown' ? 'client-identified' : 'client-unknown',
+          appointmentId ? 'appointment-linked' : 'appointment-unlinked'
+        ]
       };
       
-      // Save to database
-      const savedNote = await storage.createProgressNote(progressNoteData);
+      // Save to database with all the rich analysis
+      const savedNote = await storage.createProgressNote(enhancedProgressNote);
       
       res.json({ 
         success: true,
         progressNote: savedNote, 
-        model: 'openai-direct',
-        message: `Progress note saved successfully${appointmentId ? ' and linked to appointment' : ''}${finalClientName ? ` for ${finalClientName}` : ''}`,
+        model: 'comprehensive-multi-ai',
+        message: `Comprehensive progress note with full analysis saved${appointmentId ? ' and linked to appointment' : ''}${detectedClientName ? ` for ${detectedClientName}` : ''}`,
         linkedToAppointment: !!appointmentId,
         clientFound: finalClientId !== 'unknown',
+        analysisFeatures: {
+          tonalAnalysis: !!comprehensiveNote.tonalAnalysis,
+          keyPoints: comprehensiveNote.keyPoints?.length || 0,
+          significantQuotes: comprehensiveNote.significantQuotes?.length || 0,
+          narrativeSummary: !!comprehensiveNote.narrativeSummary,
+          comprehensiveSOAP: true
+        },
         detectedInfo: {
-          clientName: finalClientName,
+          clientName: detectedClientName,
           sessionDate: finalSessionDate,
           appointmentLinked: !!appointmentId
         }
       });
     } catch (error: any) {
-      console.error('Error generating progress note:', error);
-      res.status(500).json({ error: 'Failed to generate progress note', details: error.message });
+      console.error('Error generating comprehensive progress note:', error);
+      res.status(500).json({ error: 'Failed to generate comprehensive progress note', details: error.message });
     }
   });
   // ========== SIMPLE PROGRESS NOTES ROUTES ==========
