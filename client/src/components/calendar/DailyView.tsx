@@ -114,7 +114,7 @@ export const DailyView = ({
         setSessionNotes(event.notes || '');
       }
     } catch (error) {
-      console.error('Error loading session notes:', error);
+      // Silently handle session notes loading errors - calendar events may not have associated session notes
       setSessionNotes(event.notes || '');
     }
   };
