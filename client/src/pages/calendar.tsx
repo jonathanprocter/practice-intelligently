@@ -7,6 +7,8 @@ import { getWeekStart, getWeekEnd, getWeekDays, addWeeks, isCurrentWeek, getWeek
 // Removed export imports - using direct PDF export now
 import { WeeklyCalendarGrid } from '../components/calendar/WeeklyCalendarGrid';
 import { CalendarHeader } from '../components/calendar/CalendarHeader';
+import { CustomWeeklyView } from '../components/calendar/CustomWeeklyView';
+import { CustomDailyView } from '../components/calendar/CustomDailyView';
 import { Link } from 'wouter';
 import { DailyView } from '../components/calendar/DailyView';
 import { AppointmentStatusView } from '../components/calendar/AppointmentStatusView';
@@ -847,23 +849,19 @@ export default function Calendar() {
           </TabsList>
 
           <TabsContent value="week" className="h-full">
-            <WeeklyCalendarGrid
-              week={calendarDays}
+            <CustomWeeklyView
+              weekStart={currentWeek}
               events={calendarEvents}
-              onDayClick={handleDayClick}
-              onTimeSlotClick={handleTimeSlotClick}
               onEventClick={handleEventClick}
-              onEventMove={handleEventMove}
             />
           </TabsContent>
 
           <TabsContent value="day" className="h-full">
-            <DailyView
+            <CustomDailyView
               date={selectedDate}
               events={calendarEvents}
               onEventClick={handleEventClick}
-              onTimeSlotClick={handleTimeSlotClick}
-              onPreviousDay={() => {
+              onPrevDay={() => {
                 const newDate = new Date(selectedDate);
                 newDate.setDate(newDate.getDate() - 1);
                 setSelectedDate(newDate);
@@ -873,8 +871,6 @@ export default function Calendar() {
                 newDate.setDate(newDate.getDate() + 1);
                 setSelectedDate(newDate);
               }}
-              onNewAppointment={handleNewAppointment}
-              onSessionNotes={handleSessionNotes}
             />
           </TabsContent>
 
