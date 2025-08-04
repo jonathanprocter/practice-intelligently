@@ -2809,7 +2809,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       );
       
       // Find client by name if provided
-      let finalClientId = clientId;
+      let finalClientId = clientId || 'unknown';
       let actualClientName = finalClientName;
       
       if (detectedClientName && !clientId) {
@@ -2817,6 +2817,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         const foundClientId = await storage.getClientIdByName(detectedClientName);
         if (foundClientId) {
           finalClientId = foundClientId;
+          // Get the actual client record to get proper name formatting
+          const client = await storage.getClient(foundClientId);
+          if (client) {
+            actualClientName = `${client.firstName} ${client.lastName}`;
+          }
         } else {
           // Try fuzzy matching for partial names
           const allClients = await storage.getClients(finalTherapistId);
@@ -2849,7 +2854,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       // Enhance the comprehensive note with database linking
       const enhancedProgressNote = {
         ...comprehensiveNote,
-        clientId: finalClientId || 'unknown',
+        clientId: finalClientId,
         therapistId: finalTherapistId,
         appointmentId: appointmentId || undefined,
         sessionDate: new Date(finalSessionDate),
@@ -2986,6 +2991,30 @@ Generate specific preparation guidance for the next session including:
       console.error('Error generating next session insights:', error);
     }
   }
+
+  // API route to get progress notes for a specific appointment
+  app.get('/api/progress-notes/appointment/:appointmentId', async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+      const progressNotes = await storage.getProgressNotesByAppointmentId(appointmentId);
+      res.json(progressNotes);
+    } catch (error) {
+      console.error('Error fetching progress notes by appointment:', error);
+      res.status(500).json({ error: 'Failed to fetch progress notes' });
+    }
+  });
+
+  // API route to get session prep notes for a specific appointment
+  app.get('/api/session-prep/appointment/:appointmentId', async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+      const sessionPrep = await storage.getSessionPrepNoteByEventId(appointmentId);
+      res.json(sessionPrep);
+    } catch (error) {
+      console.error('Error fetching session prep by appointment:', error);
+      res.status(500).json({ error: 'Failed to fetch session prep' });
+    }
+  });
 
   // ========== SIMPLE PROGRESS NOTES ROUTES ==========
   

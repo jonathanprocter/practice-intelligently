@@ -42,6 +42,8 @@ export interface IStorage {
   getAppointments(therapistId: string, date?: Date): Promise<Appointment[]>;
   getTodaysAppointments(therapistId: string): Promise<Appointment[]>;
   getUpcomingAppointments(therapistId: string, days?: number): Promise<Appointment[]>;
+  getUpcomingAppointmentsByClient(clientId: string): Promise<Appointment[]>;
+  getClientIdByName(clientName: string): Promise<string | null>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointment(id: string, appointment: Partial<Appointment>): Promise<Appointment>;
   cancelAppointment(id: string, reason: string): Promise<Appointment>;
@@ -118,6 +120,7 @@ export interface IStorage {
 
   // Progress notes methods
   getProgressNotes(clientId: string): Promise<ProgressNote[]>;
+  getProgressNotesByAppointmentId(appointmentId: string): Promise<ProgressNote[]>;
   getRecentProgressNotes(therapistId: string, limit?: number): Promise<ProgressNote[]>;
   createProgressNote(note: InsertProgressNote): Promise<ProgressNote>;
   updateProgressNote(id: string, note: Partial<ProgressNote>): Promise<ProgressNote>;
@@ -793,6 +796,89 @@ export class DatabaseStorage implements IStorage {
       .from(progressNotes)
       .where(eq(progressNotes.clientId, clientId))
       .orderBy(desc(progressNotes.createdAt));
+  }
+
+  async getProgressNotesByAppointmentId(appointmentId: string): Promise<ProgressNote[]> {
+    try {
+      const result = await pool.query(
+        `SELECT * FROM progress_notes WHERE appointment_id = $1 ORDER BY created_at DESC`,
+        [appointmentId]
+      );
+
+      return result.rows.map(row => ({
+        id: row.id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        title: row.title,
+        subjective: row.subjective,
+        objective: row.objective,
+        assessment: row.assessment,
+        plan: row.plan,
+        tonalAnalysis: row.tonal_analysis,
+        keyPoints: this.safeParseJSON(row.key_points, []),
+        significantQuotes: this.safeParseJSON(row.significant_quotes, []),
+        narrativeSummary: row.narrative_summary,
+        sessionDate: new Date(row.session_date),
+        appointmentId: row.appointment_id,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      }));
+    } catch (error) {
+      console.error('Error in getProgressNotesByAppointmentId:', error);
+      return [];
+    }
+  }
+
+  async getUpcomingAppointmentsByClient(clientId: string): Promise<Appointment[]> {
+    try {
+      const result = await pool.query(
+        `SELECT * FROM appointments 
+         WHERE client_id = $1 AND start_time > NOW() AND status = 'scheduled'
+         ORDER BY start_time ASC`,
+        [clientId]
+      );
+
+      return result.rows.map(row => ({
+        id: row.id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        startTime: new Date(row.start_time),
+        endTime: new Date(row.end_time),
+        status: row.status,
+        type: row.type,
+        notes: row.notes,
+        location: row.location,
+        isRecurring: row.is_recurring,
+        recurringPattern: row.recurring_pattern,
+        googleEventId: row.google_event_id,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      }));
+    } catch (error) {
+      console.error('Error in getUpcomingAppointmentsByClient:', error);
+      return [];
+    }
+  }
+
+  async getClientIdByName(clientName: string): Promise<string | null> {
+    try {
+      const nameParts = clientName.split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(' ');
+
+      const result = await pool.query(
+        `SELECT id FROM clients 
+         WHERE (first_name ILIKE $1 AND last_name ILIKE $2) 
+         OR (first_name || ' ' || last_name) ILIKE $3
+         LIMIT 1`,
+        [firstName, lastName, clientName]
+      );
+
+      return result.rows.length > 0 ? result.rows[0].id : null;
+    } catch (error) {
+      console.error('Error in getClientIdByName:', error);
+      return null;
+    }
   }
 
   async getRecentProgressNotes(therapistId: string, limit: number = 10): Promise<ProgressNote[]> {
