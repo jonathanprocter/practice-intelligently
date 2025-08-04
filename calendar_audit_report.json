@@ -1,0 +1,784 @@
+{
+  "audit_timestamp": "2025-08-04T14:52:00Z",
+  "total_issues": 42,
+  "high_priority_issues": 17,
+  "issues_by_category": {
+    "Date Restrictions": 3,
+    "API Endpoints": 1,
+    "Frontend Queries": 8,
+    "Cache Issues": 24,
+    "Dashboard Integration": 6
+  },
+  "issues": [
+    {
+      "category": "Date Restrictions",
+      "severity": "HIGH",
+      "pattern": "getDate\\(\\)\\s*[+-]",
+      "files": [
+        "./client/src/pages/appointments.tsx",
+        "./client/src/pages/calendar.tsx",
+        "./client/src/utils/currentWeeklyExport.ts",
+        "./client/src/utils/dateUtils.ts",
+        "./client/src/utils/pdfExport.ts",
+        "./client/src/utils/calendarExport.ts",
+        "./client/src/utils/perfectDashboardExport.ts",
+        "./server/us-holidays.ts",
+        "./server/routes.ts",
+        "./server/storage.ts"
+      ],
+      "description": "Found date restrictions that may limit calendar events to current dates"
+    },
+    {
+      "category": "Date Restrictions",
+      "severity": "HIGH",
+      "pattern": "startOf.*day",
+      "files": [
+        "./server/storage.ts"
+      ],
+      "description": "Found date restrictions that may limit calendar events to current dates"
+    },
+    {
+      "category": "Date Restrictions",
+      "severity": "HIGH",
+      "pattern": "endOf.*day",
+      "files": [
+        "./server/storage.ts"
+      ],
+      "description": "Found date restrictions that may limit calendar events to current dates"
+    },
+    {
+      "category": "API Endpoints",
+      "severity": "MEDIUM",
+      "file": "./server/routes.ts",
+      "description": "API endpoint that handles calendar events - verify date range defaults"
+    },
+    {
+      "category": "Frontend Queries",
+      "severity": "HIGH",
+      "file": "./client/src/components/calendar/DailyView.tsx",
+      "pattern": "fetch.*calendar/events",
+      "description": "Frontend query that fetches calendar events - verify date range"
+    },
+    {
+      "category": "Frontend Queries",
+      "severity": "HIGH",
+      "file": "./client/src/lib/googleCalendar.ts",
+      "pattern": "fetch.*calendar/events",
+      "description": "Frontend query that fetches calendar events - verify date range"
+    },
+    {
+      "category": "Frontend Queries",
+      "severity": "HIGH",
+      "file": "./client/src/pages/oauth-test-simple.tsx",
+      "pattern": "fetch.*calendar/events",
+      "description": "Frontend query that fetches calendar events - verify date range"
+    },
+    {
+      "category": "Frontend Queries",
+      "severity": "HIGH",
+      "file": "./client/src/pages/calendar.tsx",
+      "pattern": "fetch.*calendar/events",
+      "description": "Frontend query that fetches calendar events - verify date range"
+    },
+    {
+      "category": "Frontend Queries",
+      "severity": "HIGH",
+      "file": "./client/src/pages/oauth-debug.tsx",
+      "pattern": "queryKey.*calendar",
+      "description": "Frontend query that fetches calendar events - verify date range"
+    },
+    {
+      "category": "Frontend Queries",
+      "severity": "HIGH",
+      "file": "./client/src/pages/calendar-integration.tsx",
+      "pattern": "queryKey.*calendar",
+      "description": "Frontend query that fetches calendar events - verify date range"
+    },
+    {
+      "category": "Frontend Queries",
+      "severity": "HIGH",
+      "file": "./client/src/pages/settings.tsx",
+      "pattern": "queryKey.*calendar",
+      "description": "Frontend query that fetches calendar events - verify date range"
+    },
+    {
+      "category": "Frontend Queries",
+      "severity": "HIGH",
+      "file": "./client/src/pages/calendar.tsx",
+      "pattern": "queryKey.*calendar",
+      "description": "Frontend query that fetches calendar events - verify date range"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/components/layout/header.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/components/layout/sidebar.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/lib/queryClient.ts",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/pages/dashboard.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/pages/calendar.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/pages/dashboard.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/pages/calendar.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/pages/dashboard.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/components/dashboard/todays-sessions.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/components/dashboard/todays-schedule.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/components/forms/ClientForm.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/components/forms/DocumentUploadZone.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/components/clients/ClientListGenerator.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/components/clients/RealClientImporter.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/components/clients/QuickClientUpdate.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/components/checkins/client-checkins-dashboard.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/pages/action-items.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/pages/oauth-test-simple.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/pages/ai-insights.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/pages/calendar-integration.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/pages/settings.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/pages/session-notes.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/pages/appointments.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Cache Issues",
+      "severity": "MEDIUM",
+      "file": "./client/src/pages/assessments.tsx",
+      "description": "Cache configuration that may be preventing new queries from executing"
+    },
+    {
+      "category": "Dashboard Integration",
+      "severity": "HIGH",
+      "file": "./client/src/lib/api.ts",
+      "description": "Dashboard making separate calendar calls with restricted date ranges"
+    },
+    {
+      "category": "Dashboard Integration",
+      "severity": "HIGH",
+      "file": "./client/src/pages/calendar.tsx",
+      "description": "Dashboard making separate calendar calls with restricted date ranges"
+    },
+    {
+      "category": "Dashboard Integration",
+      "severity": "HIGH",
+      "file": "./server/routes.ts",
+      "description": "Dashboard making separate calendar calls with restricted date ranges"
+    },
+    {
+      "category": "Dashboard Integration",
+      "severity": "HIGH",
+      "file": "./client/src/lib/api.ts",
+      "description": "Dashboard making separate calendar calls with restricted date ranges"
+    },
+    {
+      "category": "Dashboard Integration",
+      "severity": "HIGH",
+      "file": "./client/src/pages/calendar.tsx",
+      "description": "Dashboard making separate calendar calls with restricted date ranges"
+    },
+    {
+      "category": "Dashboard Integration",
+      "severity": "HIGH",
+      "file": "./server/routes.ts",
+      "description": "Dashboard making separate calendar calls with restricted date ranges"
+    }
+  ],
+  "fixes": [
+    {
+      "issue": {
+        "category": "Date Restrictions",
+        "severity": "HIGH",
+        "pattern": "getDate\\(\\)\\s*[+-]",
+        "files": [
+          "./client/src/pages/appointments.tsx",
+          "./client/src/pages/calendar.tsx",
+          "./client/src/utils/currentWeeklyExport.ts",
+          "./client/src/utils/dateUtils.ts",
+          "./client/src/utils/pdfExport.ts",
+          "./client/src/utils/calendarExport.ts",
+          "./client/src/utils/perfectDashboardExport.ts",
+          "./server/us-holidays.ts",
+          "./server/routes.ts",
+          "./server/storage.ts"
+        ],
+        "description": "Found date restrictions that may limit calendar events to current dates"
+      },
+      "fix_type": "Replace date restrictions",
+      "recommendation": "Replace current date calculations with 2015-2030 range",
+      "code_example": "\n// Instead of:\nconst startTime = new Date();\nconst endTime = new Date();\nendTime.setDate(endTime.getDate() + 30);\n\n// Use:\nconst startTime = new Date('2015-01-01T00:00:00.000Z');\nconst endTime = new Date('2030-12-31T23:59:59.999Z');\n                ",
+      "priority": 1
+    },
+    {
+      "issue": {
+        "category": "Date Restrictions",
+        "severity": "HIGH",
+        "pattern": "startOf.*day",
+        "files": [
+          "./server/storage.ts"
+        ],
+        "description": "Found date restrictions that may limit calendar events to current dates"
+      },
+      "fix_type": "Replace date restrictions",
+      "recommendation": "Replace current date calculations with 2015-2030 range",
+      "code_example": "\n// Instead of:\nconst startTime = new Date();\nconst endTime = new Date();\nendTime.setDate(endTime.getDate() + 30);\n\n// Use:\nconst startTime = new Date('2015-01-01T00:00:00.000Z');\nconst endTime = new Date('2030-12-31T23:59:59.999Z');\n                ",
+      "priority": 1
+    },
+    {
+      "issue": {
+        "category": "Date Restrictions",
+        "severity": "HIGH",
+        "pattern": "endOf.*day",
+        "files": [
+          "./server/storage.ts"
+        ],
+        "description": "Found date restrictions that may limit calendar events to current dates"
+      },
+      "fix_type": "Replace date restrictions",
+      "recommendation": "Replace current date calculations with 2015-2030 range",
+      "code_example": "\n// Instead of:\nconst startTime = new Date();\nconst endTime = new Date();\nendTime.setDate(endTime.getDate() + 30);\n\n// Use:\nconst startTime = new Date('2015-01-01T00:00:00.000Z');\nconst endTime = new Date('2030-12-31T23:59:59.999Z');\n                ",
+      "priority": 1
+    },
+    {
+      "issue": {
+        "category": "Frontend Queries",
+        "severity": "HIGH",
+        "file": "./client/src/components/calendar/DailyView.tsx",
+        "pattern": "fetch.*calendar/events",
+        "description": "Frontend query that fetches calendar events - verify date range"
+      },
+      "fix_type": "Update query parameters",
+      "recommendation": "Ensure frontend queries pass 2015-2030 date range to backend",
+      "priority": 1
+    },
+    {
+      "issue": {
+        "category": "Frontend Queries",
+        "severity": "HIGH",
+        "file": "./client/src/lib/googleCalendar.ts",
+        "pattern": "fetch.*calendar/events",
+        "description": "Frontend query that fetches calendar events - verify date range"
+      },
+      "fix_type": "Update query parameters",
+      "recommendation": "Ensure frontend queries pass 2015-2030 date range to backend",
+      "priority": 1
+    },
+    {
+      "issue": {
+        "category": "Frontend Queries",
+        "severity": "HIGH",
+        "file": "./client/src/pages/oauth-test-simple.tsx",
+        "pattern": "fetch.*calendar/events",
+        "description": "Frontend query that fetches calendar events - verify date range"
+      },
+      "fix_type": "Update query parameters",
+      "recommendation": "Ensure frontend queries pass 2015-2030 date range to backend",
+      "priority": 1
+    },
+    {
+      "issue": {
+        "category": "Frontend Queries",
+        "severity": "HIGH",
+        "file": "./client/src/pages/calendar.tsx",
+        "pattern": "fetch.*calendar/events",
+        "description": "Frontend query that fetches calendar events - verify date range"
+      },
+      "fix_type": "Update query parameters",
+      "recommendation": "Ensure frontend queries pass 2015-2030 date range to backend",
+      "priority": 1
+    },
+    {
+      "issue": {
+        "category": "Frontend Queries",
+        "severity": "HIGH",
+        "file": "./client/src/pages/oauth-debug.tsx",
+        "pattern": "queryKey.*calendar",
+        "description": "Frontend query that fetches calendar events - verify date range"
+      },
+      "fix_type": "Update query parameters",
+      "recommendation": "Ensure frontend queries pass 2015-2030 date range to backend",
+      "priority": 1
+    },
+    {
+      "issue": {
+        "category": "Frontend Queries",
+        "severity": "HIGH",
+        "file": "./client/src/pages/calendar-integration.tsx",
+        "pattern": "queryKey.*calendar",
+        "description": "Frontend query that fetches calendar events - verify date range"
+      },
+      "fix_type": "Update query parameters",
+      "recommendation": "Ensure frontend queries pass 2015-2030 date range to backend",
+      "priority": 1
+    },
+    {
+      "issue": {
+        "category": "Frontend Queries",
+        "severity": "HIGH",
+        "file": "./client/src/pages/settings.tsx",
+        "pattern": "queryKey.*calendar",
+        "description": "Frontend query that fetches calendar events - verify date range"
+      },
+      "fix_type": "Update query parameters",
+      "recommendation": "Ensure frontend queries pass 2015-2030 date range to backend",
+      "priority": 1
+    },
+    {
+      "issue": {
+        "category": "Frontend Queries",
+        "severity": "HIGH",
+        "file": "./client/src/pages/calendar.tsx",
+        "pattern": "queryKey.*calendar",
+        "description": "Frontend query that fetches calendar events - verify date range"
+      },
+      "fix_type": "Update query parameters",
+      "recommendation": "Ensure frontend queries pass 2015-2030 date range to backend",
+      "priority": 1
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/components/layout/header.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/components/layout/sidebar.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/lib/queryClient.ts",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/pages/dashboard.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/pages/calendar.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/pages/dashboard.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/pages/calendar.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/pages/dashboard.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/components/dashboard/todays-sessions.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/components/dashboard/todays-schedule.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/components/forms/ClientForm.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/components/forms/DocumentUploadZone.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/components/clients/ClientListGenerator.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/components/clients/RealClientImporter.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/components/clients/QuickClientUpdate.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/components/checkins/client-checkins-dashboard.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/pages/action-items.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/pages/oauth-test-simple.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/pages/ai-insights.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/pages/calendar-integration.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/pages/settings.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/pages/session-notes.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/pages/appointments.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Cache Issues",
+        "severity": "MEDIUM",
+        "file": "./client/src/pages/assessments.tsx",
+        "description": "Cache configuration that may be preventing new queries from executing"
+      },
+      "fix_type": "Cache invalidation",
+      "recommendation": "Invalidate calendar queries to force new data fetch",
+      "priority": 2
+    },
+    {
+      "issue": {
+        "category": "Dashboard Integration",
+        "severity": "HIGH",
+        "file": "./client/src/lib/api.ts",
+        "description": "Dashboard making separate calendar calls with restricted date ranges"
+      },
+      "fix_type": "Update dashboard API calls",
+      "recommendation": "Modify dashboard API calls to use broader date ranges",
+      "priority": 1
+    },
+    {
+      "issue": {
+        "category": "Dashboard Integration",
+        "severity": "HIGH",
+        "file": "./client/src/pages/calendar.tsx",
+        "description": "Dashboard making separate calendar calls with restricted date ranges"
+      },
+      "fix_type": "Update dashboard API calls",
+      "recommendation": "Modify dashboard API calls to use broader date ranges",
+      "priority": 1
+    },
+    {
+      "issue": {
+        "category": "Dashboard Integration",
+        "severity": "HIGH",
+        "file": "./server/routes.ts",
+        "description": "Dashboard making separate calendar calls with restricted date ranges"
+      },
+      "fix_type": "Update dashboard API calls",
+      "recommendation": "Modify dashboard API calls to use broader date ranges",
+      "priority": 1
+    },
+    {
+      "issue": {
+        "category": "Dashboard Integration",
+        "severity": "HIGH",
+        "file": "./client/src/lib/api.ts",
+        "description": "Dashboard making separate calendar calls with restricted date ranges"
+      },
+      "fix_type": "Update dashboard API calls",
+      "recommendation": "Modify dashboard API calls to use broader date ranges",
+      "priority": 1
+    },
+    {
+      "issue": {
+        "category": "Dashboard Integration",
+        "severity": "HIGH",
+        "file": "./client/src/pages/calendar.tsx",
+        "description": "Dashboard making separate calendar calls with restricted date ranges"
+      },
+      "fix_type": "Update dashboard API calls",
+      "recommendation": "Modify dashboard API calls to use broader date ranges",
+      "priority": 1
+    },
+    {
+      "issue": {
+        "category": "Dashboard Integration",
+        "severity": "HIGH",
+        "file": "./server/routes.ts",
+        "description": "Dashboard making separate calendar calls with restricted date ranges"
+      },
+      "fix_type": "Update dashboard API calls",
+      "recommendation": "Modify dashboard API calls to use broader date ranges",
+      "priority": 1
+    }
+  ],
+  "summary": {
+    "problem": "Over 4,000 calendar events should load from 2015-2030 but only showing 0-1 events",
+    "root_cause": "Multiple parts of system using current date restrictions instead of historical range",
+    "immediate_actions": [
+      "Fix all date restriction patterns in backend/frontend",
+      "Update dashboard API calls to use 2015-2030 range",
+      "Invalidate calendar query cache",
+      "Verify Simple Practice calendar events are being processed correctly"
+    ]
+  }
+}

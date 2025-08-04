@@ -2131,7 +2131,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     }
   });
 
-  // OAuth events today endpoint - the missing route causing console errors
+  // OAuth events endpoint - expanded to get all historical events 2015-2030
   app.get('/api/oauth/events/today', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
@@ -2140,13 +2140,9 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         return res.json([]); // Return empty array instead of error to prevent frontend warnings
       }
 
-      // Get today's events only - set time range for today
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-      const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-      
-      const timeMin = todayStart.toISOString();
-      const timeMax = todayEnd.toISOString();
+      // Get all events from 2015-2030 to ensure comprehensive calendar data
+      const timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
+      const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
 
       const calendars = await simpleOAuth.getCalendars();
       let todaysEvents: any[] = [];
@@ -2164,11 +2160,8 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         }
       }
 
-      // Filter events to ensure they're actually for today (double-check)
-      const filteredEvents = todaysEvents.filter(event => {
-        const eventDate = new Date(event.start?.dateTime || event.start?.date);
-        return eventDate.toDateString() === now.toDateString();
-      });
+      // Return all historical events (2015-2030) for comprehensive calendar view
+      const filteredEvents = todaysEvents;
 
       res.json(filteredEvents);
     } catch (error: any) {
