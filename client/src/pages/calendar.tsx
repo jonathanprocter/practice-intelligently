@@ -60,19 +60,25 @@ export default function Calendar() {
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     queryFn: async () => {
-      // Fetching calendar events for all time ranges to get thousands of events
+      // Fetching calendar events for current timeframe only
       try {
-        // Get ALL events from 2019-2030 for comprehensive calendar view
-        const timeMin = new Date('2019-01-01T00:00:00.000Z').toISOString();
-        const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
+        // Get recent events only (current week + 30 days before/after)
+        const currentWeekStart = getWeekStart(new Date());
+        const recentStart = new Date(currentWeekStart);
+        recentStart.setDate(recentStart.getDate() - 30);
+        const recentEnd = new Date(currentWeekStart);
+        recentEnd.setDate(recentEnd.getDate() + 37); // Current week + 30 days after
+        
+        const timeMin = recentStart.toISOString();
+        const timeMax = recentEnd.toISOString();
         const calendarParam = selectedCalendarId === 'all' ? '' : `&calendarId=${selectedCalendarId}`;
 
-        // First try to get ALL calendar events from the comprehensive endpoint
+        // Get current/recent events from the calendar API
         const allEventsResponse = await fetch(`/api/calendar/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}${calendarParam}`);
 
         if (allEventsResponse.ok) {
           const allEvents = await allEventsResponse.json();
-          console.log(`Successfully loaded ${allEvents.length} events from calendar API`);
+          console.log(`Successfully loaded ${allEvents.length} recent events from calendar API`);
 
           if (allEvents.length > 0) {
             return allEvents.map((event: any) => ({
@@ -137,9 +143,14 @@ export default function Calendar() {
         return []; // Return empty array instead of throwing error
       }
 
-      // Use the main calendar events endpoint to get comprehensive data
-      const timeMin = new Date('2019-01-01T00:00:00.000Z').toISOString();
-      const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
+      // Use the main calendar events endpoint to get recent data only
+      const recentStart = new Date();
+      recentStart.setDate(recentStart.getDate() - 30);
+      const recentEnd = new Date();
+      recentEnd.setDate(recentEnd.getDate() + 30);
+      
+      const timeMin = recentStart.toISOString();
+      const timeMax = recentEnd.toISOString();
       const calendarParam = selectedCalendarId === 'all' ? '' : `&calendarId=${selectedCalendarId}`;
 
       const response = await fetch(`/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}${calendarParam}`);
