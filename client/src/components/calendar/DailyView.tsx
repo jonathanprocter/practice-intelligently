@@ -112,12 +112,27 @@ export const DailyView = ({
           setExistingProgressNotes(progressNotes);
         } else {
           // Try to find progress notes by client name if no appointment-linked notes found
-          const clientName = event.clientName || event.title?.replace(/🔒\s*/, '')?.replace(/\s*Appointment$/, '');
+          let clientName = event.clientName || event.title?.replace(/🔒\s*/, '')?.replace(/\s*Appointment$/, '');
+          
+          // Clean up client name - remove common suffixes
           if (clientName) {
+            clientName = clientName
+              .replace(/\s*Appointment$/i, '')
+              .replace(/\s*Session$/i, '')
+              .replace(/\s*Meeting$/i, '')
+              .trim();
+            
+            console.log(`🔍 Searching for progress notes with cleaned client name: "${clientName}"`);
+            
             const clientProgressResponse = await fetch(`/api/progress-notes/client/${encodeURIComponent(clientName)}`);
             if (clientProgressResponse.ok) {
               const clientProgressNotes = await clientProgressResponse.json();
-              setExistingProgressNotes(clientProgressNotes);
+              if (clientProgressNotes.length > 0) {
+                console.log(`✅ Found ${clientProgressNotes.length} progress notes for client: ${clientName}`);
+                setExistingProgressNotes(clientProgressNotes);
+              } else {
+                console.log(`❌ No progress notes found for client: ${clientName}`);
+              }
             }
           }
         }

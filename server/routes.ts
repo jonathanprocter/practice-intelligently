@@ -3010,18 +3010,54 @@ Generate specific preparation guidance for the next session including:
       const { clientName } = req.params;
       console.log(`🔍 Looking for progress notes for client: ${clientName}`);
       
-      // First try to find client by name
-      const clientId = await storage.getClientIdByName(clientName);
+      // Clean up the client name from calendar events
+      const cleanedName = clientName
+        .replace(/\s*Appointment$/i, '')
+        .replace(/\s*Session$/i, '')
+        .replace(/\s*Meeting$/i, '')
+        .replace(/🔒\s*/, '')
+        .trim();
+      
+      console.log(`🧹 Cleaned client name: "${cleanedName}"`);
+      
+      // First try to find client by cleaned name  
+      let clientId = await storage.getClientIdByName(cleanedName);
+      
+      // If not found, try fuzzy matching by splitting name parts
+      if (!clientId && cleanedName.includes(' ')) {
+        const nameParts = cleanedName.split(' ');
+        const firstName = nameParts[0];
+        const lastName = nameParts[nameParts.length - 1];
+        
+        console.log(`🔍 Trying fuzzy match with: ${firstName} ${lastName}`);
+        
+        // Try different name combinations
+        const nameVariations = [
+          `${firstName} ${lastName}`,
+          `${lastName} ${firstName}`,
+          firstName,
+          lastName
+        ];
+        
+        for (const variation of nameVariations) {
+          clientId = await storage.getClientIdByName(variation);
+          if (clientId) {
+            console.log(`✅ Found client with name variation: ${variation}`);
+            break;
+          }
+        }
+      }
+      
       if (!clientId) {
-        console.log(`❌ Client not found: ${clientName}`);
+        console.log(`❌ Client not found with any name variation: ${cleanedName}`);
         return res.json([]);
       }
       
-      console.log(`✅ Found client ID: ${clientId} for name: ${clientName}`);
+      console.log(`✅ Found client ID: ${clientId} for name: ${cleanedName}`);
       
       // Get all progress notes for this client
       const notes = await storage.getProgressNotes(clientId);
-      console.log(`📋 Found ${notes.length} progress notes for client: ${clientName}`);
+      console.log(`📋 Found ${notes.length} progress notes for client: ${cleanedName}`);
       res.json(notes);
     } catch (error) {
       console.error('Error fetching progress notes by client name:', error);
