@@ -62,28 +62,49 @@ export default function Calendar() {
     queryFn: async () => {
       // Fetching calendar events for current timeframe only
       try {
-        // Get recent events only (current week + 30 days before/after)
-        const currentWeekStart = getWeekStart(new Date());
-        const recentStart = new Date(currentWeekStart);
-        recentStart.setDate(recentStart.getDate() - 30);
-        const recentEnd = new Date(currentWeekStart);
-        recentEnd.setDate(recentEnd.getDate() + 37); // Current week + 30 days after
+        // Get all events from a broader range to include all Simple Practice appointments
+        const recentStart = new Date();
+        recentStart.setFullYear(recentStart.getFullYear() - 1); // 1 year back
+        const recentEnd = new Date();
+        recentEnd.setFullYear(recentEnd.getFullYear() + 1); // 1 year forward
         
         const timeMin = recentStart.toISOString();
         const timeMax = recentEnd.toISOString();
         const calendarParam = selectedCalendarId === 'all' ? '' : `&calendarId=${selectedCalendarId}`;
 
-        // Get current/recent events from the calendar API
+        // Try getting Simple Practice events specifically first
+        const simplePracticeCalendarId = '79dfcb90ce59b1b0345b24f5c8d342bd308eac9521d063a684a8bbd377f2b822@group.calendar.google.com';
+        const simplePracticeResponse = await fetch(`/api/calendar/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&calendarId=${simplePracticeCalendarId}`);
+        
+        if (simplePracticeResponse.ok) {
+          const simplePracticeEvents = await simplePracticeResponse.json();
+          console.log(`Successfully loaded ${simplePracticeEvents.length} events from Simple Practice calendar`);
+          
+          if (simplePracticeEvents.length > 0) {
+            return simplePracticeEvents.map((event: any) => ({
+              id: event.id,
+              title: event.title || event.summary || 'Appointment',
+              startTime: new Date(event.startTime || event.start?.dateTime || event.start?.date),
+              endTime: new Date(event.endTime || event.end?.dateTime || event.end?.date),
+              location: event.location || getCalendarLocationDisplay(event.startTime || event.start?.dateTime || event.start?.date),
+              description: event.description || '',
+              calendarId: event.calendarId || 'simple-practice',
+              calendarName: event.calendarName || 'Simple Practice'
+            }));
+          }
+        }
+        
+        // Fallback: Get all calendar events
         const allEventsResponse = await fetch(`/api/calendar/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}${calendarParam}`);
 
         if (allEventsResponse.ok) {
           const allEvents = await allEventsResponse.json();
-          console.log(`Successfully loaded ${allEvents.length} recent events from calendar API`);
+          console.log(`Successfully loaded ${allEvents.length} events from all calendars`);
 
           if (allEvents.length > 0) {
             return allEvents.map((event: any) => ({
               id: event.id,
-              title: event.title || event.summary || 'Appointment',
+              title: event.title || event.summary || 'Appointment',  
               startTime: new Date(event.startTime || event.start?.dateTime || event.start?.date),
               endTime: new Date(event.endTime || event.end?.dateTime || event.end?.date),
               location: event.location || getCalendarLocationDisplay(event.startTime || event.start?.dateTime || event.start?.date),
