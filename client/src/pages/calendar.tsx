@@ -62,11 +62,9 @@ export default function Calendar() {
     queryFn: async () => {
       // Fetching calendar events for current timeframe only
       try {
-        // Get all events from a broader range to include all Simple Practice appointments
-        const recentStart = new Date();
-        recentStart.setFullYear(recentStart.getFullYear() - 1); // 1 year back
-        const recentEnd = new Date();
-        recentEnd.setFullYear(recentEnd.getFullYear() + 1); // 1 year forward
+        // Get all events from 2015-2030 to include all historical appointments
+        const recentStart = new Date('2015-01-01T00:00:00.000Z');
+        const recentEnd = new Date('2030-12-31T23:59:59.999Z');
         
         const timeMin = recentStart.toISOString();
         const timeMax = recentEnd.toISOString();
@@ -164,14 +162,9 @@ export default function Calendar() {
         return []; // Return empty array instead of throwing error
       }
 
-      // Use the main calendar events endpoint to get recent data only
-      const recentStart = new Date();
-      recentStart.setDate(recentStart.getDate() - 30);
-      const recentEnd = new Date();
-      recentEnd.setDate(recentEnd.getDate() + 30);
-      
-      const timeMin = recentStart.toISOString();
-      const timeMax = recentEnd.toISOString();
+      // Use the main calendar events endpoint to get all historical data 2015-2030
+      const timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
+      const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
       const calendarParam = selectedCalendarId === 'all' ? '' : `&calendarId=${selectedCalendarId}`;
 
       const response = await fetch(`/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}${calendarParam}`);
