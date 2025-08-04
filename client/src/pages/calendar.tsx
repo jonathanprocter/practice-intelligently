@@ -268,8 +268,30 @@ export default function Calendar() {
   // Create calendar days with events (filtered to current week for display)
   const calendarDays: CalendarDay[] = weekDays.map(date => {
     const dayEvents = calendarEvents.filter(event => {
+      if (!event.startTime) return false;
+      
       const eventDate = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
-      const matches = eventDate.toDateString() === date.toDateString();
+      
+      // Handle invalid dates
+      if (isNaN(eventDate.getTime())) {
+        console.warn('Invalid event date:', event);
+        return false;
+      }
+      
+      // Use date comparison that accounts for timezone differences
+      const eventDateStr = eventDate.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+      const dayDateStr = date.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+      const matches = eventDateStr === dayDateStr;
+      
+      // Debug logging for troubleshooting
+      if (matches) {
+        console.log(`Event "${event.title}" matches day ${dayDateStr}`, {
+          eventDate: eventDate.toISOString(),
+          eventDateStr,
+          dayDateStr
+        });
+      }
+      
       return matches;
     });
 
@@ -290,6 +312,21 @@ export default function Calendar() {
   const weekEventCount = calendarDays.reduce((total, day) => total + day.events.length, 0);
   console.log(`Events for current week (${currentWeek.toDateString()} - ${weekEnd.toDateString()}): ${weekEventCount}`);
   console.log(`Total events loaded in calendar: ${calendarEvents.length}`);
+  
+  // Debug: Show sample event dates and week dates for comparison
+  if (calendarEvents.length > 0 && weekEventCount === 0) {
+    console.log('DEBUG: Week dates vs Event dates comparison');
+    console.log('Week days:', weekDays.map(d => d.toLocaleDateString('en-CA')));
+    console.log('Sample event dates:', calendarEvents.slice(0, 5).map(e => {
+      const eventDate = e.startTime instanceof Date ? e.startTime : new Date(e.startTime);
+      return {
+        title: e.title,
+        rawDate: eventDate.toISOString(),
+        localDate: eventDate.toLocaleDateString('en-CA'),
+        dateString: eventDate.toDateString()
+      };
+    }));
+  }
 
   // Navigation handlers
   const handlePreviousWeek = () => {
