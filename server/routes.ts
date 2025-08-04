@@ -158,7 +158,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 timeMin,
                 timeMax
               );
-              // Filter dashboard stats events the same way
+              // Filter events for today's dashboard stats
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const tomorrow = new Date(today);
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              
               const todaysEvents = events.filter(event => {
                 const eventStart = event.start?.dateTime || event.start?.date;
                 if (!eventStart) return false;
@@ -2713,13 +2718,39 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         return res.status(400).json({ error: 'Document content is required' });
       }
       
-      // Process clinical document with AI using documentProcessor
-      const analysis = await documentProcessor.processDocument(
-        documentContent, 
-        `clinical-${documentType || 'general'}.txt`
-      );
+      // Create temporary file for document processing
+      const fs = require('fs');
+      const path = require('path');
+      const tempDir = 'temp';
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
       
-      res.json({ analysis, model: 'multimodel-ai' });
+      const tempFileName = `clinical-${Date.now()}-${documentType || 'general'}.txt`;
+      const tempFilePath = path.join(tempDir, tempFileName);
+      
+      // Write content to temporary file
+      fs.writeFileSync(tempFilePath, documentContent, 'utf8');
+      
+      try {
+        // Process the temporary document file
+        const analysis = await documentProcessor.processDocument(
+          tempFilePath, 
+          tempFileName
+        );
+        
+        // Clean up temporary file
+        fs.unlinkSync(tempFilePath);
+        
+        res.json({ analysis, model: 'document-processor' });
+      } catch (error: any) {
+        // Clean up temporary file on error
+        if (fs.existsSync(tempFilePath)) {
+          fs.unlinkSync(tempFilePath);
+        }
+        throw error;
+      }
+      
     } catch (error: any) {
       console.error('Error processing clinical document:', error);
       res.status(500).json({ error: 'Failed to process document', details: error.message });
