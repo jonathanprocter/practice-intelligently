@@ -3004,6 +3004,31 @@ Generate specific preparation guidance for the next session including:
     }
   });
 
+  // API route to get progress notes by client name (fallback for calendar events)
+  app.get('/api/progress-notes/client/:clientName', async (req, res) => {
+    try {
+      const { clientName } = req.params;
+      console.log(`🔍 Looking for progress notes for client: ${clientName}`);
+      
+      // First try to find client by name
+      const clientId = await storage.getClientIdByName(clientName);
+      if (!clientId) {
+        console.log(`❌ Client not found: ${clientName}`);
+        return res.json([]);
+      }
+      
+      console.log(`✅ Found client ID: ${clientId} for name: ${clientName}`);
+      
+      // Get all progress notes for this client
+      const notes = await storage.getProgressNotes(clientId);
+      console.log(`📋 Found ${notes.length} progress notes for client: ${clientName}`);
+      res.json(notes);
+    } catch (error) {
+      console.error('Error fetching progress notes by client name:', error);
+      res.status(500).json({ error: 'Failed to fetch progress notes' });
+    }
+  });
+
   // API route to get session prep notes for a specific appointment
   app.get('/api/session-prep/appointment/:appointmentId', async (req, res) => {
     try {

@@ -108,7 +108,19 @@ export const DailyView = ({
       const progressResponse = await fetch(`/api/progress-notes/appointment/${event.id}`);
       if (progressResponse.ok) {
         const progressNotes = await progressResponse.json();
-        setExistingProgressNotes(progressNotes);
+        if (progressNotes.length > 0) {
+          setExistingProgressNotes(progressNotes);
+        } else {
+          // Try to find progress notes by client name if no appointment-linked notes found
+          const clientName = event.clientName || event.title?.replace(/🔒\s*/, '')?.replace(/\s*Appointment$/, '');
+          if (clientName) {
+            const clientProgressResponse = await fetch(`/api/progress-notes/client/${encodeURIComponent(clientName)}`);
+            if (clientProgressResponse.ok) {
+              const clientProgressNotes = await clientProgressResponse.json();
+              setExistingProgressNotes(clientProgressNotes);
+            }
+          }
+        }
       }
 
       // Load session prep notes for this appointment
