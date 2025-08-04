@@ -18,6 +18,7 @@ import { z } from "zod";
 import { randomUUID } from 'crypto';
 import multer from 'multer';
 import fs from 'fs';
+import { uploadSingle, uploadMultiple } from './upload';
 import { getAllApiStatuses } from "./health-check";
 import { simpleOAuth } from "./oauth-simple";
 import { googleCalendarService } from "./auth";
@@ -142,11 +143,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { simpleOAuth } = await import('./oauth-simple');
 
         if (simpleOAuth.isConnected()) {
-          // Get today's events from Google Calendar
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const tomorrow = new Date(today);
-          tomorrow.setDate(tomorrow.getDate() + 1);
+          // Get all historical events from Google Calendar (2015-2030) for comprehensive dashboard stats
+          const timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
+          const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
 
           // Get events from all calendars, especially Simple Practice
           const calendars = await simpleOAuth.getCalendars();
@@ -156,8 +155,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
               const events = await simpleOAuth.getEvents(
                 calendar.id || '',
-                today.toISOString(),
-                tomorrow.toISOString()
+                timeMin,
+                timeMax
               );
               // Filter dashboard stats events the same way
               const todaysEvents = events.filter(event => {
@@ -2714,12 +2713,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         return res.status(400).json({ error: 'Document content is required' });
       }
       
-      // Process clinical document with AI
-      const analysis = await multiModelAI.processClinicalDocument({
-        content: documentContent,
-        clientId: clientId || null,
-        documentType: documentType || 'general'
-      });
+      // Process clinical document with AI using documentProcessor
+      const analysis = await documentProcessor.processDocument(
+        documentContent, 
+        `clinical-${documentType || 'general'}.txt`
+      );
       
       res.json({ analysis, model: 'multimodel-ai' });
     } catch (error: any) {
@@ -2735,13 +2733,12 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         return res.status(400).json({ error: 'Document content is required' });
       }
       
-      // Generate progress note from document
-      const progressNote = await multiModelAI.generateProgressNote({
-        content: documentContent,
-        clientId: clientId || null,
-        sessionDate: sessionDate || new Date().toISOString(),
-        format: format || 'SOAP'
-      });
+      // Generate progress note from document using documentProcessor
+      const progressNote = await documentProcessor.generateProgressNote(
+        documentContent,
+        clientId || 'unknown',
+        sessionDate || new Date().toISOString()
+      );
       
       res.json({ progressNote, model: 'multimodel-ai' });
     } catch (error: any) {
@@ -2749,6 +2746,126 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       res.status(500).json({ error: 'Failed to generate progress note', details: error.message });
     }
   });
+  // ========== FILE UPLOAD ROUTES ==========
+  
+  // Single file upload endpoint for drag-and-drop progress notes processing
+  app.post('/api/upload/document', uploadSingle, async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const { clientId, sessionDate } = req.body;
+      
+      // Process the uploaded document
+      const processed = await documentProcessor.processDocument(
+        req.file.path,
+        req.file.originalname
+      );
+      
+      // Generate progress note from the processed document
+      const progressNote = await documentProcessor.generateProgressNote(
+        processed.extractedText,
+        clientId || processed.detectedClientName || 'unknown',
+        sessionDate || processed.detectedSessionDate || new Date().toISOString()
+      );
+      
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+      
+      res.json({
+        success: true,
+        processed,
+        progressNote,
+        message: 'Document processed and progress note generated successfully'
+      });
+      
+    } catch (error: any) {
+      // Clean up file if error occurs
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      
+      console.error('Error processing uploaded document:', error);
+      res.status(500).json({ 
+        error: 'Failed to process document', 
+        details: error.message 
+      });
+    }
+  });
+  
+  // Multiple files upload endpoint
+  app.post('/api/upload/documents', uploadMultiple, async (req, res) => {
+    try {
+      if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+        return res.status(400).json({ error: 'No files uploaded' });
+      }
+
+      const { clientId, sessionDate } = req.body;
+      const results = [];
+      
+      for (const file of req.files) {
+        try {
+          const processed = await documentProcessor.processDocument(
+            file.path,
+            file.originalname
+          );
+          
+          const progressNote = await documentProcessor.generateProgressNote(
+            processed.extractedText,
+            clientId || processed.detectedClientName || 'unknown',
+            sessionDate || processed.detectedSessionDate || new Date().toISOString()
+          );
+          
+          results.push({
+            filename: file.originalname,
+            success: true,
+            processed,
+            progressNote
+          });
+          
+          // Clean up file
+          fs.unlinkSync(file.path);
+          
+        } catch (fileError: any) {
+          results.push({
+            filename: file.originalname,
+            success: false,
+            error: fileError.message
+          });
+          
+          // Clean up file on error
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        }
+      }
+      
+      res.json({
+        success: true,
+        results,
+        totalFiles: req.files.length,
+        successfulFiles: results.filter(r => r.success).length
+      });
+      
+    } catch (error: any) {
+      // Clean up all files if general error occurs
+      if (req.files && Array.isArray(req.files)) {
+        req.files.forEach(file => {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        });
+      }
+      
+      console.error('Error processing uploaded documents:', error);
+      res.status(500).json({ 
+        error: 'Failed to process documents', 
+        details: error.message 
+      });
+    }
+  });
+
   // ========== DRIVE & NOTION ROUTES (Auto-generated) ==========
 
   app.get('/api/drive/files', async (req, res) => {
