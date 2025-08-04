@@ -2710,6 +2710,36 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   });
   // ========== DOCUMENT PROCESSING ROUTES (Auto-generated) ==========
 
+  // File upload endpoint that handles actual file uploads
+  app.post('/api/documents/upload-and-process', uploadSingle, async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // Process the uploaded file
+      const processed = await documentProcessor.processDocument(req.file.path, req.file.originalname);
+      
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json({ 
+        analysis: processed,
+        extractedText: processed.extractedText,
+        detectedClientName: processed.detectedClientName,
+        detectedSessionDate: processed.detectedSessionDate,
+        model: 'document-processor' 
+      });
+    } catch (error: any) {
+      // Clean up file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      console.error('Error processing uploaded document:', error);
+      res.status(500).json({ error: 'Failed to process document', details: error.message });
+    }
+  });
+
   app.post('/api/documents/process-clinical', async (req, res) => {
     try {
       const { documentContent, clientId, documentType } = req.body;

@@ -41,7 +41,7 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
           const formData = new FormData();
           formData.append('document', file);
 
-          const response = await fetch('/api/documents/process-clinical', {
+          const response = await fetch('/api/documents/upload-and-process', {
             method: 'POST',
             body: formData,
           });
