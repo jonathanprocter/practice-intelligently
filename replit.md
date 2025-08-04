@@ -58,6 +58,15 @@ The system utilizes a comprehensive PostgreSQL database with 13 robust tables:
 
 ## Recent Changes (August 2025)
 
+### Document Processing & Appointment Linking System - Complete Integration (August 4, 2025)
+- **Comprehensive Document Processing**: Restored full multi-model AI ensemble analysis with tonal analysis, key insights, significant quotes, and narrative summaries
+- **Real Client Matching**: Implemented fuzzy name matching against actual client database with first/last name verification  
+- **Automatic Appointment Linking**: Progress notes now automatically link to specific calendar appointments based on client and session date
+- **Appointment Notes Integration**: Processed content is directly attached to appointment notes field in calendar system
+- **Next Session AI Insights**: Automatically generates preparation insights for client's next scheduled appointment including follow-up questions, suggested interventions, and session objectives
+- **Enhanced Client Detection**: Improved name extraction from documents with fallback matching for partial names
+- **Database Consistency**: Progress notes save with proper client ID, therapist ID, and appointment associations for complete clinical workflow integration
+
 ### Calendar System Complete Fix - 4,690+ Events Successfully Loading
 - **MAJOR SUCCESS**: Fixed calendar application to load all historical events from 2015-2030
 - **Root Cause Identified**: `/api/oauth/events/today` endpoint was restricting events to today only via Python audit script

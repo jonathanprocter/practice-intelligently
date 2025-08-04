@@ -2810,11 +2810,29 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       
       // Find client by name if provided
       let finalClientId = clientId;
+      let actualClientName = finalClientName;
       
       if (detectedClientName && !clientId) {
+        // Try exact match first
         const foundClientId = await storage.getClientIdByName(detectedClientName);
         if (foundClientId) {
           finalClientId = foundClientId;
+        } else {
+          // Try fuzzy matching for partial names
+          const allClients = await storage.getClients(finalTherapistId);
+          const nameParts = detectedClientName.toLowerCase().split(' ');
+          
+          for (const client of allClients) {
+            const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
+            const firstNameMatch = nameParts.some((part: string) => client.firstName.toLowerCase().includes(part));
+            const lastNameMatch = nameParts.some((part: string) => client.lastName.toLowerCase().includes(part));
+            
+            if (firstNameMatch && lastNameMatch) {
+              finalClientId = client.id;
+              actualClientName = `${client.firstName} ${client.lastName}`;
+              break;
+            }
+          }
         }
       }
       
@@ -2833,7 +2851,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         ...comprehensiveNote,
         clientId: finalClientId || 'unknown',
         therapistId: finalTherapistId,
-        appointmentId: appointmentId,
+        appointmentId: appointmentId || undefined,
         sessionDate: new Date(finalSessionDate),
         // Enhance AI tags with linking information
         aiTags: [
@@ -2847,13 +2865,28 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       // Save to database with all the rich analysis
       const savedNote = await storage.createProgressNote(enhancedProgressNote);
       
+      // If linked to appointment, update the appointment's notes field
+      if (appointmentId) {
+        const appointmentNotesUpdate = `Progress Note: ${comprehensiveNote.title}\n\nSummary: ${comprehensiveNote.narrativeSummary}\n\nKey Points: ${comprehensiveNote.keyPoints?.join(', ') || 'None'}\n\nGenerated: ${new Date().toLocaleDateString()}`;
+        
+        await storage.updateAppointment(appointmentId, {
+          notes: appointmentNotesUpdate
+        });
+        
+        // Generate AI insights for the next appointment with this client
+        if (finalClientId !== 'unknown') {
+          await generateNextSessionInsights(finalClientId, finalTherapistId, savedNote, actualClientName);
+        }
+      }
+      
       res.json({ 
         success: true,
         progressNote: savedNote, 
         model: 'comprehensive-multi-ai',
-        message: `Comprehensive progress note with full analysis saved${appointmentId ? ' and linked to appointment' : ''}${detectedClientName ? ` for ${detectedClientName}` : ''}`,
+        message: `Comprehensive progress note saved${appointmentId ? ' and attached to appointment' : ''}${detectedClientName ? ` for ${detectedClientName}` : ''}`,
         linkedToAppointment: !!appointmentId,
         clientFound: finalClientId !== 'unknown',
+        appointmentUpdated: !!appointmentId,
         analysisFeatures: {
           tonalAnalysis: !!comprehensiveNote.tonalAnalysis,
           keyPoints: comprehensiveNote.keyPoints?.length || 0,
@@ -2872,6 +2905,88 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       res.status(500).json({ error: 'Failed to generate comprehensive progress note', details: error.message });
     }
   });
+
+  // Helper function to generate insights for next session
+  async function generateNextSessionInsights(clientId: string, therapistId: string, progressNote: any, clientName: string) {
+    try {
+      // Find the next scheduled appointment for this client
+      const upcomingAppointments = await storage.getUpcomingAppointmentsByClient(clientId);
+      
+      if (upcomingAppointments.length === 0) {
+        console.log(`No upcoming appointments found for client ${clientName}`);
+        return;
+      }
+
+      const nextAppointment = upcomingAppointments[0];
+      
+      // Generate AI insights for the next session
+      const sessionPrepPrompt = `Based on this completed session progress note, generate preparation insights for the next therapy session:
+
+COMPLETED SESSION ANALYSIS:
+Title: ${progressNote.title}
+Date: ${progressNote.sessionDate}
+Client: ${clientName}
+
+Subjective: ${progressNote.subjective}
+Objective: ${progressNote.objective}
+Assessment: ${progressNote.assessment}
+Plan: ${progressNote.plan}
+
+Key Points: ${progressNote.keyPoints?.join(', ') || 'None'}
+Narrative Summary: ${progressNote.narrativeSummary}
+
+Generate specific preparation guidance for the next session including:
+1. Key focus areas to explore
+2. Follow-up questions based on this session
+3. Suggested interventions or techniques
+4. Homework/action items to review
+5. Risk factors or concerns to monitor
+6. Session objectives for continuation of care`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert clinical therapist generating session preparation insights. Provide specific, actionable guidance for the next therapy session based on the previous session's progress note."
+          },
+          { role: "user", content: sessionPrepPrompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 1000
+      });
+
+      const aiInsights = response.choices[0].message.content;
+
+      // Save session prep insights to the next appointment
+      const sessionPrepData = {
+        appointmentId: nextAppointment.id,
+        clientId: clientId,
+        therapistId: therapistId,
+        prepContent: aiInsights || 'AI insights generation failed',
+        keyFocusAreas: progressNote.keyPoints || [],
+        previousSessionSummary: progressNote.narrativeSummary,
+        aiGeneratedInsights: `Generated from progress note: ${progressNote.title}`,
+        sessionObjectives: [`Follow up on: ${progressNote.keyPoints?.slice(0, 2).join(', ') || 'previous session themes'}`],
+        lastUpdatedBy: therapistId
+      };
+
+      // Check if session prep already exists for this appointment
+      const existingPrep = await storage.getSessionPrepNoteByEventId(nextAppointment.id);
+      
+      if (existingPrep) {
+        await storage.updateSessionPrepNote(existingPrep.id, sessionPrepData);
+        console.log(`Updated session prep for next appointment: ${nextAppointment.id}`);
+      } else {
+        await storage.createSessionPrepNote(sessionPrepData);
+        console.log(`Created session prep for next appointment: ${nextAppointment.id}`);
+      }
+
+    } catch (error) {
+      console.error('Error generating next session insights:', error);
+    }
+  }
+
   // ========== SIMPLE PROGRESS NOTES ROUTES ==========
   
   // Simple, fast progress note generation endpoint
