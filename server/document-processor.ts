@@ -56,6 +56,7 @@ export interface ProgressNote {
   keyPoints: string[];
   significantQuotes: string[];
   narrativeSummary: string;
+  aiTags?: string[];
   clientId: string;
   sessionDate: string;
   createdAt: Date;
@@ -154,8 +155,7 @@ export class DocumentProcessor {
         data: pdfData,
         useWorkerFetch: false,
         isEvalSupported: false,
-        useSystemFonts: true,
-        disableWorker: true
+        useSystemFonts: true
       }).promise;
 
       let fullText = '';
@@ -299,7 +299,7 @@ export class DocumentProcessor {
 
         stream
           .pipe(csvParserModule())
-          .on('data', (data) => results.push(data))
+          .on('data', (data: any) => results.push(data))
           .on('end', () => {
             try {
               if (results.length === 0) {
@@ -322,7 +322,7 @@ export class DocumentProcessor {
               reject(new Error(`Failed to process CSV data: ${error instanceof Error ? error.message : 'Unknown error'}`));
             }
           })
-          .on('error', (error) => {
+          .on('error', (error: any) => {
             reject(new Error(`Failed to read CSV file: ${error.message}`));
           });
       } catch (error) {
@@ -745,12 +745,12 @@ Session Date: ${sessionDate}`;
   private distributeContentToSOAP(paragraphs: string[], fullContent: string): any {
     // Analyze each paragraph and assign to most appropriate SOAP section
     const soapContent = {
-      subjective: [],
-      objective: [],
-      assessment: [],
-      plan: [],
-      tonalAnalysis: [],
-      narrative: []
+      subjective: [] as string[],
+      objective: [] as string[],
+      assessment: [] as string[],
+      plan: [] as string[],
+      tonalAnalysis: [] as string[],
+      narrative: [] as string[]
     };
 
     for (const paragraph of paragraphs) {
