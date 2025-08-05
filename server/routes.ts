@@ -3090,10 +3090,13 @@ I can help you analyze this data, provide insights, and assist with clinical dec
                 const eventDateString = eventDate.toDateString();
                 const sessionDateString = sessionDateObj.toDateString();
                 
-                // Check if client name appears in event title
+                // Check if client name appears in event title (handle 🔒 prefix and "Appointment" suffix)
                 const eventTitle = event.summary.toLowerCase();
+                const cleanEventTitle = eventTitle.replace(/🔒\s*/, '').replace(/\s*appointment\s*$/, '');
                 const clientNameParts = actualClientName.toLowerCase().split(' ');
-                const nameMatch = clientNameParts.every(part => eventTitle.includes(part));
+                const nameMatch = clientNameParts.every(part => cleanEventTitle.includes(part));
+                
+                console.log(`🔍 Event matching: "${event.summary}" vs "${actualClientName}" - Clean title: "${cleanEventTitle}" - Match: ${nameMatch}`);
                 
                 return nameMatch && eventDateString === sessionDateString;
               });
@@ -3221,12 +3224,55 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         }
       }
       
-      // Find the next scheduled appointment for this client
-      const upcomingAppointments = await storage.getUpcomingAppointmentsByClient(clientId);
-      console.log(`📅 Found ${upcomingAppointments.length} upcoming appointments for ${clientName}`);
+      // Find the next scheduled appointment for this client (check both database and Google Calendar)
+      let upcomingAppointments = await storage.getUpcomingAppointmentsByClient(clientId);
+      console.log(`📅 Found ${upcomingAppointments.length} database appointments for ${clientName}`);
+      
+      // If no database appointments, check Google Calendar for future appointments
+      if (upcomingAppointments.length === 0) {
+        console.log(`🔍 No database appointments found, checking Google Calendar for future events...`);
+        try {
+          const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+            ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+            : 'http://localhost:5000';
+          
+          // Get events from today onwards to find future appointments
+          const today = new Date();
+          const futureDate = new Date(today.getTime() + (90 * 24 * 60 * 60 * 1000)); // Next 90 days
+          
+          const calendarResponse = await fetch(`${baseUrl}/api/calendar/events?timeMin=${today.toISOString()}&timeMax=${futureDate.toISOString()}`);
+          if (calendarResponse.ok) {
+            const calendarEvents = await calendarResponse.json();
+            console.log(`📅 Found ${calendarEvents.length} future calendar events`);
+            
+            // Filter for this client's appointments
+            const clientEvents = calendarEvents.filter((event: any) => {
+              if (!event.summary || !event.start?.dateTime) return false;
+              const eventTitle = event.summary.toLowerCase();
+              const cleanEventTitle = eventTitle.replace(/🔒\s*/, '').replace(/\s*appointment\s*$/, '');
+              const clientNameParts = clientName.toLowerCase().split(' ');
+              return clientNameParts.every(part => cleanEventTitle.includes(part));
+            });
+            
+            console.log(`📅 Found ${clientEvents.length} future appointments in Google Calendar for ${clientName}`);
+            
+            if (clientEvents.length > 0) {
+              // Convert to appointment-like objects
+              upcomingAppointments = clientEvents.map((event: any) => ({
+                id: event.id,
+                startTime: new Date(event.start.dateTime),
+                summary: event.summary,
+                isCalendarEvent: true
+              }));
+            }
+          }
+        } catch (error) {
+          console.error('Error searching Google Calendar for upcoming appointments:', error);
+        }
+      }
       
       if (upcomingAppointments.length === 0) {
-        console.log(`⚠️ No upcoming appointments found for client ${clientName} (${clientId})`);
+        console.log(`⚠️ No upcoming appointments found for client ${clientName} (${clientId}) in database or Google Calendar`);
         return;
       }
 
