@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useLocation } from 'wouter';
+import { useRoute, useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,23 +89,24 @@ interface TreatmentGuide {
 }
 
 export default function ClientChart() {
-  const { clientId } = useParams();
+  const [match, params] = useRoute('/clients/:clientId/chart');
+  const clientId = params?.clientId;
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState('progress-notes');
   const queryClient = useQueryClient();
 
   const { data: client, isLoading: clientLoading } = useQuery<Client>({
-    queryKey: ['/api/clients', clientId],
+    queryKey: [`/api/clients/detail/${clientId}`],
     enabled: !!clientId
   });
 
   const { data: progressNotes = [], isLoading: notesLoading } = useQuery<ProgressNote[]>({
-    queryKey: ['/api/progress-notes', clientId],
+    queryKey: [`/api/progress-notes/${clientId}`],
     enabled: !!clientId
   });
 
   const { data: sessionPrepNotes = [], isLoading: prepLoading } = useQuery<SessionPrepNote[]>({
-    queryKey: ['/api/session-prep/client', clientId],
+    queryKey: [`/api/session-prep/client/${clientId}`],
     enabled: !!clientId
   });
 
@@ -136,6 +137,24 @@ export default function ClientChart() {
     queryKey: ['/api/ai/treatment-guide', clientId],
     enabled: !!clientId
   });
+
+  if (!match || !clientId) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Client Chart</h1>
+          <p className="text-muted-foreground">No client ID provided</p>
+          <Button 
+            onClick={() => setLocation('/clients')}
+            className="mt-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Clients
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (clientLoading) {
     return (
