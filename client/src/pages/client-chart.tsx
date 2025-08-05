@@ -186,12 +186,12 @@ export default function ClientChart() {
           <div className="flex items-center space-x-3">
             <Avatar>
               <AvatarFallback>
-                {client.firstName.charAt(0)}{client.lastName.charAt(0)}
+                {client?.firstName?.charAt(0) || 'C'}{client?.lastName?.charAt(0) || 'L'}
               </AvatarFallback>
             </Avatar>
             <div>
               <h1 className="text-2xl font-bold" data-testid="text-client-name">
-                {client.firstName} {client.lastName}
+                {client?.firstName || 'Unknown'} {client?.lastName || 'Client'}
               </h1>
               <p className="text-muted-foreground">
                 Client Chart Review
@@ -199,8 +199,8 @@ export default function ClientChart() {
             </div>
           </div>
         </div>
-        <Badge variant={client.status === 'active' ? 'default' : 'secondary'}>
-          {client.status}
+        <Badge variant={client?.status === 'active' ? 'default' : 'secondary'}>
+          {client?.status || 'unknown'}
         </Badge>
       </div>
 
@@ -216,32 +216,32 @@ export default function ClientChart() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Email</p>
-              <p data-testid="text-client-email">{client.email}</p>
+              <p data-testid="text-client-email">{client?.email || 'Not provided'}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Phone</p>
-              <p data-testid="text-client-phone">{client.phone}</p>
+              <p data-testid="text-client-phone">{client?.phone || 'Not provided'}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Date of Birth</p>
               <p data-testid="text-client-dob">
-                {client.dateOfBirth ? format(new Date(client.dateOfBirth), 'MMM dd, yyyy') : 'Not provided'}
+                {client?.dateOfBirth ? format(new Date(client.dateOfBirth), 'MMM dd, yyyy') : 'Not provided'}
               </p>
             </div>
           </div>
           <Separator className="my-4" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-2xl font-bold text-blue-600">{progressNotes.length}</p>
+              <p className="text-2xl font-bold text-blue-600">{progressNotes?.length || 0}</p>
               <p className="text-sm text-muted-foreground">Progress Notes</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-green-600">{sessionPrepNotes.length}</p>
+              <p className="text-2xl font-bold text-green-600">{sessionPrepNotes?.length || 0}</p>
               <p className="text-sm text-muted-foreground">Session Prep Notes</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-purple-600">
-                {progressNotes.length + sessionPrepNotes.length}
+                {(progressNotes?.length || 0) + (sessionPrepNotes?.length || 0)}
               </p>
               <p className="text-sm text-muted-foreground">Total Documents</p>
             </div>
@@ -274,7 +274,7 @@ export default function ClientChart() {
         <TabsContent value="progress-notes" className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Progress Notes</h2>
-            <Badge variant="outline">{progressNotes.length} notes</Badge>
+            <Badge variant="outline">{progressNotes?.length || 0} notes</Badge>
           </div>
           
           {notesLoading ? (
@@ -282,7 +282,7 @@ export default function ClientChart() {
               <Loader2 className="h-6 w-6 animate-spin mr-2" />
               Loading progress notes...
             </div>
-          ) : progressNotes.length === 0 ? (
+          ) : !progressNotes || progressNotes.length === 0 ? (
             <Card>
               <CardContent className="text-center py-8">
                 <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -386,7 +386,7 @@ export default function ClientChart() {
         <TabsContent value="session-prep" className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Session Preparation Notes</h2>
-            <Badge variant="outline">{sessionPrepNotes.length} prep notes</Badge>
+            <Badge variant="outline">{sessionPrepNotes?.length || 0} prep notes</Badge>
           </div>
           
           {prepLoading ? (
@@ -394,7 +394,7 @@ export default function ClientChart() {
               <Loader2 className="h-6 w-6 animate-spin mr-2" />
               Loading session prep notes...
             </div>
-          ) : sessionPrepNotes.length === 0 ? (
+          ) : !sessionPrepNotes || sessionPrepNotes.length === 0 ? (
             <Card>
               <CardContent className="text-center py-8">
                 <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -535,7 +535,7 @@ export default function ClientChart() {
               <CardContent className="space-y-6">
                 <div>
                   <h3 className="font-semibold mb-2">Clinical Overview</h3>
-                  <p className="text-muted-foreground">{caseConceptualization.overview}</p>
+                  <p className="text-muted-foreground">{caseConceptualization?.overview || 'No overview available'}</p>
                 </div>
 
                 <Separator />
@@ -544,36 +544,36 @@ export default function ClientChart() {
                   <div>
                     <h3 className="font-semibold mb-2">Presenting Concerns</h3>
                     <ul className="list-disc list-inside space-y-1">
-                      {caseConceptualization.presentingConcerns?.map((concern: string, index: number) => (
+                      {caseConceptualization?.presentingConcerns?.map((concern: string, index: number) => (
                         <li key={index} className="text-sm text-muted-foreground">{concern}</li>
-                      ))}
+                      )) || <li className="text-sm text-muted-foreground">No concerns identified</li>}
                     </ul>
                   </div>
 
                   <div>
                     <h3 className="font-semibold mb-2">Client Strengths</h3>
                     <ul className="list-disc list-inside space-y-1">
-                      {caseConceptualization.strengths?.map((strength: string, index: number) => (
+                      {caseConceptualization?.strengths?.map((strength: string, index: number) => (
                         <li key={index} className="text-sm text-muted-foreground">{strength}</li>
-                      ))}
+                      )) || <li className="text-sm text-muted-foreground">No strengths identified</li>}
                     </ul>
                   </div>
 
                   <div>
                     <h3 className="font-semibold mb-2">Risk Factors</h3>
                     <ul className="list-disc list-inside space-y-1">
-                      {caseConceptualization.riskFactors?.map((risk: string, index: number) => (
+                      {caseConceptualization?.riskFactors?.map((risk: string, index: number) => (
                         <li key={index} className="text-sm text-muted-foreground text-red-600">{risk}</li>
-                      ))}
+                      )) || <li className="text-sm text-muted-foreground">No risk factors identified</li>}
                     </ul>
                   </div>
 
                   <div>
                     <h3 className="font-semibold mb-2">Treatment Goals</h3>
                     <ul className="list-disc list-inside space-y-1">
-                      {caseConceptualization.treatmentGoals?.map((goal: string, index: number) => (
+                      {caseConceptualization?.treatmentGoals?.map((goal: string, index: number) => (
                         <li key={index} className="text-sm text-muted-foreground">{goal}</li>
-                      ))}
+                      )) || <li className="text-sm text-muted-foreground">No goals identified</li>}
                     </ul>
                   </div>
                 </div>
@@ -582,15 +582,15 @@ export default function ClientChart() {
 
                 <div>
                   <h3 className="font-semibold mb-2">Diagnostic Impression</h3>
-                  <p className="text-muted-foreground">{caseConceptualization.diagnosticImpression}</p>
+                  <p className="text-muted-foreground">{caseConceptualization?.diagnosticImpression || 'No diagnostic impression available'}</p>
                 </div>
 
                 <div>
                   <h3 className="font-semibold mb-2">Prognosis</h3>
-                  <p className="text-muted-foreground">{caseConceptualization.prognosis}</p>
+                  <p className="text-muted-foreground">{caseConceptualization?.prognosis || 'No prognosis available'}</p>
                 </div>
 
-                {caseConceptualization.culturalConsiderations && (
+                {caseConceptualization?.culturalConsiderations && (
                   <div>
                     <h3 className="font-semibold mb-2">Cultural Considerations</h3>
                     <p className="text-muted-foreground">{caseConceptualization.culturalConsiderations}</p>
@@ -649,7 +649,7 @@ export default function ClientChart() {
               <CardContent className="space-y-6">
                 <div>
                   <h3 className="font-semibold mb-2">Treatment Overview</h3>
-                  <p className="text-muted-foreground">{treatmentGuide.overview}</p>
+                  <p className="text-muted-foreground">{treatmentGuide?.overview || 'No treatment overview available'}</p>
                 </div>
 
                 <Separator />
@@ -658,35 +658,35 @@ export default function ClientChart() {
                   <div>
                     <h3 className="font-semibold mb-2">Recommended Interventions</h3>
                     <ul className="list-disc list-inside space-y-1">
-                      {treatmentGuide.recommendedInterventions?.map((intervention: string, index: number) => (
+                      {treatmentGuide?.recommendedInterventions?.map((intervention: string, index: number) => (
                         <li key={index} className="text-sm text-muted-foreground">{intervention}</li>
-                      ))}
+                      )) || <li className="text-sm text-muted-foreground">No interventions available</li>}
                     </ul>
                   </div>
 
                   <div>
                     <h3 className="font-semibold mb-2">Next Steps</h3>
                     <ul className="list-disc list-inside space-y-1">
-                      {treatmentGuide.nextSteps?.map((step: string, index: number) => (
+                      {treatmentGuide?.nextSteps?.map((step: string, index: number) => (
                         <li key={index} className="text-sm text-muted-foreground">{step}</li>
-                      ))}
+                      )) || <li className="text-sm text-muted-foreground">No next steps available</li>}
                     </ul>
                   </div>
                 </div>
 
                 <div>
                   <h3 className="font-semibold mb-2">Evidence-Based Techniques</h3>
-                  <p className="text-muted-foreground">{treatmentGuide.evidenceBasedTechniques}</p>
+                  <p className="text-muted-foreground">{treatmentGuide?.evidenceBasedTechniques || 'No techniques available'}</p>
                 </div>
 
                 <div>
                   <h3 className="font-semibold mb-2">Session Structure Recommendations</h3>
-                  <p className="text-muted-foreground">{treatmentGuide.sessionStructure}</p>
+                  <p className="text-muted-foreground">{treatmentGuide?.sessionStructure || 'No structure recommendations available'}</p>
                 </div>
 
                 <div>
                   <h3 className="font-semibold mb-2">Homework and Between-Session Activities</h3>
-                  <p className="text-muted-foreground">{treatmentGuide.homeworkSuggestions}</p>
+                  <p className="text-muted-foreground">{treatmentGuide?.homeworkSuggestions || 'No homework suggestions available'}</p>
                 </div>
               </CardContent>
             </Card>
