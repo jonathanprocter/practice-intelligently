@@ -2333,6 +2333,60 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     }
   });
 
+  // OAuth events endpoint - get events for a specific date
+  app.get('/api/oauth/events/date/:date', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+      const { date } = req.params; // Expected format: YYYY-MM-DD
+
+      if (!simpleOAuth.isConnected()) {
+        return res.json([]); // Return empty array instead of error to prevent frontend warnings
+      }
+
+      // Parse the date parameter to create time bounds
+      const targetDate = new Date(date + 'T00:00:00.000Z');
+      if (isNaN(targetDate.getTime())) {
+        return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+      }
+
+      const timeMin = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()).toISOString();
+      const timeMax = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999).toISOString();
+
+      const calendars = await simpleOAuth.getCalendars();
+      let dateEvents: any[] = [];
+
+      for (const calendar of calendars) {
+        try {
+          const events = await simpleOAuth.getEvents(
+            calendar.id,
+            timeMin,
+            timeMax
+          );
+          dateEvents = dateEvents.concat(events);
+        } catch (error) {
+          console.warn(`Failed to fetch events from calendar ${calendar.summary}:`, error);
+        }
+      }
+
+      console.log(`📅 Found ${dateEvents.length} events for date: ${date}`);
+
+      // Filter events to only include the target date events
+      const filteredEvents = dateEvents.filter(event => {
+        if (!event.start) return false;
+        
+        const originalDateTimeString = event.start.dateTime || event.start.date;
+        const eventDateString = originalDateTimeString.split('T')[0]; // Gets YYYY-MM-DD
+        
+        return eventDateString === date;
+      });
+
+      console.log(`📅 Filtered to ${filteredEvents.length} events for ${date}`);
+      res.json(filteredEvents);
+    } catch (error: any) {
+      console.warn('OAuth events date error:', error);
+      res.json([]); // Return empty array to prevent frontend errors
+    }
+  });
 
   // ========== AI INTELLIGENCE API ROUTES (Auto-generated) ==========
 
@@ -3019,10 +3073,15 @@ I can help you analyze this data, provide insights, and assist with clinical dec
             const baseUrl = process.env.REPLIT_DEV_DOMAIN 
               ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
               : 'http://localhost:5000';
-            const eventsResponse = await fetch(`${baseUrl}/api/oauth/events/today`);
+            
+            // Get events for the specific session date, not just today
+            const sessionDateObj = new Date(finalSessionDate);
+            const dateParam = sessionDateObj.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+            const eventsResponse = await fetch(`${baseUrl}/api/oauth/events/date/${dateParam}`);
+            
             if (eventsResponse.ok) {
               const events = await eventsResponse.json();
-              const sessionDateObj = new Date(finalSessionDate);
+              console.log(`📅 Found ${events.length} events on ${finalSessionDate}`);
               
               const matchingEvent = events.find((event: any) => {
                 if (!event.summary || !event.start?.dateTime) return false;
