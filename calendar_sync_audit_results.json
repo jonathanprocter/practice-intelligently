@@ -1,0 +1,1390 @@
+{
+  "issues": [],
+  "warnings": [
+    "17 clients have no appointments",
+    "1 clients have overlapping appointments",
+    "Found 4 unusual appointment durations",
+    "Found 1 potential duplicate client name patterns"
+  ],
+  "stats": {
+    "total_appointments": 1329,
+    "recent_appointments": 1328,
+    "clients_with_appointments": 56,
+    "total_clients": 73,
+    "client_coverage_percent": 76.71232876712328,
+    "top_clients": [
+      {
+        "name": "David Grossman",
+        "appointments": 104
+      },
+      {
+        "name": "Brian Kolsch",
+        "appointments": 84
+      },
+      {
+        "name": "Noah Silverman",
+        "appointments": 83
+      },
+      {
+        "name": "Sarah Palladino",
+        "appointments": 61
+      },
+      {
+        "name": "Ruben Spilberg",
+        "appointments": 53
+      },
+      {
+        "name": "Freddy Rodriguez",
+        "appointments": 51
+      },
+      {
+        "name": "Vivian Meador",
+        "appointments": 50
+      },
+      {
+        "name": "Gavin Perna",
+        "appointments": 49
+      },
+      {
+        "name": "Max Moskowitz",
+        "appointments": 48
+      },
+      {
+        "name": "Kristi Rook",
+        "appointments": 48
+      }
+    ],
+    "google_synced_appointments": 1328,
+    "unsynced_appointments": 1,
+    "google_sync_rate": 99.9247554552295,
+    "calendar_distribution": [
+      {
+        "calendar_id": "79dfcb90ce59b1b0345b...",
+        "appointments": 1245
+      },
+      {
+        "calendar_id": "jonathan.procter@gma...",
+        "appointments": 80
+      },
+      {
+        "calendar_id": "primary...",
+        "appointments": 3
+      }
+    ],
+    "future_appointments": 448,
+    "past_appointments": 881,
+    "day_distribution": [
+      {
+        "day": "Sunday",
+        "appointments": 9
+      },
+      {
+        "day": "Monday",
+        "appointments": 243
+      },
+      {
+        "day": "Tuesday",
+        "appointments": 70
+      },
+      {
+        "day": "Wednesday",
+        "appointments": 272
+      },
+      {
+        "day": "Thursday",
+        "appointments": 355
+      },
+      {
+        "day": "Friday",
+        "appointments": 320
+      },
+      {
+        "day": "Saturday",
+        "appointments": 60
+      }
+    ],
+    "recent_sync_by_date": [
+      {
+        "date": "2019-02-22",
+        "appointments": 1
+      },
+      {
+        "date": "2020-09-26",
+        "appointments": 1
+      },
+      {
+        "date": "2021-03-13",
+        "appointments": 1
+      },
+      {
+        "date": "2022-04-14",
+        "appointments": 1
+      },
+      {
+        "date": "2023-02-28",
+        "appointments": 2
+      },
+      {
+        "date": "2023-03-01",
+        "appointments": 4
+      },
+      {
+        "date": "2023-03-02",
+        "appointments": 8
+      },
+      {
+        "date": "2023-03-03",
+        "appointments": 9
+      },
+      {
+        "date": "2023-03-04",
+        "appointments": 2
+      },
+      {
+        "date": "2023-03-06",
+        "appointments": 8
+      },
+      {
+        "date": "2023-03-07",
+        "appointments": 1
+      },
+      {
+        "date": "2023-03-08",
+        "appointments": 4
+      },
+      {
+        "date": "2023-03-09",
+        "appointments": 7
+      },
+      {
+        "date": "2023-03-10",
+        "appointments": 8
+      },
+      {
+        "date": "2023-03-13",
+        "appointments": 2
+      },
+      {
+        "date": "2023-03-14",
+        "appointments": 2
+      },
+      {
+        "date": "2023-03-15",
+        "appointments": 2
+      },
+      {
+        "date": "2023-03-16",
+        "appointments": 8
+      },
+      {
+        "date": "2023-03-17",
+        "appointments": 2
+      },
+      {
+        "date": "2023-03-18",
+        "appointments": 2
+      },
+      {
+        "date": "2023-04-22",
+        "appointments": 1
+      },
+      {
+        "date": "2025-01-24",
+        "appointments": 3
+      },
+      {
+        "date": "2025-01-25",
+        "appointments": 1
+      },
+      {
+        "date": "2025-03-01",
+        "appointments": 2
+      },
+      {
+        "date": "2025-03-02",
+        "appointments": 1
+      },
+      {
+        "date": "2025-03-03",
+        "appointments": 6
+      },
+      {
+        "date": "2025-03-04",
+        "appointments": 2
+      },
+      {
+        "date": "2025-03-05",
+        "appointments": 8
+      },
+      {
+        "date": "2025-03-06",
+        "appointments": 10
+      },
+      {
+        "date": "2025-03-07",
+        "appointments": 8
+      },
+      {
+        "date": "2025-03-08",
+        "appointments": 2
+      },
+      {
+        "date": "2025-03-09",
+        "appointments": 1
+      },
+      {
+        "date": "2025-03-11",
+        "appointments": 1
+      },
+      {
+        "date": "2025-03-12",
+        "appointments": 7
+      },
+      {
+        "date": "2025-03-13",
+        "appointments": 8
+      },
+      {
+        "date": "2025-03-14",
+        "appointments": 8
+      },
+      {
+        "date": "2025-03-15",
+        "appointments": 2
+      },
+      {
+        "date": "2025-03-17",
+        "appointments": 6
+      },
+      {
+        "date": "2025-03-18",
+        "appointments": 1
+      },
+      {
+        "date": "2025-03-19",
+        "appointments": 10
+      },
+      {
+        "date": "2025-03-20",
+        "appointments": 11
+      },
+      {
+        "date": "2025-03-21",
+        "appointments": 8
+      },
+      {
+        "date": "2025-03-24",
+        "appointments": 6
+      },
+      {
+        "date": "2025-03-25",
+        "appointments": 2
+      },
+      {
+        "date": "2025-03-26",
+        "appointments": 7
+      },
+      {
+        "date": "2025-03-27",
+        "appointments": 7
+      },
+      {
+        "date": "2025-03-28",
+        "appointments": 12
+      },
+      {
+        "date": "2025-03-29",
+        "appointments": 2
+      },
+      {
+        "date": "2025-03-31",
+        "appointments": 7
+      },
+      {
+        "date": "2025-04-01",
+        "appointments": 1
+      },
+      {
+        "date": "2025-04-02",
+        "appointments": 7
+      },
+      {
+        "date": "2025-04-03",
+        "appointments": 8
+      },
+      {
+        "date": "2025-04-04",
+        "appointments": 9
+      },
+      {
+        "date": "2025-04-05",
+        "appointments": 1
+      },
+      {
+        "date": "2025-04-06",
+        "appointments": 1
+      },
+      {
+        "date": "2025-04-07",
+        "appointments": 6
+      },
+      {
+        "date": "2025-04-08",
+        "appointments": 1
+      },
+      {
+        "date": "2025-04-09",
+        "appointments": 6
+      },
+      {
+        "date": "2025-04-10",
+        "appointments": 10
+      },
+      {
+        "date": "2025-04-11",
+        "appointments": 10
+      },
+      {
+        "date": "2025-04-12",
+        "appointments": 1
+      },
+      {
+        "date": "2025-04-14",
+        "appointments": 1
+      },
+      {
+        "date": "2025-04-15",
+        "appointments": 2
+      },
+      {
+        "date": "2025-04-16",
+        "appointments": 6
+      },
+      {
+        "date": "2025-04-17",
+        "appointments": 9
+      },
+      {
+        "date": "2025-04-18",
+        "appointments": 10
+      },
+      {
+        "date": "2025-04-19",
+        "appointments": 3
+      },
+      {
+        "date": "2025-04-21",
+        "appointments": 7
+      },
+      {
+        "date": "2025-04-22",
+        "appointments": 2
+      },
+      {
+        "date": "2025-04-23",
+        "appointments": 5
+      },
+      {
+        "date": "2025-04-24",
+        "appointments": 11
+      },
+      {
+        "date": "2025-04-25",
+        "appointments": 9
+      },
+      {
+        "date": "2025-04-26",
+        "appointments": 3
+      },
+      {
+        "date": "2025-04-27",
+        "appointments": 2
+      },
+      {
+        "date": "2025-04-28",
+        "appointments": 6
+      },
+      {
+        "date": "2025-04-29",
+        "appointments": 3
+      },
+      {
+        "date": "2025-04-30",
+        "appointments": 6
+      },
+      {
+        "date": "2025-05-01",
+        "appointments": 10
+      },
+      {
+        "date": "2025-05-02",
+        "appointments": 10
+      },
+      {
+        "date": "2025-05-03",
+        "appointments": 4
+      },
+      {
+        "date": "2025-05-05",
+        "appointments": 7
+      },
+      {
+        "date": "2025-05-06",
+        "appointments": 3
+      },
+      {
+        "date": "2025-05-07",
+        "appointments": 6
+      },
+      {
+        "date": "2025-05-08",
+        "appointments": 8
+      },
+      {
+        "date": "2025-05-09",
+        "appointments": 11
+      },
+      {
+        "date": "2025-05-10",
+        "appointments": 3
+      },
+      {
+        "date": "2025-05-12",
+        "appointments": 6
+      },
+      {
+        "date": "2025-05-13",
+        "appointments": 2
+      },
+      {
+        "date": "2025-05-14",
+        "appointments": 7
+      },
+      {
+        "date": "2025-05-15",
+        "appointments": 10
+      },
+      {
+        "date": "2025-05-16",
+        "appointments": 11
+      },
+      {
+        "date": "2025-05-17",
+        "appointments": 1
+      },
+      {
+        "date": "2025-05-19",
+        "appointments": 6
+      },
+      {
+        "date": "2025-05-20",
+        "appointments": 2
+      },
+      {
+        "date": "2025-05-21",
+        "appointments": 7
+      },
+      {
+        "date": "2025-05-22",
+        "appointments": 8
+      },
+      {
+        "date": "2025-05-23",
+        "appointments": 10
+      },
+      {
+        "date": "2025-05-24",
+        "appointments": 1
+      },
+      {
+        "date": "2025-05-27",
+        "appointments": 4
+      },
+      {
+        "date": "2025-05-28",
+        "appointments": 13
+      },
+      {
+        "date": "2025-05-29",
+        "appointments": 8
+      },
+      {
+        "date": "2025-05-30",
+        "appointments": 10
+      },
+      {
+        "date": "2025-05-31",
+        "appointments": 1
+      },
+      {
+        "date": "2025-06-02",
+        "appointments": 8
+      },
+      {
+        "date": "2025-06-03",
+        "appointments": 4
+      },
+      {
+        "date": "2025-06-04",
+        "appointments": 4
+      },
+      {
+        "date": "2025-06-05",
+        "appointments": 10
+      },
+      {
+        "date": "2025-06-06",
+        "appointments": 7
+      },
+      {
+        "date": "2025-06-07",
+        "appointments": 3
+      },
+      {
+        "date": "2025-06-09",
+        "appointments": 8
+      },
+      {
+        "date": "2025-06-10",
+        "appointments": 3
+      },
+      {
+        "date": "2025-06-11",
+        "appointments": 7
+      },
+      {
+        "date": "2025-06-12",
+        "appointments": 9
+      },
+      {
+        "date": "2025-06-13",
+        "appointments": 9
+      },
+      {
+        "date": "2025-06-14",
+        "appointments": 2
+      },
+      {
+        "date": "2025-06-16",
+        "appointments": 9
+      },
+      {
+        "date": "2025-06-17",
+        "appointments": 1
+      },
+      {
+        "date": "2025-06-18",
+        "appointments": 7
+      },
+      {
+        "date": "2025-06-19",
+        "appointments": 11
+      },
+      {
+        "date": "2025-06-20",
+        "appointments": 9
+      },
+      {
+        "date": "2025-06-21",
+        "appointments": 1
+      },
+      {
+        "date": "2025-06-22",
+        "appointments": 1
+      },
+      {
+        "date": "2025-06-23",
+        "appointments": 5
+      },
+      {
+        "date": "2025-06-24",
+        "appointments": 3
+      },
+      {
+        "date": "2025-06-25",
+        "appointments": 6
+      },
+      {
+        "date": "2025-06-26",
+        "appointments": 11
+      },
+      {
+        "date": "2025-06-27",
+        "appointments": 9
+      },
+      {
+        "date": "2025-06-28",
+        "appointments": 2
+      },
+      {
+        "date": "2025-06-30",
+        "appointments": 5
+      },
+      {
+        "date": "2025-07-01",
+        "appointments": 5
+      },
+      {
+        "date": "2025-07-02",
+        "appointments": 7
+      },
+      {
+        "date": "2025-07-03",
+        "appointments": 10
+      },
+      {
+        "date": "2025-07-04",
+        "appointments": 1
+      },
+      {
+        "date": "2025-07-07",
+        "appointments": 9
+      },
+      {
+        "date": "2025-07-08",
+        "appointments": 3
+      },
+      {
+        "date": "2025-07-09",
+        "appointments": 5
+      },
+      {
+        "date": "2025-07-10",
+        "appointments": 9
+      },
+      {
+        "date": "2025-07-11",
+        "appointments": 7
+      },
+      {
+        "date": "2025-07-12",
+        "appointments": 3
+      },
+      {
+        "date": "2025-07-14",
+        "appointments": 9
+      },
+      {
+        "date": "2025-07-15",
+        "appointments": 2
+      },
+      {
+        "date": "2025-07-16",
+        "appointments": 8
+      },
+      {
+        "date": "2025-07-17",
+        "appointments": 12
+      },
+      {
+        "date": "2025-07-18",
+        "appointments": 8
+      },
+      {
+        "date": "2025-07-19",
+        "appointments": 1
+      },
+      {
+        "date": "2025-07-20",
+        "appointments": 2
+      },
+      {
+        "date": "2025-07-21",
+        "appointments": 8
+      },
+      {
+        "date": "2025-07-22",
+        "appointments": 3
+      },
+      {
+        "date": "2025-07-23",
+        "appointments": 10
+      },
+      {
+        "date": "2025-07-24",
+        "appointments": 8
+      },
+      {
+        "date": "2025-07-25",
+        "appointments": 8
+      },
+      {
+        "date": "2025-07-26",
+        "appointments": 2
+      },
+      {
+        "date": "2025-07-28",
+        "appointments": 8
+      },
+      {
+        "date": "2025-07-29",
+        "appointments": 1
+      },
+      {
+        "date": "2025-07-30",
+        "appointments": 7
+      },
+      {
+        "date": "2025-07-31",
+        "appointments": 9
+      },
+      {
+        "date": "2025-08-01",
+        "appointments": 8
+      },
+      {
+        "date": "2025-08-02",
+        "appointments": 2
+      },
+      {
+        "date": "2025-08-04",
+        "appointments": 9
+      },
+      {
+        "date": "2025-08-05",
+        "appointments": 2
+      },
+      {
+        "date": "2025-08-06",
+        "appointments": 7
+      },
+      {
+        "date": "2025-08-07",
+        "appointments": 8
+      },
+      {
+        "date": "2025-08-08",
+        "appointments": 9
+      },
+      {
+        "date": "2025-08-09",
+        "appointments": 2
+      },
+      {
+        "date": "2025-08-11",
+        "appointments": 9
+      },
+      {
+        "date": "2025-08-12",
+        "appointments": 1
+      },
+      {
+        "date": "2025-08-13",
+        "appointments": 5
+      },
+      {
+        "date": "2025-08-14",
+        "appointments": 6
+      },
+      {
+        "date": "2025-08-15",
+        "appointments": 8
+      },
+      {
+        "date": "2025-08-16",
+        "appointments": 1
+      },
+      {
+        "date": "2025-08-18",
+        "appointments": 7
+      },
+      {
+        "date": "2025-08-19",
+        "appointments": 1
+      },
+      {
+        "date": "2025-08-20",
+        "appointments": 4
+      },
+      {
+        "date": "2025-08-21",
+        "appointments": 6
+      },
+      {
+        "date": "2025-08-22",
+        "appointments": 7
+      },
+      {
+        "date": "2025-08-23",
+        "appointments": 1
+      },
+      {
+        "date": "2025-08-25",
+        "appointments": 6
+      },
+      {
+        "date": "2025-08-26",
+        "appointments": 1
+      },
+      {
+        "date": "2025-08-27",
+        "appointments": 4
+      },
+      {
+        "date": "2025-08-28",
+        "appointments": 5
+      },
+      {
+        "date": "2025-08-29",
+        "appointments": 8
+      },
+      {
+        "date": "2025-08-30",
+        "appointments": 1
+      },
+      {
+        "date": "2025-09-01",
+        "appointments": 5
+      },
+      {
+        "date": "2025-09-02",
+        "appointments": 1
+      },
+      {
+        "date": "2025-09-03",
+        "appointments": 3
+      },
+      {
+        "date": "2025-09-04",
+        "appointments": 5
+      },
+      {
+        "date": "2025-09-05",
+        "appointments": 7
+      },
+      {
+        "date": "2025-09-06",
+        "appointments": 1
+      },
+      {
+        "date": "2025-09-08",
+        "appointments": 6
+      },
+      {
+        "date": "2025-09-09",
+        "appointments": 1
+      },
+      {
+        "date": "2025-09-10",
+        "appointments": 3
+      },
+      {
+        "date": "2025-09-11",
+        "appointments": 5
+      },
+      {
+        "date": "2025-09-12",
+        "appointments": 8
+      },
+      {
+        "date": "2025-09-13",
+        "appointments": 1
+      },
+      {
+        "date": "2025-09-15",
+        "appointments": 5
+      },
+      {
+        "date": "2025-09-16",
+        "appointments": 1
+      },
+      {
+        "date": "2025-09-17",
+        "appointments": 3
+      },
+      {
+        "date": "2025-09-18",
+        "appointments": 5
+      },
+      {
+        "date": "2025-09-19",
+        "appointments": 7
+      },
+      {
+        "date": "2025-09-20",
+        "appointments": 1
+      },
+      {
+        "date": "2025-09-22",
+        "appointments": 5
+      },
+      {
+        "date": "2025-09-23",
+        "appointments": 1
+      },
+      {
+        "date": "2025-09-24",
+        "appointments": 3
+      },
+      {
+        "date": "2025-09-25",
+        "appointments": 5
+      },
+      {
+        "date": "2025-09-26",
+        "appointments": 5
+      },
+      {
+        "date": "2025-09-27",
+        "appointments": 1
+      },
+      {
+        "date": "2025-09-29",
+        "appointments": 4
+      },
+      {
+        "date": "2025-09-30",
+        "appointments": 1
+      },
+      {
+        "date": "2025-10-01",
+        "appointments": 3
+      },
+      {
+        "date": "2025-10-02",
+        "appointments": 5
+      },
+      {
+        "date": "2025-10-03",
+        "appointments": 2
+      },
+      {
+        "date": "2025-10-04",
+        "appointments": 1
+      },
+      {
+        "date": "2025-10-06",
+        "appointments": 4
+      },
+      {
+        "date": "2025-10-07",
+        "appointments": 1
+      },
+      {
+        "date": "2025-10-08",
+        "appointments": 3
+      },
+      {
+        "date": "2025-10-09",
+        "appointments": 5
+      },
+      {
+        "date": "2025-10-10",
+        "appointments": 3
+      },
+      {
+        "date": "2025-10-13",
+        "appointments": 3
+      },
+      {
+        "date": "2025-10-14",
+        "appointments": 1
+      },
+      {
+        "date": "2025-10-15",
+        "appointments": 3
+      },
+      {
+        "date": "2025-10-16",
+        "appointments": 4
+      },
+      {
+        "date": "2025-10-17",
+        "appointments": 2
+      },
+      {
+        "date": "2025-10-20",
+        "appointments": 3
+      },
+      {
+        "date": "2025-10-21",
+        "appointments": 1
+      },
+      {
+        "date": "2025-10-22",
+        "appointments": 3
+      },
+      {
+        "date": "2025-10-23",
+        "appointments": 4
+      },
+      {
+        "date": "2025-10-24",
+        "appointments": 3
+      },
+      {
+        "date": "2025-10-27",
+        "appointments": 3
+      },
+      {
+        "date": "2025-10-28",
+        "appointments": 1
+      },
+      {
+        "date": "2025-10-29",
+        "appointments": 3
+      },
+      {
+        "date": "2025-10-30",
+        "appointments": 4
+      },
+      {
+        "date": "2025-10-31",
+        "appointments": 2
+      },
+      {
+        "date": "2025-11-03",
+        "appointments": 3
+      },
+      {
+        "date": "2025-11-05",
+        "appointments": 4
+      },
+      {
+        "date": "2025-11-06",
+        "appointments": 4
+      },
+      {
+        "date": "2025-11-07",
+        "appointments": 3
+      },
+      {
+        "date": "2025-11-10",
+        "appointments": 2
+      },
+      {
+        "date": "2025-11-12",
+        "appointments": 4
+      },
+      {
+        "date": "2025-11-13",
+        "appointments": 4
+      },
+      {
+        "date": "2025-11-14",
+        "appointments": 2
+      },
+      {
+        "date": "2025-11-17",
+        "appointments": 2
+      },
+      {
+        "date": "2025-11-19",
+        "appointments": 3
+      },
+      {
+        "date": "2025-11-20",
+        "appointments": 4
+      },
+      {
+        "date": "2025-11-21",
+        "appointments": 3
+      },
+      {
+        "date": "2025-11-24",
+        "appointments": 2
+      },
+      {
+        "date": "2025-11-26",
+        "appointments": 4
+      },
+      {
+        "date": "2025-11-27",
+        "appointments": 4
+      },
+      {
+        "date": "2025-11-28",
+        "appointments": 2
+      },
+      {
+        "date": "2025-12-01",
+        "appointments": 2
+      },
+      {
+        "date": "2025-12-03",
+        "appointments": 4
+      },
+      {
+        "date": "2025-12-04",
+        "appointments": 4
+      },
+      {
+        "date": "2025-12-05",
+        "appointments": 3
+      },
+      {
+        "date": "2025-12-08",
+        "appointments": 2
+      },
+      {
+        "date": "2025-12-10",
+        "appointments": 4
+      },
+      {
+        "date": "2025-12-11",
+        "appointments": 4
+      },
+      {
+        "date": "2025-12-12",
+        "appointments": 2
+      },
+      {
+        "date": "2025-12-15",
+        "appointments": 2
+      },
+      {
+        "date": "2025-12-17",
+        "appointments": 4
+      },
+      {
+        "date": "2025-12-18",
+        "appointments": 4
+      },
+      {
+        "date": "2025-12-19",
+        "appointments": 3
+      },
+      {
+        "date": "2025-12-22",
+        "appointments": 2
+      },
+      {
+        "date": "2025-12-24",
+        "appointments": 4
+      },
+      {
+        "date": "2025-12-25",
+        "appointments": 4
+      },
+      {
+        "date": "2025-12-26",
+        "appointments": 2
+      },
+      {
+        "date": "2025-12-29",
+        "appointments": 2
+      },
+      {
+        "date": "2025-12-31",
+        "appointments": 4
+      },
+      {
+        "date": "2026-01-01",
+        "appointments": 4
+      },
+      {
+        "date": "2026-01-02",
+        "appointments": 3
+      },
+      {
+        "date": "2026-01-05",
+        "appointments": 2
+      },
+      {
+        "date": "2026-01-07",
+        "appointments": 4
+      },
+      {
+        "date": "2026-01-08",
+        "appointments": 4
+      },
+      {
+        "date": "2026-01-09",
+        "appointments": 2
+      },
+      {
+        "date": "2026-01-12",
+        "appointments": 2
+      },
+      {
+        "date": "2026-01-14",
+        "appointments": 4
+      },
+      {
+        "date": "2026-01-15",
+        "appointments": 4
+      },
+      {
+        "date": "2026-01-16",
+        "appointments": 3
+      },
+      {
+        "date": "2026-01-19",
+        "appointments": 2
+      },
+      {
+        "date": "2026-01-21",
+        "appointments": 4
+      },
+      {
+        "date": "2026-01-22",
+        "appointments": 4
+      },
+      {
+        "date": "2026-01-23",
+        "appointments": 2
+      },
+      {
+        "date": "2026-01-26",
+        "appointments": 2
+      },
+      {
+        "date": "2026-01-28",
+        "appointments": 4
+      },
+      {
+        "date": "2026-01-29",
+        "appointments": 4
+      },
+      {
+        "date": "2026-01-30",
+        "appointments": 2
+      },
+      {
+        "date": "2026-02-02",
+        "appointments": 2
+      },
+      {
+        "date": "2026-02-04",
+        "appointments": 4
+      },
+      {
+        "date": "2026-02-05",
+        "appointments": 4
+      },
+      {
+        "date": "2026-02-06",
+        "appointments": 2
+      },
+      {
+        "date": "2026-02-09",
+        "appointments": 2
+      },
+      {
+        "date": "2026-02-11",
+        "appointments": 4
+      },
+      {
+        "date": "2026-02-12",
+        "appointments": 1
+      }
+    ],
+    "year_distribution": [
+      {
+        "year": 2019,
+        "appointments": 1
+      },
+      {
+        "year": 2020,
+        "appointments": 1
+      },
+      {
+        "year": 2021,
+        "appointments": 1
+      },
+      {
+        "year": 2022,
+        "appointments": 1
+      },
+      {
+        "year": 2023,
+        "appointments": 72
+      },
+      {
+        "year": 2025,
+        "appointments": 1178
+      },
+      {
+        "year": 2026,
+        "appointments": 75
+      }
+    ],
+    "date_range": {
+      "earliest": "2019-02-22 17:00:00",
+      "latest": "2026-02-12 12:30:00",
+      "total": 1329
+    },
+    "monthly_distribution": [
+      {
+        "month": "2019-02",
+        "appointments": 1
+      },
+      {
+        "month": "2020-09",
+        "appointments": 1
+      },
+      {
+        "month": "2021-03",
+        "appointments": 1
+      },
+      {
+        "month": "2022-04",
+        "appointments": 1
+      },
+      {
+        "month": "2023-02",
+        "appointments": 2
+      },
+      {
+        "month": "2023-03",
+        "appointments": 69
+      },
+      {
+        "month": "2023-04",
+        "appointments": 1
+      },
+      {
+        "month": "2025-01",
+        "appointments": 4
+      },
+      {
+        "month": "2025-03",
+        "appointments": 145
+      },
+      {
+        "month": "2025-04",
+        "appointments": 146
+      },
+      {
+        "month": "2025-05",
+        "appointments": 169
+      },
+      {
+        "month": "2025-06",
+        "appointments": 154
+      },
+      {
+        "month": "2025-07",
+        "appointments": 165
+      },
+      {
+        "month": "2025-08",
+        "appointments": 129
+      },
+      {
+        "month": "2025-09",
+        "appointments": 93
+      },
+      {
+        "month": "2025-10",
+        "appointments": 67
+      },
+      {
+        "month": "2025-11",
+        "appointments": 50
+      },
+      {
+        "month": "2025-12",
+        "appointments": 56
+      },
+      {
+        "month": "2026-01",
+        "appointments": 56
+      },
+      {
+        "month": "2026-02",
+        "appointments": 19
+      }
+    ]
+  }
+}
