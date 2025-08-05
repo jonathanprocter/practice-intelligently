@@ -611,9 +611,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await storage.createSessionPrepNote({
               eventId: appointment.id,
               clientId: actualClientId,
-              content: aiSummary,
-              type: 'ai_generated',
-              createdAt: new Date()
+              therapistId: sessionNote.therapistId,
+              prepContent: aiSummary
             });
             
             appointmentsUpdated++;
@@ -629,9 +628,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.createSessionPrepNote({
             eventId: `prep-${sessionNote.id}-${Date.now()}`, // Generate unique event ID
             clientId: actualClientId,
-            content: aiSummary,
-            type: 'ai_generated',
-            createdAt: new Date()
+            therapistId: sessionNote.therapistId,
+            prepContent: aiSummary
           });
           appointmentsUpdated = 1; // Indicate that prep was created
           console.log(`✅ Session prep note created for client ${actualClientId} (no upcoming appointments found)`);
@@ -2436,9 +2434,8 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       const prepNote = await storage.createSessionPrepNote({
         eventId,
         clientId: clientId || null,
-        content,
-        type: type || 'manual',
-        createdAt: new Date()
+        therapistId: clientId, // We'll need to get the actual therapist ID
+        prepContent: content
       });
       
       res.json(prepNote);

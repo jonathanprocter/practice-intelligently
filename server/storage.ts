@@ -829,36 +829,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getUpcomingAppointmentsByClient(clientId: string): Promise<Appointment[]> {
-    try {
-      const result = await pool.query(
-        `SELECT * FROM appointments 
-         WHERE client_id = $1 AND start_time > NOW() AND status = 'scheduled'
-         ORDER BY start_time ASC`,
-        [clientId]
-      );
 
-      return result.rows.map(row => ({
-        id: row.id,
-        clientId: row.client_id,
-        therapistId: row.therapist_id,
-        startTime: new Date(row.start_time),
-        endTime: new Date(row.end_time),
-        status: row.status,
-        type: row.type,
-        notes: row.notes,
-        location: row.location,
-        isRecurring: row.is_recurring,
-        recurringPattern: row.recurring_pattern,
-        googleEventId: row.google_event_id,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
-      }));
-    } catch (error) {
-      console.error('Error in getUpcomingAppointmentsByClient:', error);
-      return [];
-    }
-  }
 
   async getClientIdByName(clientName: string): Promise<string | null> {
     try {

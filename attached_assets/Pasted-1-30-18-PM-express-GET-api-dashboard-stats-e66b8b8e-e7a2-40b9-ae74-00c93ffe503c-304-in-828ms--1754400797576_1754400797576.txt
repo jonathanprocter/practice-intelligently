@@ -1,0 +1,455 @@
+1:30:18 PM [express] GET /api/dashboard/stats/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c 304 in 828ms :: {…
+Found 4 calendars including subcalendars:
+  1. Holidays in United States (en.usa#holiday@group.v.calendar.google.com) [reader] 
+  2. Simple Practice (79dfcb90ce59b1b0345b24f5c8d342bd308eac9521d063a684a8bbd377f2b822@group.calendar.google.com) [owner] 
+  3. Google (jonathan.procter@gmail.com) [owner] [PRIMARY]
+  4. TrevorAI (c2ffec13aa77af8e71cac14a327928e34da57bddaadf18c4e0f669827e1454ff@group.calendar.google.com) [owner] 
+🔍 Calendar fetch params: timeMin=2025-08-05T00:00:00.000Z, timeMax=2025-08-05T23:59:59.999Z
+  → Fetched 0 events from calendar: en.usa#holiday@group.v.calendar.google.com (2025-2025)
+🔍 Calendar fetch params: timeMin=2025-08-05T00:00:00.000Z, timeMax=2025-08-05T23:59:59.999Z
+  → Fetched 4 events from calendar: 79dfcb90ce59b1b0345b24f5c8d342bd308eac9521d063a684a8bbd377f2b822@group.calendar.google.com (2025-2025)
+    📅 Event: 🔒 Valentina Gjidoda Appointment - Start: 2025-08-04T20:00:00-04:00
+    📅 Event: Coffee with Nora - Start: 2025-08-05T08:00:00-04:00
+    📅 Event: Call with Blake - Start: 2025-08-05T11:00:00-04:00
+    📅 Event: Vivian Meador Appointment - Start: 2025-08-05T19:00:00-04:00
+🔍 Calendar fetch params: timeMin=2025-08-05T00:00:00.000Z, timeMax=2025-08-05T23:59:59.999Z
+  → Fetched 0 events from calendar: jonathan.procter@gmail.com (2025-2025)
+🔍 Calendar fetch params: timeMin=2025-08-05T00:00:00.000Z, timeMax=2025-08-05T23:59:59.999Z
+  → Fetched 0 events from calendar: c2ffec13aa77af8e71cac14a327928e34da57bddaadf18c4e0f669827e1454ff@group.calendar.google.com (2025-2025)
+1:30:24 PM [express] GET /api/dashboard/stats/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c 304 in 878ms :: {…
+1:30:26 PM [express] GET /api/progress-notes/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c 304 in 24ms :: []
+1:30:30 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","timestamp":"2025-08-05T13:30:30.7…
+1:30:39 PM [express] POST /api/documents/upload-and-process 200 in 4068ms :: {"analysis":{"extracted…
+Using comprehensive document processor for full analysis...
+Error calling Perplexity API: Error: Perplexity API error: 400 Bad Request
+    at PerplexityClient.generateResponse (/home/runner/workspace/server/perplexity.ts:83:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PerplexityClient.getClinicalResearch (/home/runner/workspace/server/perplexity.ts:106:22)
+    at async MultiModelAI.getEvidenceBasedRecommendations (/home/runner/workspace/server/ai-multi-model.ts:86:21)
+    at async Promise.allSettled (index 2)
+    at async MultiModelAI.generateEnsembleAnalysis (/home/runner/workspace/server/ai-multi-model.ts:140:62)
+    at async DocumentProcessor.generateProgressNote (/home/runner/workspace/server/document-processor.ts:501:22)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:2847:33)
+Perplexity analysis failed, falling back to OpenAI: Error: Perplexity API error: 400 Bad Request
+    at PerplexityClient.generateResponse (/home/runner/workspace/server/perplexity.ts:83:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PerplexityClient.getClinicalResearch (/home/runner/workspace/server/perplexity.ts:106:22)
+    at async MultiModelAI.getEvidenceBasedRecommendations (/home/runner/workspace/server/ai-multi-model.ts:86:21)
+    at async Promise.allSettled (index 2)
+    at async MultiModelAI.generateEnsembleAnalysis (/home/runner/workspace/server/ai-multi-model.ts:140:62)
+    at async DocumentProcessor.generateProgressNote (/home/runner/workspace/server/document-processor.ts:501:22)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:2847:33)
+1:31:00 PM [express] GET /api/health 200 in 2ms :: {"status":"ok","timestamp":"2025-08-05T13:31:00.7…
+1:31:30 PM [express] GET /api/health 200 in 0ms :: {"status":"ok","timestamp":"2025-08-05T13:31:30.9…
+🔍 Looking for Google Calendar event for client: Nick Dabreu Appointment 1600 Hrs on date: 2025-07-23
+Error searching Google Calendar events: TypeError: Failed to parse URL from be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/api/oauth/events/today
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:2900:36) {
+  [cause]: TypeError: Invalid URL
+      at new URL (node:internal/url:806:29)
+      at new Request (node:internal/deps/undici/undici:9586:25)
+      at fetch (node:internal/deps/undici/undici:10315:25)
+      at fetch (node:internal/deps/undici/undici:13508:10)
+      at fetch (node:internal/bootstrap/web/exposed-window-or-worker:72:12)
+      at <anonymous> (/home/runner/workspace/server/routes.ts:2900:42)
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+    code: 'ERR_INVALID_URL',
+    input: 'be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/api/oauth/events/today'
+  }
+}
+🤖 Creating unified narrative from progress note sections...
+🏷️  Generating AI tags for unified narrative...
+✅ Generated 10 AI tags: CBT, ACT, Generalized Anxiety, Cognitive Restructuring, Mindfulness, Perspective-Taking, Adult, Life Transitions, Cognitive Biases, Therapeutic Alliance
+✅ Unified narrative created and saved to session notes
+📊 Generated 10 AI tags: CBT, ACT, Generalized Anxiety, Cognitive Restructuring, Mindfulness, Perspective-Taking, Adult, Life Transitions, Cognitive Biases, Therapeutic Alliance
+🔄 Generating next session prep for client ID: Nick Dabreu (Nick Dabreu Appointment 1600 Hrs) - independent of current appointment linking
+🔍 Looking for upcoming appointments for client ID: Nick Dabreu (Nick Dabreu Appointment 1600 Hrs)
+❌ Invalid client ID format: Nick Dabreu - trying to resolve client name to UUID
+🔍 Searching for client: "Nick Dabreu"
+📝 Name parts: firstName="Nick", lastName="Dabreu"
+✅ Exact match found: Nick Dabreu (429ab6e7-9e6f-42a4-92b3-c9607f0fb7d9)
+✅ Resolved client name to UUID: 429ab6e7-9e6f-42a4-92b3-c9607f0fb7d9
+📅 Found 0 upcoming appointments for Nick Dabreu Appointment 1600 Hrs
+⚠️ No upcoming appointments found for client Nick Dabreu Appointment 1600 Hrs (429ab6e7-9e6f-42a4-92b3-c9607f0fb7d9)
+1:31:51 PM [express] POST /api/documents/generate-progress-note 200 in 64299ms :: {"success":true,"p…
+1:31:52 PM [express] GET /api/progress-notes/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c 304 in 23ms :: []
+file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:395
+0&&(o=t[0]),o instanceof Error)throw o;var u=new Error("Unhandled error."+(o?" ("+
+                               ^
+
+error: terminating connection due to administrator command
+    at cn.parseErrorMessage (file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1182:6)
+    at cn.handlePacket (file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1143:13)
+    at cn.parse (file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1127:36)
+    at v.<anonymous> (file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1190:16)
+    at v.emit (file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:397:12)
+    at WebSocket.<anonymous> (file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:987:80)
+    at callListener (/home/runner/workspace/node_modules/ws/lib/event-target.js:290:14)
+    at WebSocket.onMessage (/home/runner/workspace/node_modules/ws/lib/event-target.js:209:9)
+    at WebSocket.emit (node:events:524:28)
+    at Receiver.receiverOnMessage (/home/runner/workspace/node_modules/ws/lib/websocket.js:1220:20)
+    at Receiver.emit (node:events:524:28)
+    at Receiver.dataMessage (/home/runner/workspace/node_modules/ws/lib/receiver.js:569:14)
+    at Receiver.getData (/home/runner/workspace/node_modules/ws/lib/receiver.js:496:10)
+    at Receiver.startLoop (/home/runner/workspace/node_modules/ws/lib/receiver.js:167:16)
+    at Receiver._write (/home/runner/workspace/node_modules/ws/lib/receiver.js:94:10)
+    at writeOrBuffer (node:internal/streams/writable:572:12)
+    at _write (node:internal/streams/writable:501:10)
+    at Writable.write (node:internal/streams/writable:510:10)
+    at TLSSocket.socketOnData (/home/runner/workspace/node_modules/ws/lib/websocket.js:1355:35)
+    at TLSSocket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23) {
+  length: 116,
+  severity: 'FATAL',
+  code: '57P01',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'postgres.c',
+  line: '3289',
+  routine: 'ProcessInterrupts',
+  client: NeonClient {
+    _events: [Object: null prototype] { error: [Function (anonymous)] },
+    _eventsCount: 1,
+    _maxListeners: undefined,
+    connectionParameters: ConnectionParameters {
+      user: 'neondb_owner',
+      database: 'neondb',
+      port: 5432,
+      host: 'ep-plain-brook-aei1dgfg.c-2.us-east-2.aws.neon.tech',
+      binary: false,
+      options: undefined,
+      ssl: {},
+      client_encoding: '',
+      replication: undefined,
+      isDomainSocket: false,
+      application_name: undefined,
+      fallback_application_name: undefined,
+      statement_timeout: false,
+      lock_timeout: false,
+      idle_in_transaction_session_timeout: false,
+      query_timeout: false,
+      connect_timeout: 0
+    },
+    user: 'neondb_owner',
+    database: 'neondb',
+    port: 5432,
+    host: 'ep-plain-brook-aei1dgfg.c-2.us-east-2.aws.neon.tech',
+    replication: undefined,
+    _Promise: [Function: Promise],
+    _types: TypeOverrides {
+      _types: {
+        getTypeParser: [Function: getTypeParser],
+        setTypeParser: [Function: setTypeParser],
+        arrayParser: { create: [Function: create] },
+        builtins: {
+          BOOL: 16,
+          BYTEA: 17,
+          CHAR: 18,
+          INT8: 20,
+          INT2: 21,
+          INT4: 23,
+          REGPROC: 24,
+          TEXT: 25,
+          OID: 26,
+          TID: 27,
+          XID: 28,
+          CID: 29,
+          JSON: 114,
+          XML: 142,
+          PG_NODE_TREE: 194,
+          SMGR: 210,
+          PATH: 602,
+          POLYGON: 604,
+          CIDR: 650,
+          FLOAT4: 700,
+          FLOAT8: 701,
+          ABSTIME: 702,
+          RELTIME: 703,
+          TINTERVAL: 704,
+          CIRCLE: 718,
+          MACADDR8: 774,
+          MONEY: 790,
+          MACADDR: 829,
+          INET: 869,
+          ACLITEM: 1033,
+          BPCHAR: 1042,
+          VARCHAR: 1043,
+          DATE: 1082,
+          TIME: 1083,
+          TIMESTAMP: 1114,
+          TIMESTAMPTZ: 1184,
+          INTERVAL: 1186,
+          TIMETZ: 1266,
+          BIT: 1560,
+          VARBIT: 1562,
+          NUMERIC: 1700,
+          REFCURSOR: 1790,
+          REGPROCEDURE: 2202,
+          REGOPER: 2203,
+          REGOPERATOR: 2204,
+          REGCLASS: 2205,
+          REGTYPE: 2206,
+          UUID: 2950,
+          TXID_SNAPSHOT: 2970,
+          PG_LSN: 3220,
+          PG_NDISTINCT: 3361,
+          PG_DEPENDENCIES: 3402,
+          TSVECTOR: 3614,
+          TSQUERY: 3615,
+          GTSVECTOR: 3642,
+          REGCONFIG: 3734,
+          REGDICTIONARY: 3769,
+          JSONB: 3802,
+          REGNAMESPACE: 4089,
+          REGROLE: 4096
+        }
+      },
+      text: {},
+      binary: {}
+    },
+    _ending: true,
+    _connecting: false,
+    _connected: true,
+    _connectionError: false,
+    _queryable: false,
+    connection: Connection {
+      _events: [Object: null prototype] {
+        newListener: [Function (anonymous)],
+        connect: [ [Function (anonymous)], [Function (anonymous)] ],
+        sslconnect: [Function (anonymous)],
+        authenticationMD5Password: [Function: bound _handleAuthMD5Password],
+        authenticationSASL: [Function: bound _handleAuthSASL],
+        authenticationSASLContinue: [Function: bound _handleAuthSASLContinue] AsyncFunction,
+        authenticationSASLFinal: [Function: bound _handleAuthSASLFinal],
+        backendKeyData: [Function: bound _handleBackendKeyData],
+        error: [Function: bound _handleErrorEvent],
+        errorMessage: [Function: bound _handleErrorMessage],
+        notice: [Function: bound _handleNotice],
+        rowDescription: [Function: bound _handleRowDescription],
+        dataRow: [Function: bound _handleDataRow],
+        portalSuspended: [Function: bound _handlePortalSuspended],
+        emptyQuery: [Function: bound _handleEmptyQuery],
+        commandComplete: [Function: bound _handleCommandComplete],
+        parseComplete: [Function: bound _handleParseComplete],
+        copyInResponse: [Function: bound _handleCopyInResponse],
+        copyData: [Function: bound _handleCopyData],
+        notification: [Function: bound _handleNotification],
+        end: [
+          [Function: bound onceWrapper] {
+            listener: [Function (anonymous)]
+          },
+          [Function: bound onceWrapper] {
+            listener: [Function (anonymous)]
+          }
+        ],
+        readyForQuery: [Function: bound _handleReadyForQuery]
+      },
+      _eventsCount: 22,
+      _maxListeners: undefined,
+      stream: Socket {
+        _events: [Object: null prototype] {
+          error: [Function: reportStreamError],
+          close: [Function (anonymous)],
+          end: [ [Function (anonymous)], [Function (anonymous)] ],
+          data: [Function (anonymous)]
+        },
+        _eventsCount: 4,
+        _maxListeners: undefined,
+        opts: {},
+        connecting: false,
+        pending: false,
+        writable: true,
+        encrypted: false,
+        authorized: false,
+        destroyed: true,
+        ws: <ref *1> WebSocket {
+          _events: [Object: null prototype] {
+            error: [Function],
+            message: [Function],
+            close: [Function],
+            open: [Function]
+          },
+          _eventsCount: 4,
+          _maxListeners: undefined,
+          _binaryType: 'arraybuffer',
+          _closeCode: 1006,
+          _closeFrameReceived: false,
+          _closeFrameSent: false,
+          _closeMessage: Buffer(0) [Uint8Array] [],
+          _closeTimer: Timeout {
+            _idleTimeout: 30000,
+            _idlePrev: [TimersList],
+            _idleNext: [Timeout],
+            _idleStart: 214685,
+            _onTimeout: [Function: bound ],
+            _timerArgs: undefined,
+            _repeat: null,
+            _destroyed: false,
+            [Symbol(refed)]: true,
+            [Symbol(kHasPrimitive)]: false,
+            [Symbol(asyncId)]: 13826,
+            [Symbol(triggerId)]: 13710
+          },
+          _errorEmitted: false,
+          _extensions: {},
+          _paused: false,
+          _protocol: '',
+          _readyState: 2,
+          _receiver: Receiver {
+            _events: [Object],
+            _writableState: [WritableState],
+            _maxListeners: undefined,
+            _allowSynchronousEvents: true,
+            _binaryType: 'arraybuffer',
+            _extensions: {},
+            _isServer: false,
+            _maxPayload: 104857600,
+            _skipUTF8Validation: false,
+            _bufferedBytes: 0,
+            _buffers: [],
+            _compressed: false,
+            _payloadLength: 117,
+            _mask: undefined,
+            _fragmented: 0,
+            _masked: false,
+            _fin: true,
+            _opcode: 2,
+            _totalPayloadLength: 0,
+            _messageLength: 0,
+            _fragments: [],
+            _errored: false,
+            _loop: true,
+            _state: 4,
+            _eventsCount: 6,
+            [Symbol(shapeMode)]: true,
+            [Symbol(kCapture)]: false,
+            [Symbol(websocket)]: [Circular *1]
+          },
+          _sender: Sender {
+            _extensions: {},
+            _socket: [TLSSocket],
+            _firstFragment: true,
+            _compress: false,
+            _bufferedBytes: 0,
+            _queue: [],
+            _state: 0,
+            onerror: [Function: senderOnError],
+            [Symbol(websocket)]: [Circular *1]
+          },
+          _socket: TLSSocket {
+            _tlsOptions: [Object],
+            _secureEstablished: true,
+            _securePending: false,
+            _newSessionPending: false,
+            _controlReleased: true,
+            secureConnecting: false,
+            _SNICallback: null,
+            servername: 'ep-plain-brook-aei1dgfg.c-2.us-east-2.aws.neon.tech',
+            alpnProtocol: false,
+            authorized: true,
+            authorizationError: null,
+            encrypted: true,
+            _events: [Object: null prototype],
+            _eventsCount: 6,
+            connecting: false,
+            _hadError: false,
+            _parent: null,
+            _host: 'ep-plain-brook-aei1dgfg.c-2.us-east-2.aws.neon.tech',
+            _closeAfterHandlingError: false,
+            _readableState: [ReadableState],
+            _writableState: [WritableState],
+            allowHalfOpen: false,
+            _maxListeners: undefined,
+            _sockname: null,
+            _pendingData: null,
+            _pendingEncoding: '',
+            server: undefined,
+            _server: null,
+            ssl: [TLSWrap],
+            _requestCert: true,
+            _rejectUnauthorized: true,
+            parser: null,
+            _httpMessage: null,
+            autoSelectFamilyAttemptedAddresses: [Array],
+            timeout: 0,
+            [Symbol(alpncallback)]: null,
+            [Symbol(res)]: [TLSWrap],
+            [Symbol(verified)]: true,
+            [Symbol(pendingSession)]: null,
+            [Symbol(async_id_symbol)]: 13710,
+            [Symbol(kHandle)]: [TLSWrap],
+            [Symbol(lastWriteQueueSize)]: 6,
+            [Symbol(timeout)]: null,
+            [Symbol(kBuffer)]: null,
+            [Symbol(kBufferCb)]: null,
+            [Symbol(kBufferGen)]: null,
+            [Symbol(shapeMode)]: true,
+            [Symbol(kCapture)]: false,
+            [Symbol(kSetNoDelay)]: true,
+            [Symbol(kSetKeepAlive)]: false,
+            [Symbol(kSetKeepAliveInitialDelay)]: 0,
+            [Symbol(kBytesRead)]: 0,
+            [Symbol(kBytesWritten)]: 0,
+            [Symbol(connect-options)]: [Object],
+            [Symbol(websocket)]: [Circular *1]
+          },
+          _bufferedAmount: 0,
+          _isServer: false,
+          _redirects: 0,
+          _autoPong: true,
+          _url: 'wss://ep-plain-brook-aei1dgfg.c-2.us-east-2.aws.neon.tech/v2',
+          _req: null,
+          [Symbol(shapeMode)]: false,
+          [Symbol(kCapture)]: false
+        },
+        writeBuffer: undefined,
+        tlsState: 0,
+        tlsRead: undefined,
+        tlsWrite: undefined
+      },
+      _keepAlive: false,
+      _keepAliveInitialDelayMillis: 0,
+      lastBuffer: false,
+      parsedStatements: {},
+      ssl: false,
+      _ending: true,
+      _emitMessage: false,
+      _connecting: true
+    },
+    queryQueue: [],
+    binary: false,
+    processID: -1829015016,
+    secretKey: 212155512,
+    ssl: false,
+    _connectionTimeoutMillis: 0,
+    config: {
+      connectionString: 'postgresql://neondb_owner:npg_i1QsHf9qENoP@ep-plain-brook-aei1dgfg.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require',
+      max: 10,
+      maxUses: Infinity,
+      allowExitOnIdle: false,
+      maxLifetimeSeconds: 0,
+      idleTimeoutMillis: 10000
+    },
+    _connectionCallback: null,
+    release: [Function (anonymous)],
+    activeQuery: null,
+    readyForQuery: true,
+    hasExecuted: true,
+    _poolUseCount: 6
+  }
+}
+
+Node.js v20.19.3
