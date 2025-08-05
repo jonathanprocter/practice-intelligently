@@ -2194,19 +2194,17 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       const filteredEvents = todaysEvents.filter(event => {
         if (!event.start) return false;
         
-        const eventStart = new Date(event.start.dateTime || event.start.date);
-        const eventDate = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
-        const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        // Use the original dateTime string to avoid timezone conversion issues
+        const originalDateTimeString = event.start.dateTime || event.start.date;
         
-        console.log(`🔍 Event: ${event.summary} - Start: ${eventStart.toISOString()} - EventDate: ${eventDate.toDateString()} - TodayDate: ${todayDate.toDateString()} - Match: ${eventDate.getTime() === todayDate.getTime()}`);
+        // Extract just the date part (YYYY-MM-DD) from the original string
+        const eventDateString = originalDateTimeString.split('T')[0]; // Gets "2025-08-04" or "2025-08-05"
+        const todayDateString = today.toISOString().split('T')[0]; // Gets today's date in YYYY-MM-DD format
         
-        // Only include events that are exactly on today's date
-        const isToday = eventDate.getTime() === todayDate.getTime();
+        console.log(`🔍 Event: ${event.summary} - OriginalDateTime: ${originalDateTimeString} - EventDate: ${eventDateString} - TodayDate: ${todayDateString} - Match: ${eventDateString === todayDateString}`);
         
-        // Additional safeguard: explicitly exclude events from August 4th
-        const isYesterday = eventStart.toISOString().startsWith('2025-08-04');
-        
-        return isToday && !isYesterday;
+        // Only include events that are exactly on today's date (no timezone conversion)
+        return eventDateString === todayDateString;
       });
       
       console.log(`🔍 DEBUG: Filtered to ${filteredEvents.length} events for today`);
