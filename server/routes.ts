@@ -234,7 +234,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Clients
+  // Search clients by name (put this BEFORE the therapistId route to avoid collision)
+  app.get("/api/clients/search", async (req, res) => {
+    try {
+      const { name } = req.query;
+      if (!name) {
+        return res.status(400).json({ error: "Name parameter is required" });
+      }
+      
+      const clients = await storage.getClients('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c');
+      const searchTerm = (name as string).toLowerCase().trim();
+      
+      // Search for clients by name (first name, last name, or full name)
+      const matchingClients = clients.filter(client => {
+        const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
+        const firstName = client.firstName?.toLowerCase() || '';
+        const lastName = client.lastName?.toLowerCase() || '';
+        
+        return fullName.includes(searchTerm) || 
+               firstName.includes(searchTerm) || 
+               lastName.includes(searchTerm);
+      });
+      
+      res.json(matchingClients);
+    } catch (error) {
+      console.error("Error searching clients:", error);
+      res.status(500).json({ error: "Failed to search clients" });
+    }
+  });
+
+  // Debug endpoint to find specific calendar event
+  app.get("/api/calendar/event/:eventId", async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      
+      // Search for the event across the date range
+      const response = await fetch(`http://localhost:5000/api/calendar/events?timeMin=2025-07-01T00:00:00.000Z&timeMax=2025-08-31T23:59:59.999Z&calendarId=79dfcb90ce59b1b0345b24f5c8d342bd308eac9521d063a684a8bbd377f2b822@group.calendar.google.com`);
+      const events = await response.json();
+      
+      const event = events.find((e: any) => e.id === eventId);
+      if (event) {
+        res.json(event);
+      } else {
+        res.status(404).json({ error: "Event not found" });
+      }
+    } catch (error) {
+      console.error("Error finding calendar event:", error);
+      res.status(500).json({ error: "Failed to find calendar event" });
+    }
+  });
+
+  // Clients by therapist ID
   app.get("/api/clients/:therapistId", async (req, res) => {
     try {
       const { therapistId } = req.params;
