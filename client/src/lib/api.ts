@@ -203,9 +203,9 @@ export class ApiClient {
           notes: event.description || ''
         }));
 
-        // Also get database appointments
+        // Also get database appointments (today only)
         try {
-          const dbResponse = await apiRequest('GET', `/api/appointments/${therapistId}`);
+          const dbResponse = await apiRequest('GET', `/api/appointments/today/${therapistId}`);
           const dbAppointments = await dbResponse.json();
 
           // Combine and return both
@@ -216,8 +216,8 @@ export class ApiClient {
         }
       } catch (calendarError) {
         console.warn('Calendar fetch failed, trying database appointments only');
-        // Fallback to database appointments only
-        const response = await apiRequest('GET', `/api/appointments/${therapistId}`);
+        // Fallback to database appointments only (today only)
+        const response = await apiRequest('GET', `/api/appointments/today/${therapistId}`);
         return response.json();
       }
     } catch (error) {
