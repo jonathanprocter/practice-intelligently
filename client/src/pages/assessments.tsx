@@ -27,6 +27,7 @@ import {
   Stethoscope
 } from "lucide-react";
 import { format } from "date-fns";
+import { ValuesMatrix } from "@/components/assessments/ValuesMatrix";
 
 const therapistId = "e66b8b8e-e7a2-40b9-ae74-00c93ffe503c";
 
@@ -41,6 +42,8 @@ export default function Assessments() {
   const [inSessionAssessments, setInSessionAssessments] = useState<any[]>([]);
   const [activeIframe, setActiveIframe] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('catalog');
+  const [showValuesMatrix, setShowValuesMatrix] = useState(false);
+  const [valuesMatrixClientId, setValuesMatrixClientId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -388,6 +391,31 @@ export default function Assessments() {
           onAssign={handleAssign}
         />
       )}
+
+      {/* Values Matrix Dialog */}
+      <Dialog open={showValuesMatrix} onOpenChange={setShowValuesMatrix}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Values Matrix Assessment</DialogTitle>
+            <DialogDescription>
+              Complete this interactive assessment to identify and rank your personal values.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+            <ValuesMatrix
+              clientId={valuesMatrixClientId}
+              onComplete={(results) => {
+                // Handle completion - could save results, show success message, etc.
+                toast({
+                  title: "Values Matrix Completed",
+                  description: "Your values have been successfully ranked and results exported."
+                });
+                setShowValuesMatrix(false);
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 
@@ -521,14 +549,28 @@ export default function Assessments() {
                       <Users className="w-3 h-3 mr-1" />
                       Assign
                     </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => window.open(item.url, '_blank')}
-                    >
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      Preview
-                    </Button>
+                    {item.name === 'Values Matrix' ? (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          setShowValuesMatrix(true);
+                          setValuesMatrixClientId(null); // Can be set to specific client if needed
+                        }}
+                      >
+                        <PlayCircle className="w-3 h-3 mr-1" />
+                        Start Tool
+                      </Button>
+                    ) : (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => window.open(item.url, '_blank')}
+                      >
+                        <ExternalLink className="w-3 h-3 mr-1" />
+                        Preview
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
