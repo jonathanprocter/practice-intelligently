@@ -88,6 +88,8 @@ export default function Assessments() {
       "Substance Use": "bg-orange-50 text-orange-700 border-orange-200",
       "Couples": "bg-pink-50 text-pink-700 border-pink-200",
       "Tools": "bg-cyan-50 text-cyan-700 border-cyan-200",
+      "tools": "bg-cyan-50 text-cyan-700 border-cyan-200",
+      "self_discovery": "bg-emerald-50 text-emerald-700 border-emerald-200",
       "General": "bg-gray-50 text-gray-700 border-gray-200"
     };
     return colors[category] || "bg-gray-50 text-gray-700 border-gray-200";
@@ -503,11 +505,11 @@ export default function Assessments() {
             </div>
           ) : (
             filteredCatalog.map((item: any) => (
-              <Card key={item.id} className={`hover:shadow-lg transition-shadow border-l-4 ${item.category === 'Tools' ? 'border-l-cyan-500' : 'border-l-blue-500'}`}>
+              <Card key={item.id} className={`hover:shadow-lg transition-shadow border-l-4 ${(item.category === 'Tools' || item.category === 'tools' || item.category === 'self_discovery') ? 'border-l-cyan-500' : 'border-l-blue-500'}`}>
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center">
-                      {item.category === 'Tools' ? (
+                      {(item.category === 'Tools' || item.category === 'tools' || item.category === 'self_discovery') ? (
                         <Wrench className="w-4 h-4 mr-2 text-cyan-600" />
                       ) : (
                         <Stethoscope className="w-4 h-4 mr-2 text-blue-600" />
