@@ -1,0 +1,131 @@
+{
+  "timestamp": "2025-08-05T18:19:38.159038",
+  "overall_status": "HEALTHY",
+  "modules": {
+    "system_health": {
+      "status": "PASS",
+      "api_connectivity": true,
+      "database_status": true,
+      "ai_services": [
+        {
+          "service": "openai",
+          "status": "online",
+          "lastChecked": "2025-08-05T18:19:38.172Z"
+        },
+        {
+          "service": "anthropic",
+          "status": "online",
+          "lastChecked": "2025-08-05T18:19:38.172Z"
+        },
+        {
+          "service": "perplexity",
+          "status": "online",
+          "lastChecked": "2025-08-05T18:19:38.172Z"
+        },
+        {
+          "service": "gemini",
+          "status": "online",
+          "lastChecked": "2025-08-05T18:19:38.176Z"
+        }
+      ],
+      "response_times": {
+        "health_check": "11ms"
+      }
+    },
+    "calendar_integration": {
+      "status": "PASS",
+      "oauth_connected": true,
+      "calendars_available": 4,
+      "events_fetching": true,
+      "today_events": 3,
+      "response_times": {
+        "auth_check": "4ms",
+        "calendars_fetch": "142ms",
+        "events_fetch": "719ms"
+      }
+    },
+    "document_processing": {
+      "status": "PASS",
+      "upload_endpoint": false,
+      "ai_processing": true,
+      "client_detection": false,
+      "progress_note_generation": false,
+      "supported_formats": []
+    },
+    "storage_system": {
+      "status": "PASS",
+      "database_connection": true,
+      "clients_crud": true,
+      "appointments_crud": true,
+      "session_notes_crud": true,
+      "progress_notes_crud": true,
+      "ai_insights_crud": true,
+      "response_times": {
+        "clients_fetch": "47ms",
+        "appointments_fetch": "26ms",
+        "session_notes_fetch": "25ms",
+        "progress_notes_fetch": "79ms",
+        "ai_insights_fetch": "25ms"
+      }
+    },
+    "ai_services": {
+      "status": "PASS",
+      "openai_available": true,
+      "anthropic_available": true,
+      "gemini_available": true,
+      "perplexity_available": true,
+      "session_insights": true,
+      "progress_note_generation": false,
+      "ai_tagging": true,
+      "response_times": {
+        "services_check": "510ms",
+        "insight_generation": "7863ms",
+        "pattern_analysis": "64ms"
+      }
+    },
+    "progress_notes_system": {
+      "status": "PASS",
+      "crud_operations": true,
+      "soap_format": true,
+      "ai_enhancement": true,
+      "client_association": true,
+      "response_times": {
+        "notes_fetch": "66ms",
+        "ai_generation": "6157ms"
+      }
+    },
+    "session_insights_system": {
+      "status": "PASS",
+      "session_prep": true,
+      "appointment_insights": false,
+      "client_history_analysis": false,
+      "next_session_recommendations": false,
+      "response_times": {
+        "session_prep": "2564ms",
+        "appointment_insights": "11103ms"
+      }
+    },
+    "file_structure": {
+      "status": "PASS",
+      "missing_files": [],
+      "critical_files": {
+        "server/routes.ts": true,
+        "server/storage.ts": true,
+        "server/db.ts": true,
+        "server/document-processor.ts": true,
+        "server/oauth-simple.ts": true,
+        "shared/schema.ts": true,
+        "package.json": true
+      }
+    }
+  },
+  "critical_issues": [],
+  "warnings": [],
+  "recommendations": [
+    "Optimize insight_generation in ai_services - response time 7863ms is slow",
+    "Optimize ai_generation in progress_notes_system - response time 6157ms is slow",
+    "Optimize session_prep in session_insights_system - response time 2564ms is slow",
+    "Optimize appointment_insights in session_insights_system - response time 11103ms is slow",
+    "System is performing well - consider implementing monitoring alerts"
+  ]
+}
