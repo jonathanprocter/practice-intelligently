@@ -38,7 +38,7 @@ const docProcessor = new DocumentProcessor();
 const upload = multer({
   dest: 'uploads/',
   fileFilter: (req, file, cb) => {
-    console.log('File filter - mimetype:', file.mimetype, 'originalname:', file.originalname);
+    console.log('File filter - mimetype:', file.mimetype, 'originalname:', file.originalname, 'fieldname:', file.fieldname);
     if (file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {
@@ -4460,7 +4460,8 @@ Follow-up areas for next session:
 
   // Document upload and processing route
   app.post('/api/documents/upload-and-process', (req, res) => {
-    upload.single('file')(req, res, async (err) => {
+    console.log('Upload request received - headers:', req.headers['content-type']);
+    upload.any()(req, res, async (err) => {
       if (err) {
         console.error('Multer error:', err);
         return res.status(400).json({ 
@@ -4471,13 +4472,22 @@ Follow-up areas for next session:
 
       try {
         const { clientId, clientName } = req.body;
-        const file = req.file;
+        const files = req.files as Express.Multer.File[];
+        const file = files?.[0];
         
-        console.log('Upload received - clientId:', clientId, 'clientName:', clientName, 'file:', file?.originalname);
+        console.log('Upload received - clientId:', clientId, 'clientName:', clientName);
+        console.log('Files received:', files?.map(f => ({ fieldname: f.fieldname, originalname: f.originalname, mimetype: f.mimetype })));
         
         if (!file || !clientId || !clientName) {
           return res.status(400).json({ 
-            error: 'Missing required fields: file, clientId, clientName' 
+            error: 'Missing required fields: file, clientId, clientName',
+            received: { 
+              hasFile: !!file, 
+              clientId: !!clientId, 
+              clientName: !!clientName,
+              bodyKeys: Object.keys(req.body),
+              fileCount: files?.length || 0
+            }
           });
         }
 
