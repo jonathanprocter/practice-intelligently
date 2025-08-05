@@ -140,32 +140,42 @@ export const DailyView = ({
 
       // Load session prep notes for this appointment
       console.log(`🔍 Loading session prep for event: ${event.id}`);
-      const prepResponse = await fetch(`/api/session-prep/appointment/${event.id}`);
-      if (prepResponse.ok) {
-        const prepData = await prepResponse.json();
-        setSessionPrepNotes(prepData);
-        console.log(`✅ Session prep loaded successfully`);
-      } else {
-        console.log(`❌ Session prep failed: ${prepResponse.status}`);
+      try {
+        const prepResponse = await fetch(`/api/session-prep/appointment/${event.id}`);
+        if (prepResponse.ok) {
+          const prepData = await prepResponse.json();
+          setSessionPrepNotes(prepData);
+          console.log(`✅ Session prep loaded successfully`);
+        } else {
+          console.log(`❌ Session prep failed: ${prepResponse.status}`);
+        }
+      } catch (prepError) {
+        console.error(`❌ Session prep error:`, prepError);
+        setSessionPrepNotes(null);
       }
 
       // Try to load existing session notes from database
       console.log(`🔍 Loading session notes for event: ${event.id}`);
-      const sessionResponse = await fetch(`/api/session-notes/event/${event.id}`);
-      if (sessionResponse.ok) {
-        const existingNotes = await sessionResponse.json();
-        console.log(`📝 Found ${existingNotes.length} session notes for event ${event.id}`);
-        if (existingNotes.length > 0) {
-          // Use the most recent note
-          const latestNote = existingNotes[0];
-          console.log(`✅ Loading session note content: ${latestNote.content.substring(0, 100)}...`);
-          setSessionNotes(latestNote.content);
+      try {
+        const sessionResponse = await fetch(`/api/session-notes/event/${event.id}`);
+        if (sessionResponse.ok) {
+          const existingNotes = await sessionResponse.json();
+          console.log(`📝 Found ${existingNotes.length} session notes for event ${event.id}`);
+          if (existingNotes.length > 0) {
+            // Use the most recent note
+            const latestNote = existingNotes[0];
+            console.log(`✅ Loading session note content: ${latestNote.content.substring(0, 100)}...`);
+            setSessionNotes(latestNote.content);
+          } else {
+            console.log(`❌ No session notes found, using event notes`);
+            setSessionNotes(event.notes || '');
+          }
         } else {
-          console.log(`❌ No session notes found, using event notes`);
+          console.log(`❌ Failed to load session notes: ${sessionResponse.status}`);
           setSessionNotes(event.notes || '');
         }
-      } else {
-        console.log(`❌ Failed to load session notes: ${sessionResponse.status}`);
+      } catch (sessionError) {
+        console.error(`❌ Session notes loading error:`, sessionError);
         setSessionNotes(event.notes || '');
       }
     } catch (error) {
