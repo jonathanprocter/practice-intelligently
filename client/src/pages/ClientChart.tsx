@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,7 +17,8 @@ import {
   Clock,
   Activity,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from 'lucide-react';
 import { DocumentProcessor } from '@/components/documents/DocumentProcessor';
 
@@ -51,6 +54,8 @@ export default function ClientChart() {
   const params = useParams<{ clientId: string }>();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: client, isLoading: clientLoading } = useQuery<Client>({
     queryKey: ['/api/clients', params.clientId],
@@ -76,6 +81,36 @@ export default function ClientChart() {
     // Refresh session notes after document is processed
     // This will be handled by the DocumentProcessor component
     console.log('Document processed:', document);
+  };
+
+  // Delete session note mutation
+  const deleteSessionNoteMutation = useMutation({
+    mutationFn: async (noteId: string) => {
+      return await apiRequest(`/api/session-notes/${noteId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/session-notes/client', params.clientId] });
+      toast({
+        title: "Session note deleted",
+        description: "The session note has been successfully removed."
+      });
+    },
+    onError: (error) => {
+      console.error('Error deleting session note:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete session note. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleDeleteSessionNote = (noteId: string, noteSource?: string) => {
+    if (confirm(`Are you sure you want to delete this ${noteSource === 'document_upload' ? 'uploaded document' : 'session note'}? This action cannot be undone.`)) {
+      deleteSessionNoteMutation.mutate(noteId);
+    }
   };
 
   if (clientLoading) {
@@ -218,16 +253,28 @@ export default function ClientChart() {
                   <div key={note.id} className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium">Session Note</span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(note.createdAt).toLocaleDateString()}
-                        </span>
-                        {note.source === 'document_upload' && (
-                          <Badge variant="secondary" className="text-xs">
-                            Uploaded Document
-                          </Badge>
-                        )}
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">Session Note</span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(note.createdAt).toLocaleDateString()}
+                          </span>
+                          {note.source === 'document_upload' && (
+                            <Badge variant="secondary" className="text-xs">
+                              Uploaded Document
+                            </Badge>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteSessionNote(note.id, note.source)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 h-auto p-1"
+                          disabled={deleteSessionNoteMutation.isPending}
+                          data-testid={`button-delete-recent-note-${note.id}`}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
                       </div>
                       <p className="text-sm text-gray-600 line-clamp-2">
                         {note.content.substring(0, 100)}...
@@ -279,6 +326,16 @@ export default function ClientChart() {
                         <span className="text-sm text-gray-500">
                           {new Date(note.createdAt).toLocaleTimeString()}
                         </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteSessionNote(note.id, note.source)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          disabled={deleteSessionNoteMutation.isPending}
+                          data-testid={`button-delete-note-${note.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                     
