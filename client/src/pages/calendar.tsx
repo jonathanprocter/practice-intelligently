@@ -266,7 +266,7 @@ export default function Calendar() {
       title: event.title || event.summary || 'Appointment',
       startTime: startTime,
       endTime: endTime,
-      clientId: `google-${event.id}`,
+      clientId: undefined, // Let DailyView component handle client lookup by name
       clientName: event.title || event.summary || 'Appointment',
       type: 'individual' as CalendarEvent['type'],
       status: (event.status === 'confirmed' ? 'scheduled' : 'pending') as CalendarEvent['status'],

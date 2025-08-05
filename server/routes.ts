@@ -4089,6 +4089,13 @@ Follow-up areas for next session:
     }
   });
 
+  // Helper function to check if string is valid UUID
+  function isValidUUID(str: string): boolean {
+    if (!str) return false;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  }
+
   // POST endpoint for creating session notes
   app.post('/api/session-notes', async (req, res) => {
     try {
@@ -4099,10 +4106,12 @@ Follow-up areas for next session:
       }
       
       // Ensure eventId is properly set for appointment linking
+      // Only set appointmentId if it's a valid UUID, otherwise leave it null
+      const appointmentIdCandidate = sessionNoteData.appointmentId;
       const noteData = {
         ...sessionNoteData,
         eventId: sessionNoteData.eventId || sessionNoteData.appointmentId,
-        appointmentId: sessionNoteData.appointmentId || sessionNoteData.eventId
+        appointmentId: isValidUUID(appointmentIdCandidate) ? appointmentIdCandidate : null
       };
       
       console.log('Creating session note with data:', {

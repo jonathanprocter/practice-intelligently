@@ -171,18 +171,39 @@ export const DailyView = ({
     if (!selectedEvent) return;
 
     try {
+      // First, try to find the actual client by extracting the name from the event
+      let actualClientId = selectedEvent.clientId;
+      
+      if (!actualClientId && selectedEvent.title) {
+        // Extract client name from event title (remove "🔒" and "Appointment")
+        const cleanTitle = selectedEvent.title.replace(/🔒\s*/, '').replace(/\s*Appointment.*$/, '').trim();
+        
+        // Try to find the client by name
+        try {
+          const clientResponse = await fetch(`/api/clients/search?name=${encodeURIComponent(cleanTitle)}`);
+          if (clientResponse.ok) {
+            const clients = await clientResponse.json();
+            if (clients.length > 0) {
+              actualClientId = clients[0].id;
+            }
+          }
+        } catch (error) {
+          console.warn('Could not look up client:', error);
+        }
+      }
+
       // Saving session notes for event
       const response = await fetch('/api/session-notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           eventId: selectedEvent.id,
-          appointmentId: selectedEvent.id,
-          clientId: selectedEvent.clientId || 'f4b3e1b5-d4a2-4f6c-8e7b-2a9f8c5d3e2a', // Default client ID if not provided
+          appointmentId: null, // Don't set appointmentId since it's a Google Calendar event ID
+          clientId: actualClientId || 'f4b3e1b5-d4a2-4f6c-8e7b-2a9f8c5d3e2a', // Default client ID if not provided
           therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', // Default therapist ID
           content: sessionNotes,
           date: date.toISOString(),
-          clientName: selectedEvent.clientName
+          clientName: selectedEvent.clientName || selectedEvent.title
         })
       });
 
