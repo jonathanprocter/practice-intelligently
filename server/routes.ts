@@ -569,6 +569,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get session notes by event/appointment ID (specific endpoint)
+  app.get("/api/session-notes/event/:eventId", async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const notes = await storage.getSessionNotesByEventId(eventId);
+      res.json(notes);
+    } catch (error) {
+      console.error("Error fetching session notes by event ID:", error);
+      res.status(500).json({ error: "Failed to fetch session notes" });
+    }
+  });
+
   // AI Session Prep Generation
   app.post("/api/ai/session-prep-from-note", async (req, res) => {
     try {
@@ -4086,8 +4098,22 @@ Follow-up areas for next session:
         return res.status(400).json({ error: 'Client ID and therapist ID are required' });
       }
       
+      // Ensure eventId is properly set for appointment linking
+      const noteData = {
+        ...sessionNoteData,
+        eventId: sessionNoteData.eventId || sessionNoteData.appointmentId,
+        appointmentId: sessionNoteData.appointmentId || sessionNoteData.eventId
+      };
+      
+      console.log('Creating session note with data:', {
+        eventId: noteData.eventId,
+        appointmentId: noteData.appointmentId,
+        clientId: noteData.clientId,
+        therapistId: noteData.therapistId
+      });
+      
       // Create the session note
-      const newSessionNote = await storage.createSessionNote(sessionNoteData);
+      const newSessionNote = await storage.createSessionNote(noteData);
       res.status(201).json(newSessionNote);
     } catch (error: any) {
       console.error('Error creating session note:', error);

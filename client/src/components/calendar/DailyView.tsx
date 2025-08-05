@@ -146,7 +146,7 @@ export const DailyView = ({
       }
 
       // Try to load existing session notes from database
-      const sessionResponse = await fetch(`/api/session-notes/${event.id}`);
+      const sessionResponse = await fetch(`/api/session-notes/event/${event.id}`);
       if (sessionResponse.ok) {
         const existingNotes = await sessionResponse.json();
         if (existingNotes.length > 0) {
