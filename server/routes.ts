@@ -2844,10 +2844,47 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       // Find appointment on the session date for this client
       let appointmentId = null;
       if (finalClientId && finalClientId !== 'unknown') {
+        // First try database appointments
         const appointments = await storage.getAppointments(finalTherapistId, new Date(finalSessionDate));
         const clientAppointment = appointments.find(apt => apt.clientId === finalClientId);
         if (clientAppointment) {
           appointmentId = clientAppointment.id;
+          console.log(`✅ Found database appointment: ${appointmentId}`);
+        } else {
+          // Try to match with Google Calendar events for the same date and client
+          console.log(`🔍 Looking for Google Calendar event for client: ${actualClientName} on date: ${finalSessionDate}`);
+          try {
+            const baseUrl = process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000';
+            const eventsResponse = await fetch(`${baseUrl}/api/oauth/events/today`);
+            if (eventsResponse.ok) {
+              const events = await eventsResponse.json();
+              const sessionDateObj = new Date(finalSessionDate);
+              
+              const matchingEvent = events.find((event: any) => {
+                if (!event.summary || !event.start?.dateTime) return false;
+                
+                const eventDate = new Date(event.start.dateTime);
+                const eventDateString = eventDate.toDateString();
+                const sessionDateString = sessionDateObj.toDateString();
+                
+                // Check if client name appears in event title
+                const eventTitle = event.summary.toLowerCase();
+                const clientNameParts = actualClientName.toLowerCase().split(' ');
+                const nameMatch = clientNameParts.every(part => eventTitle.includes(part));
+                
+                return nameMatch && eventDateString === sessionDateString;
+              });
+              
+              if (matchingEvent) {
+                appointmentId = matchingEvent.id;
+                console.log(`✅ Found matching Google Calendar event: ${matchingEvent.summary} (${appointmentId})`);
+              } else {
+                console.log(`❌ No matching Google Calendar event found for ${actualClientName} on ${finalSessionDate}`);
+              }
+            }
+          } catch (error) {
+            console.error('Error searching Google Calendar events:', error);
+          }
         }
       }
       
@@ -2874,9 +2911,15 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       if (appointmentId) {
         const appointmentNotesUpdate = `Progress Note: ${comprehensiveNote.title}\n\nSummary: ${comprehensiveNote.narrativeSummary}\n\nKey Points: ${comprehensiveNote.keyPoints?.join(', ') || 'None'}\n\nGenerated: ${new Date().toLocaleDateString()}`;
         
-        await storage.updateAppointment(appointmentId, {
-          notes: appointmentNotesUpdate
-        });
+        // Try to update database appointment first, if it fails, it's a Google Calendar event
+        try {
+          await storage.updateAppointment(appointmentId, {
+            notes: appointmentNotesUpdate
+          });
+          console.log(`✅ Updated database appointment notes: ${appointmentId}`);
+        } catch (error) {
+          console.log(`ℹ️ Appointment ${appointmentId} is a Google Calendar event, notes stored in progress note only`);
+        }
         
         // Generate AI insights for the next appointment with this client
         if (finalClientId !== 'unknown') {

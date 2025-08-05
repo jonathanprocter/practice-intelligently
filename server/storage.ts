@@ -862,19 +862,64 @@ export class DatabaseStorage implements IStorage {
 
   async getClientIdByName(clientName: string): Promise<string | null> {
     try {
-      const nameParts = clientName.split(' ');
+      console.log(`🔍 Searching for client: "${clientName}"`);
+      
+      // Clean the client name
+      const cleanName = clientName.trim();
+      const nameParts = cleanName.split(' ');
       const firstName = nameParts[0];
       const lastName = nameParts.slice(1).join(' ');
 
-      const result = await pool.query(
-        `SELECT id FROM clients 
+      console.log(`📝 Name parts: firstName="${firstName}", lastName="${lastName}"`);
+
+      // Try exact match first
+      let result = await pool.query(
+        `SELECT id, first_name, last_name FROM clients 
          WHERE (first_name ILIKE $1 AND last_name ILIKE $2) 
          OR (first_name || ' ' || last_name) ILIKE $3
          LIMIT 1`,
-        [firstName, lastName, clientName]
+        [firstName, lastName, cleanName]
       );
 
-      return result.rows.length > 0 ? result.rows[0].id : null;
+      if (result.rows.length > 0) {
+        const client = result.rows[0];
+        console.log(`✅ Exact match found: ${client.first_name} ${client.last_name} (${client.id})`);
+        return client.id;
+      }
+
+      // Try case-insensitive partial matching
+      console.log(`🔍 Trying partial matching for: ${cleanName}`);
+      
+      result = await pool.query(
+        `SELECT id, first_name, last_name FROM clients 
+         WHERE first_name ILIKE $1 OR last_name ILIKE $2
+         OR first_name ILIKE $3 OR last_name ILIKE $4
+         LIMIT 1`,
+        [`%${firstName}%`, `%${lastName}%`, `${firstName}%`, `${lastName}%`]
+      );
+
+      if (result.rows.length > 0) {
+        const client = result.rows[0];
+        console.log(`🎯 Partial match found: ${client.first_name} ${client.last_name} (${client.id})`);
+        return client.id;
+      }
+
+      // Try final fallback with single name matches
+      result = await pool.query(
+        `SELECT id, first_name, last_name FROM clients 
+         WHERE first_name ILIKE $1 OR last_name ILIKE $2
+         LIMIT 1`,
+        [`%${firstName}%`, `%${lastName}%`]
+      );
+
+      if (result.rows.length > 0) {
+        const client = result.rows[0];
+        console.log(`🔄 Final fallback match found: ${client.first_name} ${client.last_name} (${client.id})`);
+        return client.id;
+      }
+
+      console.log(`❌ No client found for: ${cleanName}`);
+      return null;
     } catch (error) {
       console.error('Error in getClientIdByName:', error);
       return null;
