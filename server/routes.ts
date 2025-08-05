@@ -1190,17 +1190,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalEvents += events.length;
           syncedCalendars++;
 
-          // First, save all events to calendar_events table
-          const { syncEventToDatabase } = await import('./auth');
-          for (const event of events) {
-            await syncEventToDatabase(event, calendar.id, calendar.summary);
-          }
+          // Skip saving to calendar_events table for now - focus on creating appointments
 
-          // Then, process each event and create appointments for recognized clients
+          // Process each event and create appointments for recognized clients
+          let calendarAppointments = 0;
           for (const event of events) {
-            const appointmentCount = await syncEventToAppointment(event, calendar.id);
-            appointmentsCreated += appointmentCount;
+            try {
+              const appointmentCount = await syncEventToAppointment(event, calendar.id);
+              calendarAppointments += appointmentCount;
+            } catch (error: any) {
+              console.warn(`Failed to sync event ${event.summary}:`, error.message);
+            }
           }
+          appointmentsCreated += calendarAppointments;
 
           return {
             calendarId: calendar.id,
