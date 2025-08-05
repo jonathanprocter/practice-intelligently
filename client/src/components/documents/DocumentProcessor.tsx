@@ -64,42 +64,15 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
       setProcessingDocuments(prev => [...prev, processingDoc]);
       
       try {
-        // Step 1: Upload document to object storage
-        const uploadResponse = await fetch('/api/objects/upload', {
-          method: 'POST'
-        });
+        // Step 1: Upload and process document in one call
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('clientId', clientId);
+        formData.append('clientName', clientName);
         
-        if (!uploadResponse.ok) {
-          throw new Error('Failed to get upload URL');
-        }
-        
-        const { uploadURL } = await uploadResponse.json();
-        
-        // Upload file directly to object storage
-        const uploadFileResponse = await fetch(uploadURL, {
-          method: 'PUT',
-          body: file,
-          headers: {
-            'Content-Type': file.type
-          }
-        });
-        
-        if (!uploadFileResponse.ok) {
-          throw new Error('Failed to upload file');
-        }
-        
-        // Step 2: Process document with AI
-        const processResponse = await fetch('/api/documents/process-session-pdf', {
+        const processResponse = await fetch('/api/documents/upload-and-process', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            documentUrl: uploadURL,
-            filename: file.name,
-            clientId,
-            clientName
-          })
+          body: formData
         });
         
         if (!processResponse.ok) {

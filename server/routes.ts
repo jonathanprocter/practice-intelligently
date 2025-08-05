@@ -34,6 +34,21 @@ const openai = new OpenAI({
 // Initialize document processor
 const docProcessor = new DocumentProcessor();
 
+// Configure multer for file uploads
+const upload = multer({
+  dest: 'uploads/',
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF files are allowed'));
+    }
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  }
+});
+
 // Helper function to generate session prep summary
 async function generateSessionPrepSummary(sessionContent: string, aiSummary: string): Promise<string> {
   try {
@@ -4439,6 +4454,49 @@ Follow-up areas for next session:
     } catch (error: any) {
       console.error('Error in evidence-based interventions:', error);
       res.status(500).json({ error: 'Failed to generate intervention recommendations', details: error.message });
+    }
+  });
+
+  // Document upload and processing route
+  app.post('/api/documents/upload-and-process', upload.single('file'), async (req, res) => {
+    try {
+      const { clientId, clientName } = req.body;
+      const file = req.file;
+      
+      if (!file || !clientId || !clientName) {
+        return res.status(400).json({ 
+          error: 'Missing required fields: file, clientId, clientName' 
+        });
+      }
+
+      if (file.mimetype !== 'application/pdf') {
+        return res.status(400).json({ 
+          error: 'Only PDF files are supported' 
+        });
+      }
+
+      // Process the uploaded PDF file
+      const analysis = await docProcessor.processSessionPDF(
+        file.path,
+        file.originalname,
+        clientId,
+        clientName
+      );
+
+      // Clean up uploaded file
+      try {
+        await fs.promises.unlink(file.path);
+      } catch (unlinkError) {
+        console.warn('Failed to delete uploaded file:', unlinkError);
+      }
+
+      res.json(analysis);
+    } catch (error) {
+      console.error('Error processing uploaded PDF:', error);
+      res.status(500).json({ 
+        error: 'Failed to process document',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 

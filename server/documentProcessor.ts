@@ -22,10 +22,10 @@ interface DocumentAnalysis {
 }
 
 export class DocumentProcessor {
-  async processSessionPDF(documentUrl: string, filename: string, clientId: string, clientName: string): Promise<DocumentAnalysis> {
+  async processSessionPDF(filePath: string, filename: string, clientId: string, clientName: string): Promise<DocumentAnalysis> {
     try {
-      // Step 1: Download and extract PDF content
-      const pdfContent = await this.extractPDFContent(documentUrl);
+      // Step 1: Extract PDF content from file path
+      const pdfContent = await this.extractPDFContent(filePath, filename);
       
       // Step 2: Analyze content with AI
       const analysis = await this.analyzeSessionContent(pdfContent, clientName);
@@ -54,11 +54,12 @@ export class DocumentProcessor {
     }
   }
 
-  private async extractPDFContent(documentUrl: string): Promise<string> {
+  private async extractPDFContent(filePath: string, filename: string): Promise<string> {
     try {
       // For now, return a placeholder text indicating PDF processing is available
       // This can be expanded with proper PDF parsing when needed
-      return `PDF document uploaded from: ${documentUrl}
+      return `PDF document uploaded: ${filename}
+File path: ${filePath}
       
 This is a placeholder for PDF content extraction. The document has been uploaded successfully and can be processed with AI analysis for:
 - Session content analysis
