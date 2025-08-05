@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import IntegrationStatus from "@/components/ui/integration-status";
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient } from "@/lib/api";
+import profileImage from '@assets/image_1754410832108.png';
 
 export default function Header() {
   const currentDate = new Date().toLocaleDateString('en-US', {
@@ -47,7 +48,7 @@ export default function Header() {
           
           <div className="flex items-center space-x-3">
             <img 
-              src="/attached_assets/image_1754410832108.png" 
+              src={profileImage} 
               alt="Dr. Jonathan Procter" 
               className="w-10 h-10 rounded-full object-cover"
             />
