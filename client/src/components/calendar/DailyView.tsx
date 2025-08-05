@@ -146,17 +146,22 @@ export const DailyView = ({
       }
 
       // Try to load existing session notes from database
+      console.log(`🔍 Loading session notes for event: ${event.id}`);
       const sessionResponse = await fetch(`/api/session-notes/event/${event.id}`);
       if (sessionResponse.ok) {
         const existingNotes = await sessionResponse.json();
+        console.log(`📝 Found ${existingNotes.length} session notes for event ${event.id}`);
         if (existingNotes.length > 0) {
           // Use the most recent note
           const latestNote = existingNotes[0];
+          console.log(`✅ Loading session note content: ${latestNote.content.substring(0, 100)}...`);
           setSessionNotes(latestNote.content);
         } else {
+          console.log(`❌ No session notes found, using event notes`);
           setSessionNotes(event.notes || '');
         }
       } else {
+        console.log(`❌ Failed to load session notes: ${sessionResponse.status}`);
         setSessionNotes(event.notes || '');
       }
     } catch (error) {
