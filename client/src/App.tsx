@@ -19,7 +19,7 @@ import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 import { ProgressNotesPage } from "@/pages/progress-notes";
 import Assessments from "@/pages/assessments";
-import ClientChart from "@/pages/client-chart";
+import ClientChart from "@/pages/ClientChart";
 import { lazy, Suspense } from "react";
 
 
@@ -54,7 +54,9 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/clients" component={Clients} />
-      <Route path="/clients/:clientId/chart" component={ClientChart} />
+      <Route path="/clients/:clientId/chart">
+        {(params) => <ClientChart key={params.clientId} />}
+      </Route>
       <Route path="/appointments" component={Appointments} />
       <Route path="/calendar" component={Calendar} />
       <Route path="/calendar/integration" component={CalendarIntegration} />

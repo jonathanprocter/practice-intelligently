@@ -5,6 +5,7 @@ import { analyzeContent, analyzeSessionTranscript } from "./ai-services";
 import { multiModelAI } from './ai-multi-model';
 import { perplexityClient } from './perplexity';
 import { documentProcessor } from './document-processor';
+import { DocumentProcessor } from './documentProcessor.js';
 // Removed old import - now using simpleOAuth
 import { generateAppointmentInsights } from "./ai-insights";
 import { pool } from "./db";
@@ -29,6 +30,9 @@ import OpenAI from 'openai';
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// Initialize document processor
+const docProcessor = new DocumentProcessor();
 
 // Helper function to generate session prep summary
 async function generateSessionPrepSummary(sessionContent: string, aiSummary: string): Promise<string> {
@@ -4435,6 +4439,48 @@ Follow-up areas for next session:
     } catch (error: any) {
       console.error('Error in evidence-based interventions:', error);
       res.status(500).json({ error: 'Failed to generate intervention recommendations', details: error.message });
+    }
+  });
+
+  // Document processing routes
+  app.post('/api/documents/process-session-pdf', async (req, res) => {
+    try {
+      const { documentUrl, filename, clientId, clientName } = req.body;
+      
+      if (!documentUrl || !filename || !clientId || !clientName) {
+        return res.status(400).json({ 
+          error: 'Missing required fields: documentUrl, filename, clientId, clientName' 
+        });
+      }
+
+      const analysis = await docProcessor.processSessionPDF(
+        documentUrl,
+        filename,
+        clientId,
+        clientName
+      );
+
+      res.json(analysis);
+    } catch (error) {
+      console.error('Error processing session PDF:', error);
+      res.status(500).json({ 
+        error: 'Failed to process document',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Object storage upload endpoint (placeholder for object storage integration)
+  app.post('/api/objects/upload', async (req, res) => {
+    try {
+      // Generate a simple upload URL for testing purposes
+      const uploadId = randomUUID();
+      const uploadURL = `https://storage.example.com/uploads/${uploadId}`;
+      
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error('Error generating upload URL:', error);
+      res.status(500).json({ error: 'Failed to generate upload URL' });
     }
   });
 

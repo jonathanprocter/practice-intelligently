@@ -1,0 +1,378 @@
+import React, { useState, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { Upload, FileText, Calendar, Brain, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+
+interface ProcessedDocument {
+  id: string;
+  filename: string;
+  content: string;
+  extractedDate?: string;
+  suggestedAppointments: Array<{
+    id: string;
+    title: string;
+    date: string;
+    confidence: number;
+  }>;
+  aiTags: string[];
+  status: 'processing' | 'completed' | 'error';
+  error?: string;
+}
+
+interface DocumentProcessorProps {
+  clientId: string;
+  clientName: string;
+  onDocumentProcessed?: (document: ProcessedDocument) => void;
+}
+
+export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }: DocumentProcessorProps) {
+  const [processingDocuments, setProcessingDocuments] = useState<ProcessedDocument[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { toast } = useToast();
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    const pdfFiles = acceptedFiles.filter(file => file.type === 'application/pdf');
+    
+    if (pdfFiles.length === 0) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload PDF files only.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    
+    for (const file of pdfFiles) {
+      const documentId = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Add document to processing queue
+      const processingDoc: ProcessedDocument = {
+        id: documentId,
+        filename: file.name,
+        content: '',
+        suggestedAppointments: [],
+        aiTags: [],
+        status: 'processing'
+      };
+      
+      setProcessingDocuments(prev => [...prev, processingDoc]);
+      
+      try {
+        // Step 1: Upload document to object storage
+        const uploadResponse = await fetch('/api/objects/upload', {
+          method: 'POST'
+        });
+        
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to get upload URL');
+        }
+        
+        const { uploadURL } = await uploadResponse.json();
+        
+        // Upload file directly to object storage
+        const uploadFileResponse = await fetch(uploadURL, {
+          method: 'PUT',
+          body: file,
+          headers: {
+            'Content-Type': file.type
+          }
+        });
+        
+        if (!uploadFileResponse.ok) {
+          throw new Error('Failed to upload file');
+        }
+        
+        // Step 2: Process document with AI
+        const processResponse = await fetch('/api/documents/process-session-pdf', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            documentUrl: uploadURL,
+            filename: file.name,
+            clientId,
+            clientName
+          })
+        });
+        
+        if (!processResponse.ok) {
+          throw new Error('Failed to process document');
+        }
+        
+        const processedData = await processResponse.json();
+        
+        // Update document status
+        setProcessingDocuments(prev => 
+          prev.map(doc => 
+            doc.id === documentId 
+              ? {
+                  ...doc,
+                  content: processedData.content,
+                  extractedDate: processedData.extractedDate,
+                  suggestedAppointments: processedData.suggestedAppointments || [],
+                  aiTags: processedData.aiTags || [],
+                  status: 'completed'
+                }
+              : doc
+          )
+        );
+        
+        toast({
+          title: "Document processed successfully",
+          description: `${file.name} has been analyzed and tagged.`
+        });
+        
+        if (onDocumentProcessed) {
+          onDocumentProcessed({
+            ...processingDoc,
+            content: processedData.content,
+            extractedDate: processedData.extractedDate,
+            suggestedAppointments: processedData.suggestedAppointments || [],
+            aiTags: processedData.aiTags || [],
+            status: 'completed'
+          });
+        }
+        
+      } catch (error) {
+        console.error('Error processing document:', error);
+        
+        setProcessingDocuments(prev => 
+          prev.map(doc => 
+            doc.id === documentId 
+              ? {
+                  ...doc,
+                  status: 'error',
+                  error: error instanceof Error ? error.message : 'Unknown error'
+                }
+              : doc
+          )
+        );
+        
+        toast({
+          title: "Document processing failed",
+          description: `Failed to process ${file.name}`,
+          variant: "destructive"
+        });
+      }
+    }
+    
+    setIsProcessing(false);
+  }, [clientId, clientName, onDocumentProcessed, toast]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf']
+    },
+    multiple: true
+  });
+
+  const attachToAppointment = async (documentId: string, appointmentId: string) => {
+    try {
+      const document = processingDocuments.find(doc => doc.id === documentId);
+      if (!document) return;
+      
+      const response = await fetch('/api/session-notes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          eventId: appointmentId,
+          clientId,
+          therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', // Default therapist
+          content: document.content,
+          aiTags: document.aiTags,
+          source: 'document_upload',
+          originalFilename: document.filename
+        })
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Document attached successfully",
+          description: `${document.filename} has been attached to the appointment.`
+        });
+        
+        // Remove from processing list
+        setProcessingDocuments(prev => prev.filter(doc => doc.id !== documentId));
+      } else {
+        throw new Error('Failed to attach document');
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to attach document",
+        description: "Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const removeDocument = (documentId: string) => {
+    setProcessingDocuments(prev => prev.filter(doc => doc.id !== documentId));
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Drop Zone */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Document Upload & Processing
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div
+            {...getRootProps()}
+            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+              isDragActive 
+                ? 'border-blue-500 bg-blue-50' 
+                : 'border-gray-300 hover:border-gray-400'
+            }`}
+          >
+            <input {...getInputProps()} />
+            <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            {isDragActive ? (
+              <p className="text-blue-600 font-medium">Drop PDF files here...</p>
+            ) : (
+              <div>
+                <p className="text-gray-600 font-medium mb-2">
+                  Drag & drop PDF session notes here, or click to browse
+                </p>
+                <p className="text-sm text-gray-500">
+                  AI will extract content, identify dates, and suggest appointment matches
+                </p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Processing Queue */}
+      {processingDocuments.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="w-5 h-5" />
+              Processing Queue
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {processingDocuments.map((doc) => (
+              <div key={doc.id} className="border rounded-lg p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900">{doc.filename}</h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      {doc.status === 'processing' && (
+                        <>
+                          <Progress value={50} className="w-32" />
+                          <span className="text-sm text-gray-500">Processing...</span>
+                        </>
+                      )}
+                      {doc.status === 'completed' && (
+                        <>
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <span className="text-sm text-green-600">Completed</span>
+                        </>
+                      )}
+                      {doc.status === 'error' && (
+                        <>
+                          <AlertCircle className="w-4 h-4 text-red-600" />
+                          <span className="text-sm text-red-600">Error: {doc.error}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeDocument(doc.id)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                {doc.status === 'completed' && (
+                  <div className="space-y-3">
+                    {/* AI Tags */}
+                    {doc.aiTags.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-2">AI Tags:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {doc.aiTags.map((tag, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Extracted Date */}
+                    {doc.extractedDate && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-700">
+                          Extracted Date: <span className="font-normal">{doc.extractedDate}</span>
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Suggested Appointments */}
+                    {doc.suggestedAppointments.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-2">
+                          Suggested Appointments:
+                        </p>
+                        <div className="space-y-2">
+                          {doc.suggestedAppointments.map((appointment) => (
+                            <div
+                              key={appointment.id}
+                              className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4 text-gray-500" />
+                                <span className="text-sm">{appointment.title}</span>
+                                <span className="text-xs text-gray-500">
+                                  ({appointment.confidence}% match)
+                                </span>
+                              </div>
+                              <Button
+                                size="sm"
+                                onClick={() => attachToAppointment(doc.id, appointment.id)}
+                              >
+                                Attach
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Content Preview */}
+                    {doc.content && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-2">Content Preview:</p>
+                        <div className="bg-gray-50 p-3 rounded text-sm text-gray-600 max-h-32 overflow-y-auto">
+                          {doc.content.substring(0, 200)}...
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
