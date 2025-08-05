@@ -8,6 +8,7 @@ import RecentActivity from "@/components/dashboard/recent-activity";
 import ProgressOverview from "@/components/dashboard/progress-overview";
 import ApiStatusIndicators from "@/components/dashboard/api-status-indicators";
 import TodaysSessions from "@/components/dashboard/todays-sessions";
+import { SessionDocumentUploader } from "@/components/SessionDocumentUploader";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -68,6 +69,11 @@ export default function Dashboard() {
         <ProgressOverview />
       </div>
 
+      {/* Session Document Upload Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SessionDocumentUploader therapistId="e66b8b8e-e7a2-40b9-ae74-00c93ffe503c" />
+        <div></div> {/* Empty grid cell for layout */}
+      </div>
 
     </div>
   );

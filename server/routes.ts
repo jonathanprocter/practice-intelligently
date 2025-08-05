@@ -24,6 +24,7 @@ import { getAllApiStatuses } from "./health-check";
 import { simpleOAuth } from "./oauth-simple";
 import { googleCalendarService } from "./auth";
 import { generateUSHolidays, getHolidaysForYear, getHolidaysInRange, isUSHoliday } from "./us-holidays";
+import { SessionDocumentProcessor } from './session-document-processor';
 import OpenAI from 'openai';
 
 // Initialize OpenAI client
@@ -33,6 +34,9 @@ const openai = new OpenAI({
 
 // Initialize document processor
 const docProcessor = new DocumentProcessor();
+
+// Initialize session document processor
+const sessionDocProcessor = new SessionDocumentProcessor(storage);
 
 // Configure multer for file uploads
 const upload = multer({
@@ -47,6 +51,29 @@ const upload = multer({
   },
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB limit
+  }
+});
+
+// Configure multer for session documents
+const sessionUpload = multer({
+  dest: 'uploads/sessions/',
+  fileFilter: (req, file, cb) => {
+    console.log('Session upload - mimetype:', file.mimetype, 'originalname:', file.originalname);
+    const allowedTypes = [
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+      'application/msword', // .doc
+      'text/plain', // .txt
+      'application/pdf' // .pdf
+    ];
+    
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only DOCX, DOC, TXT, and PDF files are allowed for session documents'));
+    }
+  },
+  limits: {
+    fileSize: 15 * 1024 * 1024 // 15MB limit for session documents
   }
 });
 
@@ -2955,6 +2982,58 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         error: 'Failed to process document', 
         details: error.message,
         stack: error.stack // Add stack trace for better debugging
+      });
+    }
+  });
+
+  // Session document upload and processing endpoint
+  app.post('/api/sessions/upload-document', sessionUpload.single('document'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No document uploaded' });
+      }
+
+      const { therapistId } = req.body;
+      if (!therapistId) {
+        return res.status(400).json({ error: 'Therapist ID is required' });
+      }
+
+      console.log(`Processing session document: ${req.file.originalname}`);
+
+      // Read the file
+      const fileBuffer = fs.readFileSync(req.file.path);
+
+      // Process the session document
+      const results = await sessionDocProcessor.processSessionDocument(
+        fileBuffer,
+        req.file.originalname,
+        therapistId
+      );
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+        success: true,
+        message: 'Session document processed successfully',
+        results: {
+          sessionsCreated: results.sessionsCreated,
+          documentsStored: results.documentsStored,
+          clientsMatched: results.clientsMatched,
+          errors: results.errors
+        }
+      });
+
+    } catch (error: any) {
+      // Clean up file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      console.error('Error processing session document:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to process session document',
+        details: error.message
       });
     }
   });
