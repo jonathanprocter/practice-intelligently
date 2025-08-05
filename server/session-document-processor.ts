@@ -90,18 +90,110 @@ export class SessionDocumentProcessor {
   }
 
   /**
-   * Parse multiple sessions from document text
+   * Parse sessions from document text - prioritize single comprehensive sessions
    */
   private parseSessionsFromText(text: string): ParsedSession[] {
     const sessions: ParsedSession[] = [];
     
-    // Split by session markers - look for client name at start and session dates
+    // First check if this is a single comprehensive session (most common case)
+    const singleSession = this.tryParseSingleSession(text);
+    if (singleSession) {
+      sessions.push(singleSession);
+      return sessions;
+    }
+    
+    // Fall back to multi-session parsing
+    return this.parseMultipleSessions(text);
+  }
+
+  /**
+   * Try to parse as a single comprehensive session
+   */
+  private tryParseSingleSession(text: string): ParsedSession | null {
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    
+    let clientName = '';
+    let sessionDate = '';
+    let currentSection = '';
+    let currentContent = '';
+    let session: Partial<ParsedSession> = { fullContent: text };
+    
+    // Look for client name and session date in the first few lines
+    for (let i = 0; i < Math.min(lines.length, 10); i++) {
+      const line = lines[i];
+      
+      if (!clientName && this.isClientNameLine(line) && !this.isSessionDateLine(line)) {
+        clientName = this.extractClientName(line);
+        continue;
+      }
+      
+      if (!sessionDate && this.isSessionDateLine(line)) {
+        sessionDate = this.extractSessionDate(line);
+        break;
+      }
+    }
+    
+    // Must have both client name and session date
+    if (!clientName || !sessionDate) {
+      return null;
+    }
+    
+    session.clientName = clientName;
+    session.sessionDate = sessionDate;
+    
+    // Parse content by sections
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // Skip client name and date lines
+      if (this.isClientNameLine(line) || this.isSessionDateLine(line)) {
+        continue;
+      }
+      
+      // Detect SOAP or supplemental sections
+      if (this.isSoapSection(line) || this.isSupplementalSection(line)) {
+        // Save previous section content
+        if (currentSection && currentContent) {
+          this.assignSectionContent(session, currentSection, currentContent.trim());
+        }
+        
+        currentSection = this.isSoapSection(line) ? line.toLowerCase() : this.normalizeSupplementalSection(line);
+        currentContent = '';
+        continue;
+      }
+      
+      // Add line to current content
+      if (line.length > 0) {
+        currentContent += line + '\n';
+      }
+    }
+    
+    // Save the last section
+    if (currentSection && currentContent) {
+      this.assignSectionContent(session, currentSection, currentContent.trim());
+    }
+    
+    // Validate the session
+    try {
+      return ParsedSessionSchema.parse(session);
+    } catch (error) {
+      console.error('Single session validation failed:', error, session);
+      return null;
+    }
+  }
+
+  /**
+   * Parse multiple sessions from document text (fallback method)
+   */
+  private parseMultipleSessions(text: string): ParsedSession[] {
+    const sessions: ParsedSession[] = [];
     const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     
     let currentSession: Partial<ParsedSession> = {};
     let currentSection = '';
     let currentContent = '';
     let clientName = '';
+    let sessionCount = 0;
     
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
@@ -134,6 +226,7 @@ export class SessionDocumentProcessor {
         };
         currentContent = '';
         currentSection = '';
+        sessionCount++;
         continue;
       }
       
