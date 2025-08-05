@@ -2189,6 +2189,8 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
       
+      console.log(`🔍 DEBUG: Retrieved ${todaysEvents.length} events, filtering for today: ${today.toDateString()}`);
+      
       const filteredEvents = todaysEvents.filter(event => {
         if (!event.start) return false;
         
@@ -2196,9 +2198,18 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         const eventDate = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
         const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         
+        console.log(`🔍 Event: ${event.summary} - Start: ${eventStart.toISOString()} - EventDate: ${eventDate.toDateString()} - TodayDate: ${todayDate.toDateString()} - Match: ${eventDate.getTime() === todayDate.getTime()}`);
+        
         // Only include events that are exactly on today's date
-        return eventDate.getTime() === todayDate.getTime();
+        const isToday = eventDate.getTime() === todayDate.getTime();
+        
+        // Additional safeguard: explicitly exclude events from August 4th
+        const isYesterday = eventStart.toISOString().startsWith('2025-08-04');
+        
+        return isToday && !isYesterday;
       });
+      
+      console.log(`🔍 DEBUG: Filtered to ${filteredEvents.length} events for today`);
 
       res.json(filteredEvents);
     } catch (error: any) {

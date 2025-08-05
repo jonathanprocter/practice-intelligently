@@ -190,6 +190,13 @@ class SimpleOAuth {
       const events = response.data.items || [];
       console.log(`  → Fetched ${events.length} events from calendar: ${calendarId} (${startTime.substring(0,4)}-${endTime.substring(0,4)})`);
       
+      // Debug: Log each event's basic info when fetching today's events specifically
+      if (startTime.includes('2025-08-05')) {
+        events.forEach(event => {
+          console.log(`    📅 Event: ${event.summary} - Start: ${event.start?.dateTime || event.start?.date}`);
+        });
+      }
+      
       return events;
     } catch (error: any) {
       console.error(`Error fetching events from calendar ${calendarId}:`, error.message);
