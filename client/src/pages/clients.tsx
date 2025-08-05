@@ -37,11 +37,19 @@ export default function Clients() {
   const activeClients = clients?.filter(client => client.status === 'active') || [];
   const archivedClients = clients?.filter(client => client.status === 'archived') || [];
   
+  const sortClientsAlphabetically = (clientList: Client[]) => {
+    return clientList.sort((a, b) => {
+      const aName = `${a.firstName || ''} ${a.lastName || ''}`.toLowerCase().trim();
+      const bName = `${b.firstName || ''} ${b.lastName || ''}`.toLowerCase().trim();
+      return aName.localeCompare(bName);
+    });
+  };
+
   const filterClientsBySearch = (clientList: Client[]) => {
-    if (!searchTerm.trim()) return clientList;
+    if (!searchTerm.trim()) return sortClientsAlphabetically(clientList);
     
     const searchLower = searchTerm.toLowerCase().trim();
-    return clientList.filter(client => {
+    const filtered = clientList.filter(client => {
       const fullName = `${client.firstName || ''} ${client.lastName || ''}`.toLowerCase();
       const preferredName = client.preferredName?.toLowerCase() || '';
       const email = client.email?.toLowerCase() || '';
@@ -54,6 +62,8 @@ export default function Clients() {
              client.firstName?.toLowerCase().includes(searchLower) ||
              client.lastName?.toLowerCase().includes(searchLower);
     });
+    
+    return sortClientsAlphabetically(filtered);
   };
 
   const filteredActiveClients = filterClientsBySearch(activeClients);
