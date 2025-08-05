@@ -3120,6 +3120,213 @@ Generate specific preparation guidance for the next session including:
     }
   });
 
+  // ========== CLIENT CHART ANALYSIS ROUTES ==========
+  
+  // Generate case conceptualization for a client
+  app.post('/api/ai/case-conceptualization/:clientId', async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      
+      // Get all progress notes and session prep notes for this client
+      const progressNotes = await storage.getProgressNotes(clientId);
+      const client = await storage.getClient(clientId);
+      
+      if (!client) {
+        return res.status(404).json({ error: 'Client not found' });
+      }
+      
+      // Prepare comprehensive clinical data for AI analysis
+      const clinicalData = {
+        clientInfo: {
+          name: `${client.firstName} ${client.lastName}`,
+          age: client.dateOfBirth ? new Date().getFullYear() - new Date(client.dateOfBirth).getFullYear() : 'Unknown',
+          status: client.status
+        },
+        sessionCount: progressNotes.length,
+        progressNotes: progressNotes.map(note => ({
+          date: note.sessionDate,
+          title: note.title,
+          subjective: note.subjective,
+          objective: note.objective,
+          assessment: note.assessment,
+          plan: note.plan,
+          keyPoints: note.keyPoints,
+          narrativeSummary: note.narrativeSummary,
+          tonalAnalysis: note.tonalAnalysis
+        }))
+      };
+      
+      const conceptualizationPrompt = `As an expert clinical psychologist, analyze the comprehensive clinical data for ${client.firstName} ${client.lastName} and provide a detailed case conceptualization.
+
+Clinical Data:
+- Total Sessions: ${clinicalData.sessionCount}
+- Client Age: ${clinicalData.clientInfo.age}
+- Status: ${clinicalData.clientInfo.status}
+
+Progress Notes Analysis:
+${clinicalData.progressNotes.map(note => `
+Date: ${note.date}
+Assessment: ${note.assessment}
+Key Points: ${note.keyPoints?.join(', ') || 'None'}
+Narrative: ${note.narrativeSummary}
+`).join('\n')}
+
+Please provide a comprehensive case conceptualization including:
+
+1. Clinical Overview (2-3 paragraphs summarizing the overall clinical picture)
+2. Presenting Concerns (list 3-5 main issues)
+3. Client Strengths (list 3-5 strengths and resources)
+4. Risk Factors (list any identified risk factors)
+5. Treatment Goals (list 4-6 specific, measurable goals)
+6. Recommended Interventions (list evidence-based approaches)
+7. Diagnostic Impression (tentative diagnostic considerations)
+8. Prognosis (realistic outlook for treatment)
+9. Cultural Considerations (if applicable)
+10. Next Steps (immediate treatment priorities)
+
+Format as a structured JSON response with these exact field names: overview, presentingConcerns, strengths, riskFactors, treatmentGoals, recommendedInterventions, diagnosticImpression, prognosis, culturalConsiderations, nextSteps.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert clinical psychologist providing comprehensive case conceptualizations. Always respond with valid JSON containing the requested structure."
+          },
+          { role: "user", content: conceptualizationPrompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 2000
+      });
+
+      const conceptualization = JSON.parse(response.choices[0].message.content || '{}');
+      
+      res.json(conceptualization);
+    } catch (error: any) {
+      console.error('Error generating case conceptualization:', error);
+      res.status(500).json({ error: 'Failed to generate case conceptualization', details: error.message });
+    }
+  });
+
+  // Get existing case conceptualization
+  app.get('/api/ai/case-conceptualization/:clientId', async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      
+      // For now, return null - in production you might cache these in database
+      res.json(null);
+    } catch (error: any) {
+      console.error('Error fetching case conceptualization:', error);
+      res.status(500).json({ error: 'Failed to fetch case conceptualization' });
+    }
+  });
+
+  // Generate AI treatment guide for a client
+  app.post('/api/ai/treatment-guide/:clientId', async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      
+      // Get all progress notes for this client
+      const progressNotes = await storage.getProgressNotes(clientId);
+      const client = await storage.getClient(clientId);
+      
+      if (!client) {
+        return res.status(404).json({ error: 'Client not found' });
+      }
+      
+      // Prepare clinical data for treatment guide
+      const treatmentData = {
+        clientInfo: {
+          name: `${client.firstName} ${client.lastName}`,
+          sessionCount: progressNotes.length
+        },
+        recentNotes: progressNotes.slice(0, 5), // Last 5 sessions for current treatment focus
+        overallProgress: progressNotes.map(note => ({
+          date: note.sessionDate,
+          assessment: note.assessment,
+          plan: note.plan,
+          keyPoints: note.keyPoints
+        }))
+      };
+      
+      const treatmentGuidePrompt = `As an expert clinical therapist, create a comprehensive treatment guide for ${client.firstName} ${client.lastName} based on their clinical history.
+
+Clinical History:
+- Total Sessions Completed: ${treatmentData.clientInfo.sessionCount}
+- Recent Session Data: ${JSON.stringify(treatmentData.recentNotes.slice(0, 3))}
+
+Recent Treatment Plans:
+${treatmentData.recentNotes.map(note => `
+Date: ${note.sessionDate}
+Assessment: ${note.assessment}
+Plan: ${note.plan}
+Key Points: ${note.keyPoints?.join(', ') || 'None'}
+`).join('\n')}
+
+Please provide a comprehensive treatment guide including:
+
+1. Treatment Overview (summary of recommended approach)
+2. Recommended Interventions (specific therapeutic techniques and modalities)
+3. Evidence-Based Techniques (research-supported methods for identified concerns)
+4. Session Structure Recommendations (how to organize therapy sessions)
+5. Homework and Between-Session Activities (specific assignments and exercises)
+6. Next Steps (immediate treatment priorities and goals)
+7. Progress Monitoring (how to track improvement)
+8. Risk Management (safety considerations and protocols)
+
+Format as a structured JSON response with these exact field names: overview, recommendedInterventions, evidenceBasedTechniques, sessionStructure, homeworkSuggestions, nextSteps, progressMonitoring, riskManagement.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert clinical therapist providing evidence-based treatment guides. Always respond with valid JSON containing the requested structure."
+          },
+          { role: "user", content: treatmentGuidePrompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 2000
+      });
+
+      const treatmentGuide = JSON.parse(response.choices[0].message.content || '{}');
+      
+      res.json(treatmentGuide);
+    } catch (error: any) {
+      console.error('Error generating treatment guide:', error);
+      res.status(500).json({ error: 'Failed to generate treatment guide', details: error.message });
+    }
+  });
+
+  // Get existing treatment guide
+  app.get('/api/ai/treatment-guide/:clientId', async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      
+      // For now, return null - in production you might cache these in database
+      res.json(null);
+    } catch (error: any) {
+      console.error('Error fetching treatment guide:', error);
+      res.status(500).json({ error: 'Failed to fetch treatment guide' });
+    }
+  });
+
+  // Get session prep notes for a specific client
+  app.get('/api/session-prep/client/:clientId', async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      
+      // Get all session prep notes for this client
+      const sessionPrepNotes = await storage.getSessionPrepNotesByClient(clientId);
+      res.json(sessionPrepNotes);
+    } catch (error: any) {
+      console.error('Error fetching session prep notes for client:', error);
+      res.status(500).json({ error: 'Failed to fetch session prep notes' });
+    }
+  });
+
   // ========== SIMPLE PROGRESS NOTES ROUTES ==========
   
   // Simple, fast progress note generation endpoint

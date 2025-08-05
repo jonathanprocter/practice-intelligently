@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient, type Client } from "@/lib/api";
-import { Users, Plus, Search, Filter, Edit2, Calendar, Phone, Mail, UserCheck, Upload, FileText, Archive } from "lucide-react";
+import { Users, Plus, Search, Filter, Edit2, Calendar, Phone, Mail, UserCheck, Upload, FileText, Archive, ChartLine } from "lucide-react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ export default function Clients() {
   const [showClientForm, setShowClientForm] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [, setLocation] = useLocation();
   
   const { data: clients, isLoading, error } = useQuery({
     queryKey: ['clients'],
@@ -191,6 +193,15 @@ export default function Clients() {
                   )}
                 </div>
                 <div className="flex flex-col space-y-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setLocation(`/clients/${client.id}/chart`)}
+                    data-testid={`button-chart-${client.id}`}
+                  >
+                    <ChartLine className="w-4 h-4 mr-1" />
+                    Chart
+                  </Button>
                   <Button 
                     variant="outline" 
                     size="sm"

@@ -1513,6 +1513,8 @@ export class DatabaseStorage implements IStorage {
         homeworkReview: row.homework_review,
         sessionObjectives: row.session_objectives || [],
         aiGeneratedInsights: row.ai_generated_insights,
+        followUpQuestions: row.follow_up_questions || [],
+        psychoeducationalMaterials: row.psychoeducational_materials || [],
         lastUpdatedBy: row.last_updated_by,
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at)
@@ -1520,6 +1522,40 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error in getSessionPrepNoteByEventId:', error);
       return undefined;
+    }
+  }
+
+  async getSessionPrepNotesByClient(clientId: string): Promise<SessionPrepNote[]> {
+    try {
+      const result = await pool.query(
+        'SELECT * FROM session_prep_notes WHERE client_id = $1 ORDER BY created_at DESC',
+        [clientId]
+      );
+
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        appointmentId: row.appointment_id,
+        eventId: row.event_id,
+        clientId: row.client_id,
+        therapistId: row.therapist_id,
+        prepContent: row.prep_content,
+        keyFocusAreas: row.key_focus_areas || [],
+        previousSessionSummary: row.previous_session_summary,
+        suggestedInterventions: row.suggested_interventions || [],
+        clientGoals: row.client_goals || [],
+        riskFactors: row.risk_factors || [],
+        homeworkReview: row.homework_review,
+        sessionObjectives: row.session_objectives || [],
+        aiGeneratedInsights: row.ai_generated_insights,
+        followUpQuestions: row.follow_up_questions || [],
+        psychoeducationalMaterials: row.psychoeducational_materials || [],
+        lastUpdatedBy: row.last_updated_by,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      }));
+    } catch (error) {
+      console.error('Error in getSessionPrepNotesByClient:', error);
+      return [];
     }
   }
 
