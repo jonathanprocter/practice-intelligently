@@ -47,7 +47,7 @@ export default function Header() {
           
           <div className="flex items-center space-x-3">
             <img 
-              src="/attached_assets/generated-image (1)_1753977205405.png" 
+              src="/attached_assets/image_1754410832108.png" 
               alt="Dr. Jonathan Procter" 
               className="w-10 h-10 rounded-full object-cover"
             />
