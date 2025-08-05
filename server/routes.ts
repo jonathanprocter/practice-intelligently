@@ -3127,8 +3127,24 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         ]
       };
       
-      // Save to database with all the rich analysis
-      const savedNote = await storage.createProgressNote(enhancedProgressNote);
+      // Save to database as a session note if appointment is linked, otherwise as progress note
+      let savedNote;
+      if (appointmentId) {
+        // Create as session note with proper linking
+        const sessionNoteData = {
+          clientId: finalClientId,
+          eventId: appointmentId,
+          content: `${comprehensiveNote.title}\n\n${comprehensiveNote.subjective}\n\n${comprehensiveNote.objective}\n\n${comprehensiveNote.assessment}\n\n${comprehensiveNote.plan}`,
+          aiAnalysis: comprehensiveNote.narrativeSummary,
+          createdAt: new Date(finalSessionDate)
+        };
+        savedNote = await storage.createSessionNote(sessionNoteData);
+        console.log(`✅ Created session note linked to appointment: ${appointmentId}`);
+      } else {
+        // Create as progress note without linking
+        savedNote = await storage.createProgressNote(enhancedProgressNote);
+        console.log(`ℹ️ Created progress note without appointment link`);
+      }
       
       // If linked to appointment, update the appointment's notes field
       if (appointmentId) {
