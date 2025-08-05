@@ -394,11 +394,11 @@ export default function Assessments() {
 
       {/* Values Matrix Dialog */}
       <Dialog open={showValuesMatrix} onOpenChange={setShowValuesMatrix}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden" aria-describedby="values-matrix-description">
           <DialogHeader>
             <DialogTitle>Values Matrix Assessment</DialogTitle>
-            <DialogDescription>
-              Complete this interactive assessment to identify and rank your personal values.
+            <DialogDescription id="values-matrix-description">
+              Complete this interactive assessment to identify and rank your personal values through pairwise comparisons.
             </DialogDescription>
           </DialogHeader>
           <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
