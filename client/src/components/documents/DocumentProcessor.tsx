@@ -84,25 +84,37 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
         
         // Step 2: Generate and save progress note from processed content
         if (processedData.analysis?.extractedText) {
-          const progressNoteResponse = await fetch('/api/documents/generate-progress-note', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              content: processedData.analysis.extractedText,
-              clientId: clientId,
-              sessionDate: processedData.analysis.detectedSessionDate,
-              detectedClientName: processedData.analysis.detectedClientName,
-              therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'
-            })
-          });
+          try {
+            // Add timeout to prevent hanging
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+            
+            const progressNoteResponse = await fetch('/api/documents/generate-progress-note', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                content: processedData.analysis.extractedText,
+                clientId: clientId,
+                sessionDate: processedData.analysis.detectedSessionDate,
+                detectedClientName: processedData.analysis.detectedClientName,
+                therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'
+              }),
+              signal: controller.signal
+            });
 
-          if (progressNoteResponse.ok) {
-            const progressNoteData = await progressNoteResponse.json();
-            console.log('Progress note created successfully:', progressNoteData);
-          } else {
-            console.warn('Failed to create progress note, but document processing succeeded');
+            clearTimeout(timeoutId);
+
+            if (progressNoteResponse.ok) {
+              const progressNoteData = await progressNoteResponse.json();
+              console.log('Progress note created successfully:', progressNoteData);
+            } else {
+              console.warn('Failed to create progress note, but document processing succeeded');
+            }
+          } catch (error: any) {
+            console.warn('Progress note generation timed out or failed:', error.message);
+            // Continue with document processing even if progress note fails
           }
         }
         

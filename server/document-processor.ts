@@ -4,6 +4,7 @@ import mammoth from 'mammoth';
 import xlsx from 'xlsx';
 import sharp from 'sharp';
 import { multiModelAI } from './ai-multi-model';
+import OpenAI from 'openai';
 
 // Dynamic imports for ES module compatibility
 let csvParser: any = null;
@@ -63,6 +64,13 @@ export interface ProgressNote {
 }
 
 export class DocumentProcessor {
+  private openai: OpenAI;
+
+  constructor() {
+    this.openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
 
   private async _fileExists(path: string): Promise<boolean> {
     try {
@@ -497,18 +505,30 @@ Client ID: ${clientId}
 Session Date: ${sessionDate}`;
 
     try {
-      // Use ensemble approach for the most comprehensive clinical analysis
-      const result = await multiModelAI.generateEnsembleAnalysis(
-        comprehensivePrompt,
-        'comprehensive clinical progress note generation'
-      );
+      // Use OpenAI directly for reliable, fast analysis
+      console.log('Using OpenAI for progress note generation...');
+      const result = await this.openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert clinical therapist creating comprehensive SOAP format progress notes. Provide detailed, professional clinical analysis."
+          },
+          {
+            role: "user", 
+            content: comprehensivePrompt
+          }
+        ],
+        max_tokens: 4000,
+        temperature: 0.7
+      });
 
-      const progressNoteContent = result.content;
+      const progressNoteContent = result.choices[0]?.message?.content || '';
 
       // Use the rich AI-generated content directly instead of parsing into limited sections
       return this.parseProgressNote(progressNoteContent, clientId, sessionDate);
     } catch (error) {
-      console.error('Error generating progress note:', error);
+      console.error('Error generating progress note with OpenAI:', error);
       throw new Error('Failed to generate progress note with AI');
     }
   }
