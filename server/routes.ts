@@ -2192,7 +2192,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         if (!event.start) return false;
         
         const eventStart = new Date(event.start.dateTime || event.start.date);
-        return eventStart >= startOfToday && eventStart <= endOfToday;
+        const eventDate = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+        const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        
+        // Only include events that are exactly on today's date
+        return eventDate.getTime() === todayDate.getTime();
       });
 
       res.json(filteredEvents);
