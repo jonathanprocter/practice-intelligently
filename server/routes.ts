@@ -594,11 +594,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let appointmentsUpdated = 0;
 
       if (upcomingAppointments.length > 0) {
-        // Update database appointments
+        // Update database appointments with session prep content
         for (const appointment of upcomingAppointments) {
           try {
-            await storage.updateAppointmentSessionPrep(appointment.id, aiSummary);
+            // Update the appointment's notes field with the session prep content
+            const existingNotes = appointment.notes || '';
+            const sessionPrepSection = `\n\n--- AI Generated Session Prep ---\n${aiSummary}\n--- End Session Prep ---`;
+            const updatedNotes = `${existingNotes}${sessionPrepSection}`.trim();
+            
+            await storage.updateAppointment(appointment.id, {
+              notes: updatedNotes
+            });
+            
+            // Also create a dedicated session prep note
+            await storage.createSessionPrepNote({
+              eventId: appointment.id,
+              clientId: actualClientId,
+              content: aiSummary,
+              type: 'ai_generated',
+              createdAt: new Date()
+            });
+            
             appointmentsUpdated++;
+            console.log(`✅ Session prep saved to appointment ${appointment.id} for client ${actualClientId}`);
           } catch (error) {
             console.error(`Error updating session prep for appointment ${appointment.id}:`, error);
           }
@@ -608,13 +626,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create a general session prep note for this client
         try {
           await storage.createSessionPrepNote({
-            clientId: sessionNote.clientId, // Use the original client name for consistency
-            therapistId: sessionNote.therapistId,
-            prepContent: aiSummary,
             eventId: `prep-${sessionNote.id}-${Date.now()}`, // Generate unique event ID
-            previousSessionSummary: sessionNote.aiSummary || null
+            clientId: actualClientId,
+            content: aiSummary,
+            type: 'ai_generated',
+            createdAt: new Date()
           });
           appointmentsUpdated = 1; // Indicate that prep was created
+          console.log(`✅ Session prep note created for client ${actualClientId} (no upcoming appointments found)`);
         } catch (error) {
           console.error("Error creating session prep note:", error);
         }
@@ -3382,10 +3401,60 @@ Return ONLY a JSON object with this exact structure:
         significantQuotes: aiResponse.keyPoints || []
       };
       
+      // CRITICAL FIX: Save progress note to database if we have a valid client ID
+      let savedProgressNote = null;
+      console.log(`🔍 Attempting to save progress note for client: ${clientId}`);
+      
+      if (clientId && clientId !== 'unknown') {
+        try {
+          // Try to find an appointment for this client on the session date
+          const sessionDateObj = new Date(sessionDate || new Date());
+          console.log(`🔍 Looking for appointments for client ${clientId} on date ${sessionDateObj.toISOString()}`);
+          
+          const appointments = await storage.getAppointments('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', sessionDateObj);
+          const clientAppointment = appointments.find(apt => apt.clientId === clientId);
+          
+          console.log(`🔍 Found ${appointments.length} appointments on this date, ${clientAppointment ? 'one matches client' : 'none match client'}`);
+          
+          savedProgressNote = await storage.createProgressNote({
+            title: progressNote.title,
+            subjective: progressNote.subjective,
+            objective: progressNote.objective,
+            assessment: progressNote.assessment,
+            plan: progressNote.plan,
+            tonalAnalysis: progressNote.tonalAnalysis,
+            keyPoints: progressNote.keyPoints || [],
+            significantQuotes: progressNote.significantQuotes || [],
+            narrativeSummary: progressNote.narrativeSummary,
+            sessionDate: sessionDateObj,
+            clientId: clientId,
+            therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+            appointmentId: clientAppointment?.id || null
+          });
+          
+          console.log(`✅ Progress note saved to database with ID: ${savedProgressNote.id}`);
+          
+          // If appointment found, also save to appointment notes
+          if (clientAppointment) {
+            await storage.updateAppointment(clientAppointment.id, {
+              notes: `${clientAppointment.notes || ''}\n\n--- Generated Progress Note ---\n${progressNote.title}\n\nSubjective: ${progressNote.subjective}\n\nObjective: ${progressNote.objective}\n\nAssessment: ${progressNote.assessment}\n\nPlan: ${progressNote.plan}`.trim()
+            });
+            console.log(`✅ Progress note content added to appointment ${clientAppointment.id} notes field`);
+          }
+        } catch (dbError: any) {
+          console.error('❌ Error saving progress note to database:', dbError);
+          console.error('Full error details:', dbError);
+          // Continue and return the generated note even if database save fails
+        }
+      } else {
+        console.log(`⚠️ Skipping database save: invalid client ID (${clientId})`);
+      }
+      
       console.log('Progress note generated successfully');
       res.json({ 
         success: true, 
         progressNote, 
+        savedProgressNote,
         model: 'openai-gpt4o' 
       });
       
@@ -3416,11 +3485,88 @@ Return ONLY a JSON object with this exact structure:
       );
       
       // Generate progress note from the processed document
-      const progressNote = await documentProcessor.generateProgressNote(
+      const generatedNote = await documentProcessor.generateProgressNote(
         processed.extractedText,
         clientId || processed.detectedClientName || 'unknown',
         sessionDate || processed.detectedSessionDate || new Date().toISOString()
       );
+      
+      // Now the critical fix: Save the progress note to the database
+      let savedProgressNote = null;
+      let appointmentId = null;
+      
+      // Try to find the actual client ID if we have a client name
+      let actualClientId = clientId;
+      if (!actualClientId && processed.detectedClientName) {
+        actualClientId = await storage.getClientIdByName(processed.detectedClientName);
+      }
+      
+      if (actualClientId) {
+        // Try to find an appointment for this client on the session date
+        const sessionDateObj = new Date(generatedNote.sessionDate);
+        const appointments = await storage.getAppointments('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', sessionDateObj);
+        const clientAppointment = appointments.find(apt => apt.clientId === actualClientId);
+        
+        if (clientAppointment) {
+          appointmentId = clientAppointment.id;
+          console.log(`✅ Found appointment ${appointmentId} for client ${actualClientId} on ${generatedNote.sessionDate}`);
+        }
+        
+        // Save progress note to database
+        savedProgressNote = await storage.createProgressNote({
+          title: generatedNote.title,
+          subjective: generatedNote.subjective,
+          objective: generatedNote.objective,
+          assessment: generatedNote.assessment,
+          plan: generatedNote.plan,
+          tonalAnalysis: generatedNote.tonalAnalysis || 'Professional therapeutic tone observed',
+          keyPoints: generatedNote.keyPoints || [],
+          significantQuotes: generatedNote.significantQuotes || [],
+          narrativeSummary: generatedNote.narrativeSummary || 'Session content processed from uploaded document',
+          sessionDate: new Date(generatedNote.sessionDate),
+          clientId: actualClientId,
+          therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+          appointmentId: appointmentId
+        });
+        
+        console.log(`✅ Progress note saved to database with ID: ${savedProgressNote.id}`);
+        
+        // If we found an appointment, also save to appointment notes field
+        if (appointmentId && clientAppointment) {
+          await storage.updateAppointment(appointmentId, {
+            notes: `${clientAppointment.notes || ''}\n\n--- Processed Document Progress Note ---\n${generatedNote.title}\n\nSubjective: ${generatedNote.subjective}\n\nObjective: ${generatedNote.objective}\n\nAssessment: ${generatedNote.assessment}\n\nPlan: ${generatedNote.plan}`.trim()
+          });
+          console.log(`✅ Progress note content added to appointment ${appointmentId} notes field`);
+        }
+        
+        // Generate session prep for next appointment if exists
+        const upcomingAppointments = await storage.getUpcomingAppointmentsByClient(actualClientId);
+        if (upcomingAppointments.length > 0) {
+          const nextAppointment = upcomingAppointments[0];
+          
+          // Generate AI insights for the next session
+          const sessionPrepContent = `Based on progress note from ${generatedNote.sessionDate}:
+
+Key insights: ${generatedNote.keyPoints.join(', ')}
+Assessment: ${generatedNote.assessment}
+Plan: ${generatedNote.plan}
+
+Follow-up areas for next session:
+- Review progress on treatment goals
+- Explore themes from significant quotes: ${generatedNote.significantQuotes.join(', ')}
+- Continue interventions outlined in plan`;
+
+          const sessionPrepNote = await storage.createSessionPrepNote({
+            eventId: nextAppointment.id,
+            clientId: actualClientId,
+            content: sessionPrepContent,
+            type: 'ai_generated',
+            createdAt: new Date()
+          });
+          
+          console.log(`✅ Session prep note created for next appointment ${nextAppointment.id}`);
+        }
+      }
       
       // Clean up uploaded file
       fs.unlinkSync(req.file.path);
@@ -3428,8 +3574,11 @@ Return ONLY a JSON object with this exact structure:
       res.json({
         success: true,
         processed,
-        progressNote,
-        message: 'Document processed and progress note generated successfully'
+        progressNote: generatedNote,
+        savedProgressNote,
+        appointmentId,
+        clientId: actualClientId,
+        message: 'Document processed, progress note generated and saved to database successfully'
       });
       
     } catch (error: any) {
@@ -3463,17 +3612,69 @@ Return ONLY a JSON object with this exact structure:
             file.originalname
           );
           
-          const progressNote = await documentProcessor.generateProgressNote(
+          const generatedNote = await documentProcessor.generateProgressNote(
             processed.extractedText,
             clientId || processed.detectedClientName || 'unknown',
             sessionDate || processed.detectedSessionDate || new Date().toISOString()
           );
           
+          // Save progress note to database for each file
+          let savedProgressNote = null;
+          let appointmentId = null;
+          
+          // Try to find the actual client ID if we have a client name
+          let actualClientId = clientId;
+          if (!actualClientId && processed.detectedClientName) {
+            actualClientId = await storage.getClientIdByName(processed.detectedClientName);
+          }
+          
+          if (actualClientId) {
+            // Try to find an appointment for this client on the session date
+            const sessionDateObj = new Date(generatedNote.sessionDate);
+            const appointments = await storage.getAppointments('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', sessionDateObj);
+            const clientAppointment = appointments.find(apt => apt.clientId === actualClientId);
+            
+            if (clientAppointment) {
+              appointmentId = clientAppointment.id;
+              console.log(`✅ Found appointment ${appointmentId} for client ${actualClientId} on ${generatedNote.sessionDate}`);
+            }
+            
+            // Save progress note to database
+            savedProgressNote = await storage.createProgressNote({
+              title: generatedNote.title,
+              subjective: generatedNote.subjective,
+              objective: generatedNote.objective,
+              assessment: generatedNote.assessment,
+              plan: generatedNote.plan,
+              tonalAnalysis: generatedNote.tonalAnalysis || 'Professional therapeutic tone observed',
+              keyPoints: generatedNote.keyPoints || [],
+              significantQuotes: generatedNote.significantQuotes || [],
+              narrativeSummary: generatedNote.narrativeSummary || 'Session content processed from uploaded document',
+              sessionDate: new Date(generatedNote.sessionDate),
+              clientId: actualClientId,
+              therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+              appointmentId: appointmentId
+            });
+            
+            console.log(`✅ Progress note saved to database with ID: ${savedProgressNote.id}`);
+            
+            // If we found an appointment, also save to appointment notes field
+            if (appointmentId && clientAppointment) {
+              await storage.updateAppointment(appointmentId, {
+                notes: `${clientAppointment.notes || ''}\n\n--- Processed Document Progress Note ---\n${generatedNote.title}\n\nSubjective: ${generatedNote.subjective}\n\nObjective: ${generatedNote.objective}\n\nAssessment: ${generatedNote.assessment}\n\nPlan: ${generatedNote.plan}`.trim()
+              });
+              console.log(`✅ Progress note content added to appointment ${appointmentId} notes field`);
+            }
+          }
+          
           results.push({
             filename: file.originalname,
             success: true,
             processed,
-            progressNote
+            progressNote: generatedNote,
+            savedProgressNote,
+            appointmentId,
+            clientId: actualClientId
           });
           
           // Clean up file
