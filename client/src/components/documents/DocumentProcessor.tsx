@@ -66,7 +66,7 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
       try {
         // Step 1: Upload and process document in one call
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('file', file); // Using 'file' field name
         formData.append('clientId', clientId);
         formData.append('clientName', clientName);
         

@@ -38,6 +38,7 @@ const docProcessor = new DocumentProcessor();
 const upload = multer({
   dest: 'uploads/',
   fileFilter: (req, file, cb) => {
+    console.log('File filter - mimetype:', file.mimetype, 'originalname:', file.originalname);
     if (file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {
@@ -4458,46 +4459,58 @@ Follow-up areas for next session:
   });
 
   // Document upload and processing route
-  app.post('/api/documents/upload-and-process', upload.single('file'), async (req, res) => {
-    try {
-      const { clientId, clientName } = req.body;
-      const file = req.file;
-      
-      if (!file || !clientId || !clientName) {
+  app.post('/api/documents/upload-and-process', (req, res) => {
+    upload.single('file')(req, res, async (err) => {
+      if (err) {
+        console.error('Multer error:', err);
         return res.status(400).json({ 
-          error: 'Missing required fields: file, clientId, clientName' 
+          error: 'File upload error',
+          details: err.message 
         });
       }
 
-      if (file.mimetype !== 'application/pdf') {
-        return res.status(400).json({ 
-          error: 'Only PDF files are supported' 
-        });
-      }
-
-      // Process the uploaded PDF file
-      const analysis = await docProcessor.processSessionPDF(
-        file.path,
-        file.originalname,
-        clientId,
-        clientName
-      );
-
-      // Clean up uploaded file
       try {
-        await fs.promises.unlink(file.path);
-      } catch (unlinkError) {
-        console.warn('Failed to delete uploaded file:', unlinkError);
-      }
+        const { clientId, clientName } = req.body;
+        const file = req.file;
+        
+        console.log('Upload received - clientId:', clientId, 'clientName:', clientName, 'file:', file?.originalname);
+        
+        if (!file || !clientId || !clientName) {
+          return res.status(400).json({ 
+            error: 'Missing required fields: file, clientId, clientName' 
+          });
+        }
 
-      res.json(analysis);
-    } catch (error) {
-      console.error('Error processing uploaded PDF:', error);
-      res.status(500).json({ 
-        error: 'Failed to process document',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
+        if (file.mimetype !== 'application/pdf') {
+          return res.status(400).json({ 
+            error: 'Only PDF files are supported' 
+          });
+        }
+
+        // Process the uploaded PDF file
+        const analysis = await docProcessor.processSessionPDF(
+          file.path,
+          file.originalname,
+          clientId,
+          clientName
+        );
+
+        // Clean up uploaded file
+        try {
+          await fs.promises.unlink(file.path);
+        } catch (unlinkError) {
+          console.warn('Failed to delete uploaded file:', unlinkError);
+        }
+
+        res.json(analysis);
+      } catch (error) {
+        console.error('Error processing uploaded PDF:', error);
+        res.status(500).json({ 
+          error: 'Failed to process document',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    });
   });
 
   // Document processing routes
