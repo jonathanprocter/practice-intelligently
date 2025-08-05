@@ -376,6 +376,71 @@ class SimpleOAuth {
       throw error;
     }
   }
+
+  // Additional Calendar methods for routes
+  async getEvent(eventId: string, calendarId: string = 'primary'): Promise<any> {
+    if (!this.isConnected()) {
+      throw new Error('Not authenticated with Google Calendar');
+    }
+
+    try {
+      const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
+      const response = await calendar.events.get({
+        calendarId,
+        eventId
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error getting event:', error);
+      if (error.code === 401 || error.code === 403) {
+        this.isAuthenticated = false;
+        throw new Error('Authentication expired. Please re-authenticate.');
+      }
+      throw error;
+    }
+  }
+
+  async updateEvent(eventId: string, updates: any, calendarId: string = 'primary'): Promise<any> {
+    if (!this.isConnected()) {
+      throw new Error('Not authenticated with Google Calendar');
+    }
+
+    try {
+      const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
+      const response = await calendar.events.update({
+        calendarId,
+        eventId,
+        requestBody: updates
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error updating event:', error);
+      if (error.code === 401 || error.code === 403) {
+        this.isAuthenticated = false;
+        throw new Error('Authentication expired. Please re-authenticate.');
+      }
+      throw error;
+    }
+  }
+
+  async clearTokens(): Promise<void> {
+    this.tokens = null;
+    this.isAuthenticated = false;
+    this.oauth2Client.setCredentials({});
+
+    // Remove tokens file
+    try {
+      const { promises: fsPromises } = await import('fs');
+      try {
+        await fsPromises.unlink(this.tokensFilePath);
+        console.log('OAuth tokens cleared and file deleted');
+      } catch (fileError) {
+        // File might not exist, which is fine
+      }
+    } catch (error) {
+      console.warn('Failed to clear tokens file:', error);
+    }
+  }
 }
 
 // Export singleton instance

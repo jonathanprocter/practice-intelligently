@@ -2446,7 +2446,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   });
   // ========== CALENDAR API ROUTES (Auto-generated) ==========
 
-  app.get('/api/calendar/events/:param', async (req, res) => {
+  app.get('/api/calendar/events/:eventId', async (req, res) => {
     try {
       const { eventId } = req.params;
       const { simpleOAuth } = await import('./oauth-simple');
@@ -2464,7 +2464,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     }
   });
   
-  app.put('/api/calendar/events/:param', async (req, res) => {
+  app.put('/api/calendar/events/:eventId', async (req, res) => {
     try {
       const { eventId } = req.params;
       const updates = req.body;
@@ -2482,7 +2482,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       res.status(500).json({ error: 'Failed to update calendar event', details: error.message });
     }
   });
-  app.get('/api/calendar/events/:param?:param', async (req, res) => {
+  app.get('/api/calendar/events/:eventId/:additionalParam?', async (req, res) => {
     try {
       const { eventId } = req.params;
       const { simpleOAuth } = await import('./oauth-simple');
@@ -2500,7 +2500,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     }
   });
   
-  app.put('/api/calendar/events/:param?:param', async (req, res) => {
+  app.put('/api/calendar/events/:eventId/:additionalParam?', async (req, res) => {
     try {
       const { eventId } = req.params;
       const updates = req.body;
@@ -2555,7 +2555,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       res.status(500).json({ error: 'Failed to get calendar events', details: error.message });
     }
   });
-  app.get('/api/calendar/events/:param:param', async (req, res) => {
+  app.get('/api/calendar/events/:eventId/:calendarId', async (req, res) => {
     try {
       const { eventId } = req.params;
       const { simpleOAuth } = await import('./oauth-simple');
@@ -2573,7 +2573,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     }
   });
   
-  app.put('/api/calendar/events/:param:param', async (req, res) => {
+  app.put('/api/calendar/events/:eventId/:calendarId', async (req, res) => {
     try {
       const { eventId } = req.params;
       const updates = req.body;
@@ -2591,7 +2591,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       res.status(500).json({ error: 'Failed to update calendar event', details: error.message });
     }
   });
-  app.get('/api/calendar/events/:param?calendarId=:param', async (req, res) => {
+  app.get('/api/calendar/events/:eventId', async (req, res) => {
     try {
       const { eventId } = req.params;
       const { simpleOAuth } = await import('./oauth-simple');
@@ -2609,7 +2609,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     }
   });
   
-  app.put('/api/calendar/events/:param?calendarId=:param', async (req, res) => {
+  app.put('/api/calendar/events/:eventId', async (req, res) => {
     try {
       const { eventId } = req.params;
       const updates = req.body;

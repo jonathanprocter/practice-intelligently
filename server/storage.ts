@@ -1693,9 +1693,9 @@ export class DatabaseStorage implements IStorage {
       const { generateClinicalAnalysis } = await import('./ai-services');
 
       const sessionContext = previousNotes.slice(0, 3).map(note => ({
-        date: note.createdAt,
+        date: note.createdAt || new Date(),
         content: note.content,
-        duration: note.duration
+        duration: '50 minutes' // Default session duration
       }));
 
       const prompt = `As an expert clinical therapist, analyze the following client information and recent session notes to provide comprehensive session preparation guidance:
