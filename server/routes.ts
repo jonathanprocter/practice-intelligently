@@ -38,6 +38,90 @@ const docProcessor = new DocumentProcessor();
 // Initialize session document processor
 const sessionDocProcessor = new SessionDocumentProcessor(storage);
 
+// Helper function to sync calendar events to appointments
+async function syncEventToAppointment(event: any, calendarId: string): Promise<number> {
+  try {
+    // Skip events without proper time data
+    if (!event.start?.dateTime || !event.end?.dateTime || !event.summary) {
+      return 0;
+    }
+
+    // Extract client name from event summary
+    const clientName = extractClientNameFromEvent(event.summary);
+    if (!clientName) {
+      return 0;
+    }
+
+    // Try to find the client in our database
+    const clientId = await storage.getClientIdByName(clientName);
+    if (!clientId) {
+      console.log(`Client not found for event: ${event.summary} (extracted: ${clientName})`);
+      return 0;
+    }
+
+    // Check if appointment already exists for this event
+    const existingAppointment = await storage.getAppointmentByEventId(event.id);
+    if (existingAppointment) {
+      return 0; // Already exists
+    }
+
+    // Create the appointment
+    const appointmentData = {
+      clientId,
+      therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', // Default therapist
+      startTime: new Date(event.start.dateTime),
+      endTime: new Date(event.end.dateTime),
+      type: 'therapy_session',
+      status: 'scheduled',
+      location: event.location || 'Office',
+      googleEventId: event.id,
+      googleCalendarId: calendarId,
+      lastGoogleSync: new Date()
+    };
+
+    await storage.createAppointment(appointmentData);
+    console.log(`Created appointment for ${clientName} from event: ${event.summary}`);
+    return 1;
+  } catch (error) {
+    console.error('Error syncing event to appointment:', error);
+    return 0;
+  }
+}
+
+// Helper function to extract client name from event summary
+function extractClientNameFromEvent(summary: string): string | null {
+  if (!summary) return null;
+
+  // Common patterns for client appointments
+  const patterns = [
+    // "🔒 Client Name Appointment" (with lock emoji) - must come first
+    /^🔒\s*(.+?)\s+(Appointment|Session|Therapy|Meeting)$/i,
+    // "Client Name Appointment" or "Client Name Session"
+    /^(.+?)\s+(Appointment|Session|Therapy|Meeting)$/i,
+    // "Appointment with Client Name" or "Session with Client Name"
+    /^(?:Appointment|Session|Therapy|Meeting)\s+with\s+(.+)$/i,
+    // Just "Client Name" if it looks like a person's name
+    /^([A-Z][a-z]+\s+[A-Z][a-z]+)$/
+  ];
+
+  for (const pattern of patterns) {
+    const match = summary.match(pattern);
+    if (match && match[1]) {
+      let clientName = match[1].trim();
+      
+      // Remove any emoji or special characters from the beginning
+      clientName = clientName.replace(/^[^\w\s]+\s*/, '');
+      
+      // Validate it looks like a person's name (has at least 2 words)
+      if (clientName.split(' ').length >= 2) {
+        return clientName;
+      }
+    }
+  }
+
+  return null;
+}
+
 // Configure multer for file uploads
 const upload = multer({
   dest: 'uploads/',
@@ -605,6 +689,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get appointments for a specific client
+  app.get("/api/appointments/client/:clientId", async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const appointments = await storage.getAppointmentsByClient(clientId);
+      res.json(appointments);
+    } catch (error) {
+      console.error("Error fetching client appointments:", error);
+      res.status(500).json({ error: "Failed to fetch client appointments" });
+    }
+  });
+
   app.get("/api/appointments/detail/:id", async (req, res) => {
     try {
       const { id } = req.params;
@@ -1068,7 +1164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Enhanced Calendar sync endpoints - fetches from ALL calendars and subcalendars
+  // Enhanced Calendar sync endpoints - fetches from ALL calendars and subcalendars AND creates appointments
   app.post('/api/calendar/sync', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
@@ -1081,6 +1177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const calendars = await simpleOAuth.getCalendars();
       let totalEvents = 0;
       let syncedCalendars = 0;
+      let appointmentsCreated = 0;
 
       // Enhanced time range: 2019-2030 to capture all historical and future events
       const timeMin = new Date('2019-01-01T00:00:00.000Z').toISOString();
@@ -1092,6 +1189,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const events = await simpleOAuth.getEvents(calendar.id, timeMin, timeMax);
           totalEvents += events.length;
           syncedCalendars++;
+
+          // First, save all events to calendar_events table
+          const { syncEventToDatabase } = await import('./auth');
+          for (const event of events) {
+            await syncEventToDatabase(event, calendar.id, calendar.summary);
+          }
+
+          // Then, process each event and create appointments for recognized clients
+          for (const event of events) {
+            const appointmentCount = await syncEventToAppointment(event, calendar.id);
+            appointmentsCreated += appointmentCount;
+          }
+
           return {
             calendarId: calendar.id,
             calendarName: calendar.summary,
@@ -1114,8 +1224,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ 
         success: true, 
-        message: `Successfully synced ${totalEvents} events from ${syncedCalendars}/${calendars.length} calendars (2019-2030)`, 
+        message: `Successfully synced ${totalEvents} events from ${syncedCalendars}/${calendars.length} calendars and created ${appointmentsCreated} appointments`, 
         totalEventCount: totalEvents,
+        appointmentsCreated,
         calendarsProcessed: calendars.length,
         calendarsSuccessful: syncedCalendars,
         timeRange: '2019-2030',

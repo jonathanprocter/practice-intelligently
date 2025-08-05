@@ -543,6 +543,23 @@ export class DatabaseStorage implements IStorage {
       .limit(5); // Limit to next 5 appointments
   }
 
+  async getAppointmentsByClient(clientId: string): Promise<Appointment[]> {
+    return await db
+      .select()
+      .from(appointments)
+      .where(eq(appointments.clientId, clientId))
+      .orderBy(desc(appointments.startTime));
+  }
+
+  async getAppointmentByEventId(eventId: string): Promise<Appointment | null> {
+    const [appointment] = await db
+      .select()
+      .from(appointments)
+      .where(eq(appointments.googleEventId, eventId))
+      .limit(1);
+    return appointment || null;
+  }
+
   async getClientIdByName(clientName: string): Promise<string | null> {
     const [client] = await db
       .select({ id: clients.id })
