@@ -3545,18 +3545,52 @@ Return ONLY a JSON object with this exact structure:
       // Try to find the actual client ID if we have a client name
       let actualClientId = clientId;
       if (!actualClientId && processed.detectedClientName) {
-        actualClientId = await storage.getClientIdByName(processed.detectedClientName);
+        // Clean the client name (remove 🔒 symbols and extra spaces)
+        const cleanClientName = processed.detectedClientName.replace(/🔒\s*/g, '').trim();
+        console.log(`🧹 Cleaned client name: "${cleanClientName}" from original: "${processed.detectedClientName}"`);
+        actualClientId = await storage.getClientIdByName(cleanClientName);
       }
       
       if (actualClientId) {
         // Try to find an appointment for this client on the session date
         const sessionDateObj = new Date(generatedNote.sessionDate);
+        console.log(`🔍 Looking for appointments on ${sessionDateObj.toISOString().split('T')[0]} for client ${actualClientId}`);
+        
         const appointments = await storage.getAppointments('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', sessionDateObj);
+        console.log(`📅 Found ${appointments.length} appointments on this date`);
+        
         const clientAppointment = appointments.find(apt => apt.clientId === actualClientId);
         
-        if (clientAppointment) {
+        if (!clientAppointment) {
+          // Try a wider date range (±1 day) in case of time zone issues
+          const dayBefore = new Date(sessionDateObj);
+          dayBefore.setDate(dayBefore.getDate() - 1);
+          const dayAfter = new Date(sessionDateObj);
+          dayAfter.setDate(dayAfter.getDate() + 1);
+          
+          console.log(`🔍 Expanding search to include ${dayBefore.toISOString().split('T')[0]} and ${dayAfter.toISOString().split('T')[0]}`);
+          
+          const appointmentsBefore = await storage.getAppointments('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', dayBefore);
+          const appointmentsAfter = await storage.getAppointments('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', dayAfter);
+          
+          const allAppointments = [...appointmentsBefore, ...appointments, ...appointmentsAfter];
+          const clientAppointmentExpanded = allAppointments.find(apt => apt.clientId === actualClientId);
+          
+          if (clientAppointmentExpanded) {
+            console.log(`✅ Found appointment in expanded search: ${clientAppointmentExpanded.id}`);
+            // Use the found appointment from expanded search
+            appointmentId = clientAppointmentExpanded.id;
+          }
+        } else {
           appointmentId = clientAppointment.id;
-          console.log(`✅ Found appointment ${appointmentId} for client ${actualClientId} on ${generatedNote.sessionDate}`);
+          console.log(`✅ Found exact appointment match: ${appointmentId}`);
+        }
+        
+        // Log final result
+        if (appointmentId) {
+          console.log(`✅ Final appointment ID set: ${appointmentId} for client ${actualClientId} on ${generatedNote.sessionDate}`);
+        } else {
+          console.log(`⚠️ No appointment found for client ${actualClientId} on ${generatedNote.sessionDate}`);
         }
         
         // Save progress note to database
@@ -3594,24 +3628,40 @@ Return ONLY a JSON object with this exact structure:
           // Generate AI insights for the next session
           const sessionPrepContent = `Based on progress note from ${generatedNote.sessionDate}:
 
-Key insights: ${generatedNote.keyPoints.join(', ')}
+Key insights: ${generatedNote.keyPoints?.join(', ') || 'No specific key points identified'}
 Assessment: ${generatedNote.assessment}
 Plan: ${generatedNote.plan}
 
 Follow-up areas for next session:
 - Review progress on treatment goals
-- Explore themes from significant quotes: ${generatedNote.significantQuotes.join(', ')}
+- Explore themes from significant quotes: ${generatedNote.significantQuotes?.join(', ') || 'No significant quotes recorded'}
 - Continue interventions outlined in plan`;
 
-          const sessionPrepNote = await storage.createSessionPrepNote({
-            eventId: nextAppointment.id,
-            clientId: actualClientId,
-            content: sessionPrepContent,
-            type: 'ai_generated',
-            createdAt: new Date()
-          });
-          
-          console.log(`✅ Session prep note created for next appointment ${nextAppointment.id}`);
+          try {
+            const sessionPrepNote = await storage.createSessionPrepNote({
+              appointmentId: nextAppointment.id,
+              eventId: nextAppointment.id,
+              clientId: actualClientId,
+              therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+              prepContent: sessionPrepContent,
+              keyFocusAreas: generatedNote.keyPoints || [],
+              previousSessionSummary: `${generatedNote.subjective}\n\n${generatedNote.objective}`,
+              suggestedInterventions: [generatedNote.plan],
+              clientGoals: [],
+              riskFactors: [],
+              homeworkReview: null,
+              sessionObjectives: [],
+              aiGeneratedInsights: `Generated from uploaded document: ${generatedNote.title}`,
+              lastUpdatedBy: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'
+            });
+            
+            console.log(`✅ Session prep note created for next appointment ${nextAppointment.id} with ID: ${sessionPrepNote.id}`);
+          } catch (sessionPrepError: any) {
+            console.error(`❌ Error creating session prep note:`, sessionPrepError);
+            // Don't fail the entire upload if session prep creation fails
+          }
+        } else {
+          console.log(`ℹ️ No upcoming appointments found for client ${actualClientId} - skipping session prep creation`);
         }
       }
       
