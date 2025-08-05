@@ -4030,13 +4030,31 @@ Follow-up areas for next session:
       
       // Get session notes with optional client filter
       const sessionNotes = clientId 
-        ? await storage.getSessionNotesByClient(clientId as string)
+        ? await storage.getSessionNotesByClientId(clientId as string)
         : await storage.getSessionNotes(therapistId as string);
         
       res.json(sessionNotes);
     } catch (error: any) {
       console.error('Error getting session notes:', error);
       res.status(500).json({ error: 'Failed to get session notes', details: error.message });
+    }
+  });
+
+  // POST endpoint for creating session notes
+  app.post('/api/session-notes', async (req, res) => {
+    try {
+      const sessionNoteData = req.body;
+      
+      if (!sessionNoteData.clientId || !sessionNoteData.therapistId) {
+        return res.status(400).json({ error: 'Client ID and therapist ID are required' });
+      }
+      
+      // Create the session note
+      const newSessionNote = await storage.createSessionNote(sessionNoteData);
+      res.status(201).json(newSessionNote);
+    } catch (error: any) {
+      console.error('Error creating session note:', error);
+      res.status(500).json({ error: 'Failed to create session note', details: error.message });
     }
   });
 
