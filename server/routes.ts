@@ -2965,8 +2965,17 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         
         // Generate AI insights for the next appointment with this client
         if (finalClientId !== 'unknown') {
+          console.log(`🔄 Generating next session insights for client ID: ${finalClientId} (${actualClientName})`);
           await generateNextSessionInsights(finalClientId, finalTherapistId, savedNote, actualClientName);
+        } else {
+          console.log(`⚠️ Cannot generate next session insights - client ID is unknown for: ${actualClientName}`);
         }
+      }
+      
+      // ALWAYS generate session prep for next appointment, regardless of current appointment linking
+      if (finalClientId !== 'unknown') {
+        console.log(`🔄 Generating next session prep for client ID: ${finalClientId} (${actualClientName}) - independent of current appointment linking`);
+        await generateNextSessionInsights(finalClientId, finalTherapistId, savedNote, actualClientName);
       }
       
       res.json({ 
@@ -2999,15 +3008,33 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   // Helper function to generate insights for next session
   async function generateNextSessionInsights(clientId: string, therapistId: string, progressNote: any, clientName: string) {
     try {
+      console.log(`🔍 Looking for upcoming appointments for client ID: ${clientId} (${clientName})`);
+      
+      // Validate that clientId is a proper UUID, not a client name
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(clientId)) {
+        console.log(`❌ Invalid client ID format: ${clientId} - trying to resolve client name to UUID`);
+        const resolvedClientId = await storage.getClientIdByName(clientId);
+        if (resolvedClientId) {
+          clientId = resolvedClientId;
+          console.log(`✅ Resolved client name to UUID: ${clientId}`);
+        } else {
+          console.log(`❌ Could not resolve client name to UUID: ${clientId}`);
+          return;
+        }
+      }
+      
       // Find the next scheduled appointment for this client
       const upcomingAppointments = await storage.getUpcomingAppointmentsByClient(clientId);
+      console.log(`📅 Found ${upcomingAppointments.length} upcoming appointments for ${clientName}`);
       
       if (upcomingAppointments.length === 0) {
-        console.log(`No upcoming appointments found for client ${clientName}`);
+        console.log(`⚠️ No upcoming appointments found for client ${clientName} (${clientId})`);
         return;
       }
 
       const nextAppointment = upcomingAppointments[0];
+      console.log(`🎯 Next appointment: ${nextAppointment.id} on ${nextAppointment.startTime || nextAppointment.start_time}`);
       
       // Generate AI insights for the next session
       const sessionPrepPrompt = `Based on this completed session progress note, generate preparation insights for the next therapy session:
@@ -3066,10 +3093,10 @@ Generate specific preparation guidance for the next session including:
       
       if (existingPrep) {
         await storage.updateSessionPrepNote(existingPrep.id, sessionPrepData);
-        console.log(`Updated session prep for next appointment: ${nextAppointment.id}`);
+        console.log(`✅ Updated session prep for next appointment: ${nextAppointment.id} (${clientName})`);
       } else {
-        await storage.createSessionPrepNote(sessionPrepData);
-        console.log(`Created session prep for next appointment: ${nextAppointment.id}`);
+        const createdPrep = await storage.createSessionPrepNote(sessionPrepData);
+        console.log(`✅ Created session prep for next appointment: ${nextAppointment.id} (${clientName}) - Prep ID: ${createdPrep.id}`);
       }
 
     } catch (error) {
