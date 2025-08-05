@@ -177,6 +177,9 @@ export const DailyView = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           eventId: selectedEvent.id,
+          appointmentId: selectedEvent.id,
+          clientId: selectedEvent.clientId || 'f4b3e1b5-d4a2-4f6c-8e7b-2a9f8c5d3e2a', // Default client ID if not provided
+          therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', // Default therapist ID
           content: sessionNotes,
           date: date.toISOString(),
           clientName: selectedEvent.clientName
