@@ -53,7 +53,7 @@ export default function Header() {
             />
             <div className="hidden md:block">
               <p className="font-medium text-therapy-text">Dr. Jonathan Procter</p>
-              <p className="text-sm text-therapy-text/60">Licensed Therapist</p>
+              <p className="text-sm text-therapy-text/60">LMHC</p>
             </div>
           </div>
         </div>
