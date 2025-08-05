@@ -180,10 +180,10 @@ export default function Assessments() {
 
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="assign-assessment-description">
           <DialogHeader>
             <DialogTitle>Assign Assessment</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="assign-assessment-description">
               Assign "{assessment.name}" to a client with optional due date and notes.
             </DialogDescription>
           </DialogHeader>

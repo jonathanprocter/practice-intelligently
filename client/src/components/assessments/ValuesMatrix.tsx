@@ -67,6 +67,8 @@ export function ValuesMatrix({ clientId, onComplete }: ValuesMatrixProps) {
 
   const handleComparison = (winner: string) => {
     const currentPair = allComparisons[currentComparison];
+    if (!currentPair) return; // Safety check
+    
     const newComparison = {
       valueA: currentPair.valueA,
       valueB: currentPair.valueB,
@@ -286,6 +288,21 @@ ${results.rankings.map(r => `${r.rank}. ${r.value} (${r.score} wins)`).join('\n'
   if (step === 'compare') {
     const progress = ((currentComparison) / allComparisons.length) * 100;
     const currentPair = allComparisons[currentComparison];
+
+    if (!currentPair) {
+      return (
+        <div className="max-w-4xl mx-auto p-6 space-y-6">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <p>No comparisons available. Please return to Step 1.</p>
+              <Button onClick={() => setStep('input')} className="mt-4">
+                Back to Values Input
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
 
     return (
       <div className="max-w-4xl mx-auto p-6 space-y-6">
