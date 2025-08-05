@@ -66,7 +66,7 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
       try {
         // Step 1: Upload and process document in one call
         const formData = new FormData();
-        formData.append('file', file); // Using 'file' field name
+        formData.append('document', file); // Using 'document' field name to match server expectation
         formData.append('clientId', clientId);
         formData.append('clientName', clientName);
         
@@ -76,7 +76,8 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
         });
         
         if (!processResponse.ok) {
-          throw new Error('Failed to process document');
+          const errorData = await processResponse.json().catch(() => ({}));
+          throw new Error(errorData.details || errorData.error || `Server error: ${processResponse.status}`);
         }
         
         const processedData = await processResponse.json();

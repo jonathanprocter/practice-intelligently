@@ -2897,7 +2897,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         fs.unlinkSync(req.file.path);
       }
       console.error('Error processing uploaded document:', error);
-      res.status(500).json({ error: 'Failed to process document', details: error.message });
+      res.status(500).json({ 
+        error: 'Failed to process document', 
+        details: error.message,
+        stack: error.stack // Add stack trace for better debugging
+      });
     }
   });
 
