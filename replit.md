@@ -45,6 +45,7 @@ The system utilizes a comprehensive PostgreSQL database with tables for core cli
 - **Google Drive & Notion Integration**: Content viewer with OAuth authentication for Google Calendar, Drive, and Notion workspace integration.
 - **Assessment Management System**: Integration of clinical assessments (e.g., Beck Depression Inventory) and therapeutic tools (e.g., breathing exercises, Life in Weeks visualization).
 - **Client Chart Review System**: Dedicated interface for comprehensive clinical overview including progress notes, session prep history, AI-powered case conceptualization, and AI treatment guide generation.
+- **Session Notes Integration**: Robust session notes system with proper Google Calendar event ID linking, error-resilient loading, and seamless UI integration for appointment-based documentation.
 
 ### Data Flow
 Client requests from the React frontend are processed by the Express backend, interacting with PostgreSQL via Drizzle ORM. External AI services process therapeutic content, and TanStack Query manages real-time UI updates.
