@@ -2868,8 +2868,8 @@ I can help you analyze this data, provide insights, and assist with clinical dec
           
           for (const client of allClients) {
             const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
-            const firstNameMatch = nameParts.some((part: string) => client.firstName.toLowerCase().includes(part));
-            const lastNameMatch = nameParts.some((part: string) => client.lastName.toLowerCase().includes(part));
+            const firstNameMatch = nameParts.some((part: any) => client.firstName.toLowerCase().includes(part));
+            const lastNameMatch = nameParts.some((part: any) => client.lastName.toLowerCase().includes(part));
             
             if (firstNameMatch && lastNameMatch) {
               finalClientId = client.id;
@@ -2893,7 +2893,9 @@ I can help you analyze this data, provide insights, and assist with clinical dec
           // Try to match with Google Calendar events for the same date and client
           console.log(`🔍 Looking for Google Calendar event for client: ${actualClientName} on date: ${finalSessionDate}`);
           try {
-            const baseUrl = process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000';
+            const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+              ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+              : 'http://localhost:5000';
             const eventsResponse = await fetch(`${baseUrl}/api/oauth/events/today`);
             if (eventsResponse.ok) {
               const events = await eventsResponse.json();
@@ -3031,7 +3033,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       }
 
       const nextAppointment = upcomingAppointments[0];
-      console.log(`🎯 Next appointment: ${nextAppointment.id} on ${nextAppointment.startTime || nextAppointment.start_time}`);
+      console.log(`🎯 Next appointment: ${nextAppointment.id} on ${nextAppointment.startTime}`);
       
       // Generate AI insights for the next session
       const sessionPrepPrompt = `Based on this completed session progress note, generate preparation insights for the next therapy session:
@@ -3046,7 +3048,7 @@ Objective: ${progressNote.objective}
 Assessment: ${progressNote.assessment}
 Plan: ${progressNote.plan}
 
-Key Points: ${progressNote.keyPoints?.join(', ') || 'None'}
+Key Points: ${Array.isArray(progressNote.keyPoints) ? progressNote.keyPoints.join(', ') : 'None'}
 Narrative Summary: ${progressNote.narrativeSummary}
 
 Generate specific preparation guidance for the next session including:
@@ -3234,7 +3236,7 @@ Progress Notes Analysis:
 ${clinicalData.progressNotes.map(note => `
 Date: ${note.date}
 Assessment: ${note.assessment}
-Key Points: ${note.keyPoints?.join(', ') || 'None'}
+Key Points: ${Array.isArray(note.keyPoints) ? note.keyPoints.join(', ') : 'None'}
 Narrative: ${note.narrativeSummary}
 `).join('\n')}
 
@@ -3328,7 +3330,7 @@ ${treatmentData.recentNotes.map(note => `
 Date: ${note.sessionDate}
 Assessment: ${note.assessment}
 Plan: ${note.plan}
-Key Points: ${note.keyPoints?.join(', ') || 'None'}
+Key Points: ${Array.isArray(note.keyPoints) ? note.keyPoints.join(', ') : 'None'}
 `).join('\n')}
 
 Please provide a comprehensive treatment guide including:
