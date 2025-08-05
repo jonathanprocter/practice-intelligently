@@ -139,10 +139,14 @@ export const DailyView = ({
       }
 
       // Load session prep notes for this appointment
+      console.log(`🔍 Loading session prep for event: ${event.id}`);
       const prepResponse = await fetch(`/api/session-prep/appointment/${event.id}`);
       if (prepResponse.ok) {
         const prepData = await prepResponse.json();
         setSessionPrepNotes(prepData);
+        console.log(`✅ Session prep loaded successfully`);
+      } else {
+        console.log(`❌ Session prep failed: ${prepResponse.status}`);
       }
 
       // Try to load existing session notes from database
@@ -165,7 +169,8 @@ export const DailyView = ({
         setSessionNotes(event.notes || '');
       }
     } catch (error) {
-      // Silently handle loading errors - calendar events may not have associated data
+      // Handle loading errors - calendar events may not have associated data
+      console.error(`❌ Error in handleEventClick:`, error);
       setSessionNotes(event.notes || '');
     } finally {
       setIsLoadingAppointmentData(false);
