@@ -204,15 +204,39 @@ export class SessionDocumentProcessor {
   }
 
   private isClientNameLine(line: string): boolean {
-    // Client name is typically the first line or a standalone name
-    return (
-      line.length > 0 &&
-      line.length < 50 &&
-      /^[A-Za-z\s]+$/.test(line) &&
-      !this.isSessionDateLine(line) &&
-      !this.isSoapSection(line) &&
-      !line.toLowerCase().includes('session')
-    );
+    const cleanLine = line.trim().toLowerCase();
+    
+    // Must be reasonable length for a name
+    if (line.length < 2 || line.length > 50) return false;
+    
+    // Must only contain letters and spaces
+    if (!/^[A-Za-z\s]+$/.test(line)) return false;
+    
+    // Must have 1-3 words (first name, optional middle, last name)
+    const words = line.trim().split(/\s+/);
+    if (words.length < 1 || words.length > 3) return false;
+    
+    // Exclude common section headers and therapy terms
+    const excludedTerms = [
+      'session', 'subjective', 'objective', 'assessment', 'plan',
+      'supplemental', 'analyses', 'analysis', 'tonal', 'thematic',
+      'comprehensive', 'narrative', 'summary', 'key', 'points',
+      'significant', 'quotes', 'homework', 'next', 'notes',
+      'progress', 'therapy', 'client', 'patient', 'theme', 'shift'
+    ];
+    
+    if (excludedTerms.some(term => cleanLine.includes(term))) return false;
+    
+    // Exclude if it's a SOAP section
+    if (this.isSoapSection(line)) return false;
+    
+    // Exclude if it's a session date line
+    if (this.isSessionDateLine(line)) return false;
+    
+    // Exclude if it's a supplemental section
+    if (this.isSupplementalSection(line)) return false;
+    
+    return true;
   }
 
   private extractClientName(line: string): string {
@@ -338,22 +362,50 @@ export class SessionDocumentProcessor {
    * Find existing client or create new one
    */
   private async findOrCreateClient(clientName: string, therapistId: string) {
+    // Filter out invalid client names (section headers, common words, etc.)
+    const invalidNames = [
+      'comprehensive', 'narrative', 'summary', 'session', 'subjective', 'objective', 
+      'assessment', 'plan', 'key', 'points', 'significant', 'quotes', 'supplemental',
+      'analyses', 'tonal', 'analysis', 'thematic', 'theme', 'shift', 'homework',
+      'next', 'notes', 'progress', 'therapy', 'client', 'patient'
+    ];
+    
+    const cleanName = clientName.trim().toLowerCase();
+    
+    // Skip if it's likely not a real client name
+    if (invalidNames.some(invalid => cleanName.includes(invalid)) || 
+        cleanName.length < 2 || 
+        /\d/.test(cleanName) || // contains numbers
+        cleanName.split(' ').length > 3) { // too many words
+      throw new Error(`Invalid client name detected: ${clientName}`);
+    }
+
     const nameParts = clientName.trim().split(' ');
     const firstName = nameParts[0] || 'Unknown';
     const lastName = nameParts.slice(1).join(' ') || 'Client';
 
-    // Try to find existing client
+    // Try to find existing client with fuzzy matching
     const clients = await this.storage.getClients(therapistId);
-    const existingClient = clients.find(client => 
-      client.firstName.toLowerCase() === firstName.toLowerCase() &&
-      client.lastName.toLowerCase() === lastName.toLowerCase()
-    );
+    const existingClient = clients.find(client => {
+      const firstMatch = client.firstName.toLowerCase() === firstName.toLowerCase();
+      const lastMatch = client.lastName.toLowerCase() === lastName.toLowerCase();
+      
+      // Also check for partial matches
+      const firstPartial = client.firstName.toLowerCase().includes(firstName.toLowerCase()) ||
+                          firstName.toLowerCase().includes(client.firstName.toLowerCase());
+      const lastPartial = client.lastName.toLowerCase().includes(lastName.toLowerCase()) ||
+                         lastName.toLowerCase().includes(client.lastName.toLowerCase());
+      
+      return (firstMatch && lastMatch) || (firstPartial && lastPartial);
+    });
 
     if (existingClient) {
+      console.log(`Found existing client: ${existingClient.firstName} ${existingClient.lastName} for search: ${clientName}`);
       return existingClient;
     }
 
-    // Create new client
+    // Create new client only if name seems valid
+    console.log(`Creating new client: ${firstName} ${lastName}`);
     return await this.storage.createClient({
       firstName,
       lastName,
