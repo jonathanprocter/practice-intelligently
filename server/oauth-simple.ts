@@ -173,8 +173,8 @@ class SimpleOAuth {
       const startTime = timeMin || new Date('2015-01-01T00:00:00.000Z').toISOString();
       const endTime = timeMax || new Date('2030-12-31T23:59:59.999Z').toISOString();
       
-      // Debug: Log the actual parameters being used
-      console.log(`🔍 Calendar fetch params: timeMin=${timeMin || 'DEFAULT'}, timeMax=${timeMax || 'DEFAULT'}`);
+      // Debug: Log the actual parameters being used  
+      console.log(`🔍 Calendar fetch params: timeMin=${startTime}, timeMax=${endTime}`);
       
       const response = await calendar.events.list({
         calendarId,

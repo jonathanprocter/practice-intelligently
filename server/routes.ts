@@ -2154,7 +2154,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     }
   });
 
-  // OAuth events endpoint - expanded to get all historical events 2015-2030
+  // OAuth events endpoint - get today's events only
   app.get('/api/oauth/events/today', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
@@ -2163,9 +2163,10 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         return res.json([]); // Return empty array instead of error to prevent frontend warnings
       }
 
-      // Get all events from 2015-2030 to ensure comprehensive calendar data
-      const timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
-      const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
+      // Get today's events only - Fixed to use actual today's date range
+      const today = new Date();
+      const timeMin = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+      const timeMax = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
 
       const calendars = await simpleOAuth.getCalendars();
       let todaysEvents: any[] = [];
@@ -2183,8 +2184,16 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         }
       }
 
-      // Return all historical events (2015-2030) for comprehensive calendar view
-      const filteredEvents = todaysEvents;
+      // Filter events to only include today's events (using the same today date already defined above)
+      const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+      
+      const filteredEvents = todaysEvents.filter(event => {
+        if (!event.start) return false;
+        
+        const eventStart = new Date(event.start.dateTime || event.start.date);
+        return eventStart >= startOfToday && eventStart <= endOfToday;
+      });
 
       res.json(filteredEvents);
     } catch (error: any) {
