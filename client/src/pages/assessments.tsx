@@ -63,7 +63,7 @@ export default function Assessments() {
   // Filtering logic
   const getUniqueCategories = () => {
     if (!catalogData || !Array.isArray(catalogData)) return [];
-    return [...new Set(catalogData.map((item: any) => item.category))];
+    return Array.from(new Set(catalogData.map((item: any) => item.category)));
   };
 
   const filteredCatalog = (catalogData && Array.isArray(catalogData) ? catalogData : []).filter((item: any) => {
@@ -403,7 +403,7 @@ export default function Assessments() {
           </DialogHeader>
           <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
             <ValuesMatrix
-              clientId={valuesMatrixClientId}
+              clientId={valuesMatrixClientId || undefined}
               onComplete={(results) => {
                 // Handle completion - could save results, show success message, etc.
                 toast({
