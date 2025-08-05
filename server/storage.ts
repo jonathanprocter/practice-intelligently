@@ -223,6 +223,16 @@ export interface IStorage {
   getAssessmentPackages(): Promise<AssessmentPackage[]>;
   getAssessmentPackage(id: string): Promise<AssessmentPackage | undefined>;
   createAssessmentPackage(pkg: InsertAssessmentPackage): Promise<AssessmentPackage>;
+
+  // Recent Activity methods for dashboard
+  getRecentSessionNotes(therapistId: string, days: number): Promise<SessionNote[]>;
+  getRecentAppointments(therapistId: string, days: number): Promise<Appointment[]>;
+  getRecentClients(therapistId: string, days: number): Promise<Client[]>;
+  getRecentCompletedActionItems(therapistId: string, days: number): Promise<ActionItem[]>;
+  getCalendarSyncStats(): Promise<{
+    lastSyncAt?: string;
+    appointmentsCount?: number;
+  }>;
   updateAssessmentPackage(id: string, pkg: Partial<AssessmentPackage>): Promise<AssessmentPackage>;
   deactivateAssessmentPackage(id: string): Promise<AssessmentPackage>;
 
@@ -287,6 +297,10 @@ export class DatabaseStorage implements IStorage {
   async getClient(id: string): Promise<Client | undefined> {
     const [client] = await db.select().from(clients).where(eq(clients.id, id));
     return client || undefined;
+  }
+
+  async getClientById(id: string): Promise<Client | undefined> {
+    return this.getClient(id);
   }
 
   async createClient(client: InsertClient): Promise<Client> {
@@ -3134,6 +3148,143 @@ Jonathan`,
     return await db.select().from(assessmentAuditLog)
       .where(eq(assessmentAuditLog.clientAssessmentId, clientAssessmentId))
       .orderBy(desc(assessmentAuditLog.timestamp));
+  }
+
+  // Recent Activity methods for dashboard
+  async getRecentSessionNotes(therapistId: string, days: number): Promise<SessionNote[]> {
+    const daysAgo = new Date();
+    daysAgo.setDate(daysAgo.getDate() - days);
+    
+    return await db
+      .select()
+      .from(sessionNotes)
+      .where(
+        and(
+          eq(sessionNotes.therapistId, therapistId),
+          gte(sessionNotes.createdAt, daysAgo)
+        )
+      )
+      .orderBy(desc(sessionNotes.createdAt))
+      .limit(10);
+  }
+
+  async getRecentAppointments(therapistId: string, days: number): Promise<Appointment[]> {
+    const daysAgo = new Date();
+    daysAgo.setDate(daysAgo.getDate() - days);
+    
+    return await db
+      .select()
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.therapistId, therapistId),
+          or(
+            gte(appointments.createdAt, daysAgo),
+            gte(appointments.startTime, daysAgo)
+          )
+        )
+      )
+      .orderBy(desc(appointments.createdAt))
+      .limit(10);
+  }
+
+  async getRecentClients(therapistId: string, days: number): Promise<Client[]> {
+    const daysAgo = new Date();
+    daysAgo.setDate(daysAgo.getDate() - days);
+    
+    return await db
+      .select()
+      .from(clients)
+      .where(
+        and(
+          eq(clients.therapistId, therapistId),
+          gte(clients.createdAt, daysAgo)
+        )
+      )
+      .orderBy(desc(clients.createdAt))
+      .limit(5);
+  }
+
+  async getRecentCompletedActionItems(therapistId: string, days: number): Promise<ActionItem[]> {
+    const daysAgo = new Date();
+    daysAgo.setDate(daysAgo.getDate() - days);
+    
+    return await db
+      .select()
+      .from(actionItems)
+      .where(
+        and(
+          eq(actionItems.therapistId, therapistId),
+          eq(actionItems.status, 'completed'),
+          gte(actionItems.updatedAt, daysAgo)
+        )
+      )
+      .orderBy(desc(actionItems.updatedAt))
+      .limit(5);
+  }
+
+  async getCalendarSyncStats(): Promise<{
+    lastSyncAt?: string;
+    appointmentsCount?: number;
+  }> {
+    try {
+      // Get the most recent appointment created/updated to estimate last sync
+      const [recentAppointment] = await db
+        .select({
+          createdAt: appointments.createdAt,
+          updatedAt: appointments.updatedAt
+        })
+        .from(appointments)
+        .where(sql`${appointments.googleEventId} IS NOT NULL`)
+        .orderBy(desc(appointments.updatedAt))
+        .limit(1);
+
+      if (!recentAppointment) {
+        return {};
+      }
+
+      // Count appointments with Google Calendar integration
+      const [countResult] = await db
+        .select({ count: count() })
+        .from(appointments)
+        .where(sql`${appointments.googleEventId} IS NOT NULL`);
+
+      return {
+        lastSyncAt: recentAppointment.updatedAt.toISOString(),
+        appointmentsCount: countResult.count
+      };
+    } catch (error) {
+      console.log('Error getting calendar sync stats:', error);
+      return {};
+    }
+  }
+
+  async getCompassLearningContext(therapistId: string): Promise<{
+    preferences: any;
+    patterns: any;
+    frequentQueries: any;
+  }> {
+    // Get recent conversation patterns and preferences
+    const recentConversations = await db
+      .select()
+      .from(compassConversations)
+      .where(eq(compassConversations.therapistId, therapistId))
+      .orderBy(desc(compassConversations.timestamp))
+      .limit(50);
+
+    // Get memory contexts for learning patterns
+    const memoryContexts = await db
+      .select()
+      .from(compassMemory)
+      .where(eq(compassMemory.therapistId, therapistId))
+      .orderBy(desc(compassMemory.lastAccessed))
+      .limit(20);
+
+    return {
+      preferences: memoryContexts.filter(m => m.contextType === 'preference'),
+      patterns: memoryContexts.filter(m => m.contextType === 'pattern'),
+      frequentQueries: recentConversations.slice(0, 10)
+    };
   }
 }
 

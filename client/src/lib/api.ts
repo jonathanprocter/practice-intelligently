@@ -69,6 +69,14 @@ export interface AiInsight {
   createdAt: string;
 }
 
+export interface Activity {
+  id: string;
+  type: 'session' | 'ai_analysis' | 'appointment' | 'goal' | 'sync' | 'other';
+  title: string;
+  description: string;
+  timestamp: string;
+}
+
 export interface SessionNote {
   id: string;
   appointmentId?: string;
@@ -355,6 +363,12 @@ export class ApiClient {
 
   static async updateUser(userId: string, userData: any): Promise<any> {
     const response = await apiRequest('PATCH', `/api/users/${userId}`, userData);
+    return response.json();
+  }
+
+  // Recent Activity
+  static async getRecentActivity(): Promise<Activity[]> {
+    const response = await apiRequest('GET', `/api/recent-activity/${this.therapistId}`);
     return response.json();
   }
 }

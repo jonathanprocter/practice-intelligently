@@ -38,6 +38,39 @@ const docProcessor = new DocumentProcessor();
 // Initialize session document processor
 const sessionDocProcessor = new SessionDocumentProcessor(storage);
 
+// Helper functions for recent activity
+function formatTimeAgo(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+  if (diffInMinutes < 60) {
+    return diffInMinutes <= 1 ? '1 minute ago' : `${diffInMinutes} minutes ago`;
+  } else if (diffInHours < 24) {
+    return diffInHours === 1 ? '1 hour ago' : `${diffInHours} hours ago`;
+  } else {
+    return diffInDays === 1 ? '1 day ago' : `${diffInDays} days ago`;
+  }
+}
+
+function getTimestampValue(timestamp: string): number {
+  // Extract number and unit from timestamp strings like "2 hours ago", "1 day ago"
+  const match = timestamp.match(/(\d+)\s+(minute|hour|day)s?\s+ago/);
+  if (!match) return 0;
+  
+  const value = parseInt(match[1]);
+  const unit = match[2];
+  
+  if (unit === 'minute') return value;
+  if (unit === 'hour') return value * 60;
+  if (unit === 'day') return value * 24 * 60;
+  
+  return 0;
+}
+
 // Helper function to sync calendar events to appointments
 async function syncEventToAppointment(event: any, calendarId: string): Promise<number> {
   try {
@@ -4890,6 +4923,123 @@ Follow-up areas for next session:
     } catch (error) {
       console.error('Error generating upload URL:', error);
       res.status(500).json({ error: 'Failed to generate upload URL' });
+    }
+  });
+
+  // Recent Activity endpoint - aggregates real system activity
+  app.get('/api/recent-activity/:therapistId', async (req, res) => {
+    try {
+      const { therapistId } = req.params;
+      const activities: any[] = [];
+
+      // 1. Recent session notes (last 7 days)
+      try {
+        const recentSessionNotes = await storage.getRecentSessionNotes(therapistId, 7);
+        for (const note of recentSessionNotes.slice(0, 5)) {
+          const client = await storage.getClientById(note.clientId || '');
+          const clientName = client ? `${client.firstName} ${client.lastName}` : 'Unknown Client';
+          activities.push({
+            id: `session-${note.id}`,
+            type: 'session',
+            title: 'Session completed',
+            description: `${clientName} - ${new Date(note.createdAt).toLocaleDateString()}`,
+            timestamp: formatTimeAgo(note.createdAt)
+          });
+        }
+      } catch (error) {
+        console.log('Error fetching recent session notes:', error);
+      }
+
+      // 2. Recent appointments (scheduled, completed, or cancelled in last 3 days)
+      try {
+        const recentAppointments = await storage.getRecentAppointments(therapistId, 3);
+        for (const appointment of recentAppointments.slice(0, 3)) {
+          const client = await storage.getClientById(appointment.clientId);
+          const clientName = client ? `${client.firstName} ${client.lastName}` : 'Unknown Client';
+          let title = 'Appointment scheduled';
+          if (appointment.status === 'completed') title = 'Session completed';
+          if (appointment.status === 'cancelled') title = 'Appointment cancelled';
+          
+          activities.push({
+            id: `appointment-${appointment.id}`,
+            type: 'appointment',
+            title,
+            description: `${clientName} - ${new Date(appointment.startTime).toLocaleDateString()}`,
+            timestamp: formatTimeAgo(appointment.createdAt || appointment.startTime)
+          });
+        }
+      } catch (error) {
+        console.log('Error fetching recent appointments:', error);
+      }
+
+      // 3. Recently created clients (last 30 days)
+      try {
+        const recentClients = await storage.getRecentClients(therapistId, 30);
+        for (const client of recentClients.slice(0, 2)) {
+          activities.push({
+            id: `client-${client.id}`,
+            type: 'other',
+            title: 'New client onboarded',
+            description: `${client.firstName} ${client.lastName} joined your practice`,
+            timestamp: formatTimeAgo(client.createdAt)
+          });
+        }
+      } catch (error) {
+        console.log('Error fetching recent clients:', error);
+      }
+
+      // 4. Recent action items completed (last 7 days)
+      try {
+        const completedActionItems = await storage.getRecentCompletedActionItems(therapistId, 7);
+        for (const item of completedActionItems.slice(0, 2)) {
+          const client = item.clientId ? await storage.getClientById(item.clientId) : null;
+          const clientName = client ? ` for ${client.firstName} ${client.lastName}` : '';
+          activities.push({
+            id: `goal-${item.id}`,
+            type: 'goal',
+            title: 'Treatment goal achieved',
+            description: `${item.title}${clientName}`,
+            timestamp: formatTimeAgo(item.updatedAt || item.createdAt)
+          });
+        }
+      } catch (error) {
+        console.log('Error fetching completed action items:', error);
+      }
+
+      // 5. Calendar sync activity (if recent)
+      try {
+        const syncStats = await storage.getCalendarSyncStats();
+        if (syncStats && syncStats.lastSyncAt) {
+          const lastSync = new Date(syncStats.lastSyncAt);
+          const hoursSinceSync = (Date.now() - lastSync.getTime()) / (1000 * 60 * 60);
+          
+          if (hoursSinceSync < 24) { // Only show if synced in last 24 hours
+            activities.push({
+              id: `sync-${lastSync.getTime()}`,
+              type: 'sync',
+              title: 'Calendar synchronized',
+              description: `${syncStats.appointmentsCount || 0} appointments synced with Google Calendar`,
+              timestamp: formatTimeAgo(syncStats.lastSyncAt)
+            });
+          }
+        }
+      } catch (error) {
+        console.log('Error fetching calendar sync stats:', error);
+      }
+
+      // Sort all activities by timestamp (most recent first)
+      activities.sort((a, b) => {
+        const aTime = getTimestampValue(a.timestamp);
+        const bTime = getTimestampValue(b.timestamp);
+        return bTime - aTime;
+      });
+
+      // Return top 5 most recent activities
+      res.json(activities.slice(0, 5));
+
+    } catch (error) {
+      console.error('Error fetching recent activity:', error);
+      res.status(500).json({ error: 'Failed to fetch recent activity' });
     }
   });
 
