@@ -169,9 +169,10 @@ class SimpleOAuth {
     try {
       const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
       
-      // Use provided time range or comprehensive defaults for full historical data (2015-2030)
-      const startTime = timeMin || new Date('2015-01-01T00:00:00.000Z').toISOString();
-      const endTime = timeMax || new Date('2030-12-31T23:59:59.999Z').toISOString();
+      // Use provided time range or default to today only
+      const today = new Date();
+      const startTime = timeMin || new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+      const endTime = timeMax || new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
       
       // Debug: Log the actual parameters being used  
       console.log(`🔍 Calendar fetch params: timeMin=${startTime}, timeMax=${endTime}`);

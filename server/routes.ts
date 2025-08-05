@@ -143,9 +143,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { simpleOAuth } = await import('./oauth-simple');
 
         if (simpleOAuth.isConnected()) {
-          // Get all historical events from Google Calendar (2015-2030) for comprehensive dashboard stats
-          const timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
-          const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
+          // Get today's events from Google Calendar for dashboard stats
+          const today = new Date();
+          const timeMin = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+          const timeMax = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
 
           // Get events from all calendars, especially Simple Practice
           const calendars = await simpleOAuth.getCalendars();
