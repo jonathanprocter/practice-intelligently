@@ -59,16 +59,27 @@ const sessionUpload = multer({
   dest: 'uploads/sessions/',
   fileFilter: (req, file, cb) => {
     console.log('Session upload - mimetype:', file.mimetype, 'originalname:', file.originalname);
+    
     const allowedTypes = [
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
       'application/msword', // .doc
       'text/plain', // .txt
-      'application/pdf' // .pdf
+      'application/pdf', // .pdf
+      'application/octet-stream' // Sometimes DOCX files are detected as this
     ];
     
-    if (allowedTypes.includes(file.mimetype)) {
+    // Check file extension if MIME type is not reliable
+    const fileName = file.originalname.toLowerCase();
+    const allowedExtensions = ['.docx', '.doc', '.txt', '.pdf'];
+    const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+    
+    console.log('File validation - hasValidExtension:', hasValidExtension, 'mimeTypeAllowed:', allowedTypes.includes(file.mimetype));
+    
+    if (allowedTypes.includes(file.mimetype) || hasValidExtension) {
+      console.log('File accepted');
       cb(null, true);
     } else {
+      console.log('File rejected');
       cb(new Error('Only DOCX, DOC, TXT, and PDF files are allowed for session documents'));
     }
   },

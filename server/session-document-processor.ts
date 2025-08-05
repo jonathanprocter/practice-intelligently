@@ -343,7 +343,7 @@ export class SessionDocumentProcessor {
     const lastName = nameParts.slice(1).join(' ') || 'Client';
 
     // Try to find existing client
-    const clients = await this.storage.getClientsByTherapistId(therapistId);
+    const clients = await this.storage.getClients(therapistId);
     const existingClient = clients.find(client => 
       client.firstName.toLowerCase() === firstName.toLowerCase() &&
       client.lastName.toLowerCase() === lastName.toLowerCase()
@@ -451,13 +451,15 @@ export class SessionDocumentProcessor {
     ).join(', ');
 
     await this.storage.createDocument({
-      fileName,
+      fileName: `processed_${fileName}`,
+      originalName: fileName,
       fileType: fileName.toLowerCase().endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'text/plain',
       fileSize: fileBuffer.length,
-      content: fileBuffer,
+      filePath: `/uploads/sessions/${fileName}`,
       therapistId,
       documentType: 'session_notes',
-      metadata: {
+      description: `Session document containing ${sessions.length} sessions: ${sessionSummary}`,
+      tags: {
         sessionsFound: sessions.length,
         sessionSummary,
         processedAt: new Date().toISOString()
