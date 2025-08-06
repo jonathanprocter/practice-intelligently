@@ -44,9 +44,12 @@ interface SessionNote {
 
 interface Appointment {
   id: string;
-  title: string;
-  start: string;
+  title?: string;
+  startTime: string;
+  endTime: string;
+  type: string;
   status?: string;
+  location?: string;
 }
 
 export default function ClientChart() {
@@ -220,11 +223,11 @@ export default function ClientChart() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {appointments.filter((apt: Appointment) => new Date(apt.start) > new Date()).length}
+                  {appointments.filter((apt: Appointment) => new Date(apt.startTime) > new Date()).length}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Next: {appointments.find((apt: Appointment) => new Date(apt.start) > new Date())?.start ? 
-                    new Date(appointments.find((apt: Appointment) => new Date(apt.start) > new Date())!.start).toLocaleDateString() : 
+                  Next: {appointments.find((apt: Appointment) => new Date(apt.startTime) > new Date())?.startTime ? 
+                    new Date(appointments.find((apt: Appointment) => new Date(apt.startTime) > new Date())!.startTime).toLocaleDateString() : 
                     'Not scheduled'
                   }
                 </p>
@@ -380,10 +383,13 @@ export default function ClientChart() {
                     <div className="flex items-center gap-3">
                       <Calendar className="w-4 h-4 text-gray-500" />
                       <div>
-                        <p className="font-medium">{appointment.title}</p>
+                        <p className="font-medium">{appointment.title || appointment.type?.replace('_', ' ') || 'Appointment'}</p>
                         <p className="text-sm text-gray-500">
-                          {new Date(appointment.start).toLocaleString()}
+                          {new Date(appointment.startTime).toLocaleString()}
                         </p>
+                        {appointment.location && (
+                          <p className="text-xs text-gray-400">{appointment.location}</p>
+                        )}
                       </div>
                     </div>
                     <Badge variant={appointment.status === 'completed' ? 'default' : 'secondary'}>
