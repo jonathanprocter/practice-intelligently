@@ -353,25 +353,28 @@ export function SessionPrepCard({
                   <div key={rec.id} className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20 rounded-md p-3">
                     <div className="flex items-start justify-between mb-1">
                       <Badge variant="secondary" className="text-xs mb-2">
-                        {rec.category}
+                        {rec.recommendationType}
                       </Badge>
                       <div className="flex items-center gap-1">
                         <div className={cn(
                           "w-2 h-2 rounded-full",
-                          rec.confidence >= 0.8 ? "bg-green-500" :
-                          rec.confidence >= 0.6 ? "bg-yellow-500" : "bg-red-500"
+                          parseFloat(rec.confidence) >= 0.8 ? "bg-green-500" :
+                          parseFloat(rec.confidence) >= 0.6 ? "bg-yellow-500" : "bg-red-500"
                         )}></div>
                         <span className="text-xs text-muted-foreground">
-                          {Math.round(rec.confidence * 100)}%
+                          {Math.round(parseFloat(rec.confidence) * 100)}%
                         </span>
                       </div>
                     </div>
+                    <h4 className="text-sm font-medium text-foreground mb-1">
+                      {rec.title}
+                    </h4>
                     <p className="text-sm text-foreground leading-relaxed mb-2">
-                      {rec.recommendation}
+                      {rec.description}
                     </p>
-                    {rec.expectedOutcome && (
+                    {rec.expectedOutcomes && rec.expectedOutcomes.length > 0 && (
                       <p className="text-xs text-muted-foreground">
-                        Expected: {rec.expectedOutcome}
+                        Expected: {rec.expectedOutcomes[0]}
                       </p>
                     )}
                   </div>
