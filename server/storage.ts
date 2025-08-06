@@ -1059,6 +1059,8 @@ export class DatabaseStorage implements IStorage {
   async getDashboardStats(therapistId: string): Promise<{
     todaysSessions: number;
     activeClients: number;
+    totalClients: number;
+    totalAppointments: number;
     urgentActionItems: number;
     completionRate: number;
     monthlyRevenue: number;
@@ -1092,6 +1094,16 @@ export class DatabaseStorage implements IStorage {
           eq(clients.status, 'active')
         )
       );
+
+    const [totalClients] = await db
+      .select({ count: count() })
+      .from(clients)
+      .where(eq(clients.therapistId, therapistId));
+
+    const [totalAppointments] = await db
+      .select({ count: count() })
+      .from(appointments)
+      .where(eq(appointments.therapistId, therapistId));
 
     const [riskClients] = await db
       .select({ count: count() })
@@ -1158,6 +1170,8 @@ export class DatabaseStorage implements IStorage {
     return {
       todaysSessions: todaysSessions.count,
       activeClients: activeClients.count,
+      totalClients: totalClients.count,
+      totalAppointments: totalAppointments.count,
       urgentActionItems: urgentItems.count,
       completionRate,
       monthlyRevenue: Math.round(monthlyRevenue * 100) / 100,

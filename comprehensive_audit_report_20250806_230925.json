@@ -1,0 +1,115 @@
+{
+  "timestamp": "2025-08-06T23:09:15.301173",
+  "tests_passed": 26,
+  "tests_failed": 2,
+  "critical_issues": [],
+  "high_priority_issues": [
+    {
+      "test": "Data Consistency - Appointment Details",
+      "passed": false,
+      "priority": "high",
+      "details": "Found 8 issues: [\"Appointment f00b1fd6-6ee3-44ce-955a-3944fb379679 time mismatch: DB='2025-08-06T14:30:00' API='2025-08-06 14:30:00'\", \"Appointment 4b6229af-eae3-43e9-b80a-a1ee9600e7ec time mismatch: DB='2025-08-06T17:00:00' API='2025-08-06 17:00:00'\", \"Appointment 70512486-2989-477a-a548-130b6c92b5b8 time mismatch: DB='2025-08-06T18:30:00' API='2025-08-06 18:30:00'\"]",
+      "fix_action": "Fix data synchronization between database and API",
+      "timestamp": "2025-08-06T23:09:19.029583"
+    },
+    {
+      "test": "Google Calendar - JSON Parse",
+      "passed": false,
+      "priority": "high",
+      "details": "Failed to parse calendar JSON: Expecting value: line 1 column 1 (char 0) - Response: <!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <script type=\"module\">\nimport { createHotContext } fro",
+      "fix_action": "Check calendar API response format",
+      "timestamp": "2025-08-06T23:09:19.039353"
+    }
+  ],
+  "medium_priority_issues": [],
+  "low_priority_issues": [],
+  "connectivity_map": {
+    "/api/health": {
+      "status": "connected",
+      "response_time_ms": 5.461454391479492,
+      "data_count": 1
+    },
+    "/api/health/ai-services": {
+      "status": "connected",
+      "response_time_ms": 648.287296295166,
+      "data_count": 4
+    },
+    "/api/therapists/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 10.297060012817383,
+      "content_type": "text/html; charset=utf-8"
+    },
+    "/api/clients/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 54.18992042541504,
+      "data_count": 78
+    },
+    "/api/appointments/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 200.6247043609619,
+      "data_count": 1330
+    },
+    "/api/appointments/today/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 28.85913848876953,
+      "data_count": 8
+    },
+    "/api/appointments/upcoming/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 12.402057647705078,
+      "content_type": "text/html; charset=utf-8"
+    },
+    "/api/session-notes/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 17.700672149658203,
+      "content_type": "text/html; charset=utf-8"
+    },
+    "/api/session-notes/today/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 39.969444274902344,
+      "data_count": 4
+    },
+    "/api/dashboard/stats/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 907.6089859008789,
+      "data_count": 1
+    },
+    "/api/ai-insights/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 27.484893798828125,
+      "data_count": 10
+    },
+    "/api/recent-activity/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 342.61441230773926,
+      "data_count": 5
+    },
+    "/api/action-items/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 27.591705322265625,
+      "data_count": 0
+    },
+    "/api/action-items/urgent/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 27.942895889282227,
+      "data_count": 0
+    },
+    "/api/oauth/calendar": {
+      "status": "connected",
+      "response_time_ms": 10.058879852294922,
+      "content_type": "text/html; charset=utf-8"
+    },
+    "/api/oauth/events/today": {
+      "status": "connected",
+      "response_time_ms": 658.240795135498,
+      "data_count": 7
+    }
+  },
+  "data_integrity_report": {},
+  "performance_metrics": {
+    "/api/appointments/today/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": 28.391520182291668,
+    "/api/dashboard/stats/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": 799.6610005696615,
+    "/api/clients/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": 43.179988861083984,
+    "/api/health": 4.29232915242513
+  }
+}

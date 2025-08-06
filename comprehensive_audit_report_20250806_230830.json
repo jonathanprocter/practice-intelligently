@@ -1,0 +1,115 @@
+{
+  "timestamp": "2025-08-06T23:08:22.554020",
+  "tests_passed": 26,
+  "tests_failed": 2,
+  "critical_issues": [],
+  "high_priority_issues": [
+    {
+      "test": "Data Consistency - Appointment Details",
+      "passed": false,
+      "priority": "high",
+      "details": "Found 8 issues: [\"Appointment f00b1fd6-6ee3-44ce-955a-3944fb379679 time mismatch: DB='2025-08-06T14:30:00' API='2025-08-06 14:30:00'\", \"Appointment 4b6229af-eae3-43e9-b80a-a1ee9600e7ec time mismatch: DB='2025-08-06T17:00:00' API='2025-08-06 17:00:00'\", \"Appointment 70512486-2989-477a-a548-130b6c92b5b8 time mismatch: DB='2025-08-06T18:30:00' API='2025-08-06 18:30:00'\"]",
+      "fix_action": "Fix data synchronization between database and API",
+      "timestamp": "2025-08-06T23:08:26.741802"
+    },
+    {
+      "test": "Google Calendar - JSON Parse",
+      "passed": false,
+      "priority": "high",
+      "details": "Failed to parse calendar JSON: Expecting value: line 1 column 1 (char 0)",
+      "fix_action": "Check calendar API response format",
+      "timestamp": "2025-08-06T23:08:26.751624"
+    }
+  ],
+  "medium_priority_issues": [],
+  "low_priority_issues": [],
+  "connectivity_map": {
+    "/api/health": {
+      "status": "connected",
+      "response_time_ms": 4.034757614135742,
+      "data_count": 1
+    },
+    "/api/health/ai-services": {
+      "status": "connected",
+      "response_time_ms": 1182.758092880249,
+      "data_count": 4
+    },
+    "/api/therapists/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 8.215188980102539,
+      "content_type": "text/html; charset=utf-8"
+    },
+    "/api/clients/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 52.06131935119629,
+      "data_count": 78
+    },
+    "/api/appointments/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 185.2431297302246,
+      "data_count": 1330
+    },
+    "/api/appointments/today/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 29.19316291809082,
+      "data_count": 8
+    },
+    "/api/appointments/upcoming/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 7.446765899658203,
+      "content_type": "text/html; charset=utf-8"
+    },
+    "/api/session-notes/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 8.55398178100586,
+      "content_type": "text/html; charset=utf-8"
+    },
+    "/api/session-notes/today/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 32.382965087890625,
+      "data_count": 4
+    },
+    "/api/dashboard/stats/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 906.9497585296631,
+      "data_count": 1
+    },
+    "/api/ai-insights/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 27.462244033813477,
+      "data_count": 10
+    },
+    "/api/recent-activity/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 341.0778045654297,
+      "data_count": 5
+    },
+    "/api/action-items/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 26.400089263916016,
+      "data_count": 0
+    },
+    "/api/action-items/urgent/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": {
+      "status": "connected",
+      "response_time_ms": 26.42965316772461,
+      "data_count": 0
+    },
+    "/api/oauth/calendar": {
+      "status": "connected",
+      "response_time_ms": 6.096839904785156,
+      "content_type": "text/html; charset=utf-8"
+    },
+    "/api/oauth/events/today": {
+      "status": "connected",
+      "response_time_ms": 669.0163612365723,
+      "data_count": 7
+    }
+  },
+  "data_integrity_report": {},
+  "performance_metrics": {
+    "/api/appointments/today/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": 28.00615628560384,
+    "/api/dashboard/stats/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": 884.9837779998779,
+    "/api/clients/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c": 36.592960357666016,
+    "/api/health": 4.9393971761067705
+  }
+}
