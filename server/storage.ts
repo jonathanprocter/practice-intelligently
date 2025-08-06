@@ -360,7 +360,10 @@ export class DatabaseStorage implements IStorage {
 
       return appointmentsWithClients.map(apt => ({
         ...apt,
-        clientName: apt.clientName || 'Unknown Client'
+        clientName: apt.clientName || 'Unknown Client',
+        client_name: apt.clientName || 'Unknown Client',
+        start_time: apt.startTime,
+        end_time: apt.endTime
       })) as any;
     }
 
@@ -378,7 +381,10 @@ export class DatabaseStorage implements IStorage {
 
     return appointmentsWithClients.map(apt => ({
       ...apt,
-      clientName: apt.clientName || 'Unknown Client'
+      clientName: apt.clientName || 'Unknown Client',
+      client_name: apt.clientName || 'Unknown Client',
+      start_time: apt.startTime,
+      end_time: apt.endTime
     })) as any;
   }
 

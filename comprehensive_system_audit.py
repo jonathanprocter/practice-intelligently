@@ -1,542 +1,669 @@
 #!/usr/bin/env python3
 """
-Comprehensive System Audit Script for Therapy Practice Management System
-Audits: Calendar integration, Document parsing, Storage, AI services, Progress notes, Session insights
+Comprehensive System Audit for Therapy Management System
+Tests all critical functionality and prioritizes fixes by severity
 """
 
-import json
 import requests
-import os
-import sys
+import json
 import time
+import psycopg2
+import os
 from datetime import datetime, timedelta
-from pathlib import Path
-import subprocess
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Tuple
+import sys
 
 class SystemAuditor:
     def __init__(self):
         self.base_url = "http://localhost:5000"
-        self.test_therapist_id = "e66b8b8e-e7a2-40b9-ae74-00c93ffe503c"
-        self.results = {
-            "timestamp": datetime.now().isoformat(),
-            "overall_status": "UNKNOWN",
-            "modules": {},
-            "critical_issues": [],
-            "warnings": [],
-            "recommendations": []
+        self.therapist_id = "e66b8b8e-e7a2-40b9-ae74-00c93ffe503c"
+        self.test_results = {
+            'critical': [],
+            'high': [],
+            'medium': [],
+            'low': [],
+            'passed': []
         }
-        self.session = requests.Session()
-        self.session.headers.update({'Content-Type': 'application/json'})
-
-    def log(self, message: str, level: str = "INFO"):
-        """Log audit messages with timestamp"""
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        print(f"[{timestamp}] [{level}] {message}")
-
-    def make_request(self, method: str, endpoint: str, **kwargs) -> Optional[Dict]:
-        """Make HTTP request with error handling"""
+        self.total_tests = 0
+        self.passed_tests = 0
+        
+    def log_result(self, test_name: str, passed: bool, severity: str, details: str = "", fix_suggestion: str = ""):
+        """Log test result with severity classification"""
+        self.total_tests += 1
+        if passed:
+            self.passed_tests += 1
+            self.test_results['passed'].append({
+                'test': test_name,
+                'details': details
+            })
+            print(f"✅ {test_name}")
+        else:
+            self.test_results[severity].append({
+                'test': test_name,
+                'details': details,
+                'fix_suggestion': fix_suggestion
+            })
+            print(f"❌ {test_name}: {details}")
+    
+    def test_server_health(self) -> bool:
+        """Test basic server connectivity and health"""
         try:
-            url = f"{self.base_url}{endpoint}"
-            response = self.session.request(method, url, timeout=30, **kwargs)
-            
-            if response.status_code >= 400:
-                self.log(f"HTTP {response.status_code} for {method} {endpoint}", "ERROR")
-                return None
-                
-            return response.json() if response.headers.get('content-type', '').startswith('application/json') else response.text
-        except requests.exceptions.RequestException as e:
-            self.log(f"Request failed for {method} {endpoint}: {e}", "ERROR")
-            return None
-
-    def audit_system_health(self) -> Dict[str, Any]:
-        """Audit basic system health and connectivity"""
-        self.log("🔍 Auditing System Health...")
-        health_results = {
-            "status": "FAIL",
-            "api_connectivity": False,
-            "database_status": False,
-            "ai_services": [],
-            "response_times": {}
-        }
-
-        # Basic health check
-        start_time = time.time()
-        health_data = self.make_request("GET", "/api/health")
-        response_time = (time.time() - start_time) * 1000
-
-        if health_data:
-            health_results["api_connectivity"] = True
-            health_results["response_times"]["health_check"] = f"{response_time:.0f}ms"
-            health_results["database_status"] = health_data.get("integrations", {}).get("database", False)
-            
-            # AI services check
-            ai_data = self.make_request("GET", "/api/health/ai-services")
-            if ai_data:
-                health_results["ai_services"] = ai_data
-                health_results["status"] = "PASS"
+            response = requests.get(f"{self.base_url}/api/health", timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                self.log_result("Server Health Check", True, "critical", "Server is responding")
+                return True
             else:
-                self.results["critical_issues"].append("AI services health check failed")
-
-        return health_results
-
-    def audit_calendar_integration(self) -> Dict[str, Any]:
-        """Audit Google Calendar integration and OAuth status"""
-        self.log("📅 Auditing Calendar Integration...")
-        calendar_results = {
-            "status": "FAIL",
-            "oauth_connected": False,
-            "calendars_available": 0,
-            "events_fetching": False,
-            "today_events": 0,
-            "response_times": {}
-        }
-
-        # Check OAuth status
-        start_time = time.time()
-        auth_status = self.make_request("GET", "/api/auth/google/status")
-        calendar_results["response_times"]["auth_check"] = f"{(time.time() - start_time) * 1000:.0f}ms"
-
-        if auth_status and auth_status.get("connected"):
-            calendar_results["oauth_connected"] = True
-
-            # Check calendars
-            start_time = time.time()
-            calendars = self.make_request("GET", "/api/calendar/calendars")
-            calendar_results["response_times"]["calendars_fetch"] = f"{(time.time() - start_time) * 1000:.0f}ms"
-            
-            if calendars:
-                calendar_results["calendars_available"] = len(calendars)
-
-                # Check events fetching
-                start_time = time.time()
-                today_events = self.make_request("GET", "/api/oauth/events/today")
-                calendar_results["response_times"]["events_fetch"] = f"{(time.time() - start_time) * 1000:.0f}ms"
+                self.log_result("Server Health Check", False, "critical", 
+                              f"Server returned status {response.status_code}",
+                              "Check server startup and configuration")
+                return False
+        except Exception as e:
+            self.log_result("Server Health Check", False, "critical", 
+                          f"Cannot connect to server: {str(e)}",
+                          "Ensure server is running on localhost:5000")
+            return False
+    
+    def test_database_connectivity(self) -> bool:
+        """Test PostgreSQL database connection"""
+        try:
+            db_url = os.environ.get('DATABASE_URL')
+            if not db_url:
+                self.log_result("Database Connection", False, "critical",
+                              "DATABASE_URL environment variable not set",
+                              "Set DATABASE_URL environment variable")
+                return False
                 
-                if today_events:
-                    calendar_results["events_fetching"] = True
-                    calendar_results["today_events"] = len(today_events)
-                    calendar_results["status"] = "PASS"
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            cursor.close()
+            conn.close()
+            self.log_result("Database Connection", True, "critical", "Database is accessible")
+            return True
+        except Exception as e:
+            self.log_result("Database Connection", False, "critical",
+                          f"Database connection failed: {str(e)}",
+                          "Check database server and credentials")
+            return False
+    
+    def test_core_tables_exist(self) -> bool:
+        """Test that all required database tables exist"""
+        required_tables = ['therapists', 'clients', 'appointments', 'session_notes', 
+                          'ai_insights', 'assessments']
+        try:
+            db_url = os.environ.get('DATABASE_URL')
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor()
+            
+            for table in required_tables:
+                cursor.execute(f"""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables 
+                        WHERE table_name = '{table}'
+                    )
+                """)
+                exists = cursor.fetchone()[0]
+                if not exists:
+                    self.log_result(f"Table {table} exists", False, "critical",
+                                  f"Required table {table} is missing",
+                                  f"Run database migration to create {table} table")
+                    return False
+            
+            cursor.close()
+            conn.close()
+            self.log_result("Core Tables Exist", True, "critical", "All required tables present")
+            return True
+        except Exception as e:
+            self.log_result("Core Tables Exist", False, "critical",
+                          f"Failed to check tables: {str(e)}",
+                          "Check database schema and run migrations")
+            return False
+    
+    def test_therapist_data(self) -> bool:
+        """Test therapist data integrity"""
+        try:
+            db_url = os.environ.get('DATABASE_URL')
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT id, email, first_name, last_name FROM therapists WHERE id = %s", 
+                          (self.therapist_id,))
+            therapist = cursor.fetchone()
+            
+            if not therapist:
+                self.log_result("Therapist Data", False, "critical",
+                              f"Therapist {self.therapist_id} not found in database",
+                              "Create or restore therapist record")
+                return False
+            
+            if not all([therapist[1], therapist[2], therapist[3]]):  # email, first_name, last_name
+                self.log_result("Therapist Data", False, "high",
+                              "Therapist missing required fields (email, name)",
+                              "Update therapist record with complete information")
+                return False
+                
+            cursor.close()
+            conn.close()
+            self.log_result("Therapist Data", True, "critical", "Therapist data is complete")
+            return True
+        except Exception as e:
+            self.log_result("Therapist Data", False, "critical",
+                          f"Failed to verify therapist: {str(e)}",
+                          "Check database connection and therapist table")
+            return False
+    
+    def test_dashboard_stats(self) -> bool:
+        """Test dashboard statistics API"""
+        try:
+            response = requests.get(f"{self.base_url}/api/dashboard/stats/{self.therapist_id}")
+            if response.status_code != 200:
+                self.log_result("Dashboard Stats API", False, "high",
+                              f"Stats API returned {response.status_code}",
+                              "Check dashboard stats endpoint implementation")
+                return False
+            
+            data = response.json()
+            required_fields = ['todaysSessions', 'activeClients', 'calendarIntegrated']
+            
+            for field in required_fields:
+                if field not in data:
+                    self.log_result("Dashboard Stats API", False, "high",
+                                  f"Missing required field: {field}",
+                                  f"Update stats endpoint to include {field}")
+                    return False
+            
+            # Verify today's session count is reasonable
+            if not isinstance(data['todaysSessions'], int) or data['todaysSessions'] < 0:
+                self.log_result("Dashboard Stats API", False, "medium",
+                              f"Invalid todaysSessions value: {data['todaysSessions']}",
+                              "Fix session counting logic")
+                return False
+                
+            self.log_result("Dashboard Stats API", True, "high", 
+                          f"Stats API working, today's sessions: {data['todaysSessions']}")
+            return True
+        except Exception as e:
+            self.log_result("Dashboard Stats API", False, "high",
+                          f"Stats API failed: {str(e)}",
+                          "Check dashboard stats endpoint and database queries")
+            return False
+    
+    def test_appointments_today(self) -> bool:
+        """Test today's appointments API"""
+        try:
+            response = requests.get(f"{self.base_url}/api/appointments/today/{self.therapist_id}")
+            if response.status_code != 200:
+                self.log_result("Today's Appointments API", False, "high",
+                              f"Appointments API returned {response.status_code}",
+                              "Check appointments endpoint implementation")
+                return False
+            
+            appointments = response.json()
+            if not isinstance(appointments, list):
+                self.log_result("Today's Appointments API", False, "high",
+                              "Appointments API should return array",
+                              "Fix appointments endpoint to return array")
+                return False
+            
+            # Check appointment structure
+            for apt in appointments:
+                required_fields = ['id', 'client_name', 'start_time', 'end_time', 'status']
+                for field in required_fields:
+                    if field not in apt:
+                        self.log_result("Today's Appointments API", False, "medium",
+                                      f"Appointment missing field: {field}",
+                                      f"Update appointment query to include {field}")
+                        return False
+            
+            self.log_result("Today's Appointments API", True, "high",
+                          f"Found {len(appointments)} appointments today")
+            return True
+        except Exception as e:
+            self.log_result("Today's Appointments API", False, "high",
+                          f"Appointments API failed: {str(e)}",
+                          "Check appointments endpoint and database queries")
+            return False
+    
+    def test_calendar_integration(self) -> bool:
+        """Test Google Calendar integration"""
+        try:
+            # Test calendar list
+            response = requests.get(f"{self.base_url}/api/calendar/calendars")
+            if response.status_code != 200:
+                self.log_result("Calendar Integration", False, "high",
+                              f"Calendar API returned {response.status_code}",
+                              "Check Google Calendar authentication and API setup")
+                return False
+            
+            calendars = response.json()
+            if not isinstance(calendars, list) or len(calendars) == 0:
+                self.log_result("Calendar Integration", False, "high",
+                              "No calendars found",
+                              "Verify Google Calendar API credentials and permissions")
+                return False
+            
+            # Test events fetch
+            today = datetime.now().strftime('%Y-%m-%d')
+            response = requests.get(f"{self.base_url}/api/oauth/events/today")
+            if response.status_code != 200:
+                self.log_result("Calendar Integration", False, "medium",
+                              "Calendar events API not working",
+                              "Check calendar events endpoint")
+                return False
+            
+            self.log_result("Calendar Integration", True, "high",
+                          f"Found {len(calendars)} calendars connected")
+            return True
+        except Exception as e:
+            self.log_result("Calendar Integration", False, "high",
+                          f"Calendar integration failed: {str(e)}",
+                          "Check Google Calendar API credentials and network connectivity")
+            return False
+    
+    def test_ai_services(self) -> bool:
+        """Test AI services connectivity"""
+        try:
+            response = requests.get(f"{self.base_url}/api/health/ai-services", timeout=30)
+            if response.status_code != 200:
+                self.log_result("AI Services Health", False, "medium",
+                              f"AI services health check returned {response.status_code}",
+                              "Check AI service configurations and API keys")
+                return False
+            
+            services = response.json()
+            if not isinstance(services, list):
+                self.log_result("AI Services Health", False, "medium",
+                              "AI services should return array",
+                              "Fix AI services health endpoint")
+                return False
+            
+            online_count = sum(1 for service in services if service.get('status') == 'online')
+            total_count = len(services)
+            
+            if online_count == 0:
+                self.log_result("AI Services Health", False, "medium",
+                              "No AI services are online",
+                              "Check API keys for OpenAI, Anthropic, etc.")
+                return False
+            elif online_count < total_count:
+                self.log_result("AI Services Health", True, "medium",
+                              f"{online_count}/{total_count} AI services online")
+                return True
+            else:
+                self.log_result("AI Services Health", True, "medium",
+                              f"All {total_count} AI services online")
+                return True
+        except Exception as e:
+            self.log_result("AI Services Health", False, "medium",
+                          f"AI services check failed: {str(e)}",
+                          "Check AI service endpoints and API credentials")
+            return False
+    
+    def test_session_notes(self) -> bool:
+        """Test session notes functionality"""
+        try:
+            response = requests.get(f"{self.base_url}/api/session-notes/today/{self.therapist_id}")
+            if response.status_code != 200:
+                self.log_result("Session Notes API", False, "medium",
+                              f"Session notes API returned {response.status_code}",
+                              "Check session notes endpoint")
+                return False
+            
+            notes = response.json()
+            if not isinstance(notes, list):
+                self.log_result("Session Notes API", False, "medium",
+                              "Session notes should return array",
+                              "Fix session notes endpoint to return array")
+                return False
+            
+            self.log_result("Session Notes API", True, "medium",
+                          f"Found {len(notes)} session notes")
+            return True
+        except Exception as e:
+            self.log_result("Session Notes API", False, "medium",
+                          f"Session notes API failed: {str(e)}",
+                          "Check session notes endpoint implementation")
+            return False
+    
+    def test_client_data_integrity(self) -> bool:
+        """Test client data completeness and integrity"""
+        try:
+            db_url = os.environ.get('DATABASE_URL')
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor()
+            
+            # Check for clients with missing essential data
+            cursor.execute("""
+                SELECT COUNT(*) FROM clients 
+                WHERE therapist_id = %s 
+                AND (first_name IS NULL OR first_name = '' OR last_name IS NULL OR last_name = '')
+            """, (self.therapist_id,))
+            
+            incomplete_clients = cursor.fetchone()[0]
+            
+            # Check total client count
+            cursor.execute("SELECT COUNT(*) FROM clients WHERE therapist_id = %s", (self.therapist_id,))
+            total_clients = cursor.fetchone()[0]
+            
+            cursor.close()
+            conn.close()
+            
+            if total_clients == 0:
+                self.log_result("Client Data Integrity", False, "high",
+                              "No clients found in database",
+                              "Import or create client records")
+                return False
+            
+            if incomplete_clients > 0:
+                self.log_result("Client Data Integrity", False, "medium",
+                              f"{incomplete_clients} clients missing name data",
+                              "Update client records with complete information")
+                return False
+            
+            self.log_result("Client Data Integrity", True, "medium",
+                          f"All {total_clients} clients have complete data")
+            return True
+        except Exception as e:
+            self.log_result("Client Data Integrity", False, "high",
+                          f"Client data check failed: {str(e)}",
+                          "Check database connection and clients table")
+            return False
+    
+    def test_appointment_sync(self) -> bool:
+        """Test appointment synchronization between database and calendar"""
+        try:
+            # Get database appointments for today
+            db_url = os.environ.get('DATABASE_URL')
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT COUNT(*) FROM appointments 
+                WHERE therapist_id = %s AND DATE(start_time) = CURRENT_DATE
+            """, (self.therapist_id,))
+            db_count = cursor.fetchone()[0]
+            
+            cursor.close()
+            conn.close()
+            
+            # Get API appointments
+            response = requests.get(f"{self.base_url}/api/appointments/today/{self.therapist_id}")
+            if response.status_code == 200:
+                api_count = len(response.json())
+            else:
+                api_count = 0
+            
+            # Get dashboard stats
+            response = requests.get(f"{self.base_url}/api/dashboard/stats/{self.therapist_id}")
+            if response.status_code == 200:
+                stats_count = response.json().get('todaysSessions', 0)
+            else:
+                stats_count = 0
+            
+            if db_count != api_count or db_count != stats_count:
+                self.log_result("Appointment Sync", False, "high",
+                              f"Appointment counts don't match: DB={db_count}, API={api_count}, Stats={stats_count}",
+                              "Fix appointment counting logic and sync mechanisms")
+                return False
+            
+            self.log_result("Appointment Sync", True, "high",
+                          f"All appointment counts match: {db_count}")
+            return True
+        except Exception as e:
+            self.log_result("Appointment Sync", False, "high",
+                          f"Appointment sync check failed: {str(e)}",
+                          "Check appointment APIs and database queries")
+            return False
+    
+    def test_recent_activity(self) -> bool:
+        """Test recent activity tracking"""
+        try:
+            response = requests.get(f"{self.base_url}/api/recent-activity/{self.therapist_id}")
+            if response.status_code != 200:
+                self.log_result("Recent Activity API", False, "low",
+                              f"Recent activity API returned {response.status_code}",
+                              "Check recent activity endpoint")
+                return False
+            
+            activities = response.json()
+            if not isinstance(activities, list):
+                self.log_result("Recent Activity API", False, "low",
+                              "Recent activity should return array",
+                              "Fix recent activity endpoint")
+                return False
+            
+            self.log_result("Recent Activity API", True, "low",
+                          f"Found {len(activities)} recent activities")
+            return True
+        except Exception as e:
+            self.log_result("Recent Activity API", False, "low",
+                          f"Recent activity API failed: {str(e)}",
+                          "Check recent activity endpoint implementation")
+            return False
+    
+    def test_david_grossman_appointments(self) -> bool:
+        """Test specific case: David Grossman's appointments are correctly scheduled"""
+        try:
+            db_url = os.environ.get('DATABASE_URL')
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor()
+            
+            # Check today's appointment with more precise query
+            cursor.execute("""
+                SELECT a.start_time, a.end_time, a.status 
+                FROM appointments a 
+                JOIN clients c ON a.client_id = c.id 
+                WHERE a.therapist_id = %s 
+                AND c.first_name = 'David' 
+                AND c.last_name = 'Grossman'
+                AND DATE(a.start_time) = CURRENT_DATE
+            """, (self.therapist_id,))
+            
+            today_apt = cursor.fetchone()
+            
+            # Check Saturday appointment
+            cursor.execute("""
+                SELECT a.start_time, a.end_time, a.status 
+                FROM appointments a 
+                JOIN clients c ON a.client_id = c.id 
+                WHERE a.therapist_id = %s 
+                AND c.first_name = 'David' 
+                AND c.last_name = 'Grossman'
+                AND DATE(a.start_time) = '2025-08-09'
+            """, (self.therapist_id,))
+            
+            saturday_apt = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            
+            issues = []
+            
+            if not today_apt:
+                issues.append("David's today appointment (8:00 PM) missing")
+            else:
+                # Extract datetime from tuple and handle both datetime and string types
+                today_datetime = today_apt[0]
+                if hasattr(today_datetime, 'hour'):
+                    if not (today_datetime.hour == 20 and today_datetime.minute == 0):  # 8:00 PM
+                        issues.append(f"David's today appointment wrong time: {today_datetime}")
                 else:
-                    self.results["warnings"].append("Calendar events fetching failed")
-            else:
-                self.results["critical_issues"].append("Calendar list fetch failed")
-        else:
-            self.results["critical_issues"].append("Google Calendar OAuth not connected")
-
-        return calendar_results
-
-    def audit_document_processing(self) -> Dict[str, Any]:
-        """Audit document parsing and processing capabilities"""
-        self.log("📄 Auditing Document Processing...")
-        doc_results = {
-            "status": "FAIL",
-            "upload_endpoint": False,
-            "ai_processing": False,
-            "client_detection": False,
-            "progress_note_generation": False,
-            "supported_formats": []
-        }
-
-        # Test document upload endpoint availability
-        # Note: We'll test the endpoint exists but won't upload actual files
-        try:
-            response = self.session.options(f"{self.base_url}/api/documents/upload-and-process")
-            if response.status_code in [200, 405]:  # 405 Method Not Allowed is expected for OPTIONS
-                doc_results["upload_endpoint"] = True
-        except:
-            self.results["critical_issues"].append("Document upload endpoint not accessible")
-
-        # Check for document processor configuration
-        if self.check_file_exists("server/document-processor.ts"):
-            doc_results["ai_processing"] = True
-            doc_results["status"] = "PASS"
-        else:
-            self.results["critical_issues"].append("Document processor file not found")
-
-        return doc_results
-
-    def audit_storage_system(self) -> Dict[str, Any]:
-        """Audit database storage and CRUD operations"""
-        self.log("💾 Auditing Storage System...")
-        storage_results = {
-            "status": "FAIL",
-            "database_connection": False,
-            "clients_crud": False,
-            "appointments_crud": False,
-            "session_notes_crud": False,
-            "progress_notes_crud": False,
-            "ai_insights_crud": False,
-            "response_times": {}
-        }
-
-        # Test clients CRUD
-        start_time = time.time()
-        clients = self.make_request("GET", f"/api/clients/{self.test_therapist_id}")
-        storage_results["response_times"]["clients_fetch"] = f"{(time.time() - start_time) * 1000:.0f}ms"
-        
-        if clients is not None:
-            storage_results["clients_crud"] = True
-            storage_results["database_connection"] = True
-
-        # Test appointments CRUD
-        start_time = time.time()
-        appointments = self.make_request("GET", f"/api/appointments/{self.test_therapist_id}")
-        storage_results["response_times"]["appointments_fetch"] = f"{(time.time() - start_time) * 1000:.0f}ms"
-        
-        if appointments is not None:
-            storage_results["appointments_crud"] = True
-
-        # Test session notes CRUD
-        start_time = time.time()
-        session_notes = self.make_request("GET", f"/api/session-notes?therapistId={self.test_therapist_id}")
-        storage_results["response_times"]["session_notes_fetch"] = f"{(time.time() - start_time) * 1000:.0f}ms"
-        
-        if session_notes is not None:
-            storage_results["session_notes_crud"] = True
-
-        # Test progress notes CRUD
-        start_time = time.time()
-        progress_notes = self.make_request("GET", f"/api/progress-notes/therapist/{self.test_therapist_id}")
-        storage_results["response_times"]["progress_notes_fetch"] = f"{(time.time() - start_time) * 1000:.0f}ms"
-        
-        if progress_notes is not None:
-            storage_results["progress_notes_crud"] = True
-
-        # Test AI insights
-        start_time = time.time()
-        ai_insights = self.make_request("GET", f"/api/ai-insights/{self.test_therapist_id}")
-        storage_results["response_times"]["ai_insights_fetch"] = f"{(time.time() - start_time) * 1000:.0f}ms"
-        
-        if ai_insights is not None:
-            storage_results["ai_insights_crud"] = True
-
-        # Overall storage status
-        if all([
-            storage_results["database_connection"],
-            storage_results["clients_crud"],
-            storage_results["appointments_crud"],
-            storage_results["session_notes_crud"],
-            storage_results["progress_notes_crud"]
-        ]):
-            storage_results["status"] = "PASS"
-        else:
-            self.results["critical_issues"].append("Storage system CRUD operations failing")
-
-        return storage_results
-
-    def audit_ai_services(self) -> Dict[str, Any]:
-        """Audit AI tagging, insights, and progress note generation"""
-        self.log("🤖 Auditing AI Services...")
-        ai_results = {
-            "status": "FAIL",
-            "openai_available": False,
-            "anthropic_available": False,
-            "gemini_available": False,
-            "perplexity_available": False,
-            "session_insights": False,
-            "progress_note_generation": False,
-            "ai_tagging": False,
-            "response_times": {}
-        }
-
-        # Check AI service availability
-        start_time = time.time()
-        ai_services = self.make_request("GET", "/api/health/ai-services")
-        ai_results["response_times"]["services_check"] = f"{(time.time() - start_time) * 1000:.0f}ms"
-        
-        if ai_services:
-            for service in ai_services:
-                service_name = service.get("service", "").lower()
-                is_online = service.get("status") == "online"
-                
-                if service_name == "openai":
-                    ai_results["openai_available"] = is_online
-                elif service_name == "anthropic":
-                    ai_results["anthropic_available"] = is_online
-                elif service_name == "gemini":
-                    ai_results["gemini_available"] = is_online
-                elif service_name == "perplexity":
-                    ai_results["perplexity_available"] = is_online
-
-        # Test AI insight generation
-        test_payload = {
-            "content": "Test session content for AI analysis",
-            "analysisType": "session_insights"
-        }
-        
-        start_time = time.time()
-        ai_insight = self.make_request("POST", "/api/ai/detailed-insights", json=test_payload)
-        ai_results["response_times"]["insight_generation"] = f"{(time.time() - start_time) * 1000:.0f}ms"
-        
-        if ai_insight:
-            ai_results["session_insights"] = True
-            ai_results["ai_tagging"] = True
-
-        # Test cross-client pattern analysis
-        pattern_payload = {"therapistId": self.test_therapist_id}
-        start_time = time.time()
-        patterns = self.make_request("POST", "/api/ai/cross-client-patterns", json=pattern_payload)
-        ai_results["response_times"]["pattern_analysis"] = f"{(time.time() - start_time) * 1000:.0f}ms"
-
-        # Overall AI status
-        if (ai_results["openai_available"] and 
-            ai_results["session_insights"]):
-            ai_results["status"] = "PASS"
-        else:
-            self.results["critical_issues"].append("AI services not fully functional")
-
-        return ai_results
-
-    def audit_progress_notes_system(self) -> Dict[str, Any]:
-        """Audit progress notes creation, SOAP format, and AI enhancement"""
-        self.log("📝 Auditing Progress Notes System...")
-        progress_results = {
-            "status": "FAIL",
-            "crud_operations": False,
-            "soap_format": False,
-            "ai_enhancement": False,
-            "client_association": False,
-            "response_times": {}
-        }
-
-        # Test progress notes CRUD
-        start_time = time.time()
-        notes = self.make_request("GET", f"/api/progress-notes/therapist/{self.test_therapist_id}")
-        progress_results["response_times"]["notes_fetch"] = f"{(time.time() - start_time) * 1000:.0f}ms"
-        
-        if notes is not None:
-            progress_results["crud_operations"] = True
+                    # If it's a string, try to parse it
+                    from datetime import datetime
+                    try:
+                        parsed_dt = datetime.fromisoformat(str(today_datetime).replace('Z', '+00:00'))
+                        if not (parsed_dt.hour == 20 and parsed_dt.minute == 0):
+                            issues.append(f"David's today appointment wrong time: {parsed_dt}")
+                    except:
+                        issues.append(f"Could not parse David's today appointment time: {today_datetime}")
             
-            # Check SOAP format in existing notes
-            if notes and len(notes) > 0:
-                sample_note = notes[0]
-                if all(field in sample_note for field in ["subjective", "objective", "assessment", "plan"]):
-                    progress_results["soap_format"] = True
-                    progress_results["client_association"] = bool(sample_note.get("clientId"))
-
-        # Test AI-enhanced progress note generation
-        test_content = "Client reported improved mood and reduced anxiety symptoms. Practiced mindfulness techniques."
-        ai_payload = {
-            "sessionContent": test_content,
-            "clientId": "test-client-id",
-            "therapistId": self.test_therapist_id
-        }
+            if not saturday_apt:
+                issues.append("David's Saturday appointment (11:00 AM) missing")
+            else:
+                # Extract datetime from tuple and handle both datetime and string types
+                saturday_datetime = saturday_apt[0]
+                if hasattr(saturday_datetime, 'hour'):
+                    if not (saturday_datetime.hour == 11 and saturday_datetime.minute == 0):  # 11:00 AM
+                        issues.append(f"David's Saturday appointment wrong time: {saturday_datetime}")
+                else:
+                    # If it's a string, try to parse it
+                    from datetime import datetime
+                    try:
+                        parsed_dt = datetime.fromisoformat(str(saturday_datetime).replace('Z', '+00:00'))
+                        if not (parsed_dt.hour == 11 and parsed_dt.minute == 0):
+                            issues.append(f"David's Saturday appointment wrong time: {parsed_dt}")
+                    except:
+                        issues.append(f"Could not parse David's Saturday appointment time: {saturday_datetime}")
+            
+            if issues:
+                self.log_result("David Grossman Appointments", False, "medium",
+                              "; ".join(issues),
+                              "Update David's appointment times to match calendar")
+                return False
+            
+            self.log_result("David Grossman Appointments", True, "medium",
+                          "David's appointments correctly scheduled")
+            return True
+        except Exception as e:
+            self.log_result("David Grossman Appointments", False, "medium",
+                          f"David's appointments check failed: {str(e)}",
+                          "Check David Grossman's appointment records")
+            return False
+    
+    def run_all_tests(self) -> Dict:
+        """Run all tests and return comprehensive results"""
+        print("🔍 Starting Comprehensive System Audit...")
+        print("=" * 60)
         
-        start_time = time.time()
-        ai_note = self.make_request("POST", "/api/ai/generate-progress-note", json=ai_payload)
-        progress_results["response_times"]["ai_generation"] = f"{(time.time() - start_time) * 1000:.0f}ms"
+        # Critical tests (must pass)
+        self.test_server_health()
+        self.test_database_connectivity()
+        self.test_core_tables_exist()
+        self.test_therapist_data()
         
-        if ai_note:
-            progress_results["ai_enhancement"] = True
-
-        # Overall progress notes status
-        if all([
-            progress_results["crud_operations"],
-            progress_results["soap_format"]
-        ]):
-            progress_results["status"] = "PASS"
-        else:
-            self.results["warnings"].append("Progress notes system has issues")
-
-        return progress_results
-
-    def audit_session_insights_system(self) -> Dict[str, Any]:
-        """Audit session preparation and insights generation"""
-        self.log("🎯 Auditing Session Insights System...")
-        insights_results = {
-            "status": "FAIL",
-            "session_prep": False,
-            "appointment_insights": False,
-            "client_history_analysis": False,
-            "next_session_recommendations": False,
-            "response_times": {}
-        }
-
-        # Test session preparation from notes
-        prep_payload = {
-            "progressNote": {
-                "title": "Test Session",
-                "subjective": "Client feeling anxious",
-                "objective": "Calm demeanor, good eye contact",
-                "assessment": "Generalized anxiety symptoms",
-                "plan": "Continue CBT techniques"
+        # High priority tests
+        self.test_dashboard_stats()
+        self.test_appointments_today()
+        self.test_calendar_integration()
+        self.test_client_data_integrity()
+        self.test_appointment_sync()
+        
+        # Medium priority tests
+        self.test_ai_services()
+        self.test_session_notes()
+        self.test_david_grossman_appointments()
+        
+        # Low priority tests
+        self.test_recent_activity()
+        
+        return self.generate_report()
+    
+    def generate_report(self) -> Dict:
+        """Generate comprehensive audit report"""
+        pass_rate = (self.passed_tests / self.total_tests * 100) if self.total_tests > 0 else 0
+        
+        report = {
+            'summary': {
+                'total_tests': self.total_tests,
+                'passed_tests': self.passed_tests,
+                'failed_tests': self.total_tests - self.passed_tests,
+                'pass_rate': round(pass_rate, 1),
+                'timestamp': datetime.now().isoformat()
             },
-            "clientName": "Test Client",
-            "appointmentId": "test-appointment-123"
+            'results': self.test_results,
+            'recommendations': self.generate_recommendations()
         }
         
-        start_time = time.time()
-        session_prep = self.make_request("POST", "/api/ai/session-prep-from-note", json=prep_payload)
-        insights_results["response_times"]["session_prep"] = f"{(time.time() - start_time) * 1000:.0f}ms"
+        return report
+    
+    def generate_recommendations(self) -> List[Dict]:
+        """Generate prioritized fix recommendations"""
+        recommendations = []
         
-        if session_prep:
-            insights_results["session_prep"] = True
-
-        # Test appointment insights
-        appointment_payload = {
-            "appointmentId": "test-appointment",
-            "clientId": "test-client"
-        }
+        # Critical issues first
+        for issue in self.test_results['critical']:
+            recommendations.append({
+                'priority': 'CRITICAL',
+                'test': issue['test'],
+                'issue': issue['details'],
+                'fix': issue['fix_suggestion'],
+                'impact': 'System non-functional'
+            })
         
-        start_time = time.time()
-        appointment_insights = self.make_request("POST", "/api/ai/appointment-insights", json=appointment_payload)
-        insights_results["response_times"]["appointment_insights"] = f"{(time.time() - start_time) * 1000:.0f}ms"
-
-        # Overall insights status
-        if insights_results["session_prep"]:
-            insights_results["status"] = "PASS"
-        else:
-            self.results["warnings"].append("Session insights system needs attention")
-
-        return insights_results
-
-    def check_file_exists(self, file_path: str) -> bool:
-        """Check if a file exists in the project"""
-        return Path(file_path).exists()
-
-    def audit_file_structure(self) -> Dict[str, Any]:
-        """Audit critical file structure and dependencies"""
-        self.log("📁 Auditing File Structure...")
-        structure_results = {
-            "status": "PASS",
-            "missing_files": [],
-            "critical_files": {
-                "server/routes.ts": False,
-                "server/storage.ts": False,
-                "server/db.ts": False,
-                "server/document-processor.ts": False,
-                "server/oauth-simple.ts": False,
-                "shared/schema.ts": False,
-                "package.json": False
-            }
-        }
-
-        for file_path in structure_results["critical_files"]:
-            exists = self.check_file_exists(file_path)
-            structure_results["critical_files"][file_path] = exists
-            if not exists:
-                structure_results["missing_files"].append(file_path)
-                structure_results["status"] = "FAIL"
-
-        if structure_results["missing_files"]:
-            self.results["critical_issues"].extend([f"Missing critical file: {f}" for f in structure_results["missing_files"]])
-
-        return structure_results
-
-    def generate_recommendations(self):
-        """Generate improvement recommendations based on audit results"""
-        self.log("💡 Generating Recommendations...")
+        # High priority issues
+        for issue in self.test_results['high']:
+            recommendations.append({
+                'priority': 'HIGH',
+                'test': issue['test'],
+                'issue': issue['details'],
+                'fix': issue['fix_suggestion'],
+                'impact': 'Core functionality impaired'
+            })
         
-        # Performance recommendations
-        for module_name, module_data in self.results["modules"].items():
-            if "response_times" in module_data:
-                for endpoint, time_str in module_data["response_times"].items():
-                    time_ms = float(time_str.replace("ms", ""))
-                    if time_ms > 2000:
-                        self.results["recommendations"].append(
-                            f"Optimize {endpoint} in {module_name} - response time {time_str} is slow"
-                        )
-
-        # AI service recommendations
-        ai_module = self.results["modules"].get("ai_services", {})
-        if not ai_module.get("openai_available"):
-            self.results["recommendations"].append("Verify OpenAI API key and connectivity")
-        if not ai_module.get("anthropic_available"):
-            self.results["recommendations"].append("Consider adding Anthropic API key for backup AI processing")
-
-        # Calendar recommendations
-        calendar_module = self.results["modules"].get("calendar_integration", {})
-        if not calendar_module.get("oauth_connected"):
-            self.results["recommendations"].append("Complete Google Calendar OAuth setup for full calendar integration")
-
-        # General recommendations
-        if len(self.results["critical_issues"]) == 0 and len(self.results["warnings"]) == 0:
-            self.results["recommendations"].append("System is performing well - consider implementing monitoring alerts")
-
-    def run_audit(self) -> Dict[str, Any]:
-        """Run complete system audit"""
-        self.log("🚀 Starting Comprehensive System Audit...")
+        # Medium priority issues
+        for issue in self.test_results['medium']:
+            recommendations.append({
+                'priority': 'MEDIUM',
+                'test': issue['test'],
+                'issue': issue['details'],
+                'fix': issue['fix_suggestion'],
+                'impact': 'Feature limitations'
+            })
         
-        # Run all audit modules
-        audit_modules = [
-            ("system_health", self.audit_system_health),
-            ("calendar_integration", self.audit_calendar_integration),
-            ("document_processing", self.audit_document_processing),
-            ("storage_system", self.audit_storage_system),
-            ("ai_services", self.audit_ai_services),
-            ("progress_notes_system", self.audit_progress_notes_system),
-            ("session_insights_system", self.audit_session_insights_system),
-            ("file_structure", self.audit_file_structure)
-        ]
+        # Low priority issues
+        for issue in self.test_results['low']:
+            recommendations.append({
+                'priority': 'LOW',
+                'test': issue['test'],
+                'issue': issue['details'],
+                'fix': issue['fix_suggestion'],
+                'impact': 'Minor functionality issues'
+            })
+        
+        return recommendations
 
-        for module_name, audit_function in audit_modules:
-            try:
-                self.results["modules"][module_name] = audit_function()
-            except Exception as e:
-                self.log(f"Audit failed for {module_name}: {e}", "ERROR")
-                self.results["modules"][module_name] = {"status": "ERROR", "error": str(e)}
-                self.results["critical_issues"].append(f"Audit failure in {module_name}: {e}")
-
-        # Generate recommendations
-        self.generate_recommendations()
-
-        # Determine overall status
-        critical_failures = len(self.results["critical_issues"])
-        if critical_failures == 0:
-            self.results["overall_status"] = "HEALTHY"
-        elif critical_failures <= 2:
-            self.results["overall_status"] = "WARNING"
-        else:
-            self.results["overall_status"] = "CRITICAL"
-
-        self.log(f"✅ Audit Complete - Status: {self.results['overall_status']}")
-        return self.results
-
-    def save_results(self, filename: str = "system_audit_results.json"):
-        """Save audit results to JSON file"""
-        with open(filename, 'w') as f:
-            json.dump(self.results, f, indent=2)
-        self.log(f"Results saved to {filename}")
-
-    def print_summary(self):
-        """Print a human-readable summary of audit results"""
-        print("\n" + "="*80)
-        print("SYSTEM AUDIT SUMMARY")
-        print("="*80)
-        print(f"Overall Status: {self.results['overall_status']}")
-        print(f"Timestamp: {self.results['timestamp']}")
-        print()
-
-        # Module status summary
-        print("MODULE STATUS:")
-        for module_name, module_data in self.results["modules"].items():
-            status = module_data.get("status", "UNKNOWN")
-            status_emoji = "✅" if status == "PASS" else "❌" if status == "FAIL" else "⚠️"
-            print(f"  {status_emoji} {module_name.replace('_', ' ').title()}: {status}")
-
-        # Critical issues
-        if self.results["critical_issues"]:
-            print(f"\n🚨 CRITICAL ISSUES ({len(self.results['critical_issues'])}):")
-            for issue in self.results["critical_issues"]:
-                print(f"  • {issue}")
-
-        # Warnings
-        if self.results["warnings"]:
-            print(f"\n⚠️  WARNINGS ({len(self.results['warnings'])}):")
-            for warning in self.results["warnings"]:
-                print(f"  • {warning}")
-
-        # Recommendations
-        if self.results["recommendations"]:
-            print(f"\n💡 RECOMMENDATIONS ({len(self.results['recommendations'])}):")
-            for rec in self.results["recommendations"]:
-                print(f"  • {rec}")
-
-        print("\n" + "="*80)
+def main():
+    """Main execution function"""
+    print("🚀 Therapy Management System - Comprehensive Audit")
+    print("=" * 60)
+    
+    auditor = SystemAuditor()
+    report = auditor.run_all_tests()
+    
+    # Print summary
+    print("\n" + "=" * 60)
+    print("📊 AUDIT SUMMARY")
+    print("=" * 60)
+    print(f"Total Tests: {report['summary']['total_tests']}")
+    print(f"Passed: {report['summary']['passed_tests']}")
+    print(f"Failed: {report['summary']['failed_tests']}")
+    print(f"Pass Rate: {report['summary']['pass_rate']}%")
+    
+    # Print recommendations
+    if report['recommendations']:
+        print("\n🔧 PRIORITIZED FIXES NEEDED:")
+        print("=" * 60)
+        for i, rec in enumerate(report['recommendations'], 1):
+            print(f"\n{i}. [{rec['priority']}] {rec['test']}")
+            print(f"   Issue: {rec['issue']}")
+            print(f"   Fix: {rec['fix']}")
+            print(f"   Impact: {rec['impact']}")
+    
+    # Save detailed report
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    report_file = f"audit_report_{timestamp}.json"
+    
+    with open(report_file, 'w') as f:
+        json.dump(report, f, indent=2, default=str)
+    
+    print(f"\n💾 Detailed report saved: {report_file}")
+    
+    if report['summary']['pass_rate'] == 100:
+        print("\n🎉 SYSTEM IS 100% FUNCTIONAL!")
+        return 0
+    else:
+        print(f"\n⚠️  SYSTEM NEEDS ATTENTION - {report['summary']['pass_rate']}% functional")
+        return 1
 
 if __name__ == "__main__":
-    auditor = SystemAuditor()
-    results = auditor.run_audit()
-    auditor.save_results()
-    auditor.print_summary()
+    exit(main())
