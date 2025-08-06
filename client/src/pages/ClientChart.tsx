@@ -18,7 +18,8 @@ import {
   TrendingUp,
   AlertCircle,
   Trash2,
-  Link
+  Link,
+  CheckCircle2
 } from 'lucide-react';
 import { DocumentProcessor } from '@/components/documents/DocumentProcessor';
 import { SessionNoteLinkingModal } from '@/components/SessionNoteLinkingModal';
@@ -451,7 +452,7 @@ export default function ClientChart() {
           </div>
 
           {/* Information Alert about Unlinked Notes */}
-          {sessionNotes.filter(note => !note.appointmentId && !note.eventId).length > 0 && (
+          {sessionNotes.filter(note => !note.appointmentId && !note.eventId).length > 0 ? (
             <Card className="border-orange-200 bg-orange-50">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-3">
@@ -484,6 +485,30 @@ export default function ClientChart() {
                       </Button>
                     </div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : sessionNotes.length > 0 && (
+            <Card className="border-green-200 bg-green-50">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-green-800">All Notes Properly Linked</h4>
+                    <p className="text-sm text-green-700">
+                      Excellent! All {sessionNotes.length} session notes are properly linked to their corresponding appointments.
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsLinkingModalOpen(true)}
+                    className="text-green-700 border-green-300 hover:bg-green-100"
+                    data-testid="button-manage-linking"
+                  >
+                    <Link className="w-4 h-4 mr-2" />
+                    Manage Linking
+                  </Button>
                 </div>
               </CardContent>
             </Card>
