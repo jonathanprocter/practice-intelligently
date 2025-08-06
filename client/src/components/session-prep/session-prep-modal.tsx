@@ -198,9 +198,10 @@ export default function SessionPrepModal({
       }
     } catch (error) {
       console.error('Error generating AI insights:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Error",
-        description: "Failed to generate AI insights. Please try again.",
+        description: `Failed to generate AI insights: ${errorMessage}. Please try again.`,
         variant: "destructive",
       });
     } finally {

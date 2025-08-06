@@ -129,9 +129,11 @@ export default function TodaysSchedule() {
         throw new Error('Failed to generate insights');
       }
     } catch (error) {
+      console.error('AI insights generation error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Error",
-        description: "Failed to generate AI insights. Please try again.",
+        description: `Failed to generate AI insights: ${errorMessage}. Please try again.`,
         variant: "destructive",
       });
     }

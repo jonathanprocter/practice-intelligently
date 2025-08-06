@@ -2943,49 +2943,69 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   });
   app.post('/api/ai/appointment-insights', async (req, res) => {
     try {
-      const { appointmentId, clientId, eventData } = req.body;
+      const { appointment } = req.body;
       
-      if (!appointmentId && !clientId) {
-        return res.status(400).json({ error: 'Appointment ID or Client ID is required' });
+      if (!appointment) {
+        return res.status(400).json({ error: 'Appointment data is required' });
+      }
+      
+      // Get client history if clientId is provided
+      let clientHistory = [];
+      if (appointment.clientName) {
+        try {
+          const clientId = await storage.getClientIdByName(appointment.clientName);
+          if (clientId) {
+            clientHistory = await storage.getSessionNotesByClientId(clientId);
+          }
+        } catch (err) {
+          console.log('Could not get client history:', err);
+        }
       }
       
       // Get appointment insights
       const insights = await multiModelAI.generateAppointmentInsights({
-        appointmentId,
-        clientId,
-        eventData: eventData || {}
+        appointment,
+        clientHistory
       });
       
       res.json({ insights, model: 'multimodel-ai' });
     } catch (error: any) {
       console.error('Error generating appointment insights:', error);
-      res.status(500).json({ error: 'Failed to generate insights', details: error.message });
+      res.status(500).json({ error: 'Failed to generate insights', details: error.message || error.toString() });
     }
   });
   // ========== SESSION PREP API ROUTES (Auto-generated) ==========
 
-  app.get('/api/session-prep/:param/ai-insights', async (req, res) => {
+  app.post('/api/session-prep/:eventId/ai-insights', async (req, res) => {
     try {
       const { eventId } = req.params;
+      const { clientId } = req.body;
       
       if (!eventId) {
         return res.status(400).json({ error: 'Event ID is required' });
       }
+
+      if (!clientId) {
+        return res.status(400).json({ error: 'Client ID is required in request body' });
+      }
+      
+      // Get session history for the client
+      const sessionHistory = await storage.getSessionNotesByClientId(clientId);
       
       // Generate AI insights for session prep
       const insights = await multiModelAI.generateSessionPrepInsights({
         eventId,
-        includeHistory: true,
-        analysisDepth: 'comprehensive'
+        clientId,
+        sessionHistory
       });
       
       res.json({ insights, model: 'multimodel-ai' });
     } catch (error: any) {
       console.error('Error generating session prep insights:', error);
-      res.status(500).json({ error: 'Failed to generate insights', details: error.message });
+      res.status(500).json({ error: 'Failed to generate insights', details: error.message || error.toString() });
     }
   });
-  app.get('/api/session-prep/:param', async (req, res) => {
+  app.get('/api/session-prep/:eventId', async (req, res) => {
     try {
       const { eventId } = req.params;
       

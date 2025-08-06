@@ -91,6 +91,8 @@ export const DailyView = ({
       }
     } catch (error) {
       console.error('Failed to generate AI insights:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('AI insights error details:', errorMessage);
     } finally {
       setIsAnalyzing(false);
     }
