@@ -85,11 +85,11 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
         // Step 2: Generate and save progress note from processed content
         if (processedData.analysis?.extractedText) {
           try {
-            // Add timeout to prevent hanging
+            // Add timeout to prevent hanging with improved error handling
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+            let timeoutId: NodeJS.Timeout;
             
-            const progressNoteResponse = await fetch('/api/documents/generate-progress-note', {
+            const progressNotePromise = fetch('/api/documents/generate-progress-note', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -104,6 +104,15 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
               signal: controller.signal
             });
 
+            // Create timeout that properly handles abort
+            const timeoutPromise = new Promise<Response>((_, reject) => {
+              timeoutId = setTimeout(() => {
+                controller.abort();
+                reject(new Error('Progress note generation timed out after 45 seconds'));
+              }, 45000); // Extended timeout to 45 seconds
+            });
+
+            const progressNoteResponse = await Promise.race([progressNotePromise, timeoutPromise]);
             clearTimeout(timeoutId);
 
             if (progressNoteResponse.ok) {
