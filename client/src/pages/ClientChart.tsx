@@ -17,9 +17,11 @@ import {
   Activity,
   TrendingUp,
   AlertCircle,
-  Trash2
+  Trash2,
+  Link
 } from 'lucide-react';
 import { DocumentProcessor } from '@/components/documents/DocumentProcessor';
+import { SessionNoteLinkingModal } from '@/components/SessionNoteLinkingModal';
 
 interface Client {
   id: string;
@@ -62,6 +64,7 @@ export default function ClientChart() {
   const params = useParams<{ clientId: string }>();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
+  const [isLinkingModalOpen, setIsLinkingModalOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -123,6 +126,12 @@ export default function ClientChart() {
     if (confirm(`Are you sure you want to delete this ${noteSource === 'document_upload' ? 'uploaded document' : 'session note'}? This action cannot be undone.`)) {
       deleteSessionNoteMutation.mutate(noteId);
     }
+  };
+
+  const handleLinkingComplete = () => {
+    // Refresh all related data after linking
+    queryClient.invalidateQueries({ queryKey: ['/api/session-notes/client', params.clientId] });
+    queryClient.invalidateQueries({ queryKey: ['/api/appointments/client', params.clientId] });
   };
 
   if (clientLoading) {
@@ -454,14 +463,26 @@ export default function ClientChart() {
                       are not connected to specific appointments. These notes exist in the system but don't appear 
                       with their corresponding appointments below.
                     </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setActiveTab('sessions')}
-                      className="mt-3 text-orange-700 border-orange-300 hover:bg-orange-100"
-                    >
-                      View All Session Notes
-                    </Button>
+                    <div className="flex gap-2 mt-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setActiveTab('sessions')}
+                        className="text-orange-700 border-orange-300 hover:bg-orange-100"
+                      >
+                        View All Session Notes
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsLinkingModalOpen(true)}
+                        className="text-orange-700 border-orange-300 hover:bg-orange-100"
+                        data-testid="button-manage-linking"
+                      >
+                        <Link className="w-4 h-4 mr-2" />
+                        Manage Linking
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -602,6 +623,16 @@ export default function ClientChart() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Session Note Linking Modal */}
+      <SessionNoteLinkingModal
+        isOpen={isLinkingModalOpen}
+        onClose={() => setIsLinkingModalOpen(false)}
+        clientId={params.clientId!}
+        sessionNotes={sessionNotes}
+        appointments={appointments}
+        onLinkingComplete={handleLinkingComplete}
+      />
     </div>
   );
 }

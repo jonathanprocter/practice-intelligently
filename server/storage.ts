@@ -43,6 +43,7 @@ export interface IStorage {
   getTodaysAppointments(therapistId: string): Promise<Appointment[]>;
   getUpcomingAppointments(therapistId: string, days?: number): Promise<Appointment[]>;
   getUpcomingAppointmentsByClient(clientId: string): Promise<Appointment[]>;
+  getAppointmentsByClient(clientId: string): Promise<Appointment[]>;
   getClientIdByName(clientName: string): Promise<string | null>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointment(id: string, appointment: Partial<Appointment>): Promise<Appointment>;

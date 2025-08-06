@@ -806,6 +806,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Link session note to appointment
+  app.put("/api/session-notes/:id/link-appointment", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { appointmentId } = req.body;
+      
+      // Update the session note with the appointment ID
+      const updatedNote = await storage.updateSessionNote(id, { appointmentId });
+      res.json(updatedNote);
+    } catch (error) {
+      console.error("Error linking session note to appointment:", error);
+      res.status(500).json({ error: "Failed to link session note to appointment" });
+    }
+  });
+
+  // Unlink session note from appointment
+  app.put("/api/session-notes/:id/unlink-appointment", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Update the session note to remove appointment ID
+      const updatedNote = await storage.updateSessionNote(id, { appointmentId: null });
+      res.json(updatedNote);
+    } catch (error) {
+      console.error("Error unlinking session note from appointment:", error);
+      res.status(500).json({ error: "Failed to unlink session note from appointment" });
+    }
+  });
+
+  // AI-powered automatic linking of session notes to appointments
+  app.post("/api/session-notes/auto-link/:clientId", async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      
+      // Get all unlinked session notes for this client
+      const sessionNotes = await storage.getSessionNotes(clientId);
+      const unlinkedNotes = sessionNotes.filter(note => !note.appointmentId);
+      
+      // Get all appointments for this client
+      const appointments = await storage.getAppointmentsByClient(clientId);
+      
+      let linkedCount = 0;
+      
+      for (const note of unlinkedNotes) {
+        // Use AI to analyze note content and match to appointment date
+        try {
+          const noteDate = new Date(note.createdAt);
+          
+          // Find appointments within a reasonable time range (same day ± 1 day)
+          const candidateAppointments = appointments.filter(apt => {
+            const aptDate = new Date(apt.startTime);
+            const timeDiff = Math.abs(noteDate.getTime() - aptDate.getTime());
+            const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+            return daysDiff <= 1; // Within 1 day
+          });
+          
+          if (candidateAppointments.length === 1) {
+            // Exact match found
+            await storage.updateSessionNote(note.id, { appointmentId: candidateAppointments[0].id });
+            linkedCount++;
+          } else if (candidateAppointments.length > 1) {
+            // Multiple candidates - use AI to analyze content
+            const prompt = `Based on this session note content, determine which appointment time is most likely:
+Note date: ${noteDate.toDateString()}
+Note content preview: ${note.content.substring(0, 200)}...
+
+Candidate appointments:
+${candidateAppointments.map((apt, i) => 
+  `${i + 1}. ${new Date(apt.startTime).toDateString()} at ${new Date(apt.startTime).toLocaleTimeString()} (${apt.type})`
+).join('\n')}
+
+Respond with just the number (1-${candidateAppointments.length}) of the most likely appointment, or "none" if unsure.`;
+            
+            const response = await openai.chat.completions.create({
+              model: 'gpt-4o',
+              messages: [{ role: 'user', content: prompt }],
+              max_tokens: 10
+            });
+            
+            const choice = response.choices[0]?.message?.content?.trim();
+            const choiceNum = parseInt(choice || '');
+            
+            if (choiceNum >= 1 && choiceNum <= candidateAppointments.length) {
+              const selectedAppointment = candidateAppointments[choiceNum - 1];
+              await storage.updateSessionNote(note.id, { appointmentId: selectedAppointment.id });
+              linkedCount++;
+            }
+          }
+        } catch (aiError) {
+          console.error('Error in AI linking for note:', note.id, aiError);
+        }
+      }
+      
+      res.json({ 
+        message: `Linked ${linkedCount} session notes to appointments`,
+        linkedCount,
+        totalUnlinked: unlinkedNotes.length 
+      });
+    } catch (error) {
+      console.error("Error auto-linking session notes:", error);
+      res.status(500).json({ error: "Failed to auto-link session notes" });
+    }
+  });
+
   // Get session notes by event/appointment ID (specific endpoint)
   app.get("/api/session-notes/event/:eventId", async (req, res) => {
     try {
