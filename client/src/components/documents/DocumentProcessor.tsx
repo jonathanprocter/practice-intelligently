@@ -87,7 +87,7 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
           try {
             // Add timeout to prevent hanging with improved error handling
             const controller = new AbortController();
-            let timeoutId: NodeJS.Timeout;
+            let timeoutId: NodeJS.Timeout | undefined;
             
             const progressNotePromise = fetch('/api/documents/generate-progress-note', {
               method: 'POST',
@@ -113,7 +113,7 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
             });
 
             const progressNoteResponse = await Promise.race([progressNotePromise, timeoutPromise]);
-            clearTimeout(timeoutId);
+            if (timeoutId) clearTimeout(timeoutId);
 
             if (progressNoteResponse.ok) {
               const progressNoteData = await progressNoteResponse.json();
