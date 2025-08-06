@@ -847,19 +847,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all appointments for this client
       const appointments = await storage.getAppointmentsByClient(clientId);
       
+      console.log(`Auto-linking debug for client ${clientId}:`);
+      console.log(`- Total session notes: ${sessionNotes.length}`);
+      console.log(`- Unlinked notes: ${unlinkedNotes.length}`);
+      console.log(`- Total appointments: ${appointments.length}`);
+      
       let linkedCount = 0;
       
       for (const note of unlinkedNotes) {
-        // Use AI to analyze note content and match to appointment date
         try {
+          let candidateAppointments = [];
+          
+          // First try to match by Google Event ID if available
+          if (note.eventId) {
+            const eventMatch = appointments.find(apt => apt.googleEventId === note.eventId);
+            if (eventMatch) {
+              await storage.updateSessionNote(note.id, { appointmentId: eventMatch.id });
+              linkedCount++;
+              continue;
+            }
+          }
+          
+          // Use date-based matching
           const noteDate = new Date(note.createdAt);
           
-          // Find appointments within a reasonable time range (same day ± 1 day)
-          const candidateAppointments = appointments.filter(apt => {
+          // Find appointments within a reasonable time range (same day ± 3 days)
+          candidateAppointments = appointments.filter(apt => {
             const aptDate = new Date(apt.startTime);
             const timeDiff = Math.abs(noteDate.getTime() - aptDate.getTime());
             const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
-            return daysDiff <= 1; // Within 1 day
+            return daysDiff <= 3; // Within 3 days
           });
           
           if (candidateAppointments.length === 1) {
@@ -868,34 +885,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
             linkedCount++;
           } else if (candidateAppointments.length > 1) {
             // Multiple candidates - use AI to analyze content
-            const prompt = `Based on this session note content, determine which appointment time is most likely:
-Note date: ${noteDate.toDateString()}
-Note content preview: ${note.content.substring(0, 200)}...
+            const notePreview = note.content.substring(0, 300);
+            const prompt = `Based on this session note content and date, determine which appointment is most likely:
 
-Candidate appointments:
-${candidateAppointments.map((apt, i) => 
-  `${i + 1}. ${new Date(apt.startTime).toDateString()} at ${new Date(apt.startTime).toLocaleTimeString()} (${apt.type})`
-).join('\n')}
+Note created: ${noteDate.toDateString()} ${noteDate.toLocaleTimeString()}
+Note content preview: ${notePreview}...
 
-Respond with just the number (1-${candidateAppointments.length}) of the most likely appointment, or "none" if unsure.`;
+Available appointments:
+${candidateAppointments.map((apt, i) => {
+  const aptDate = new Date(apt.startTime);
+  return `${i + 1}. ${aptDate.toDateString()} at ${aptDate.toLocaleTimeString()} (${apt.type?.replace('_', ' ') || 'therapy session'})`;
+}).join('\n')}
+
+Respond with ONLY the number (1-${candidateAppointments.length}) of the most likely appointment, or "none" if uncertain.`;
             
-            const response = await openai.chat.completions.create({
-              model: 'gpt-4o',
-              messages: [{ role: 'user', content: prompt }],
-              max_tokens: 10
+            try {
+              const response = await openai.chat.completions.create({
+                model: 'gpt-4o',
+                messages: [{ role: 'user', content: prompt }],
+                max_tokens: 10,
+                temperature: 0
+              });
+              
+              const choice = response.choices[0]?.message?.content?.trim();
+              const choiceNum = parseInt(choice || '');
+              
+              if (choiceNum >= 1 && choiceNum <= candidateAppointments.length) {
+                const selectedAppointment = candidateAppointments[choiceNum - 1];
+                await storage.updateSessionNote(note.id, { appointmentId: selectedAppointment.id });
+                linkedCount++;
+              }
+            } catch (aiError) {
+              console.error('AI analysis failed for note:', note.id, aiError);
+              // Fallback: link to closest appointment by date
+              if (candidateAppointments.length > 0) {
+                const closest = candidateAppointments.reduce((closest, current) => {
+                  const closestDiff = Math.abs(new Date(closest.startTime).getTime() - noteDate.getTime());
+                  const currentDiff = Math.abs(new Date(current.startTime).getTime() - noteDate.getTime());
+                  return currentDiff < closestDiff ? current : closest;
+                });
+                await storage.updateSessionNote(note.id, { appointmentId: closest.id });
+                linkedCount++;
+              }
+            }
+          } else if (candidateAppointments.length === 0) {
+            // No close appointments found - expand search to ±7 days
+            const widerCandidates = appointments.filter(apt => {
+              const aptDate = new Date(apt.startTime);
+              const timeDiff = Math.abs(noteDate.getTime() - aptDate.getTime());
+              const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+              return daysDiff <= 7; // Within 1 week
             });
             
-            const choice = response.choices[0]?.message?.content?.trim();
-            const choiceNum = parseInt(choice || '');
-            
-            if (choiceNum >= 1 && choiceNum <= candidateAppointments.length) {
-              const selectedAppointment = candidateAppointments[choiceNum - 1];
-              await storage.updateSessionNote(note.id, { appointmentId: selectedAppointment.id });
+            if (widerCandidates.length === 1) {
+              await storage.updateSessionNote(note.id, { appointmentId: widerCandidates[0].id });
               linkedCount++;
             }
           }
-        } catch (aiError) {
-          console.error('Error in AI linking for note:', note.id, aiError);
+        } catch (noteError) {
+          console.error('Error processing note:', note.id, noteError);
         }
       }
       
