@@ -264,6 +264,14 @@ export default function TodaysSchedule() {
     });
   };
 
+  const calculateDuration = (startTime: string, endTime: string) => {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const durationMs = end.getTime() - start.getTime();
+    const durationMinutes = Math.round(durationMs / (1000 * 60));
+    return `${durationMinutes} min`;
+  };
+
 
 
   const getStatusColor = (status: string) => {
@@ -332,7 +340,7 @@ export default function TodaysSchedule() {
                     {appointment.status.replace('_', ' ')}
                   </Badge>
                   <span className="text-xs text-therapy-text/50">
-                    {appointment.clientId === 'calendar-event' ? 'Calendar Event' : '50 min'}
+                    {appointment.clientId === 'calendar-event' ? 'Calendar Event' : calculateDuration(appointment.startTime, appointment.endTime)}
                   </span>
                 </div>
                   </div>
