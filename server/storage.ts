@@ -860,6 +860,7 @@ export class DatabaseStorage implements IStorage {
         narrativeSummary: row.narrative_summary,
         sessionDate: new Date(row.session_date),
         appointmentId: row.appointment_id,
+        aiTags: this.safeParseJSON(row.ai_tags, []),
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at)
       }));
@@ -870,72 +871,6 @@ export class DatabaseStorage implements IStorage {
   }
 
 
-
-  async getClientIdByName(clientName: string): Promise<string | null> {
-    try {
-      console.log(`🔍 Searching for client: "${clientName}"`);
-      
-      // Clean the client name
-      const cleanName = clientName.trim();
-      const nameParts = cleanName.split(' ');
-      const firstName = nameParts[0];
-      const lastName = nameParts.slice(1).join(' ');
-
-      console.log(`📝 Name parts: firstName="${firstName}", lastName="${lastName}"`);
-
-      // Try exact match first
-      let result = await pool.query(
-        `SELECT id, first_name, last_name FROM clients 
-         WHERE (first_name ILIKE $1 AND last_name ILIKE $2) 
-         OR (first_name || ' ' || last_name) ILIKE $3
-         LIMIT 1`,
-        [firstName, lastName, cleanName]
-      );
-
-      if (result.rows.length > 0) {
-        const client = result.rows[0];
-        console.log(`✅ Exact match found: ${client.first_name} ${client.last_name} (${client.id})`);
-        return client.id;
-      }
-
-      // Try case-insensitive partial matching
-      console.log(`🔍 Trying partial matching for: ${cleanName}`);
-      
-      result = await pool.query(
-        `SELECT id, first_name, last_name FROM clients 
-         WHERE first_name ILIKE $1 OR last_name ILIKE $2
-         OR first_name ILIKE $3 OR last_name ILIKE $4
-         LIMIT 1`,
-        [`%${firstName}%`, `%${lastName}%`, `${firstName}%`, `${lastName}%`]
-      );
-
-      if (result.rows.length > 0) {
-        const client = result.rows[0];
-        console.log(`🎯 Partial match found: ${client.first_name} ${client.last_name} (${client.id})`);
-        return client.id;
-      }
-
-      // Try final fallback with single name matches
-      result = await pool.query(
-        `SELECT id, first_name, last_name FROM clients 
-         WHERE first_name ILIKE $1 OR last_name ILIKE $2
-         LIMIT 1`,
-        [`%${firstName}%`, `%${lastName}%`]
-      );
-
-      if (result.rows.length > 0) {
-        const client = result.rows[0];
-        console.log(`🔄 Final fallback match found: ${client.first_name} ${client.last_name} (${client.id})`);
-        return client.id;
-      }
-
-      console.log(`❌ No client found for: ${cleanName}`);
-      return null;
-    } catch (error) {
-      console.error('Error in getClientIdByName:', error);
-      return null;
-    }
-  }
 
   async getRecentProgressNotes(therapistId: string, limit: number = 10): Promise<ProgressNote[]> {
     return await db
@@ -3268,33 +3203,7 @@ Jonathan`,
     }
   }
 
-  async getCompassLearningContext(therapistId: string): Promise<{
-    preferences: any;
-    patterns: any;
-    frequentQueries: any;
-  }> {
-    // Get recent conversation patterns and preferences
-    const recentConversations = await db
-      .select()
-      .from(compassConversations)
-      .where(eq(compassConversations.therapistId, therapistId))
-      .orderBy(desc(compassConversations.timestamp))
-      .limit(50);
 
-    // Get memory contexts for learning patterns
-    const memoryContexts = await db
-      .select()
-      .from(compassMemory)
-      .where(eq(compassMemory.therapistId, therapistId))
-      .orderBy(desc(compassMemory.lastAccessed))
-      .limit(20);
-
-    return {
-      preferences: memoryContexts.filter(m => m.contextType === 'preference'),
-      patterns: memoryContexts.filter(m => m.contextType === 'pattern'),
-      frequentQueries: recentConversations.slice(0, 10)
-    };
-  }
 
   // Session recommendation methods
   async getSessionRecommendations(clientId: string): Promise<SessionRecommendation[]> {

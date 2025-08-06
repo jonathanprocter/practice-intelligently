@@ -869,7 +869,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Use date-based matching
-          const noteDate = new Date(note.createdAt);
+          const noteDate = new Date(note.createdAt || new Date());
           
           // Find appointments within a reasonable time range (same day ± 3 days)
           candidateAppointments = appointments.filter(apt => {
@@ -2708,7 +2708,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       for (const calendar of calendars) {
         try {
           const events = await simpleOAuth.getEvents(
-            calendar.id,
+            calendar.id || '',
             timeMin,
             timeMax
           );
@@ -2774,7 +2774,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       for (const calendar of calendars) {
         try {
           const events = await simpleOAuth.getEvents(
-            calendar.id,
+            calendar.id || '',
             timeMin,
             timeMax
           );
