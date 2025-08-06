@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
+import RecentActivity from "@/components/dashboard/recent-activity";
 
 export default function Analytics() {
   const [timeRange, setTimeRange] = useState("month");
@@ -557,47 +558,8 @@ export default function Analytics() {
           </CardContent>
         </Card>
 
-        {/* Recent Activity */}
-        <Card className="therapy-card border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Activity className="w-5 h-5 mr-2 text-green-600" />
-              Recent Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="text-sm font-medium text-therapy-text">Session completed</p>
-                  <p className="text-xs text-therapy-text/60">Sarah P. - 2 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                <Users className="h-5 w-5 text-green-600" />
-                <div>
-                  <p className="text-sm font-medium text-therapy-text">New client onboarded</p>
-                  <p className="text-xs text-therapy-text/60">Michael R. - 4 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
-                <Target className="h-5 w-5 text-purple-600" />
-                <div>
-                  <p className="text-sm font-medium text-therapy-text">Treatment goal achieved</p>
-                  <p className="text-xs text-therapy-text/60">David K. - 1 day ago</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
-                <AlertTriangle className="h-5 w-5 text-yellow-600" />
-                <div>
-                  <p className="text-sm font-medium text-therapy-text">Follow-up required</p>
-                  <p className="text-xs text-therapy-text/60">Jennifer L. - 2 days ago</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Recent Activity - Using Real Data */}
+        <RecentActivity />
       </div>
 
       {/* Analytics Presets */}
