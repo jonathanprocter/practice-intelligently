@@ -50,6 +50,7 @@ interface Appointment {
   type: string;
   status?: string;
   location?: string;
+  hasSessionNote?: boolean;
 }
 
 export default function ClientChart() {
@@ -372,31 +373,128 @@ export default function ClientChart() {
 
         {/* Appointments Tab */}
         <TabsContent value="appointments" className="space-y-6">
+          {/* Appointment Summary Stats */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Appointments</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{appointments.length}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">With Session Notes</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {appointments.filter(apt => 
+                    sessionNotes.some(note => 
+                      note.appointmentId === apt.id || 
+                      (note.eventId && apt.googleEventId && note.eventId === apt.googleEventId)
+                    )
+                  ).length}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Missing Notes</CardTitle>
+                <AlertCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">
+                  {appointments.filter(apt => 
+                    !sessionNotes.some(note => 
+                      note.appointmentId === apt.id || 
+                      (note.eventId && apt.googleEventId && note.eventId === apt.googleEventId)
+                    )
+                  ).length}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <Card>
             <CardHeader>
               <CardTitle>Appointment History</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {appointments.map((appointment: Appointment) => (
-                  <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Calendar className="w-4 h-4 text-gray-500" />
-                      <div>
-                        <p className="font-medium">{appointment.title || appointment.type?.replace('_', ' ') || 'Appointment'}</p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(appointment.startTime).toLocaleString()}
-                        </p>
-                        {appointment.location && (
-                          <p className="text-xs text-gray-400">{appointment.location}</p>
+                {appointments.map((appointment: Appointment) => {
+                  // Check if there's a session note linked to this appointment
+                  const linkedSessionNote = sessionNotes.find(note => 
+                    note.appointmentId === appointment.id || 
+                    (note.eventId && appointment.googleEventId && note.eventId === appointment.googleEventId)
+                  );
+                  
+                  return (
+                    <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Calendar className="w-4 h-4 text-gray-500" />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{appointment.title || appointment.type?.replace('_', ' ') || 'Appointment'}</p>
+                            {linkedSessionNote && (
+                              <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                <FileText className="w-3 h-3 mr-1" />
+                                Note
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-500">
+                            {new Date(appointment.startTime).toLocaleString()}
+                          </p>
+                          {appointment.location && (
+                            <p className="text-xs text-gray-400">{appointment.location}</p>
+                          )}
+                          {linkedSessionNote && (
+                            <p className="text-xs text-blue-600 mt-1">
+                              Session note: {linkedSessionNote.content.substring(0, 80)}...
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {linkedSessionNote ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setActiveTab('sessions')}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            data-testid={`button-view-note-${appointment.id}`}
+                          >
+                            <FileText className="w-4 h-4" />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              // TODO: Implement create session note for this appointment
+                              toast({
+                                title: "Feature Coming Soon",
+                                description: "Creating session notes for specific appointments will be available soon.",
+                              });
+                            }}
+                            className="text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                            data-testid={`button-add-note-${appointment.id}`}
+                          >
+                            <FileText className="w-4 h-4" />
+                          </Button>
                         )}
+                        <Badge variant={appointment.status === 'completed' ? 'default' : 'secondary'}>
+                          {appointment.status || 'scheduled'}
+                        </Badge>
                       </div>
                     </div>
-                    <Badge variant={appointment.status === 'completed' ? 'default' : 'secondary'}>
-                      {appointment.status || 'scheduled'}
-                    </Badge>
-                  </div>
-                ))}
+                  );
+                })}
                 {appointments.length === 0 && (
                   <p className="text-gray-500 text-center py-8">No appointments found</p>
                 )}
