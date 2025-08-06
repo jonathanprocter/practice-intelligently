@@ -35,6 +35,10 @@ interface Client {
 
 interface SessionNote {
   id: string;
+  appointmentId?: string;
+  eventId?: string;
+  clientId: string;
+  therapistId: string;
   content: string;
   createdAt: string;
   aiTags?: string[];
@@ -50,6 +54,7 @@ interface Appointment {
   type: string;
   status?: string;
   location?: string;
+  googleEventId?: string;
   hasSessionNote?: boolean;
 }
 
@@ -374,7 +379,7 @@ export default function ClientChart() {
         {/* Appointments Tab */}
         <TabsContent value="appointments" className="space-y-6">
           {/* Appointment Summary Stats */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Appointments</CardTitle>
@@ -387,7 +392,7 @@ export default function ClientChart() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">With Session Notes</CardTitle>
+                <CardTitle className="text-sm font-medium">Linked Notes</CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -399,26 +404,69 @@ export default function ClientChart() {
                     )
                   ).length}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  appointments with notes
+                </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Missing Notes</CardTitle>
-                <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Total Session Notes</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-600">
-                  {appointments.filter(apt => 
-                    !sessionNotes.some(note => 
-                      note.appointmentId === apt.id || 
-                      (note.eventId && apt.googleEventId && note.eventId === apt.googleEventId)
-                    )
-                  ).length}
+                <div className="text-2xl font-bold text-blue-600">
+                  {sessionNotes.length}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  {sessionNotes.filter(note => !note.appointmentId && !note.eventId).length} unlinked to appointments
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Coverage Rate</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-purple-600">
+                  {appointments.length > 0 ? Math.round((sessionNotes.length / appointments.length) * 100) : 0}%
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  notes per appointment
+                </p>
               </CardContent>
             </Card>
           </div>
+
+          {/* Information Alert about Unlinked Notes */}
+          {sessionNotes.filter(note => !note.appointmentId && !note.eventId).length > 0 && (
+            <Card className="border-orange-200 bg-orange-50">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-orange-800">Session Notes Not Linked to Appointments</h4>
+                    <p className="text-sm text-orange-700 mt-1">
+                      {sessionNotes.filter(note => !note.appointmentId && !note.eventId).length} of {sessionNotes.length} session notes 
+                      are not connected to specific appointments. These notes exist in the system but don't appear 
+                      with their corresponding appointments below.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setActiveTab('sessions')}
+                      className="mt-3 text-orange-700 border-orange-300 hover:bg-orange-100"
+                    >
+                      View All Session Notes
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
