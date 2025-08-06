@@ -244,7 +244,7 @@ export function SessionPrepCard({
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg p-4">
               <div className="text-sm text-muted-foreground leading-relaxed">
                 {showFullInsights ? (
-                  <div>{formatFullContent(aiInsights.prep_content)}</div>
+                  <>{formatFullContent(aiInsights.prep_content)}</>
                 ) : (
                   <p>{formatInsightContent(aiInsights.prep_content)}</p>
                 )}
@@ -347,9 +347,9 @@ export function SessionPrepCard({
               ))}
             </div>
           ) : sessionRecommendations.length > 0 ? (
-            <ScrollArea className="max-h-48">
-              <div className="space-y-2">
-                {sessionRecommendations.map((rec, index) => (
+            <ScrollArea className="h-48 w-full">
+              <div className="space-y-2 pr-2">
+                {sessionRecommendations.map((rec: any, index) => (
                   <div key={rec.id} className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20 rounded-md p-3">
                     <div className="flex items-start justify-between mb-1">
                       <Badge variant="secondary" className="text-xs mb-2">
