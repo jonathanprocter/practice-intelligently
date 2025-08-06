@@ -69,21 +69,51 @@ export function SessionPrepCard({
   const loadSessionPrep = async () => {
     setIsLoadingInsights(true);
     try {
-      // Load AI insights for session prep
-      if (clientId) {
-        const insightsResponse = await fetch(`/api/session-prep/${eventId}/ai-insights`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ clientId })
-        });
-        
-        if (insightsResponse.ok) {
-          const data = await insightsResponse.json();
-          setAiInsights(data.insights);
+      // For calendar events, try to find clientId by name first
+      let actualClientId = clientId;
+      
+      if (!actualClientId && clientName) {
+        try {
+          // Try to find client by name for calendar events
+          const clientSearchResponse = await fetch(`/api/clients/search?name=${encodeURIComponent(clientName)}`);
+          if (clientSearchResponse.ok) {
+            const clientData = await clientSearchResponse.json();
+            if (clientData && clientData.length > 0) {
+              actualClientId = clientData[0].id;
+              console.log(`Found client ID ${actualClientId} for calendar event client name: ${clientName}`);
+            }
+          }
+        } catch (error) {
+          console.log('Could not find client ID for calendar event:', error);
         }
+      }
+
+      if (!actualClientId) {
+        console.log('No client ID available for AI insights, skipping session prep generation...');
+        setAiInsights(null);
+        setIsLoadingInsights(false);
+        return;
+      }
+
+      // Load AI insights for session prep with comprehensive client context
+      const insightsResponse = await fetch(`/api/session-prep/${eventId}/ai-insights`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: actualClientId })
+      });
+      
+      if (insightsResponse.ok) {
+        const data = await insightsResponse.json();
+        console.log('Received contextual AI insights:', data.insights.contextual ? 'with client context' : 'basic insights');
+        setAiInsights(data.insights);
       }
     } catch (error) {
       console.error('Error loading session prep insights:', error);
+      toast({
+        title: "Unable to load AI insights",
+        description: "Please try again later.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoadingInsights(false);
     }
@@ -147,9 +177,28 @@ export function SessionPrepCard({
   }, [clientId]);
 
   const formatInsightContent = (content: string) => {
-    // Split content into paragraphs and return first 2-3 sentences for preview
-    const sentences = content.split('.').filter(s => s.trim().length > 0);
-    return sentences.slice(0, 2).join('.') + (sentences.length > 2 ? '...' : '.');
+    // Format rich text content, preserving natural line breaks and paragraphs
+    // Split content into paragraphs and return first paragraph for preview
+    const paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
+    const firstParagraph = paragraphs[0] || content;
+    
+    // If first paragraph is too long, truncate to about 150 characters
+    if (firstParagraph.length > 150) {
+      const sentences = firstParagraph.split('.').filter(s => s.trim().length > 0);
+      return sentences.slice(0, 2).join('.') + (sentences.length > 2 ? '...' : '.');
+    }
+    
+    return firstParagraph + (paragraphs.length > 1 ? '...' : '');
+  };
+
+  // Format the complete rich text content for display
+  const formatFullContent = (content: string) => {
+    // Preserve natural line breaks and paragraph structure
+    return content.split('\n\n').map((paragraph, index) => (
+      <p key={index} className="mb-2 last:mb-0">
+        {paragraph.trim()}
+      </p>
+    ));
   };
 
   return (
@@ -193,12 +242,13 @@ export function SessionPrepCard({
             </div>
             
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg p-4">
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {showFullInsights 
-                  ? aiInsights.prep_content 
-                  : formatInsightContent(aiInsights.prep_content)
-                }
-              </p>
+              <div className="text-sm text-muted-foreground leading-relaxed">
+                {showFullInsights ? (
+                  <div>{formatFullContent(aiInsights.prep_content)}</div>
+                ) : (
+                  <p>{formatInsightContent(aiInsights.prep_content)}</p>
+                )}
+              </div>
               {aiInsights.prep_content.length > 200 && (
                 <Button
                   variant="link"

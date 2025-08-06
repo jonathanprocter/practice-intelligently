@@ -440,33 +440,165 @@ export class MultiModelAI {
     eventId: string;
     clientId: string;
     sessionHistory: any[];
+    clientInfo?: any;
+    treatmentPlans?: any[];
+    actionItems?: any[];
+    assessments?: any[];
   }): Promise<any> {
     try {
+      // Build comprehensive client context from database/chart
+      let clientContext = '';
+      
+      if (params.clientInfo) {
+        clientContext += `Client Background: ${params.clientInfo.firstName} ${params.clientInfo.lastName}`;
+        if (params.clientInfo.dateOfBirth) {
+          const age = new Date().getFullYear() - new Date(params.clientInfo.dateOfBirth).getFullYear();
+          clientContext += ` (Age: ${age})`;
+        }
+        if (params.clientInfo.email) clientContext += `. Contact: ${params.clientInfo.email}`;
+        if (params.clientInfo.phone) clientContext += `, ${params.clientInfo.phone}`;
+        clientContext += '.\n\n';
+      }
+
+      if (params.sessionHistory && params.sessionHistory.length > 0) {
+        clientContext += `Session History (${params.sessionHistory.length} previous sessions):\n`;
+        params.sessionHistory.slice(-3).forEach((session: any, index: number) => {
+          const sessionDate = new Date(session.createdAt).toLocaleDateString();
+          clientContext += `• Session ${sessionDate}: ${session.content ? session.content.substring(0, 200) + '...' : 'Notes available'}\n`;
+          if (session.aiSummary) {
+            clientContext += `  Key insights: ${session.aiSummary.substring(0, 150)}...\n`;
+          }
+        });
+        clientContext += '\n';
+      }
+
+      if (params.treatmentPlans && params.treatmentPlans.length > 0) {
+        clientContext += `Current Treatment Plan:\n`;
+        params.treatmentPlans.forEach((plan: any) => {
+          clientContext += `• Goal: ${plan.goal}\n`;
+          if (plan.interventions) clientContext += `  Interventions: ${plan.interventions}\n`;
+          if (plan.expectedOutcome) clientContext += `  Expected outcome: ${plan.expectedOutcome}\n`;
+        });
+        clientContext += '\n';
+      }
+
+      if (params.actionItems && params.actionItems.length > 0) {
+        const activeItems = params.actionItems.filter((item: any) => item.status !== 'completed');
+        if (activeItems.length > 0) {
+          clientContext += `Active Action Items:\n`;
+          activeItems.forEach((item: any) => {
+            clientContext += `• ${item.description} (Priority: ${item.priority || 'Medium'})\n`;
+          });
+          clientContext += '\n';
+        }
+      }
+
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "You are an expert clinical therapist providing session preparation insights."
+            content: `You are an expert clinical therapist providing gentle, personalized session preparation insights. 
+
+CRITICAL FORMATTING REQUIREMENTS:
+- Use ONLY rich text formatting (bold, italic, line breaks, spacing)
+- NO JSON, NO Markdown syntax, NO code blocks
+- NO asterisks (*), NO hashtags (#), NO brackets []
+- Use proper paragraph breaks and natural language flow
+- Format as readable text with emphasis through capitalization or spacing
+
+Provide contextual, personalized insights based on the client's actual history, treatment plans, and previous sessions. Be gentle, supportive, and clinically appropriate.`
           },
           {
             role: "user",
-            content: `Generate session prep insights for client with ${params.sessionHistory.length} previous sessions.`
+            content: `Based on this comprehensive client information, generate personalized session preparation insights:
+
+${clientContext}
+
+Provide gentle, contextual preparation notes focusing on:
+1. Key themes from recent sessions
+2. Progress toward treatment goals  
+3. Relevant therapeutic approaches based on client history
+4. Gentle reminders about client preferences or concerns
+5. Suggested focus areas for today's session
+
+Use warm, professional language and format as natural readable text without any markdown or JSON formatting.`
           }
         ],
-        max_tokens: 800,
-        temperature: 0.3
+        max_tokens: 1000,
+        temperature: 0.4
       });
 
+      const content = response.choices[0].message.content || '';
+      
+      // Extract key insights from the content for structured display
+      const keyFocusAreas = this.extractKeyFocusAreas(content);
+      const suggestedTechniques = this.extractSuggestedTechniques(content);
+
       return {
-        prep_content: response.choices[0].message.content,
-        key_focus_areas: ["therapeutic alliance", "goal progress"],
-        suggested_techniques: ["CBT techniques", "mindfulness exercises"]
+        prep_content: content,
+        key_focus_areas: keyFocusAreas,
+        suggested_techniques: suggestedTechniques,
+        confidence: 0.85,
+        contextual: true
       };
     } catch (error) {
       console.error('Error generating session prep insights:', error);
-      return { prep_content: "Unable to generate prep insights", key_focus_areas: [], suggested_techniques: [] };
+      return { 
+        prep_content: "Session preparation insights are currently unavailable. Please review the client's recent session notes and treatment plan to prepare for today's session.", 
+        key_focus_areas: ["Review recent progress", "Check treatment plan goals"], 
+        suggested_techniques: ["Active listening", "Collaborative goal setting"],
+        confidence: 0.3,
+        contextual: false
+      };
     }
+  }
+
+  // Helper method to extract key focus areas from rich text content
+  private extractKeyFocusAreas(content: string): string[] {
+    const focusAreas = [];
+    
+    // Look for common therapeutic focus patterns
+    if (content.toLowerCase().includes('anxiety') || content.toLowerCase().includes('worry')) {
+      focusAreas.push('Anxiety management');
+    }
+    if (content.toLowerCase().includes('depression') || content.toLowerCase().includes('mood')) {
+      focusAreas.push('Mood regulation');
+    }
+    if (content.toLowerCase().includes('relationship') || content.toLowerCase().includes('family')) {
+      focusAreas.push('Relationship dynamics');
+    }
+    if (content.toLowerCase().includes('goal') || content.toLowerCase().includes('progress')) {
+      focusAreas.push('Treatment progress');
+    }
+    if (content.toLowerCase().includes('coping') || content.toLowerCase().includes('skill')) {
+      focusAreas.push('Coping strategies');
+    }
+    
+    return focusAreas.length > 0 ? focusAreas : ['Therapeutic engagement', 'Session continuity'];
+  }
+
+  // Helper method to extract suggested techniques from rich text content
+  private extractSuggestedTechniques(content: string): string[] {
+    const techniques = [];
+    
+    if (content.toLowerCase().includes('cbt') || content.toLowerCase().includes('cognitive')) {
+      techniques.push('Cognitive behavioral techniques');
+    }
+    if (content.toLowerCase().includes('mindful') || content.toLowerCase().includes('meditation')) {
+      techniques.push('Mindfulness practices');
+    }
+    if (content.toLowerCase().includes('breathing') || content.toLowerCase().includes('relaxation')) {
+      techniques.push('Relaxation exercises');
+    }
+    if (content.toLowerCase().includes('homework') || content.toLowerCase().includes('practice')) {
+      techniques.push('Therapeutic homework review');
+    }
+    if (content.toLowerCase().includes('emotion') || content.toLowerCase().includes('feeling')) {
+      techniques.push('Emotion regulation skills');
+    }
+    
+    return techniques.length > 0 ? techniques : ['Active listening', 'Reflective dialogue'];
   }
 
   async generateClientCheckIn(params: {

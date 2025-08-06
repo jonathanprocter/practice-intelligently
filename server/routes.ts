@@ -2989,17 +2989,55 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         return res.status(400).json({ error: 'Client ID is required in request body' });
       }
       
-      // Get session history for the client
+      // Get comprehensive client data from database/chart
       const sessionHistory = await storage.getSessionNotesByClientId(clientId);
       
-      // Generate AI insights for session prep
+      // Get client information
+      let clientInfo = null;
+      try {
+        clientInfo = await storage.getClient(clientId);
+      } catch (error) {
+        console.warn('Could not fetch client info:', error);
+      }
+      
+      // Get treatment plans
+      let treatmentPlans = [];
+      try {
+        treatmentPlans = await storage.getTreatmentPlans(clientId);
+      } catch (error) {
+        console.warn('Could not fetch treatment plans:', error);
+      }
+      
+      // Get action items
+      let actionItems = [];
+      try {
+        actionItems = await storage.getActionItems(clientId);
+      } catch (error) {
+        console.warn('Could not fetch action items:', error);
+      }
+      
+      // Get assessments if available
+      let assessments = [];
+      try {
+        assessments = await storage.getClientAssessments(clientId);
+      } catch (error) {
+        console.warn('Could not fetch assessments:', error);
+      }
+      
+      console.log(`Generating contextual session prep insights for client ${clientInfo?.firstName || clientId} with ${sessionHistory.length} sessions, ${treatmentPlans.length} treatment plans, and ${actionItems.length} action items`);
+      
+      // Generate AI insights for session prep with comprehensive context
       const insights = await multiModelAI.generateSessionPrepInsights({
         eventId,
         clientId,
-        sessionHistory
+        sessionHistory,
+        clientInfo,
+        treatmentPlans,
+        actionItems,
+        assessments
       });
       
-      res.json({ insights, model: 'multimodel-ai' });
+      res.json({ insights, model: 'multimodel-ai', contextual: insights.contextual });
     } catch (error: any) {
       console.error('Error generating session prep insights:', error);
       res.status(500).json({ error: 'Failed to generate insights', details: error.message || error.toString() });
