@@ -1,7 +1,7 @@
 import { 
   users, clients, appointments, sessionNotes, sessionPrepNotes, clientCheckins, actionItems, treatmentPlans, aiInsights,
   billingRecords, assessments, progressNotes, medications, communicationLogs, documents, auditLogs,
-  compassConversations, compassMemory,
+  compassConversations, compassMemory, sessionRecommendations,
   assessmentCatalog, clientAssessments, assessmentResponses, assessmentScores, assessmentPackages, assessmentAuditLog,
   type User, type InsertUser, type Client, type InsertClient, type Appointment, type InsertAppointment,
   type SessionNote, type InsertSessionNote, type SessionPrepNote, type InsertSessionPrepNote, 
@@ -11,7 +11,7 @@ import {
   type ProgressNote, type InsertProgressNote, type Medication, type InsertMedication,
   type CommunicationLog, type InsertCommunicationLog, type Document, type InsertDocument,
   type AuditLog, type InsertAuditLog, type CompassConversation, type InsertCompassConversation,
-  type CompassMemory, type InsertCompassMemory,
+  type CompassMemory, type InsertCompassMemory, type SessionRecommendation, type InsertSessionRecommendation,
   type AssessmentCatalog, type InsertAssessmentCatalog, type ClientAssessment, type InsertClientAssessment,
   type AssessmentResponse, type InsertAssessmentResponse, type AssessmentScore, type InsertAssessmentScore,
   type AssessmentPackage, type InsertAssessmentPackage, type AssessmentAuditLog, type InsertAssessmentAuditLog
@@ -103,6 +103,14 @@ export interface IStorage {
   getClientAiInsights(clientId: string): Promise<AiInsight[]>;
   createAiInsight(insight: InsertAiInsight): Promise<AiInsight>;
   markInsightAsRead(id: string): Promise<AiInsight>;
+
+  // Session recommendation methods
+  getSessionRecommendations(clientId: string): Promise<SessionRecommendation[]>;
+  getTherapistSessionRecommendations(therapistId: string): Promise<SessionRecommendation[]>;
+  createSessionRecommendation(recommendation: InsertSessionRecommendation): Promise<SessionRecommendation>;
+  updateSessionRecommendation(id: string, recommendation: Partial<SessionRecommendation>): Promise<SessionRecommendation>;
+  markRecommendationAsImplemented(id: string, feedback?: string, effectiveness?: string): Promise<SessionRecommendation>;
+  generateSessionRecommendations(clientId: string, therapistId: string): Promise<SessionRecommendation[]>;
 
   // Billing methods
   getBillingRecords(therapistId: string): Promise<BillingRecord[]>;
@@ -3286,6 +3294,171 @@ Jonathan`,
       patterns: memoryContexts.filter(m => m.contextType === 'pattern'),
       frequentQueries: recentConversations.slice(0, 10)
     };
+  }
+
+  // Session recommendation methods
+  async getSessionRecommendations(clientId: string): Promise<SessionRecommendation[]> {
+    return await db
+      .select()
+      .from(sessionRecommendations)
+      .where(eq(sessionRecommendations.clientId, clientId))
+      .orderBy(desc(sessionRecommendations.priority), desc(sessionRecommendations.createdAt));
+  }
+
+  async getTherapistSessionRecommendations(therapistId: string): Promise<SessionRecommendation[]> {
+    return await db
+      .select()
+      .from(sessionRecommendations)
+      .where(eq(sessionRecommendations.therapistId, therapistId))
+      .orderBy(desc(sessionRecommendations.priority), desc(sessionRecommendations.createdAt));
+  }
+
+  async createSessionRecommendation(recommendation: InsertSessionRecommendation): Promise<SessionRecommendation> {
+    const [result] = await db
+      .insert(sessionRecommendations)
+      .values(recommendation)
+      .returning();
+    return result;
+  }
+
+  async updateSessionRecommendation(id: string, recommendation: Partial<SessionRecommendation>): Promise<SessionRecommendation> {
+    const [result] = await db
+      .update(sessionRecommendations)
+      .set({ ...recommendation, updatedAt: new Date() })
+      .where(eq(sessionRecommendations.id, id))
+      .returning();
+    return result;
+  }
+
+  async markRecommendationAsImplemented(id: string, feedback?: string, effectiveness?: string): Promise<SessionRecommendation> {
+    const [result] = await db
+      .update(sessionRecommendations)
+      .set({
+        isImplemented: true,
+        implementedAt: new Date(),
+        feedback,
+        effectiveness,
+        status: 'implemented',
+        updatedAt: new Date()
+      })
+      .where(eq(sessionRecommendations.id, id))
+      .returning();
+    return result;
+  }
+
+  async generateSessionRecommendations(clientId: string, therapistId: string): Promise<SessionRecommendation[]> {
+    try {
+      // Gather client context data
+      const [client, recentSessionNotes, recentAppointments, activeTreatmentPlan, activeActionItems] = await Promise.all([
+        this.getClient(clientId),
+        this.getSessionNotes(clientId),
+        this.getAppointmentsByClient(clientId),
+        this.getActiveTreatmentPlan(clientId),
+        this.getActionItems(clientId)
+      ]);
+
+      if (!client) {
+        throw new Error('Client not found');
+      }
+
+      // Prepare context for AI analysis
+      const context = {
+        client: {
+          name: `${client.firstName} ${client.lastName}`,
+          primaryConcerns: client.primaryConcerns,
+          riskLevel: client.riskLevel,
+          medications: client.medications
+        },
+        recentSessions: recentSessionNotes.slice(0, 5).map(note => ({
+          date: note.createdAt,
+          content: note.content,
+          tags: note.tags
+        })),
+        treatmentPlan: activeTreatmentPlan ? {
+          goals: activeTreatmentPlan.goals,
+          interventions: activeTreatmentPlan.interventions,
+          targetSymptoms: activeTreatmentPlan.targetSymptoms
+        } : null,
+        activeActionItems: activeActionItems.filter(item => item.status === 'pending').map(item => ({
+          title: item.title,
+          priority: item.priority,
+          dueDate: item.dueDate
+        }))
+      };
+
+      // Generate AI recommendations using OpenAI
+      const aiPrompt = `As an expert clinical therapist, analyze the following client data and generate 3-5 specific, actionable session recommendations. Focus on evidence-based interventions and therapeutic techniques.
+
+Client Context:
+${JSON.stringify(context, null, 2)}
+
+Generate recommendations in the following JSON format:
+{
+  "recommendations": [
+    {
+      "recommendationType": "intervention|topic|technique|assessment|homework",
+      "title": "Brief descriptive title",
+      "description": "Detailed description of the recommendation",
+      "rationale": "Clinical reasoning and evidence base",
+      "priority": "low|medium|high|urgent",
+      "confidence": 0.85,
+      "evidenceBase": ["supporting evidence from session notes"],
+      "suggestedApproaches": ["specific techniques or interventions"],
+      "expectedOutcomes": ["anticipated therapeutic outcomes"],
+      "implementationNotes": "Practical guidance for implementation"
+    }
+  ]
+}`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert clinical therapist with extensive experience in evidence-based practice. Provide specific, actionable recommendations for therapy sessions."
+          },
+          {
+            role: "user",
+            content: aiPrompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+        max_tokens: 2000
+      });
+
+      const aiResult = JSON.parse(response.choices[0].message.content || '{"recommendations": []}');
+      const createdRecommendations: SessionRecommendation[] = [];
+
+      // Create recommendation records in database
+      for (const rec of aiResult.recommendations) {
+        const recommendation: InsertSessionRecommendation = {
+          clientId,
+          therapistId,
+          recommendationType: rec.recommendationType,
+          title: rec.title,
+          description: rec.description,
+          rationale: rec.rationale,
+          priority: rec.priority,
+          confidence: rec.confidence.toString(),
+          evidenceBase: rec.evidenceBase,
+          suggestedApproaches: rec.suggestedApproaches,
+          expectedOutcomes: rec.expectedOutcomes,
+          implementationNotes: rec.implementationNotes,
+          aiModel: 'gpt-4o',
+          generationContext: context,
+          validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // Valid for 30 days
+        };
+
+        const created = await this.createSessionRecommendation(recommendation);
+        createdRecommendations.push(created);
+      }
+
+      return createdRecommendations;
+    } catch (error) {
+      console.error('Error generating session recommendations:', error);
+      throw error;
+    }
   }
 }
 

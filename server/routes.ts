@@ -13,7 +13,7 @@ import {
   insertClientSchema, insertAppointmentSchema, insertSessionNoteSchema, 
   insertActionItemSchema, insertTreatmentPlanSchema,
   insertAssessmentCatalogSchema, insertClientAssessmentSchema, insertAssessmentResponseSchema,
-  insertAssessmentScoreSchema, insertAssessmentPackageSchema
+  insertAssessmentScoreSchema, insertAssessmentPackageSchema, insertSessionRecommendationSchema
 } from "@shared/schema";
 import { z } from "zod";
 import { randomUUID } from 'crypto';
@@ -1297,6 +1297,86 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
     } catch (error: any) {
       console.error('Error generating AI check-ins:', error);
       res.status(500).json({ error: 'Failed to generate AI check-ins' });
+    }
+  });
+
+  // Session Recommendations API Routes
+  app.get("/api/session-recommendations/client/:clientId", async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const recommendations = await storage.getSessionRecommendations(clientId);
+      res.json(recommendations);
+    } catch (error) {
+      console.error('Error fetching session recommendations:', error);
+      res.status(500).json({ error: 'Failed to fetch session recommendations' });
+    }
+  });
+
+  app.get("/api/session-recommendations/therapist/:therapistId", async (req, res) => {
+    try {
+      const { therapistId } = req.params;
+      const recommendations = await storage.getTherapistSessionRecommendations(therapistId);
+      res.json(recommendations);
+    } catch (error) {
+      console.error('Error fetching therapist session recommendations:', error);
+      res.status(500).json({ error: 'Failed to fetch therapist session recommendations' });
+    }
+  });
+
+  app.post("/api/session-recommendations", async (req, res) => {
+    try {
+      const validatedData = insertSessionRecommendationSchema.parse(req.body);
+      const recommendation = await storage.createSessionRecommendation(validatedData);
+      res.status(201).json(recommendation);
+    } catch (error: any) {
+      console.error('Error creating session recommendation:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: 'Invalid data', details: error.errors });
+      }
+      res.status(500).json({ error: 'Failed to create session recommendation' });
+    }
+  });
+
+  app.put("/api/session-recommendations/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = req.body;
+      const recommendation = await storage.updateSessionRecommendation(id, updateData);
+      res.json(recommendation);
+    } catch (error) {
+      console.error('Error updating session recommendation:', error);
+      res.status(500).json({ error: 'Failed to update session recommendation' });
+    }
+  });
+
+  app.put("/api/session-recommendations/:id/implement", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { feedback, effectiveness } = req.body;
+      const recommendation = await storage.markRecommendationAsImplemented(id, feedback, effectiveness);
+      res.json(recommendation);
+    } catch (error) {
+      console.error('Error marking recommendation as implemented:', error);
+      res.status(500).json({ error: 'Failed to mark recommendation as implemented' });
+    }
+  });
+
+  app.post("/api/session-recommendations/generate", async (req, res) => {
+    try {
+      const { clientId, therapistId } = req.body;
+      
+      if (!clientId || !therapistId) {
+        return res.status(400).json({ error: 'Client ID and therapist ID are required' });
+      }
+      
+      const recommendations = await storage.generateSessionRecommendations(clientId, therapistId);
+      res.status(201).json(recommendations);
+    } catch (error) {
+      console.error('Error generating session recommendations:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate session recommendations',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 

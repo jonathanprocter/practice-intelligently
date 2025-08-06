@@ -215,6 +215,38 @@ export const aiInsights = pgTable("ai_insights", {
   clientIdx: index("ai_insights_client_idx").on(table.clientId),
 }));
 
+export const sessionRecommendations = pgTable("session_recommendations", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }).notNull(),
+  therapistId: uuid("therapist_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  recommendationType: text("recommendation_type").notNull(), // 'intervention', 'topic', 'technique', 'assessment', 'homework'
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  rationale: text("rationale").notNull(),
+  priority: text("priority").notNull().default("medium"), // 'low', 'medium', 'high', 'urgent'
+  confidence: decimal("confidence", { precision: 3, scale: 2 }).notNull(), // 0.00 to 1.00
+  evidenceBase: jsonb("evidence_base"), // Supporting data from session notes, assessments, etc.
+  suggestedApproaches: jsonb("suggested_approaches"), // Specific techniques, interventions, etc.
+  expectedOutcomes: jsonb("expected_outcomes"), // What this recommendation aims to achieve
+  implementationNotes: text("implementation_notes"),
+  isImplemented: boolean("is_implemented").default(false),
+  implementedAt: timestamp("implemented_at"),
+  feedback: text("feedback"), // Therapist feedback on the recommendation
+  effectiveness: text("effectiveness"), // 'not_tried', 'ineffective', 'somewhat_effective', 'very_effective'
+  status: text("status").notNull().default("pending"), // 'pending', 'accepted', 'declined', 'implemented'
+  validUntil: timestamp("valid_until"), // When this recommendation expires
+  aiModel: text("ai_model"), // Which AI model generated this recommendation
+  generationContext: jsonb("generation_context"), // Context data used for generation
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  clientIdx: index("session_recommendations_client_idx").on(table.clientId),
+  therapistIdx: index("session_recommendations_therapist_idx").on(table.therapistId),
+  typeIdx: index("session_recommendations_type_idx").on(table.recommendationType),
+  priorityIdx: index("session_recommendations_priority_idx").on(table.priority),
+  statusIdx: index("session_recommendations_status_idx").on(table.status),
+}));
+
 // Additional comprehensive tables for robust therapy practice management
 
 export const billingRecords = pgTable("billing_records", {
@@ -588,6 +620,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   actionItems: many(actionItems),
   treatmentPlans: many(treatmentPlans),
   aiInsights: many(aiInsights),
+  sessionRecommendations: many(sessionRecommendations),
   billingRecords: many(billingRecords),
   assessments: many(assessments),
   progressNotes: many(progressNotes),
@@ -606,6 +639,7 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   actionItems: many(actionItems),
   treatmentPlans: many(treatmentPlans),
   aiInsights: many(aiInsights),
+  sessionRecommendations: many(sessionRecommendations),
   billingRecords: many(billingRecords),
   assessments: many(assessments),
   progressNotes: many(progressNotes),
@@ -673,6 +707,17 @@ export const aiInsightsRelations = relations(aiInsights, ({ one }) => ({
   }),
   therapist: one(users, {
     fields: [aiInsights.therapistId],
+    references: [users.id],
+  }),
+}));
+
+export const sessionRecommendationsRelations = relations(sessionRecommendations, ({ one }) => ({
+  client: one(clients, {
+    fields: [sessionRecommendations.clientId],
+    references: [clients.id],
+  }),
+  therapist: one(users, {
+    fields: [sessionRecommendations.therapistId],
     references: [users.id],
   }),
 }));
@@ -865,6 +910,15 @@ export const insertSessionNoteSchema = createInsertSchema(sessionNotes).omit({
   createdAt: true,
   updatedAt: true,
 });
+
+export const insertSessionRecommendationSchema = createInsertSchema(sessionRecommendations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type SessionRecommendation = typeof sessionRecommendations.$inferSelect;
+export type InsertSessionRecommendation = z.infer<typeof insertSessionRecommendationSchema>;
 
 export const insertSessionPrepNoteSchema = createInsertSchema(sessionPrepNotes).omit({
   id: true,

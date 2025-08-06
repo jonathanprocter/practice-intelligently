@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { DocumentProcessor } from '@/components/documents/DocumentProcessor';
 import { SessionNoteLinkingModal } from '@/components/SessionNoteLinkingModal';
+import { SessionRecommendations } from '@/components/SessionRecommendations';
 
 interface Client {
   id: string;
@@ -207,11 +208,12 @@ export default function ClientChart() {
 
       {/* Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="sessions">Session Notes</TabsTrigger>
           <TabsTrigger value="appointments">Appointments</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="recommendations">AI Recommendations</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
@@ -603,6 +605,14 @@ export default function ClientChart() {
             clientId={params.clientId!}
             clientName={clientName}
             onDocumentProcessed={handleDocumentProcessed}
+          />
+        </TabsContent>
+
+        {/* AI Recommendations Tab */}
+        <TabsContent value="recommendations" className="space-y-6">
+          <SessionRecommendations
+            clientId={params.clientId!}
+            therapistId="e66b8b8e-e7a2-40b9-ae74-00c93ffe503c"
           />
         </TabsContent>
 
