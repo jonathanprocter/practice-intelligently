@@ -281,6 +281,39 @@ export default function Appointments() {
     }
   });
 
+  const updateAppointmentStatusMutation = useMutation({
+    mutationFn: ({ appointmentId, status, reason }: { appointmentId: string, status: string, reason?: string }) => 
+      ApiClient.updateAppointmentStatus(appointmentId, status, reason),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      toast({
+        title: "Status Updated",
+        description: `Appointment status changed to ${variables.status}`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update appointment status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleStatusChange = (appointmentId: string, newStatus: string) => {
+    let reason = undefined;
+    
+    // For cancelled or no-show statuses, you might want to add a reason prompt
+    if (newStatus === 'cancelled') {
+      reason = 'Status changed by user';
+    } else if (newStatus === 'no_show') {
+      reason = 'Marked as no-show by user';
+    }
+    
+    updateAppointmentStatusMutation.mutate({ appointmentId, status: newStatus, reason });
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -718,9 +751,52 @@ export default function Appointments() {
                       <Button variant="outline" size="sm" className="text-xs h-7">
                         Check-In
                       </Button>
-                      <Button variant="outline" size="sm" className="text-xs h-7">
-                        <Edit className="h-3 w-3" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="text-xs h-7" data-testid={`status-dropdown-${appointment.id}`}>
+                            <Edit className="h-3 w-3" />
+                            Status
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuItem 
+                            onClick={() => handleStatusChange(appointment.id, 'scheduled')}
+                            className="cursor-pointer"
+                          >
+                            <CheckCircle2 className="h-4 w-4 mr-2 text-blue-500" />
+                            Scheduled
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleStatusChange(appointment.id, 'confirmed')}
+                            className="cursor-pointer"
+                          >
+                            <Check className="h-4 w-4 mr-2 text-green-500" />
+                            Confirmed
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleStatusChange(appointment.id, 'completed')}
+                            className="cursor-pointer"
+                          >
+                            <CheckCircle2 className="h-4 w-4 mr-2 text-blue-500" />
+                            Completed
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => handleStatusChange(appointment.id, 'cancelled')}
+                            className="cursor-pointer text-red-600"
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Cancelled
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleStatusChange(appointment.id, 'no_show')}
+                            className="cursor-pointer text-orange-600"
+                          >
+                            <Archive className="h-4 w-4 mr-2" />
+                            No Show
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       {!appointment.isCalendarEvent ? (
                         <Button 
                           variant="outline" 
@@ -754,9 +830,56 @@ export default function Appointments() {
                           </div>
                           <div>
                             <strong>Status:</strong> 
-                            <Badge className={`ml-2 ${getStatusColor(appointment.status)}`}>
-                              {appointment.status}
-                            </Badge>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Badge className={`ml-2 cursor-pointer hover:opacity-80 ${getStatusColor(appointment.status)}`} data-testid={`status-badge-${appointment.id}`}>
+                                  {appointment.status}
+                                </Badge>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start" data-testid={`status-menu-${appointment.id}`}>
+                                <DropdownMenuItem 
+                                  onClick={() => handleStatusChange(appointment.id, 'scheduled')}
+                                  className="cursor-pointer"
+                                  data-testid={`status-scheduled-${appointment.id}`}
+                                >
+                                  <CheckCircle2 className="h-4 w-4 mr-2 text-blue-500" />
+                                  Scheduled
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => handleStatusChange(appointment.id, 'confirmed')}
+                                  className="cursor-pointer"
+                                  data-testid={`status-confirmed-${appointment.id}`}
+                                >
+                                  <Check className="h-4 w-4 mr-2 text-green-500" />
+                                  Confirmed
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => handleStatusChange(appointment.id, 'completed')}
+                                  className="cursor-pointer"
+                                  data-testid={`status-completed-${appointment.id}`}
+                                >
+                                  <CheckCircle2 className="h-4 w-4 mr-2 text-blue-500" />
+                                  Completed
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={() => handleStatusChange(appointment.id, 'cancelled')}
+                                  className="cursor-pointer text-red-600"
+                                  data-testid={`status-cancelled-${appointment.id}`}
+                                >
+                                  <X className="h-4 w-4 mr-2" />
+                                  Cancelled
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => handleStatusChange(appointment.id, 'no_show')}
+                                  className="cursor-pointer text-orange-600"
+                                  data-testid={`status-no-show-${appointment.id}`}
+                                >
+                                  <Archive className="h-4 w-4 mr-2" />
+                                  No Show
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                         {appointment.notes && (
