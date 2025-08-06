@@ -97,9 +97,9 @@ export default function Appointments() {
 
     return {
       ...apt,
-      clientName: apt.type?.replace(' Appointment', '') || 'Unknown Client',
+      clientName: apt.type?.replace(' Appointment', '').trim() || 'Unknown Client',
       clientPhone: '', // Would be populated from client database records when available
-      clientInitials: (apt.type?.replace(' Appointment', '') || 'UC').split(' ').map(n => n[0]).join('').substring(0, 2),
+      clientInitials: (apt.type?.replace(' Appointment', '').trim() || 'UC').split(' ').map(n => n[0]).join('').substring(0, 2),
       isCustomType: apt.type !== 'Individual Counseling',
       location: 'Office', // Would be determined by business logic
       isCalendarEvent,

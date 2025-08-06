@@ -290,8 +290,8 @@ export default function TodaysSchedule() {
         {appointments && appointments.length > 0 ? (
           appointments.map((appointment) => {
             const clientName = appointment.clientId === 'calendar-event' 
-              ? appointment.type.replace(' Appointment', '') 
-              : appointment.type;
+              ? appointment.type.replace(' Appointment', '').trim()
+              : appointment.clientName || appointment.type;
             const reminderNotes = generateReminderNotes(clientName);
             const isExpanded = expandedReminders.has(appointment.id);
             
@@ -310,7 +310,7 @@ export default function TodaysSchedule() {
                         onClick={() => handleClientNameClick(clientName)}
                         className="text-left hover:text-therapy-primary hover:underline transition-colors"
                       >
-                        {appointment.type}
+                        {clientName}
                       </button>
                     </>
                   ) : (
@@ -318,7 +318,7 @@ export default function TodaysSchedule() {
                       onClick={() => handleClientNameClick(clientName)}
                       className="text-left hover:text-therapy-primary hover:underline transition-colors"
                     >
-                      Client Session
+                      {clientName}
                     </button>
                   )}
                 </h4>
