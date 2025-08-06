@@ -273,16 +273,29 @@ export default function ClientChart() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {sessionNotes.slice(0, 5).map((note: SessionNote) => (
-                  <div key={note.id} className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">Session Note</span>
-                          <span className="text-xs text-gray-500">
-                            {new Date(note.createdAt).toLocaleDateString()}
-                          </span>
+                {sessionNotes.slice(0, 5).map((note: SessionNote) => {
+                  // Find the linked appointment to show its date instead of processing date
+                  const linkedAppointment = appointments.find(apt => 
+                    apt.id === note.appointmentId || 
+                    (apt.googleEventId && note.eventId && apt.googleEventId === note.eventId)
+                  );
+                  
+                  const displayDate = linkedAppointment 
+                    ? new Date(linkedAppointment.startTime).toLocaleDateString()
+                    : new Date(note.createdAt).toLocaleDateString();
+                    
+                  const dateLabel = linkedAppointment ? 'Session Date' : 'Processing Date';
+                  
+                  return (
+                    <div key={note.id} className="flex items-start gap-3">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">Session Note</span>
+                            <span className="text-xs text-gray-500" title={dateLabel}>
+                              {displayDate}
+                            </span>
                           {note.source === 'document_upload' && (
                             <Badge variant="secondary" className="text-xs">
                               Uploaded Document
@@ -314,7 +327,8 @@ export default function ClientChart() {
                       )}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
                 {sessionNotes.length === 0 && (
                   <p className="text-gray-500 text-center py-4">No session notes yet</p>
                 )}

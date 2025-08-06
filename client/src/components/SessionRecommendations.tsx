@@ -49,15 +49,14 @@ export function SessionRecommendations({ clientId, therapistId }: SessionRecomme
   // Fetch session recommendations for the client
   const { data: recommendations = [], isLoading, error } = useQuery({
     queryKey: ['/api/session-recommendations/client', clientId],
-    queryFn: () => apiRequest(`/api/session-recommendations/client/${clientId}`),
   });
 
   // Generate new recommendations
   const generateRecommendationsMutation = useMutation({
-    mutationFn: () => apiRequest('/api/session-recommendations/generate', {
-      method: 'POST',
-      body: JSON.stringify({ clientId, therapistId }),
-    }),
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/session-recommendations/generate', { clientId, therapistId });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/session-recommendations/client', clientId] });
     },
@@ -65,11 +64,10 @@ export function SessionRecommendations({ clientId, therapistId }: SessionRecomme
 
   // Mark recommendation as implemented
   const implementRecommendationMutation = useMutation({
-    mutationFn: ({ id, feedback, effectiveness }: { id: string; feedback: string; effectiveness: string }) =>
-      apiRequest(`/api/session-recommendations/${id}/implement`, {
-        method: 'PUT',
-        body: JSON.stringify({ feedback, effectiveness }),
-      }),
+    mutationFn: async ({ id, feedback, effectiveness }: { id: string; feedback: string; effectiveness: string }) => {
+      const response = await apiRequest('PUT', `/api/session-recommendations/${id}/implement`, { feedback, effectiveness });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/session-recommendations/client', clientId] });
       setSelectedRecommendation(null);
