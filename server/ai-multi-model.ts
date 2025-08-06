@@ -501,13 +501,16 @@ export class MultiModelAI {
             content: `You are an expert clinical therapist providing gentle, personalized session preparation insights. 
 
 CRITICAL FORMATTING REQUIREMENTS:
-- Use ONLY rich text formatting (bold, italic, line breaks, spacing)
-- NO JSON, NO Markdown syntax, NO code blocks
-- NO asterisks (*), NO hashtags (#), NO brackets []
-- Use proper paragraph breaks and natural language flow
-- Format as readable text with emphasis through capitalization or spacing
+- Use ONLY plain text with natural language flow
+- NO markdown formatting whatsoever - NO asterisks (*), NO hashtags (#), NO brackets [], NO underscores (_)
+- NO bold formatting markers (**text**), NO italic markers (*text*)
+- NO bullet points with dashes or symbols
+- Use CAPITAL LETTERS sparingly for emphasis only when absolutely necessary
+- Use proper paragraph breaks (double line breaks) to separate sections
+- Format as natural, readable prose with emphasis through word choice and sentence structure
+- Write in complete sentences and paragraphs, not lists or bullet points
 
-Provide contextual, personalized insights based on the client's actual history, treatment plans, and previous sessions. Be gentle, supportive, and clinically appropriate.`
+Provide contextual, personalized insights based on the client's actual history, treatment plans, and previous sessions. Be gentle, supportive, and clinically appropriate. Write in a warm, conversational tone as if speaking directly to the therapist.`
           },
           {
             role: "user",
@@ -515,21 +518,25 @@ Provide contextual, personalized insights based on the client's actual history, 
 
 ${clientContext}
 
-Provide gentle, contextual preparation notes focusing on:
-1. Key themes from recent sessions
-2. Progress toward treatment goals  
-3. Relevant therapeutic approaches based on client history
-4. Gentle reminders about client preferences or concerns
-5. Suggested focus areas for today's session
+Write a gentle, flowing therapeutic preparation note covering these areas in natural prose:
 
-Use warm, professional language and format as natural readable text without any markdown or JSON formatting.`
+Key themes from recent sessions - what patterns have emerged
+Progress toward treatment goals - how the client is progressing  
+Relevant therapeutic approaches based on client history - what methods work best
+Gentle reminders about client preferences or concerns - what to keep in mind
+Suggested focus areas for today's session - what to prioritize
+
+Write this as a warm, conversational note from one therapist to another. Use natural paragraphs separated by double line breaks. Avoid any formatting symbols, numbered lists, or bullet points. Write in complete sentences with a supportive, professional tone.`
           }
         ],
         max_tokens: 1000,
         temperature: 0.4
       });
 
-      const content = response.choices[0].message.content || '';
+      const rawContent = response.choices[0].message.content || '';
+      
+      // Strip any remaining markdown formatting to ensure pure rich text
+      const content = this.stripMarkdownFormatting(rawContent);
       
       // Extract key insights from the content for structured display
       const keyFocusAreas = this.extractKeyFocusAreas(content);
@@ -552,6 +559,32 @@ Use warm, professional language and format as natural readable text without any 
         contextual: false
       };
     }
+  }
+
+  // Helper method to strip markdown formatting ensuring pure rich text output
+  private stripMarkdownFormatting(content: string): string {
+    // Remove all markdown formatting to ensure pure rich text
+    return content
+      // Remove bold formatting (**text** or __text__)
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/__([^_]+)__/g, '$1')
+      // Remove italic formatting (*text* or _text_)
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/_([^_]+)_/g, '$1')
+      // Remove headers (# ## ###)
+      .replace(/^#+\s+/gm, '')
+      // Remove numbered lists (1. 2. 3.)
+      .replace(/^\d+\.\s+/gm, '')
+      // Remove bullet points (- * +)
+      .replace(/^[-*+]\s+/gm, '')
+      // Remove code blocks and inline code
+      .replace(/```[^`]*```/g, '')
+      .replace(/`([^`]+)`/g, '$1')
+      // Remove strikethrough
+      .replace(/~~([^~]+)~~/g, '$1')
+      // Clean up extra whitespace
+      .replace(/\n\s*\n\s*\n/g, '\n\n')
+      .trim();
   }
 
   // Helper method to extract key focus areas from rich text content
