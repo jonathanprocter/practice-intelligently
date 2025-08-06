@@ -388,8 +388,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           const events = allEvents;
 
-          // Add calendar events to today's sessions count
-          stats.todaysSessions = (stats.todaysSessions || 0) + events.length;
+          // Replace database count with calendar events count since they're the same appointments
+          // Database only counts completed appointments, but dashboard should show all scheduled appointments
+          stats.todaysSessions = events.length;
 
           // Add a flag to indicate calendar integration is active
           (stats as any).calendarIntegrated = true;
