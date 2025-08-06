@@ -25,12 +25,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import SessionPrepModal from "@/components/session-prep/session-prep-modal";
+import { SessionPrepCard } from "@/components/session-prep/SessionPrepCard";
 import ClientInfoModal from "./ClientInfoModal";
 import { getCalendarLocationDisplay } from "@/utils/locationUtils";
 
 export default function TodaysSchedule() {
   const [activeSession, setActiveSession] = useState<string | null>(null);
   const [expandedReminders, setExpandedReminders] = useState<Set<string>>(new Set());
+  const [expandedPrepCards, setExpandedPrepCards] = useState<Set<string>>(new Set());
   const [sessionPrepModal, setSessionPrepModal] = useState<{
     isOpen: boolean;
     eventId: string;
@@ -94,6 +96,16 @@ export default function TodaysSchedule() {
     setExpandedReminders(newExpanded);
   };
 
+  const togglePrepCard = (appointmentId: string) => {
+    const newExpanded = new Set(expandedPrepCards);
+    if (newExpanded.has(appointmentId)) {
+      newExpanded.delete(appointmentId);
+    } else {
+      newExpanded.add(appointmentId);
+    }
+    setExpandedPrepCards(newExpanded);
+  };
+
   const openSessionPrep = (eventId: string, clientName: string, appointmentTime: string) => {
     setSessionPrepModal({
       isOpen: true,
@@ -143,8 +155,8 @@ export default function TodaysSchedule() {
   const deleteAppointmentMutation = useMutation({
     mutationFn: (appointmentId: string) => ApiClient.cancelAppointment(appointmentId, "Cancelled by user"),
     onSuccess: () => {
-      queryClient.invalidateQueries(['todays-appointments']);
-      queryClient.invalidateQueries(['dashboard-stats']);
+      queryClient.invalidateQueries({ queryKey: ['todays-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       toast({
         title: "Appointment deleted",
         description: "The appointment has been successfully cancelled.",
@@ -301,9 +313,10 @@ export default function TodaysSchedule() {
           appointments.map((appointment) => {
             const clientName = appointment.clientId === 'calendar-event' 
               ? appointment.type.replace(' Appointment', '').trim()
-              : appointment.clientName || appointment.type;
+              : (appointment as any).clientName || appointment.type;
             const reminderNotes = generateReminderNotes(clientName);
             const isExpanded = expandedReminders.has(appointment.id);
+            const isPrepCardExpanded = expandedPrepCards.has(appointment.id);
             
             return (
               <div key={appointment.id} className="bg-therapy-bg rounded-lg overflow-hidden">
@@ -353,7 +366,7 @@ export default function TodaysSchedule() {
                   variant="ghost"
                   className="w-8 h-8 bg-blue-50 text-blue-600 hover:bg-blue-100"
                   onClick={() => openSessionPrep(
-                    appointment.googleEventId || appointment.id, 
+                    (appointment as any).googleEventId || appointment.id, 
                     clientName, 
                     formatTime(appointment.startTime)
                   )}
@@ -368,7 +381,7 @@ export default function TodaysSchedule() {
                   variant="ghost"
                   className="w-8 h-8 bg-purple-50 text-purple-600 hover:bg-purple-100"
                   onClick={() => generateAIInsights(
-                    appointment.googleEventId || appointment.id, 
+                    (appointment as any).googleEventId || appointment.id, 
                     clientName
                   )}
                   title="AI Insights"
@@ -504,8 +517,8 @@ export default function TodaysSchedule() {
                   </div>
                 </div>
                 
-                {/* Reminder Notes Section */}
-              <Collapsible open={isExpanded} onOpenChange={() => toggleReminder(appointment.id)}>
+                {/* AI Session Prep Card Section */}
+              <Collapsible open={isPrepCardExpanded} onOpenChange={() => togglePrepCard(appointment.id)}>
                 <CollapsibleTrigger asChild>
                   <Button
                     variant="ghost"
@@ -514,42 +527,24 @@ export default function TodaysSchedule() {
                   >
                     <div className="flex items-center space-x-2">
                       <Lightbulb className="h-4 w-4" />
-                      <span className="text-sm font-medium">Session Prep Notes</span>
+                      <span className="text-sm font-medium">AI Session Preparation</span>
                     </div>
-                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    {isPrepCardExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="px-4 pb-4">
-                  <div className="bg-therapy-primary/5 rounded-lg p-4 space-y-3">
-                    <div>
-                      <p className="text-xs text-therapy-text/60 mb-1">Last Session: {reminderNotes.lastSession}</p>
-                    </div>
-                    
-                    <div>
-                      <h5 className="text-sm font-semibold text-therapy-text mb-2">Key Points Covered:</h5>
-                      <ul className="text-sm text-therapy-text/80 space-y-1">
-                        {reminderNotes.keyPoints.map((point, index) => (
-                          <li key={index} className="flex items-start space-x-2">
-                            <span className="text-therapy-primary text-xs mt-1">•</span>
-                            <span>{point}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    
-                    <div>
-                      <h5 className="text-sm font-semibold text-therapy-text mb-1">Today's Focus:</h5>
-                      <p className="text-sm text-therapy-text/80">{reminderNotes.nextFocus}</p>
-                    </div>
-                    
-                    <div className="border-t border-therapy-border pt-3">
-                      <h5 className="text-sm font-semibold text-therapy-primary mb-1 flex items-center space-x-1">
-                        <Lightbulb className="h-3 w-3" />
-                        <span>AI Clinical Insight:</span>
-                      </h5>
-                      <p className="text-sm text-therapy-text/80 italic">{reminderNotes.aiInsight}</p>
-                    </div>
-                  </div>
+                  <SessionPrepCard
+                    eventId={(appointment as any).googleEventId || appointment.id}
+                    clientName={clientName}
+                    appointmentTime={formatTime(appointment.startTime)}
+                    clientId={appointment.clientId !== 'calendar-event' ? appointment.clientId : undefined}
+                    onOpenFullPrep={() => openSessionPrep(
+                      (appointment as any).googleEventId || appointment.id, 
+                      clientName, 
+                      formatTime(appointment.startTime)
+                    )}
+                    className="border-0 shadow-none bg-transparent"
+                  />
                 </CollapsibleContent>
                 </Collapsible>
               </div>
