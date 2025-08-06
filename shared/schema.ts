@@ -206,7 +206,7 @@ export const aiInsights = pgTable("ai_insights", {
   type: text("type").notNull(),
   title: text("title").notNull(),
   content: text("content").notNull(),
-  confidence: integer("confidence"),
+  confidence: decimal("confidence", { precision: 3, scale: 2 }),
   metadata: jsonb("metadata"),
   isRead: boolean("is_read").default(false),
   createdAt: timestamp("created_at").defaultNow(),
