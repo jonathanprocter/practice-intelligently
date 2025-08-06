@@ -26,6 +26,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import SessionPrepModal from "@/components/session-prep/session-prep-modal";
 import { SessionPrepCard } from "@/components/session-prep/SessionPrepCard";
+import { SessionRecommendationPreviewCard } from "@/components/session-prep/SessionRecommendationPreviewCard";
 import ClientInfoModal from "./ClientInfoModal";
 import { getCalendarLocationDisplay } from "@/utils/locationUtils";
 
@@ -533,18 +534,37 @@ export default function TodaysSchedule() {
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="px-4 pb-4">
-                  <SessionPrepCard
-                    eventId={(appointment as any).googleEventId || appointment.id}
-                    clientName={clientName}
-                    appointmentTime={formatTime(appointment.startTime)}
-                    clientId={appointment.clientId !== 'calendar-event' ? appointment.clientId : undefined}
-                    onOpenFullPrep={() => openSessionPrep(
-                      (appointment as any).googleEventId || appointment.id, 
-                      clientName, 
-                      formatTime(appointment.startTime)
+                  <div className="space-y-4">
+                    <SessionPrepCard
+                      eventId={(appointment as any).googleEventId || appointment.id}
+                      clientName={clientName}
+                      appointmentTime={formatTime(appointment.startTime)}
+                      clientId={appointment.clientId !== 'calendar-event' ? appointment.clientId : undefined}
+                      onOpenFullPrep={() => openSessionPrep(
+                        (appointment as any).googleEventId || appointment.id, 
+                        clientName, 
+                        formatTime(appointment.startTime)
+                      )}
+                      className="border-0 shadow-none bg-transparent"
+                    />
+                    
+                    {/* Session Recommendation Preview Card */}
+                    {appointment.clientId !== 'calendar-event' && (
+                      <SessionRecommendationPreviewCard
+                        clientId={appointment.clientId}
+                        clientName={clientName}
+                        onViewAll={() => {
+                          // TODO: Navigate to full session recommendations view
+                          toast({
+                            title: "Full Recommendations",
+                            description: "Opening complete session recommendations view...",
+                          });
+                        }}
+                        className="mt-3"
+                        maxRecommendations={2}
+                      />
                     )}
-                    className="border-0 shadow-none bg-transparent"
-                  />
+                  </div>
                 </CollapsibleContent>
                 </Collapsible>
               </div>
