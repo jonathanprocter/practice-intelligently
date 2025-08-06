@@ -195,38 +195,38 @@ export class ApiClient {
       // Use the hardcoded demo therapist ID consistently
       const therapistId = FALLBACK_THERAPIST_ID;
 
-      // First try to get Google Calendar events for today
+      // Get database appointments first (they're synced with Google Calendar and have proper client names)
       try {
-        const calendarResponse = await apiRequest('GET', '/api/oauth/events/today');
-        const calendarEvents = await calendarResponse.json();
+        const dbResponse = await apiRequest('GET', `/api/appointments/today/${therapistId}`);
+        const dbAppointments = await dbResponse.json();
 
-        // Convert Google Calendar events to appointment format
-        const calendarAppointments: Appointment[] = calendarEvents.map((event: any) => ({
-          id: event.id || `calendar-${Date.now()}`,
-          clientId: 'calendar-event',
-          startTime: event.start?.dateTime || event.start?.date,
-          endTime: event.end?.dateTime || event.end?.date,
-          type: event.summary || 'Calendar Event',
-          status: 'confirmed',
-          notes: event.description || ''
-        }));
-
-        // Also get database appointments (today only)
+        // Database appointments already have proper client names and are synced with Google Calendar
+        // No need to combine with calendar events since they're duplicates
+        return dbAppointments;
+      } catch (dbError) {
+        console.warn('Database appointments fetch failed, falling back to calendar events');
+        
+        // Fallback: Get Google Calendar events only if database fails
         try {
-          const dbResponse = await apiRequest('GET', `/api/appointments/today/${therapistId}`);
-          const dbAppointments = await dbResponse.json();
+          const calendarResponse = await apiRequest('GET', '/api/oauth/events/today');
+          const calendarEvents = await calendarResponse.json();
 
-          // Combine and return both
-          return [...calendarAppointments, ...dbAppointments];
-        } catch (dbError) {
-          console.warn('Database appointments fetch failed, returning calendar events only');
+          // Convert Google Calendar events to appointment format
+          const calendarAppointments: Appointment[] = calendarEvents.map((event: any) => ({
+            id: event.id || `calendar-${Date.now()}`,
+            clientId: 'calendar-event',
+            startTime: event.start?.dateTime || event.start?.date,
+            endTime: event.end?.dateTime || event.end?.date,
+            type: event.summary || 'Calendar Event',
+            status: 'confirmed',
+            notes: event.description || ''
+          }));
+
           return calendarAppointments;
+        } catch (calendarError) {
+          console.warn('Both database and calendar fetch failed');
+          return [];
         }
-      } catch (calendarError) {
-        console.warn('Calendar fetch failed, trying database appointments only');
-        // Fallback to database appointments only (today only)
-        const response = await apiRequest('GET', `/api/appointments/today/${therapistId}`);
-        return response.json();
       }
     } catch (error) {
       console.error('Error fetching appointments:', error);
