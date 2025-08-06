@@ -47,6 +47,10 @@ export interface Appointment {
   type: string;
   status: string;
   notes?: string;
+  location?: string;
+  clientName?: string; // Added from backend join
+  clientFirstName?: string;
+  clientLastName?: string;
 }
 
 export interface ActionItem {
