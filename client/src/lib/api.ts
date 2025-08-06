@@ -299,19 +299,22 @@ export class ApiClient {
   }
 
   static async getActionItems(): Promise<ActionItem[]> {
-    const response = await apiRequest('GET', `/api/action-items/${this.therapistId}`);
+    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+    const response = await apiRequest('GET', `/api/action-items/${FALLBACK_THERAPIST_ID}`);
     return response.json();
   }
 
   static async getUrgentActionItems(): Promise<ActionItem[]> {
-    const response = await apiRequest('GET', `/api/action-items/urgent/${this.therapistId}`);
+    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+    const response = await apiRequest('GET', `/api/action-items/urgent/${FALLBACK_THERAPIST_ID}`);
     return response.json();
   }
 
   static async createActionItem(item: Omit<ActionItem, 'id'>): Promise<ActionItem> {
+    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
     const response = await apiRequest('POST', '/api/action-items', {
       ...item,
-      therapistId: this.therapistId
+      therapistId: FALLBACK_THERAPIST_ID
     });
     return response.json();
   }
@@ -322,12 +325,14 @@ export class ApiClient {
   }
 
   static async getAiInsights(): Promise<AiInsight[]> {
-    const response = await apiRequest('GET', `/api/ai-insights/${this.therapistId}`);
+    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+    const response = await apiRequest('GET', `/api/ai-insights/${FALLBACK_THERAPIST_ID}`);
     return response.json();
   }
 
   static async generateAiInsights(): Promise<AiInsight[]> {
-    const response = await apiRequest('POST', `/api/ai/generate-insights/${this.therapistId}`);
+    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+    const response = await apiRequest('POST', `/api/ai/generate-insights/${FALLBACK_THERAPIST_ID}`);
     return response.json();
   }
 
@@ -337,9 +342,10 @@ export class ApiClient {
     content: string;
     transcript?: string;
   }): Promise<any> {
+    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
     const response = await apiRequest('POST', '/api/session-notes', {
       ...note,
-      therapistId: this.therapistId
+      therapistId: FALLBACK_THERAPIST_ID
     });
     return response.json();
   }
@@ -350,7 +356,8 @@ export class ApiClient {
   }
 
   static async getTodaysSessionNotes(): Promise<SessionNote[]> {
-    const response = await apiRequest('GET', `/api/session-notes/today/${this.therapistId}`);
+    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+    const response = await apiRequest('GET', `/api/session-notes/today/${FALLBACK_THERAPIST_ID}`);
     return response.json();
   }
 
@@ -372,7 +379,8 @@ export class ApiClient {
 
   // Recent Activity
   static async getRecentActivity(): Promise<Activity[]> {
-    const response = await apiRequest('GET', `/api/recent-activity/${this.therapistId}`);
+    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+    const response = await apiRequest('GET', `/api/recent-activity/${FALLBACK_THERAPIST_ID}`);
     return response.json();
   }
 }
