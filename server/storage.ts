@@ -426,12 +426,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTodaysAppointments(therapistId: string): Promise<Appointment[]> {
-    // Get today's date in Eastern Time using the same method as frontend
-    const today = new Date();
-    // Get date components in Eastern Time
-    const easternDateString = today.toLocaleDateString('en-CA', { timeZone: 'America/New_York' }); // YYYY-MM-DD format
-    const easternToday = new Date(easternDateString + 'T00:00:00.000Z');
-    return await this.getAppointments(therapistId, easternToday);
+    // Use SQL to filter appointments that fall on today's date in Eastern Time
+    const appointmentsWithClients = await db
+      .select({
+        ...appointments,
+        clientName: sql<string>`${clients.firstName} || ' ' || ${clients.lastName}`.as('clientName'),
+        clientFirstName: clients.firstName,
+        clientLastName: clients.lastName,
+      })
+      .from(appointments)
+      .leftJoin(clients, eq(appointments.clientId, clients.id))
+      .where(
+        and(
+          eq(appointments.therapistId, therapistId),
+          // Filter for appointments that occur on today's date in Eastern Time
+          sql`DATE((${appointments.startTime} AT TIME ZONE 'UTC') AT TIME ZONE 'America/New_York') = CURRENT_DATE`
+        )
+      )
+      .orderBy(appointments.startTime);
+
+    return appointmentsWithClients.map(apt => ({
+      ...apt,
+      clientName: apt.clientName || 'Unknown Client',
+      client_name: apt.clientName || 'Unknown Client',
+      start_time: apt.startTime,
+      end_time: apt.endTime
+    })) as any;
   }
 
   async getUpcomingAppointments(therapistId: string, days: number = 7): Promise<Appointment[]> {
