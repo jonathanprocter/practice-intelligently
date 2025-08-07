@@ -169,10 +169,12 @@ class SimpleOAuth {
     try {
       const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
       
-      // Use provided time range or default to today only
+      // Use provided time range or default to today only - convert to Eastern Time
       const today = new Date();
-      const startTime = timeMin || new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-      const endTime = timeMax || new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
+      // Convert to Eastern Time for proper timezone handling
+      const easternToday = new Date(today.toLocaleString("en-US", {timeZone: "America/New_York"}));
+      const startTime = timeMin || new Date(easternToday.getFullYear(), easternToday.getMonth(), easternToday.getDate()).toISOString();
+      const endTime = timeMax || new Date(easternToday.getFullYear(), easternToday.getMonth(), easternToday.getDate(), 23, 59, 59, 999).toISOString();
       
       // Debug: Log the actual parameters being used  
       console.log(`🔍 Calendar fetch params: timeMin=${startTime}, timeMax=${endTime}`);

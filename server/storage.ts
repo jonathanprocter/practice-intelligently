@@ -389,8 +389,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTodaysAppointments(therapistId: string): Promise<Appointment[]> {
+    // Get today's date in Eastern Time
     const today = new Date();
-    return await this.getAppointments(therapistId, today);
+    const easternToday = new Date(today.toLocaleString("en-US", {timeZone: "America/New_York"}));
+    return await this.getAppointments(therapistId, easternToday);
   }
 
   async getUpcomingAppointments(therapistId: string, days: number = 7): Promise<Appointment[]> {
@@ -509,9 +511,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTodaysSessionNotes(therapistId: string): Promise<SessionNote[]> {
+    // Get today's date in Eastern Time
     const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+    const easternToday = new Date(today.toLocaleString("en-US", {timeZone: "America/New_York"}));
+    const startOfDay = new Date(easternToday.getFullYear(), easternToday.getMonth(), easternToday.getDate());
+    const endOfDay = new Date(easternToday.getFullYear(), easternToday.getMonth(), easternToday.getDate(), 23, 59, 59);
 
     return await db
       .select()

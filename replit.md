@@ -41,6 +41,7 @@ The system utilizes a comprehensive PostgreSQL database with tables for core cli
 - **Streamlined Appointments Tab**: Snapshot summary, enhanced appointment cards, and advanced search & filtering.
 - **Comprehensive US Holidays Integration**: Federal holidays system (2015-2030) integrated with Google Calendar OAuth.
 - **Enhanced Calendar Layout**: Clean day headers, military time format, and improved visual hierarchy.
+- **Complete Eastern Daylight Time (EDT) Synchronization**: Comprehensive timezone alignment across all system components including server configuration, database connections, Google Calendar API integration, frontend dateUtils, and all time-related operations to ensure accurate EDT-based scheduling and data consistency.
 - **Compass AI Assistant**: Floating AI assistant connected to all practice data with a minimizable chat interface and comprehensive practice context awareness.
 - **Google Drive & Notion Integration**: Content viewer with OAuth authentication for Google Calendar, Drive, and Notion workspace integration.
 - **Assessment Management System**: Integration of clinical assessments (e.g., Beck Depression Inventory) and therapeutic tools (e.g., breathing exercises, Life in Weeks visualization).
