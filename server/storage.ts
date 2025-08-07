@@ -320,6 +320,43 @@ export class DatabaseStorage implements IStorage {
     return newClient;
   }
 
+  async getClientIdByName(fullName: string): Promise<string | null> {
+    const [firstName, ...lastNameParts] = fullName.split(' ');
+    const lastName = lastNameParts.join(' ');
+    
+    const [client] = await db
+      .select({ id: clients.id })
+      .from(clients)
+      .where(
+        and(
+          eq(clients.firstName, firstName),
+          eq(clients.lastName, lastName)
+        )
+      );
+    
+    return client?.id || null;
+  }
+
+  async getAppointmentsByClientAndDate(clientId: string, sessionDate: Date): Promise<Appointment[]> {
+    const startOfDay = new Date(sessionDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(sessionDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    return await db
+      .select()
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.clientId, clientId),
+          gte(appointments.startTime, startOfDay),
+          lte(appointments.startTime, endOfDay)
+        )
+      )
+      .orderBy(appointments.startTime);
+  }
+
   async updateClient(id: string, client: Partial<Client>): Promise<Client> {
     const [updatedClient] = await db
       .update(clients)

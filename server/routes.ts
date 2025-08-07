@@ -1106,6 +1106,49 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
     }
   });
 
+  // Process comprehensive progress notes document
+  app.post("/api/progress-notes/process-comprehensive", async (req, res) => {
+    try {
+      const { documentContent, therapistId } = req.body;
+      
+      if (!documentContent || !therapistId) {
+        return res.status(400).json({ 
+          error: "Missing required fields: documentContent and therapistId" 
+        });
+      }
+
+      console.log('🔄 Starting comprehensive progress notes processing...');
+      
+      // Import the parser dynamically
+      const { processComprehensiveProgressNotes } = await import('./comprehensive-progress-parser-july');
+      
+      // Process the document
+      const results = await processComprehensiveProgressNotes(
+        documentContent,
+        therapistId,
+        storage
+      );
+      
+      console.log(`✅ Processing complete: ${results.created} sessions created, ${results.matched} clients matched`);
+      
+      res.json({
+        success: true,
+        created: results.created,
+        matched: results.matched,
+        unmatched: results.unmatched,
+        sessions: results.sessions,
+        message: `Successfully processed ${results.created} therapy sessions for ${results.matched} clients`
+      });
+      
+    } catch (error) {
+      console.error("Error processing comprehensive progress notes:", error);
+      res.status(500).json({ 
+        error: "Failed to process progress notes",
+        details: error.message 
+      });
+    }
+  });
+
   // Legacy session notes endpoint - disabled in favor of calendar-specific endpoint below
 
   // Action Items
