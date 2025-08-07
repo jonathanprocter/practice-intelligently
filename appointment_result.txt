@@ -1,0 +1,3 @@
+❌ Appointment creation failed: Invalid appointment data
+  - ['startTime']: Expected date, received string
+  - ['endTime']: Expected date, received string

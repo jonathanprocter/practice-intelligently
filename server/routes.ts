@@ -652,7 +652,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/appointments", async (req, res) => {
     try {
-      const validatedData = insertAppointmentSchema.parse(req.body);
+      // Convert date fields to proper Date objects if they're strings or numbers
+      const processedBody = { ...req.body };
+      const dateFields = ['startTime', 'endTime', 'lastGoogleSync', 'reminderSentAt', 'checkedInAt', 'completedAt'];
+      
+      dateFields.forEach(field => {
+        if (processedBody[field] !== undefined && processedBody[field] !== null) {
+          if (typeof processedBody[field] === 'string' || typeof processedBody[field] === 'number') {
+            processedBody[field] = new Date(processedBody[field]);
+          }
+        }
+      });
+
+      const validatedData = insertAppointmentSchema.parse(processedBody);
       const appointment = await storage.createAppointment(validatedData);
       res.json(appointment);
     } catch (error) {
