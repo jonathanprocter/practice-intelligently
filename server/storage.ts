@@ -426,15 +426,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTodaysAppointments(therapistId: string): Promise<Appointment[]> {
-    // Get today's date in Eastern Time
+    // Get today's date in Eastern Time using the same method as frontend
     const today = new Date();
-    const easternToday = new Date(today.toLocaleString("en-US", {timeZone: "America/New_York"}));
+    // Get date components in Eastern Time
+    const easternDateString = today.toLocaleDateString('en-CA', { timeZone: 'America/New_York' }); // YYYY-MM-DD format
+    const easternToday = new Date(easternDateString + 'T00:00:00.000Z');
     return await this.getAppointments(therapistId, easternToday);
   }
 
   async getUpcomingAppointments(therapistId: string, days: number = 7): Promise<Appointment[]> {
+    // Use Eastern Time for consistent timezone handling
     const now = new Date();
-    const futureDate = new Date(now.getTime() + (days * 24 * 60 * 60 * 1000));
+    const easternNow = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
+    const futureDate = new Date(easternNow.getTime() + (days * 24 * 60 * 60 * 1000));
 
     return await db
       .select()
@@ -442,7 +446,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(appointments.therapistId, therapistId),
-          gte(appointments.startTime, now),
+          gte(appointments.startTime, easternNow),
           lte(appointments.startTime, futureDate),
           eq(appointments.status, 'scheduled')
         )

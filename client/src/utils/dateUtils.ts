@@ -98,12 +98,14 @@ export function getTodayInEasternTime(): string {
   return now.toLocaleDateString('en-CA', EASTERN_TIME_OPTIONS); // YYYY-MM-DD format
 }
 
-// Military time formatting functions
+// Military time formatting functions with explicit EDT timezone handling
 export function formatTimeMilitary(dateTime: Date | string): string {
   const date = dateTime instanceof Date ? dateTime : new Date(dateTime);
   if (isNaN(date.getTime())) {
     return '00:00';
   }
+  
+  // Ensure we're displaying in Eastern Time regardless of how the date is stored
   return date.toLocaleTimeString('en-US', {
     ...EASTERN_TIME_OPTIONS,
     hour: '2-digit',
