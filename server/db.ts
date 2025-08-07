@@ -22,8 +22,8 @@ export const pool = new Pool({
 // Initialize the database connection with timezone setting
 pool.on('connect', async (client) => {
   try {
-    await client.query('SET timezone = $1', ['America/New_York']);
-    await client.query('SET TIME ZONE $1', ['America/New_York']);
+    await client.query("SET timezone = 'America/New_York'");
+    await client.query("SET TIME ZONE 'America/New_York'");
   } catch (error) {
     console.warn('Failed to set timezone on database connection:', error);
   }

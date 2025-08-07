@@ -372,10 +372,10 @@ export class DatabaseStorage implements IStorage {
 
   async getAppointments(therapistId: string, date?: Date): Promise<Appointment[]> {
     if (date) {
-      const startOfDay = new Date(date);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(date);
-      endOfDay.setHours(23, 59, 59, 999);
+      // Handle date filtering in Eastern Time
+      const easternDateString = date.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+      const startOfDay = new Date(easternDateString + 'T00:00:00.000-04:00'); // EDT offset
+      const endOfDay = new Date(easternDateString + 'T23:59:59.999-04:00');
 
       const appointmentsWithClients = await db
         .select({

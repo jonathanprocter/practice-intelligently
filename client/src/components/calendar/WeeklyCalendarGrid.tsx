@@ -132,7 +132,10 @@ export const WeeklyCalendarGrid = ({
                                 event.title?.includes('Holiday') || 
                                 event.calendarName?.includes('Holiday');
 
-      return eventDate.toDateString() === date.toDateString() && (isMarkedAllDay || isHolidayOrWeather);
+      // Use Eastern Time for consistent date comparison
+      const eventDateEDT = eventDate.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+      const dateEDT = date.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+      return eventDateEDT === dateEDT && (isMarkedAllDay || isHolidayOrWeather);
     });
   };
 
@@ -220,19 +223,32 @@ export const WeeklyCalendarGrid = ({
 
             {/* Day columns */}
             {week.map((day) => {
-              // Get all events for this day
+              // Get all events for this day using consistent Eastern Time comparison
               const allDayEvents = events.filter(event => {
                 if (!event.startTime) return false;
                 const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
                 if (isNaN(eventStart.getTime())) return false;
-                return eventStart.toDateString() === day.date.toDateString();
+                
+                // Use Eastern Time for consistent date comparison
+                const eventDateEDT = eventStart.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+                const dayDateEDT = day.date.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+                return eventDateEDT === dayDateEDT;
               });
 
               // Filter events that START in this specific time slot (not span through it)
               const slotStartEvents = allDayEvents.filter(event => {
                 const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
-                const eventHour = eventStart.getHours();
-                const eventMinute = eventStart.getMinutes();
+                
+                // Convert to Eastern Time for hour/minute comparison
+                const edtTime = eventStart.toLocaleString('en-US', { 
+                  timeZone: 'America/New_York',
+                  hour12: false,
+                  hour: '2-digit',
+                  minute: '2-digit'
+                });
+                const [hourStr, minuteStr] = edtTime.split(':');
+                const eventHour = parseInt(hourStr);
+                const eventMinute = parseInt(minuteStr);
 
                 // Check if event starts in this exact time slot
                 const startsInSlot = eventHour === timeSlot.hour && 
@@ -260,7 +276,8 @@ export const WeeklyCalendarGrid = ({
               });
 
               const isDropTarget = dropZone && 
-                dropZone.date.toDateString() === day.date.toDateString() &&
+                dropZone.date.toLocaleDateString('en-CA', { timeZone: 'America/New_York' }) === 
+                day.date.toLocaleDateString('en-CA', { timeZone: 'America/New_York' }) &&
                 dropZone.time === `${timeSlot.hour.toString().padStart(2, '0')}:${timeSlot.minute.toString().padStart(2, '0')}`;
 
               return (
