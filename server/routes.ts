@@ -25,6 +25,7 @@ import { simpleOAuth } from "./oauth-simple";
 import { googleCalendarService } from "./auth";
 import { generateUSHolidays, getHolidaysForYear, getHolidaysInRange, isUSHoliday } from "./us-holidays";
 import { SessionDocumentProcessor } from './session-document-processor';
+import { comprehensiveProgressNotesParser } from './comprehensiveProgressNotesParser';
 import OpenAI from 'openai';
 
 // Initialize OpenAI client
@@ -3481,6 +3482,58 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       res.status(500).json({
         success: false,
         error: 'Failed to process session document',
+        details: error.message
+      });
+    }
+  });
+
+  // Comprehensive Progress Notes Processing Endpoint
+  app.post('/api/documents/parse-comprehensive-progress-notes', uploadSingle, async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const { therapistId } = req.body;
+      if (!therapistId) {
+        return res.status(400).json({ error: 'Therapist ID is required' });
+      }
+
+      console.log(`Processing comprehensive progress notes: ${req.file.originalname} for therapist: ${therapistId}`);
+
+      // Process the comprehensive progress notes document
+      const result = await comprehensiveProgressNotesParser.parseComprehensiveDocument(
+        req.file.path,
+        therapistId
+      );
+
+      // Generate a summary of the processing
+      const summary = await comprehensiveProgressNotesParser.generateProcessingSummary(result);
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+        success: true,
+        message: 'Comprehensive progress notes processed successfully',
+        result,
+        summary,
+        totalClients: result.totalClients,
+        totalSessions: result.totalSessions,
+        successfulMatches: result.successfulMatches,
+        createdProgressNotes: result.createdProgressNotes,
+        processingDetails: result.processingDetails
+      });
+
+    } catch (error: any) {
+      // Clean up file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      console.error('Error processing comprehensive progress notes:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to process comprehensive progress notes',
         details: error.message
       });
     }

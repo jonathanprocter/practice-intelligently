@@ -19,6 +19,7 @@ import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 import { ProgressNotesPage } from "@/pages/progress-notes";
 import Assessments from "@/pages/assessments";
+import DocumentProcessing from "@/pages/DocumentProcessing";
 import ClientChart from "@/pages/ClientChart";
 import { lazy, Suspense } from "react";
 
@@ -64,6 +65,7 @@ function Router() {
       <Route path="/oauth/debug" component={OAuthDebug} />
       <Route path="/session-notes" component={SessionNotes} />
       <Route path="/progress-notes" component={ProgressNotesPage} />
+      <Route path="/document-processing" component={DocumentProcessing} />
       <Route path="/assessments" component={Assessments} />
       <Route path="/client-checkins" component={ClientCheckins} />
       <Route path="/action-items" component={ActionItems} />
