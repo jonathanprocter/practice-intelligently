@@ -26,6 +26,7 @@ import { googleCalendarService } from "./auth";
 import { generateUSHolidays, getHolidaysForYear, getHolidaysInRange, isUSHoliday } from "./us-holidays";
 import { SessionDocumentProcessor } from './session-document-processor';
 import { optimizedComprehensiveProgressNotesParser } from './comprehensiveProgressNotesParser-optimized';
+import { stevenDelucaProcessor } from './steven-deluca-processor';
 import OpenAI from 'openai';
 
 // Initialize OpenAI client
@@ -3583,6 +3584,35 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       res.status(500).json({ error: 'Failed to process document', details: error.message });
     }
   });
+  app.post('/api/steven-deluca/add-progress-notes', async (req, res) => {
+    try {
+      const { progressNotes, therapistId } = req.body;
+      const clientId = '23026f2f-fda8-418a-8325-edb7b5eca45d'; // Steven Deluca's ID
+      
+      const result = await stevenDelucaProcessor.processProgressNotesManually(
+        progressNotes,
+        clientId,
+        therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'
+      );
+      
+      res.json({
+        success: result.success,
+        message: `Successfully added ${result.createdNotes} progress notes for Steven Deluca`,
+        createdNotes: result.createdNotes,
+        createdAppointments: result.appointments.length,
+        appointments: result.appointments
+      });
+      
+    } catch (error: any) {
+      console.error('Error adding Steven Deluca progress notes:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to add progress notes for Steven Deluca',
+        details: error.message
+      });
+    }
+  });
+
   app.post('/api/documents/generate-progress-note', async (req, res) => {
     try {
       const { content, clientId, sessionDate, detectedClientName, detectedSessionDate, therapistId } = req.body;
