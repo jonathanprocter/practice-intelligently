@@ -25,7 +25,7 @@ import { simpleOAuth } from "./oauth-simple";
 import { googleCalendarService } from "./auth";
 import { generateUSHolidays, getHolidaysForYear, getHolidaysInRange, isUSHoliday } from "./us-holidays";
 import { SessionDocumentProcessor } from './session-document-processor';
-import { comprehensiveProgressNotesParser } from './comprehensiveProgressNotesParser';
+import { optimizedComprehensiveProgressNotesParser } from './comprehensiveProgressNotesParser-optimized';
 import OpenAI from 'openai';
 
 // Initialize OpenAI client
@@ -3502,13 +3502,13 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       console.log(`Processing comprehensive progress notes: ${req.file.originalname} for therapist: ${therapistId}`);
 
       // Process the comprehensive progress notes document
-      const result = await comprehensiveProgressNotesParser.parseComprehensiveDocument(
+      const result = await optimizedComprehensiveProgressNotesParser.parseComprehensiveDocument(
         req.file.path,
         therapistId
       );
 
       // Generate a summary of the processing
-      const summary = await comprehensiveProgressNotesParser.generateProcessingSummary(result);
+      const summary = await optimizedComprehensiveProgressNotesParser.generateProcessingSummary(result);
 
       // Clean up uploaded file
       fs.unlinkSync(req.file.path);
