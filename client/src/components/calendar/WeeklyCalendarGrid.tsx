@@ -156,7 +156,13 @@ export const WeeklyCalendarGrid = ({
               "calendar-day-header border-r border-gray-200 p-2 bg-gray-50 text-center cursor-pointer",
               day.isToday && "calendar-day-today bg-blue-50"
             )}
-            onClick={() => onDayClick(day.date)}
+            onClick={() => {
+              try {
+                onDayClick?.(day.date);
+              } catch (error) {
+                console.error('Error in day click handler:', error);
+              }
+            }}
           >
             <div className="font-medium text-sm">{formatDateShort(day.date)}</div>
             <div className="text-xs text-gray-600 mt-1">
@@ -287,7 +293,13 @@ export const WeeklyCalendarGrid = ({
                     "calendar-time-slot border-r border-b border-gray-200 p-1 min-h-[40px] relative",
                     isDropTarget && "drag-over-target"
                   )}
-                  onClick={() => onTimeSlotClick(day.date, timeSlot.display)}
+                  onClick={() => {
+                    try {
+                      onTimeSlotClick?.(day.date, timeSlot.display);
+                    } catch (error) {
+                      console.error('Error in time slot click handler:', error);
+                    }
+                  }}
                   onDragOver={(e) => handleDragOver(e, day.date, timeSlot)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, day.date, timeSlot)}
@@ -321,7 +333,11 @@ export const WeeklyCalendarGrid = ({
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        onEventClick(event);
+                        try {
+                          onEventClick?.(event);
+                        } catch (error) {
+                          console.error('Error in event click handler:', error);
+                        }
                       }}
                       draggable={!!onEventMove}
                       onDragStart={(e) => handleDragStart(e, event)}

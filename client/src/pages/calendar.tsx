@@ -369,22 +369,56 @@ export default function Calendar() {
   };
 
   const handleDayClick = (date: Date) => {
-    setSelectedDate(date);
-    setActiveTab('day');
+    try {
+      if (!date || isNaN(date.getTime())) {
+        console.error('Invalid date passed to handleDayClick:', date);
+        return;
+      }
+      setSelectedDate(date);
+      setActiveTab('day');
+    } catch (error) {
+      console.error('Error in handleDayClick:', error);
+    }
   };
 
   const handleTimeSlotClick = (date: Date, time: string) => {
-    setSelectedDate(date);
-    // Could open new appointment dialog here
-    console.log(`Time slot clicked: ${date.toDateString()} at ${time}`);
+    try {
+      if (!date || isNaN(date.getTime())) {
+        console.error('Invalid date passed to handleTimeSlotClick:', date);
+        return;
+      }
+      setSelectedDate(date);
+      // Could open new appointment dialog here
+      console.log(`Time slot clicked: ${date.toDateString()} at ${time}`);
+    } catch (error) {
+      console.error('Error in handleTimeSlotClick:', error);
+    }
   };
 
   const handleEventClick = (event: CalendarEvent) => {
-    setSelectedEvent(event);
+    try {
+      if (!event || !event.id) {
+        console.error('Invalid event passed to handleEventClick:', event);
+        return;
+      }
+      setSelectedEvent(event);
+    } catch (error) {
+      console.error('Error in handleEventClick:', error);
+    }
   };
 
   const handleEventMove = async (eventId: string, newStartTime: Date, newEndTime: Date) => {
     try {
+      if (!eventId || !newStartTime || !newEndTime) {
+        console.error('Invalid parameters for event move:', { eventId, newStartTime, newEndTime });
+        return;
+      }
+      
+      if (isNaN(newStartTime.getTime()) || isNaN(newEndTime.getTime())) {
+        console.error('Invalid dates for event move:', { newStartTime, newEndTime });
+        return;
+      }
+      
       console.log(`Moving event ${eventId} to ${newStartTime.toISOString()}`);
       
       // Find the event to get its calendar information
