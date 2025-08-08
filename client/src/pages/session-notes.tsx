@@ -71,6 +71,22 @@ export default function SessionNotes() {
     },
   });
 
+  // Mutation for generating AI tags
+  const generateTagsMutation = useMutation({
+    mutationFn: (id: string) => ApiClient.generateSessionNoteTags(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['session-notes'] });
+      toast({ title: "AI tags generated successfully" });
+    },
+    onError: (error) => {
+      toast({ 
+        title: "Error generating AI tags", 
+        description: error.message,
+        variant: "destructive" 
+      });
+    },
+  });
+
   const handleViewDetails = (note: SessionNote) => {
     setSelectedNote(note);
     setIsDetailView(true);
@@ -322,6 +338,18 @@ export default function SessionNotes() {
                     <Edit className="w-4 h-4 mr-1" />
                     Edit
                   </Button>
+                  {(!note.tags || note.tags.length === 0) && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => generateTagsMutation.mutate(note.id)}
+                      disabled={generateTagsMutation.isPending}
+                      className="text-green-600 hover:text-green-700"
+                    >
+                      <Bot className="w-4 h-4 mr-1" />
+                      {generateTagsMutation.isPending ? "Generating..." : "Generate AI Tags"}
+                    </Button>
+                  )}
                   <Button 
                     variant="ghost" 
                     size="sm"
@@ -395,6 +423,18 @@ export default function SessionNotes() {
                       <Edit className="w-4 h-4 mr-1" />
                       Edit
                     </Button>
+                    {(!selectedNote.tags || selectedNote.tags.length === 0) && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => generateTagsMutation.mutate(selectedNote.id)}
+                        disabled={generateTagsMutation.isPending}
+                        className="text-green-600 hover:text-green-700"
+                      >
+                        <Bot className="w-4 h-4 mr-1" />
+                        {generateTagsMutation.isPending ? "Generating..." : "Generate AI Tags"}
+                      </Button>
+                    )}
                     <Button 
                       variant="outline" 
                       size="sm"

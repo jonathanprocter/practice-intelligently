@@ -62,14 +62,14 @@ function getTimestampValue(timestamp: string): number {
   // Extract number and unit from timestamp strings like "2 hours ago", "1 day ago"
   const match = timestamp.match(/(\d+)\s+(minute|hour|day)s?\s+ago/);
   if (!match) return 0;
-  
+
   const value = parseInt(match[1]);
   const unit = match[2];
-  
+
   if (unit === 'minute') return value;
   if (unit === 'hour') return value * 60;
   if (unit === 'day') return value * 24 * 60;
-  
+
   return 0;
 }
 
@@ -143,10 +143,10 @@ function extractClientNameFromEvent(summary: string): string | null {
     const match = summary.match(pattern);
     if (match && match[1]) {
       let clientName = match[1].trim();
-      
+
       // Remove any emoji or special characters from the beginning
       clientName = clientName.replace(/^[^\w\s]+\s*/, '');
-      
+
       // Validate it looks like a person's name (has at least 2 words)
       if (clientName.split(' ').length >= 2) {
         return clientName;
@@ -178,7 +178,7 @@ const sessionUpload = multer({
   dest: 'uploads/sessions/',
   fileFilter: (req, file, cb) => {
     console.log('Session upload - mimetype:', file.mimetype, 'originalname:', file.originalname);
-    
+
     const allowedTypes = [
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
       'application/msword', // .doc
@@ -186,14 +186,14 @@ const sessionUpload = multer({
       'application/pdf', // .pdf
       'application/octet-stream' // Sometimes DOCX files are detected as this
     ];
-    
+
     // Check file extension if MIME type is not reliable
     const fileName = file.originalname.toLowerCase();
     const allowedExtensions = ['.docx', '.doc', '.txt', '.pdf'];
     const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
-    
+
     console.log('File validation - hasValidExtension:', hasValidExtension, 'mimeTypeAllowed:', allowedTypes.includes(file.mimetype));
-    
+
     if (allowedTypes.includes(file.mimetype) || hasValidExtension) {
       console.log('File accepted');
       cb(null, true);
@@ -341,7 +341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               today.setHours(0, 0, 0, 0);
               const tomorrow = new Date(today);
               tomorrow.setDate(tomorrow.getDate() + 1);
-              
+
               const todaysEvents = events.filter(event => {
                 const eventStart = event.start?.dateTime || event.start?.date;
                 if (!eventStart) return false;
@@ -419,21 +419,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!name) {
         return res.status(400).json({ error: "Name parameter is required" });
       }
-      
+
       const clients = await storage.getClients('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c');
       const searchTerm = (name as string).toLowerCase().trim();
-      
+
       // Search for clients by name (first name, last name, or full name)
       const matchingClients = clients.filter(client => {
         const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
         const firstName = client.firstName?.toLowerCase() || '';
         const lastName = client.lastName?.toLowerCase() || '';
-        
+
         return fullName.includes(searchTerm) || 
                firstName.includes(searchTerm) || 
                lastName.includes(searchTerm);
       });
-      
+
       res.json(matchingClients);
     } catch (error) {
       console.error("Error searching clients:", error);
@@ -445,11 +445,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/calendar/event/:eventId", async (req, res) => {
     try {
       const { eventId } = req.params;
-      
+
       // Search for the event across the date range
       const response = await fetch(`http://localhost:5000/api/calendar/events?timeMin=2025-07-01T00:00:00.000Z&timeMax=2025-08-31T23:59:59.999Z&calendarId=79dfcb90ce59b1b0345b24f5c8d342bd308eac9521d063a684a8bbd377f2b822@group.calendar.google.com`);
       const events = await response.json();
-      
+
       const event = events.find((e: any) => e.id === eventId);
       if (event) {
         res.json(event);
@@ -655,7 +655,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Convert date fields to proper Date objects if they're strings or numbers
       const processedBody = { ...req.body };
       const dateFields = ['startTime', 'endTime', 'lastGoogleSync', 'reminderSentAt', 'checkedInAt', 'completedAt'];
-      
+
       dateFields.forEach(field => {
         if (processedBody[field] !== undefined && processedBody[field] !== null) {
           if (typeof processedBody[field] === 'string' || typeof processedBody[field] === 'number') {
@@ -826,7 +826,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { appointmentId } = req.body;
-      
+
       // Update the session note with the appointment ID
       const updatedNote = await storage.updateSessionNote(id, { appointmentId });
       res.json(updatedNote);
@@ -840,7 +840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/session-notes/:id/unlink-appointment", async (req, res) => {
     try {
       const { id } = req.params;
-      
+
       // Update the session note to remove appointment ID
       const updatedNote = await storage.updateSessionNote(id, { appointmentId: null });
       res.json(updatedNote);
@@ -854,25 +854,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/session-notes/auto-link/:clientId", async (req, res) => {
     try {
       const { clientId } = req.params;
-      
+
       // Get all unlinked session notes for this client
       const sessionNotes = await storage.getSessionNotes(clientId);
       const unlinkedNotes = sessionNotes.filter(note => !note.appointmentId);
-      
+
       // Get all appointments for this client
       const appointments = await storage.getAppointmentsByClient(clientId);
-      
+
       console.log(`Auto-linking debug for client ${clientId}:`);
       console.log(`- Total session notes: ${sessionNotes.length}`);
       console.log(`- Unlinked notes: ${unlinkedNotes.length}`);
       console.log(`- Total appointments: ${appointments.length}`);
-      
+
       let linkedCount = 0;
-      
+
       for (const note of unlinkedNotes) {
         try {
           let candidateAppointments = [];
-          
+
           // First try to match by Google Event ID if available
           if (note.eventId) {
             const eventMatch = appointments.find(apt => apt.googleEventId === note.eventId);
@@ -882,10 +882,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               continue;
             }
           }
-          
+
           // Use date-based matching
           const noteDate = new Date(note.createdAt || new Date());
-          
+
           // Find appointments within a reasonable time range (same day ± 3 days)
           candidateAppointments = appointments.filter(apt => {
             const aptDate = new Date(apt.startTime);
@@ -893,7 +893,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
             return daysDiff <= 3; // Within 3 days
           });
-          
+
           if (candidateAppointments.length === 1) {
             // Exact match found
             await storage.updateSessionNote(note.id, { appointmentId: candidateAppointments[0].id });
@@ -913,7 +913,7 @@ ${candidateAppointments.map((apt, i) => {
 }).join('\n')}
 
 Respond with ONLY the number (1-${candidateAppointments.length}) of the most likely appointment, or "none" if uncertain.`;
-            
+
             try {
               const response = await openai.chat.completions.create({
                 model: 'gpt-4o',
@@ -921,10 +921,10 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
                 max_tokens: 10,
                 temperature: 0
               });
-              
+
               const choice = response.choices[0]?.message?.content?.trim();
               const choiceNum = parseInt(choice || '');
-              
+
               if (choiceNum >= 1 && choiceNum <= candidateAppointments.length) {
                 const selectedAppointment = candidateAppointments[choiceNum - 1];
                 await storage.updateSessionNote(note.id, { appointmentId: selectedAppointment.id });
@@ -951,7 +951,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
               const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
               return daysDiff <= 7; // Within 1 week
             });
-            
+
             if (widerCandidates.length === 1) {
               await storage.updateSessionNote(note.id, { appointmentId: widerCandidates[0].id });
               linkedCount++;
@@ -961,7 +961,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
           console.error('Error processing note:', note.id, noteError);
         }
       }
-      
+
       res.json({ 
         message: `Linked ${linkedCount} session notes to appointments`,
         linkedCount,
@@ -1002,7 +1002,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
           therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
           clientId: clientId || 'test-client'
         };
-        
+
         if (clientName) {
           // Try to resolve client name to actual ID
           const resolvedClientId = await storage.getClientIdByName(clientName);
@@ -1055,11 +1055,11 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
             const existingNotes = appointment.notes || '';
             const sessionPrepSection = `\n\n--- AI Generated Session Prep ---\n${aiSummary}\n--- End Session Prep ---`;
             const updatedNotes = `${existingNotes}${sessionPrepSection}`.trim();
-            
+
             await storage.updateAppointment(appointment.id, {
               notes: updatedNotes
             });
-            
+
             // Also create a dedicated session prep note
             await storage.createSessionPrepNote({
               eventId: appointment.id,
@@ -1067,7 +1067,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
               therapistId: sessionNote.therapistId,
               prepContent: aiSummary
             });
-            
+
             appointmentsUpdated++;
             console.log(`✅ Session prep saved to appointment ${appointment.id} for client ${actualClientId}`);
           } catch (error) {
@@ -1110,7 +1110,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
   app.post("/api/progress-notes/process-comprehensive", async (req, res) => {
     try {
       const { documentContent, therapistId } = req.body;
-      
+
       if (!documentContent || !therapistId) {
         return res.status(400).json({ 
           error: "Missing required fields: documentContent and therapistId" 
@@ -1118,19 +1118,19 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
       }
 
       console.log('🔄 Starting comprehensive progress notes processing...');
-      
+
       // Import the parser dynamically
       const { processComprehensiveProgressNotes } = await import('./comprehensive-progress-parser-july');
-      
+
       // Process the document
       const results = await processComprehensiveProgressNotes(
         documentContent,
         therapistId,
         storage
       );
-      
+
       console.log(`✅ Processing complete: ${results.created} sessions created, ${results.matched} clients matched`);
-      
+
       res.json({
         success: true,
         created: results.created,
@@ -1139,7 +1139,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
         sessions: results.sessions,
         message: `Successfully processed ${results.created} therapy sessions for ${results.matched} clients`
       });
-      
+
     } catch (error) {
       console.error("Error processing comprehensive progress notes:", error);
       res.status(500).json({ 
@@ -1148,8 +1148,6 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
       });
     }
   });
-
-  // Legacy session notes endpoint - disabled in favor of calendar-specific endpoint below
 
   // Action Items
   app.get("/api/action-items/:therapistId", async (req, res) => {
@@ -1422,11 +1420,11 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
   app.post("/api/session-recommendations/generate", async (req, res) => {
     try {
       const { clientId, therapistId } = req.body;
-      
+
       if (!clientId || !therapistId) {
         return res.status(400).json({ error: 'Client ID and therapist ID are required' });
       }
-      
+
       const recommendations = await storage.generateSessionRecommendations(clientId, therapistId);
       res.status(201).json(recommendations);
     } catch (error) {
@@ -1855,15 +1853,15 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
   app.post('/api/ai/cross-client-patterns', async (req, res) => {
     try {
       const { therapistId } = req.body;
-      
+
       if (!therapistId) {
         return res.status(400).json({ error: 'therapistId is required' });
       }
-      
+
       // Get client data for pattern analysis
       const clients = await storage.getClients(therapistId);
       const progressNotes = await storage.getProgressNotes(therapistId);
-      
+
       if (!process.env.OPENAI_API_KEY) {
         return res.json({
           patterns: [],
@@ -1871,7 +1869,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
           analysis: "Limited analysis available"
         });
       }
-      
+
       // AI pattern analysis implementation
       const patterns = [
         {
@@ -1887,7 +1885,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
           clientsAffected: Math.floor(clients.length * 0.6)
         }
       ];
-      
+
       res.json({
         successfulInterventionPatterns: patterns.map(p => ({
           pattern: p.description,
@@ -1921,11 +1919,11 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
   app.get('/api/ai/pattern-analysis/:therapistId', async (req, res) => {
     try {
       const { therapistId } = req.params;
-      
+
       // Get client data for pattern analysis
       const clients = await storage.getClients(therapistId);
       const progressNotes = await storage.getProgressNotes(therapistId);
-      
+
       if (!process.env.OPENAI_API_KEY) {
         return res.json({
           patterns: [],
@@ -1933,7 +1931,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
           analysis: "Limited analysis available"
         });
       }
-      
+
       // AI pattern analysis implementation
       const patterns = [
         {
@@ -1949,7 +1947,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
           clientsAffected: Math.floor(clients.length * 0.6)
         }
       ];
-      
+
       res.json({
         patterns,
         insights: [
@@ -1968,10 +1966,10 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
   app.get('/api/ai/practice-intelligence/:therapistId', async (req, res) => {
     try {
       const { therapistId } = req.params;
-      
+
       const clients = await storage.getClients(therapistId);
       const appointments = await storage.getAppointments(therapistId);
-      
+
       if (!process.env.OPENAI_API_KEY) {
         return res.json({
           efficiency: { score: 0.75, insights: ["Analysis requires OpenAI API key"] },
@@ -1979,7 +1977,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
           recommendations: ["Enable AI analysis for detailed insights"]
         });
       }
-      
+
       const intelligence = {
         efficiency: {
           score: 0.82,
@@ -2001,7 +1999,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
           "Schedule follow-ups for completed treatment plans"
         ]
       };
-      
+
       res.json(intelligence);
     } catch (error: any) {
       console.error('Error in practice intelligence:', error);
@@ -2013,10 +2011,10 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
   app.get('/api/ai/therapist-insights/:therapistId', async (req, res) => {
     try {
       const { therapistId } = req.params;
-      
+
       const progressNotes = await storage.getProgressNotes(therapistId);
       const clients = await storage.getClients(therapistId);
-      
+
       if (!process.env.OPENAI_API_KEY) {
         return res.json({
           strengths: ["Professional expertise in cognitive behavioral therapy"],
@@ -2025,7 +2023,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
           education: ["Continue current professional development"]
         });
       }
-      
+
       const insights = {
         strengths: [
           "Strong therapeutic rapport building with 95% client satisfaction",
@@ -2044,7 +2042,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
           "Explore: Dialectical Behavior Therapy Intensive"
         ]
       };
-      
+
       res.json(insights);
     } catch (error: any) {
       console.error('Error in therapist insights:', error);
@@ -2145,13 +2143,13 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
     try {
       const { category } = req.query;
       let catalogItems;
-      
+
       if (category && typeof category === 'string') {
         catalogItems = await storage.getAssessmentCatalogByCategory(category);
       } else {
         catalogItems = await storage.getAssessmentCatalog();
       }
-      
+
       res.json(catalogItems);
     } catch (error: any) {
       console.error('Error fetching assessment catalog:', error);
@@ -2396,7 +2394,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
   app.post('/api/assessments/session/start', async (req, res) => {
     try {
       const { clientId, appointmentId, assessmentIds, therapistId } = req.body;
-      
+
       // Start in-session assessments for real-time administration
       const sessionAssessments = await Promise.all(
         assessmentIds.map(async (assessmentId: string) => {
@@ -2414,7 +2412,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
           return sessionAssessment;
         })
       );
-      
+
       res.json({ sessionAssessments, status: 'active' });
     } catch (error: any) {
       console.error('Error starting session assessments:', error);
@@ -2425,7 +2423,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
   app.post('/api/assessments/session/save-progress', async (req, res) => {
     try {
       const { assessmentId, clientId, progressData, autoSaveData } = req.body;
-      
+
       // Save assessment progress (implementation would use storage layer)
       const savedProgress = {
         assessmentId,
@@ -2434,7 +2432,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
         autoSaveData,
         timestamp: new Date().toISOString()
       };
-      
+
       res.json({ success: true, savedProgress, timestamp: new Date().toISOString() });
     } catch (error: any) {
       console.error('Error saving assessment progress:', error);
@@ -2445,7 +2443,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
   app.post('/api/assessments/session/complete', async (req, res) => {
     try {
       const { assessmentId, clientId, responses, scores, sessionNoteId } = req.body;
-      
+
       const completedAssessment = {
         assessmentId,
         clientId,
@@ -2455,7 +2453,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
         completedAt: new Date().toISOString(),
         status: 'completed'
       };
-      
+
       res.json({ completedAssessment });
     } catch (error: any) {
       console.error('Error completing session assessment:', error);
@@ -2466,10 +2464,10 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
   app.get('/api/assessments/session/active/:therapistId', async (req, res) => {
     try {
       const { therapistId } = req.params;
-      
+
       // Get active session assessments (mock implementation for now)
       const activeSessionAssessments: any[] = []; // Would fetch from storage layer
-      
+
       res.json(activeSessionAssessments);
     } catch (error: any) {
       console.error('Error fetching active session assessments:', error);
@@ -2480,7 +2478,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
   app.post('/api/assessments/add-to-session-notes', async (req, res) => {
     try {
       const { appointmentId, assessmentData, sessionNoteTemplate } = req.body;
-      
+
       // Add assessment results to session notes
       const updatedSessionNote = {
         appointmentId,
@@ -2488,7 +2486,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
         sessionNoteTemplate,
         addedAt: new Date().toISOString()
       };
-      
+
       res.json({ updatedSessionNote });
     } catch (error: any) {
       console.error('Error adding assessment to session notes:', error);
@@ -2779,25 +2777,25 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       // Filter events to only include today's events (using the same today date already defined above)
       const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
-      
+
       console.log(`🔍 DEBUG: Retrieved ${todaysEvents.length} events, filtering for today: ${today.toDateString()}`);
-      
+
       const filteredEvents = todaysEvents.filter(event => {
         if (!event.start) return false;
-        
+
         // Use the original dateTime string to avoid timezone conversion issues
         const originalDateTimeString = event.start.dateTime || event.start.date;
-        
+
         // Extract just the date part (YYYY-MM-DD) from the original string
         const eventDateString = originalDateTimeString.split('T')[0]; // Gets "2025-08-04" or "2025-08-05"
         const todayDateString = today.toISOString().split('T')[0]; // Gets today's date in YYYY-MM-DD format
-        
+
         console.log(`🔍 Event: ${event.summary} - OriginalDateTime: ${originalDateTimeString} - EventDate: ${eventDateString} - TodayDate: ${todayDateString} - Match: ${eventDateString === todayDateString}`);
-        
+
         // Only include events that are exactly on today's date (no timezone conversion)
         return eventDateString === todayDateString;
       });
-      
+
       console.log(`🔍 DEBUG: Filtered to ${filteredEvents.length} events for today`);
 
       res.json(filteredEvents);
@@ -2847,10 +2845,10 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       // Filter events to only include the target date events
       const filteredEvents = dateEvents.filter(event => {
         if (!event.start) return false;
-        
+
         const originalDateTimeString = event.start.dateTime || event.start.date;
         const eventDateString = originalDateTimeString.split('T')[0]; // Gets YYYY-MM-DD
-        
+
         return eventDateString === date;
       });
 
@@ -2867,17 +2865,17 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.post('/api/ai/predict-treatment-outcome', async (req, res) => {
     try {
       const { clientId, currentTreatment, symptoms, duration } = req.body;
-      
+
       if (!clientId) {
         return res.status(400).json({ error: 'Client ID is required' });
       }
-      
+
       // Get client data for context
       const client = await storage.getClient(clientId);
       if (!client) {
         return res.status(404).json({ error: 'Client not found' });
       }
-      
+
       // Generate treatment outcome prediction using AI (placeholder implementation)
       const prediction = {
         outcome: 'positive',
@@ -2885,7 +2883,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         timeframe: '3-6 months',
         recommendedActions: ['Continue current treatment', 'Monitor progress weekly']
       };
-      
+
       res.json({ prediction, model: 'multimodel-ai' });
     } catch (error: any) {
       console.error('Error predicting treatment outcome:', error);
@@ -2894,19 +2892,19 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   });
   app.get('/api/ai/cross-client-patterns', async (req, res) => {
     try {
-      const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.query;
-      
+      const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', clientId } = req.query;
+
       // Get all clients for pattern analysis
       const clients = await storage.getClients(therapistId as string);
       const sessionNotes = await storage.getSessionNotes(therapistId as string);
-      
+
       // Analyze cross-client patterns (placeholder implementation)
       const patterns = {
         commonThemes: ['anxiety management', 'relationship issues'],
         successFactors: ['regular attendance', 'homework completion'],
         insights: ['Clients with regular check-ins show 40% better outcomes']
       };
-      
+
       res.json({ patterns, model: 'multimodel-ai' });
     } catch (error: any) {
       console.error('Error analyzing cross-client patterns:', error);
@@ -2916,18 +2914,18 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.post('/api/ai/evidence-based-interventions', async (req, res) => {
     try {
       const { condition, clientProfile, preferences } = req.body;
-      
+
       if (!condition) {
         return res.status(400).json({ error: 'Condition is required' });
       }
-      
+
       // Get evidence-based intervention recommendations
       const interventions = await multiModelAI.getEvidenceBasedInterventions({
         condition,
         clientProfile: clientProfile || {},
         preferences: preferences || {}
       });
-      
+
       res.json({ interventions, model: 'multimodel-ai' });
     } catch (error: any) {
       console.error('Error getting evidence-based interventions:', error);
@@ -2937,18 +2935,18 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.get('/api/ai/session-efficiency', async (req, res) => {
     try {
       const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', timeframe = '30' } = req.query;
-      
+
       // Get session data for efficiency analysis
       const sessionNotes = await storage.getSessionNotes(therapistId as string);
       const appointments = await storage.getAppointments(therapistId as string);
-      
+
       // Analyze session efficiency
       const efficiency = await multiModelAI.analyzeSessionEfficiency({
         sessionNotes,
         appointments,
         timeframeDays: parseInt(timeframe as string)
       });
-      
+
       res.json({ efficiency, model: 'multimodel-ai' });
     } catch (error: any) {
       console.error('Error analyzing session efficiency:', error);
@@ -2958,18 +2956,18 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.get('/api/ai/client-retention', async (req, res) => {
     try {
       const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.query;
-      
+
       // Get client and appointment data
       const clients = await storage.getClients(therapistId as string);
       const appointments = await storage.getAppointments(therapistId as string);
-      
+
       // Predict client retention
       const retention = await multiModelAI.predictClientRetention({
         clients,
         appointments,
         analysisType: 'comprehensive'
       });
-      
+
       res.json({ retention, model: 'multimodel-ai' });
     } catch (error: any) {
       console.error('Error predicting client retention:', error);
@@ -2979,12 +2977,12 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.get('/api/ai/therapist-strengths', async (req, res) => {
     try {
       const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.query;
-      
+
       // Get comprehensive practice data
       const clients = await storage.getClients(therapistId as string);
       const sessionNotes = await storage.getSessionNotes(therapistId as string);
       const appointments = await storage.getAppointments(therapistId as string);
-      
+
       // Analyze therapist strengths
       const strengths = await multiModelAI.analyzeTherapistStrengths({
         clients,
@@ -2992,7 +2990,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         appointments,
         analysisType: 'comprehensive'
       });
-      
+
       res.json({ strengths, model: 'multimodel-ai' });
     } catch (error: any) {
       console.error('Error analyzing therapist strengths:', error);
@@ -3002,11 +3000,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.post('/api/ai/appointment-insights', async (req, res) => {
     try {
       const { appointment } = req.body;
-      
+
       if (!appointment) {
         return res.status(400).json({ error: 'Appointment data is required' });
       }
-      
+
       // Get client history if clientId is provided
       let clientHistory = [];
       if (appointment.clientName) {
@@ -3019,13 +3017,13 @@ I can help you analyze this data, provide insights, and assist with clinical dec
           console.log('Could not get client history:', err);
         }
       }
-      
+
       // Get appointment insights
       const insights = await multiModelAI.generateAppointmentInsights({
         appointment,
         clientHistory
       });
-      
+
       res.json({ insights, model: 'multimodel-ai' });
     } catch (error: any) {
       console.error('Error generating appointment insights:', error);
@@ -3038,7 +3036,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     try {
       const { eventId } = req.params;
       const { clientId } = req.body;
-      
+
       if (!eventId) {
         return res.status(400).json({ error: 'Event ID is required' });
       }
@@ -3046,10 +3044,10 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       if (!clientId) {
         return res.status(400).json({ error: 'Client ID is required in request body' });
       }
-      
+
       // Get comprehensive client data from database/chart
       const sessionHistory = await storage.getSessionNotesByClientId(clientId);
-      
+
       // Get client information
       let clientInfo = null;
       try {
@@ -3057,7 +3055,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       } catch (error) {
         console.warn('Could not fetch client info:', error);
       }
-      
+
       // Get treatment plans
       let treatmentPlans = [];
       try {
@@ -3065,7 +3063,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       } catch (error) {
         console.warn('Could not fetch treatment plans:', error);
       }
-      
+
       // Get action items
       let actionItems = [];
       try {
@@ -3073,7 +3071,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       } catch (error) {
         console.warn('Could not fetch action items:', error);
       }
-      
+
       // Get assessments if available
       let assessments = [];
       try {
@@ -3081,9 +3079,9 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       } catch (error) {
         console.warn('Could not fetch assessments:', error);
       }
-      
+
       console.log(`Generating contextual session prep insights for client ${clientInfo?.firstName || clientId} with ${sessionHistory.length} sessions, ${treatmentPlans.length} treatment plans, and ${actionItems.length} action items`);
-      
+
       // Generate AI insights for session prep with comprehensive context
       const insights = await multiModelAI.generateSessionPrepInsights({
         eventId,
@@ -3094,7 +3092,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         actionItems,
         assessments
       });
-      
+
       res.json({ insights, model: 'multimodel-ai', contextual: insights.contextual });
     } catch (error: any) {
       console.error('Error generating session prep insights:', error);
@@ -3104,21 +3102,21 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.get('/api/session-prep/:eventId', async (req, res) => {
     try {
       const { eventId } = req.params;
-      
+
       // Get session prep notes for event
-      const prepNotes = await storage.getSessionPrepNotes(eventId);
+      const prepNotes = await storage.getSessionPrepNoteByEventId(eventId);
       res.json(prepNotes);
     } catch (error: any) {
       console.error('Error getting session prep notes:', error);
       res.status(500).json({ error: 'Failed to get session prep notes', details: error.message });
     }
   });
-  
+
   app.put('/api/session-prep/:param', async (req, res) => {
     try {
       const { id } = req.params;
       const updates = req.body;
-      
+
       // Update session prep note
       const updatedNote = await storage.updateSessionPrepNote(id, updates);
       res.json(updatedNote);
@@ -3130,11 +3128,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.post('/api/session-prep', async (req, res) => {
     try {
       const { eventId, clientId, content, type } = req.body;
-      
+
       if (!eventId || !content) {
         return res.status(400).json({ error: 'Event ID and content are required' });
       }
-      
+
       // Create session prep note
       const prepNote = await storage.createSessionPrepNote({
         eventId,
@@ -3142,7 +3140,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         therapistId: clientId, // We'll need to get the actual therapist ID
         prepContent: content
       });
-      
+
       res.json(prepNote);
     } catch (error: any) {
       console.error('Error creating session prep note:', error);
@@ -3155,11 +3153,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     try {
       const { eventId } = req.params;
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      
+
       // Get specific event details
       const event = await simpleOAuth.getEvent(eventId);
       res.json(event);
@@ -3168,17 +3166,17 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       res.status(500).json({ error: 'Failed to get calendar event', details: error.message });
     }
   });
-  
+
   app.put('/api/calendar/events/:eventId', async (req, res) => {
     try {
       const { eventId } = req.params;
       const updates = req.body;
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      
+
       // Update calendar event
       const updatedEvent = await simpleOAuth.updateEvent(eventId, updates);
       res.json(updatedEvent);
@@ -3191,11 +3189,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     try {
       const { eventId } = req.params;
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      
+
       // Get specific event details
       const event = await simpleOAuth.getEvent(eventId);
       res.json(event);
@@ -3204,17 +3202,17 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       res.status(500).json({ error: 'Failed to get calendar event', details: error.message });
     }
   });
-  
+
   app.put('/api/calendar/events/:eventId/:additionalParam?', async (req, res) => {
     try {
       const { eventId } = req.params;
       const updates = req.body;
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      
+
       // Update calendar event
       const updatedEvent = await simpleOAuth.updateEvent(eventId, updates);
       res.json(updatedEvent);
@@ -3226,11 +3224,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.get('/api/calendar/calendars', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      
+
       const calendars = await simpleOAuth.getCalendars();
       res.json(calendars);
     } catch (error: any) {
@@ -3242,18 +3240,18 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     try {
       const { timeMin, timeMax, calendarId } = req.query;
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      
+
       // Get calendar events with time range
       const events = await simpleOAuth.getEvents(
         calendarId as string || 'primary',
         timeMin as string,
         timeMax as string
       );
-      
+
       res.json(events);
     } catch (error: any) {
       console.error('Error getting calendar events:', error);
@@ -3264,11 +3262,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     try {
       const { eventId } = req.params;
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      
+
       // Get specific event details
       const event = await simpleOAuth.getEvent(eventId);
       res.json(event);
@@ -3277,17 +3275,17 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       res.status(500).json({ error: 'Failed to get calendar event', details: error.message });
     }
   });
-  
+
   app.put('/api/calendar/events/:eventId/:calendarId', async (req, res) => {
     try {
       const { eventId } = req.params;
       const updates = req.body;
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      
+
       // Update calendar event
       const updatedEvent = await simpleOAuth.updateEvent(eventId, updates);
       res.json(updatedEvent);
@@ -3300,11 +3298,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     try {
       const { eventId } = req.params;
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      
+
       // Get specific event details
       const event = await simpleOAuth.getEvent(eventId);
       res.json(event);
@@ -3313,17 +3311,17 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       res.status(500).json({ error: 'Failed to get calendar event', details: error.message });
     }
   });
-  
+
   app.put('/api/calendar/events/:eventId', async (req, res) => {
     try {
       const { eventId } = req.params;
       const updates = req.body;
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      
+
       // Update calendar event
       const updatedEvent = await simpleOAuth.updateEvent(eventId, updates);
       res.json(updatedEvent);
@@ -3336,18 +3334,18 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     try {
       const { timeMin, timeMax, calendarId } = req.query;
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      
+
       // Get calendar events with time range
       const events = await simpleOAuth.getEvents(
         calendarId as string || 'primary',
         timeMin as string,
         timeMax as string
       );
-      
+
       res.json(events);
     } catch (error: any) {
       console.error('Error getting calendar events:', error);
@@ -3358,18 +3356,18 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     try {
       const { timeMin, timeMax, calendarId } = req.query;
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
-      
+
       // Get calendar events with time range
       const events = await simpleOAuth.getEvents(
         calendarId as string || 'primary',
         timeMin as string,
         timeMax as string
       );
-      
+
       res.json(events);
     } catch (error: any) {
       console.error('Error getting calendar events:', error);
@@ -3381,7 +3379,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.get('/api/oauth/is-connected', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       const isConnected = simpleOAuth.isConnected();
       res.json({ 
         connected: isConnected,
@@ -3398,14 +3396,14 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.get('/api/auth/google/status', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       const isConnected = simpleOAuth.isConnected();
       const status = {
         connected: isConnected,
         hasTokens: isConnected,
         service: 'google'
       };
-      
+
       res.json(status);
     } catch (error: any) {
       console.error('Error checking auth status:', error);
@@ -3415,10 +3413,10 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.post('/api/auth/google/clear', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       // Clear OAuth tokens
       await simpleOAuth.clearTokens();
-      
+
       res.json({ success: true, message: 'OAuth tokens cleared' });
     } catch (error: any) {
       console.error('Error clearing auth tokens:', error);
@@ -3429,7 +3427,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.get('/api/auth/google', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       // Check if already connected
       if (simpleOAuth.isConnected()) {
         return res.json({
@@ -3438,11 +3436,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
           authUrl: null
         });
       }
-      
+
       // Generate OAuth URL for authentication (await the async call)
       const authUrl = await simpleOAuth.getAuthUrl();
       console.log('Generated OAuth URL:', authUrl);
-      
+
       res.json({ 
         authUrl,
         message: 'Visit this URL to authenticate with Google'
@@ -3463,7 +3461,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
 
       // Process the uploaded file
       const processed = await documentProcessor.processDocument(req.file.path, req.file.originalname);
-      
+
       // Clean up uploaded file
       fs.unlinkSync(req.file.path);
 
@@ -3598,33 +3596,33 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.post('/api/documents/process-clinical', async (req, res) => {
     try {
       const { documentContent, clientId, documentType } = req.body;
-      
+
       if (!documentContent) {
         return res.status(400).json({ error: 'Document content is required' });
       }
-      
+
       // Create temporary file for document processing
       const tempDir = 'temp';
       if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
       }
-      
+
       const tempFileName = `clinical-${Date.now()}-${documentType || 'general'}.txt`;
       const tempFilePath = `${tempDir}/${tempFileName}`;
-      
+
       // Write content to temporary file
       fs.writeFileSync(tempFilePath, documentContent, 'utf8');
-      
+
       try {
         // Process the temporary document file
         const analysis = await documentProcessor.processDocument(
           tempFilePath, 
           tempFileName
         );
-        
+
         // Clean up temporary file
         fs.unlinkSync(tempFilePath);
-        
+
         res.json({ analysis, model: 'document-processor' });
       } catch (error: any) {
         // Clean up temporary file on error
@@ -3633,7 +3631,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         }
         throw error;
       }
-      
+
     } catch (error: any) {
       console.error('Error processing clinical document:', error);
       res.status(500).json({ error: 'Failed to process document', details: error.message });
@@ -3643,13 +3641,13 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     try {
       const { progressNotes, therapistId } = req.body;
       const clientId = '23026f2f-fda8-418a-8325-edb7b5eca45d'; // Steven Deluca's ID
-      
+
       const result = await stevenDelucaProcessor.processProgressNotesManually(
         progressNotes,
         clientId,
         therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'
       );
-      
+
       res.json({
         success: result.success,
         message: `Successfully added ${result.createdNotes} progress notes for Steven Deluca`,
@@ -3657,7 +3655,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         createdAppointments: result.appointments.length,
         appointments: result.appointments
       });
-      
+
     } catch (error: any) {
       console.error('Error adding Steven Deluca progress notes:', error);
       res.status(500).json({
@@ -3671,16 +3669,16 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.post('/api/documents/generate-progress-note', async (req, res) => {
     try {
       const { content, clientId, sessionDate, detectedClientName, detectedSessionDate, therapistId } = req.body;
-      
+
       if (!content) {
         return res.status(400).json({ error: 'Document content is required' });
       }
-      
+
       // Use provided values or defaults
       const finalTherapistId = therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
       const finalSessionDate = sessionDate || detectedSessionDate || new Date().toISOString().split('T')[0];
       const finalClientName = detectedClientName || clientId || 'Client';
-      
+
       // Use the full document processor for comprehensive analysis
       console.log('Using comprehensive document processor for full analysis...');
       const comprehensiveNote = await documentProcessor.generateProgressNote(
@@ -3688,11 +3686,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         finalClientName, 
         finalSessionDate
       );
-      
+
       // Find client by name if provided
       let finalClientId = clientId || 'unknown';
       let actualClientName = finalClientName;
-      
+
       if (detectedClientName && !clientId) {
         // Try exact match first
         const foundClientId = await storage.getClientIdByName(detectedClientName);
@@ -3707,12 +3705,12 @@ I can help you analyze this data, provide insights, and assist with clinical dec
           // Try fuzzy matching for partial names
           const allClients = await storage.getClients(finalTherapistId);
           const nameParts = detectedClientName.toLowerCase().split(' ');
-          
+
           for (const client of allClients) {
             const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
             const firstNameMatch = nameParts.some((part: any) => client.firstName.toLowerCase().includes(part));
             const lastNameMatch = nameParts.some((part: any) => client.lastName.toLowerCase().includes(part));
-            
+
             if (firstNameMatch && lastNameMatch) {
               finalClientId = client.id;
               actualClientName = `${client.firstName} ${client.lastName}`;
@@ -3721,7 +3719,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
           }
         }
       }
-      
+
       // Find appointment on the session date for this client
       let appointmentId = null;
       if (finalClientId && finalClientId !== 'unknown') {
@@ -3738,34 +3736,34 @@ I can help you analyze this data, provide insights, and assist with clinical dec
             const baseUrl = process.env.REPLIT_DEV_DOMAIN 
               ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
               : 'http://localhost:5000';
-            
+
             // Get events for the specific session date, not just today
             const sessionDateObj = new Date(finalSessionDate);
             const dateParam = sessionDateObj.toISOString().split('T')[0]; // Format: YYYY-MM-DD
             const eventsResponse = await fetch(`${baseUrl}/api/oauth/events/date/${dateParam}`);
-            
+
             if (eventsResponse.ok) {
               const events = await eventsResponse.json();
               console.log(`📅 Found ${events.length} events on ${finalSessionDate}`);
-              
+
               const matchingEvent = events.find((event: any) => {
                 if (!event.summary || !event.start?.dateTime) return false;
-                
+
                 const eventDate = new Date(event.start.dateTime);
                 const eventDateString = eventDate.toDateString();
                 const sessionDateString = sessionDateObj.toDateString();
-                
+
                 // Check if client name appears in event title (handle 🔒 prefix and "Appointment" suffix)
                 const eventTitle = event.summary.toLowerCase();
                 const cleanEventTitle = eventTitle.replace(/🔒\s*/, '').replace(/\s*appointment\s*$/, '');
                 const clientNameParts = actualClientName.toLowerCase().split(' ');
                 const nameMatch = clientNameParts.every(part => cleanEventTitle.includes(part));
-                
+
                 console.log(`🔍 Event matching: "${event.summary}" vs "${actualClientName}" - Clean title: "${cleanEventTitle}" - Match: ${nameMatch}`);
-                
+
                 return nameMatch && eventDateString === sessionDateString;
               });
-              
+
               if (matchingEvent) {
                 appointmentId = matchingEvent.id;
                 console.log(`✅ Found matching Google Calendar event: ${matchingEvent.summary} (${appointmentId})`);
@@ -3778,7 +3776,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
           }
         }
       }
-      
+
       // Enhance the comprehensive note with database linking
       const enhancedProgressNote = {
         ...comprehensiveNote,
@@ -3794,7 +3792,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
           appointmentId ? 'appointment-linked' : 'appointment-unlinked'
         ]
       };
-      
+
       // Save to database as a session note if appointment is linked, otherwise as progress note
       let savedNote;
       if (appointmentId) {
@@ -3813,11 +3811,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         savedNote = await storage.createProgressNote(enhancedProgressNote);
         console.log(`ℹ️ Created progress note without appointment link`);
       }
-      
+
       // If linked to appointment, update the appointment's notes field
       if (appointmentId) {
         const appointmentNotesUpdate = `Progress Note: ${comprehensiveNote.title}\n\nSummary: ${comprehensiveNote.narrativeSummary}\n\nKey Points: ${comprehensiveNote.keyPoints?.join(', ') || 'None'}\n\nGenerated: ${new Date().toLocaleDateString()}`;
-        
+
         // Try to update database appointment first, if it fails, it's a Google Calendar event
         try {
           await storage.updateAppointment(appointmentId, {
@@ -3827,7 +3825,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         } catch (error) {
           console.log(`ℹ️ Appointment ${appointmentId} is a Google Calendar event, notes stored in progress note only`);
         }
-        
+
         // Generate AI insights for the next appointment with this client
         if (finalClientId !== 'unknown') {
           console.log(`🔄 Generating next session insights for client ID: ${finalClientId} (${actualClientName})`);
@@ -3836,13 +3834,13 @@ I can help you analyze this data, provide insights, and assist with clinical dec
           console.log(`⚠️ Cannot generate next session insights - client ID is unknown for: ${actualClientName}`);
         }
       }
-      
-      // ALWAYS generate session prep for next appointment, regardless of current appointment linking
+
+      // CRITICAL FIX: ALWAYS generate session prep for next appointment, regardless of current appointment linking
       if (finalClientId !== 'unknown') {
         console.log(`🔄 Generating next session prep for client ID: ${finalClientId} (${actualClientName}) - independent of current appointment linking`);
         await generateNextSessionInsights(finalClientId, finalTherapistId, savedNote, actualClientName);
       }
-      
+
       res.json({ 
         success: true,
         progressNote: savedNote, 
@@ -3874,7 +3872,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   async function generateNextSessionInsights(clientId: string, therapistId: string, progressNote: any, clientName: string) {
     try {
       console.log(`🔍 Looking for upcoming appointments for client ID: ${clientId} (${clientName})`);
-      
+
       // Validate that clientId is a proper UUID, not a client name
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(clientId)) {
@@ -3888,11 +3886,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
           return;
         }
       }
-      
+
       // Find the next scheduled appointment for this client (check both database and Google Calendar)
       let upcomingAppointments = await storage.getUpcomingAppointmentsByClient(clientId);
       console.log(`📅 Found ${upcomingAppointments.length} database appointments for ${clientName}`);
-      
+
       // If no database appointments, check Google Calendar for future appointments
       if (upcomingAppointments.length === 0) {
         console.log(`🔍 No database appointments found, checking Google Calendar for future events...`);
@@ -3900,16 +3898,16 @@ I can help you analyze this data, provide insights, and assist with clinical dec
           const baseUrl = process.env.REPLIT_DEV_DOMAIN 
             ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
             : 'http://localhost:5000';
-          
+
           // Get events from today onwards to find future appointments
           const today = new Date();
           const futureDate = new Date(today.getTime() + (90 * 24 * 60 * 60 * 1000)); // Next 90 days
-          
+
           const calendarResponse = await fetch(`${baseUrl}/api/calendar/events?timeMin=${today.toISOString()}&timeMax=${futureDate.toISOString()}`);
           if (calendarResponse.ok) {
             const calendarEvents = await calendarResponse.json();
             console.log(`📅 Found ${calendarEvents.length} future calendar events`);
-            
+
             // Filter for this client's appointments
             const clientEvents = calendarEvents.filter((event: any) => {
               if (!event.summary || !event.start?.dateTime) return false;
@@ -3918,9 +3916,9 @@ I can help you analyze this data, provide insights, and assist with clinical dec
               const clientNameParts = clientName.toLowerCase().split(' ');
               return clientNameParts.every(part => cleanEventTitle.includes(part));
             });
-            
+
             console.log(`📅 Found ${clientEvents.length} future appointments in Google Calendar for ${clientName}`);
-            
+
             if (clientEvents.length > 0) {
               // Convert to appointment-like objects
               upcomingAppointments = clientEvents.map((event: any) => ({
@@ -3935,7 +3933,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
           console.error('Error searching Google Calendar for upcoming appointments:', error);
         }
       }
-      
+
       if (upcomingAppointments.length === 0) {
         console.log(`⚠️ No upcoming appointments found for client ${clientName} (${clientId}) in database or Google Calendar`);
         return;
@@ -3943,7 +3941,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
 
       const nextAppointment = upcomingAppointments[0];
       console.log(`🎯 Next appointment: ${nextAppointment.id} on ${nextAppointment.startTime}`);
-      
+
       // Generate AI insights for the next session
       const sessionPrepPrompt = `Based on this completed session progress note, generate preparation insights for the next therapy session:
 
@@ -3990,15 +3988,18 @@ Generate specific preparation guidance for the next session including:
         therapistId: therapistId,
         prepContent: aiInsights || 'AI insights generation failed',
         keyFocusAreas: progressNote.keyPoints || [],
-        previousSessionSummary: progressNote.narrativeSummary,
-        aiGeneratedInsights: `Generated from progress note: ${progressNote.title}`,
+        previousSessionSummary: `${progressNote.subjective}\n\n${progressNote.objective}`,
+        suggestedInterventions: [progressNote.plan],
+        clientGoals: [],
+        riskFactors: [],
+        homeworkReview: null,
         sessionObjectives: [`Follow up on: ${progressNote.keyPoints?.slice(0, 2).join(', ') || 'previous session themes'}`],
         lastUpdatedBy: therapistId
       };
 
       // Check if session prep already exists for this appointment
       const existingPrep = await storage.getSessionPrepNoteByEventId(nextAppointment.id);
-      
+
       if (existingPrep) {
         await storage.updateSessionPrepNote(existingPrep.id, sessionPrepData);
         console.log(`✅ Updated session prep for next appointment: ${nextAppointment.id} (${clientName})`);
@@ -4029,7 +4030,7 @@ Generate specific preparation guidance for the next session including:
     try {
       const { clientName } = req.params;
       console.log(`🔍 Looking for progress notes for client: ${clientName}`);
-      
+
       // Clean up the client name from calendar events
       const cleanedName = clientName
         .replace(/\s*Appointment$/i, '')
@@ -4037,20 +4038,20 @@ Generate specific preparation guidance for the next session including:
         .replace(/\s*Meeting$/i, '')
         .replace(/🔒\s*/, '')
         .trim();
-      
+
       console.log(`🧹 Cleaned client name: "${cleanedName}"`);
-      
+
       // First try to find client by cleaned name  
       let clientId = await storage.getClientIdByName(cleanedName);
-      
+
       // If not found, try fuzzy matching by splitting name parts
       if (!clientId && cleanedName.includes(' ')) {
         const nameParts = cleanedName.split(' ');
         const firstName = nameParts[0];
         const lastName = nameParts[nameParts.length - 1];
-        
+
         console.log(`🔍 Trying fuzzy match with: ${firstName} ${lastName}`);
-        
+
         // Try different name combinations
         const nameVariations = [
           `${firstName} ${lastName}`,
@@ -4058,7 +4059,7 @@ Generate specific preparation guidance for the next session including:
           firstName,
           lastName
         ];
-        
+
         for (const variation of nameVariations) {
           clientId = await storage.getClientIdByName(variation);
           if (clientId) {
@@ -4067,14 +4068,14 @@ Generate specific preparation guidance for the next session including:
           }
         }
       }
-      
+
       if (!clientId) {
         console.log(`❌ Client not found with any name variation: ${cleanedName}`);
         return res.json([]);
       }
-      
+
       console.log(`✅ Found client ID: ${clientId} for name: ${cleanedName}`);
-      
+
       // Get all progress notes for this client
       const notes = await storage.getProgressNotes(clientId);
       console.log(`📋 Found ${notes.length} progress notes for client: ${cleanedName}`);
@@ -4098,21 +4099,21 @@ Generate specific preparation guidance for the next session including:
   });
 
   // ========== CLIENT CHART ANALYSIS ROUTES ==========
-  
+
   // Generate case conceptualization for a client
   app.post('/api/ai/case-conceptualization/:clientId', async (req, res) => {
     try {
       const { clientId } = req.params;
       const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-      
+
       // Get all progress notes and session prep notes for this client
       const progressNotes = await storage.getProgressNotes(clientId);
       const client = await storage.getClient(clientId);
-      
+
       if (!client) {
         return res.status(404).json({ error: 'Client not found' });
       }
-      
+
       // Prepare comprehensive clinical data for AI analysis
       const clinicalData = {
         clientInfo: {
@@ -4133,7 +4134,7 @@ Generate specific preparation guidance for the next session including:
           tonalAnalysis: note.tonalAnalysis
         }))
       };
-      
+
       const conceptualizationPrompt = `As an expert clinical psychologist, analyze the comprehensive clinical data for ${client.firstName} ${client.lastName} and provide a detailed case conceptualization.
 
 Clinical Data:
@@ -4178,7 +4179,7 @@ Format as a structured JSON response with these exact field names: overview, pre
       });
 
       const conceptualization = JSON.parse(response.choices[0].message.content || '{}');
-      
+
       res.json(conceptualization);
     } catch (error: any) {
       console.error('Error generating case conceptualization:', error);
@@ -4190,7 +4191,7 @@ Format as a structured JSON response with these exact field names: overview, pre
   app.get('/api/ai/case-conceptualization/:clientId', async (req, res) => {
     try {
       const { clientId } = req.params;
-      
+
       // For now, return null - in production you might cache these in database
       res.json(null);
     } catch (error: any) {
@@ -4204,15 +4205,15 @@ Format as a structured JSON response with these exact field names: overview, pre
     try {
       const { clientId } = req.params;
       const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-      
+
       // Get all progress notes for this client
       const progressNotes = await storage.getProgressNotes(clientId);
       const client = await storage.getClient(clientId);
-      
+
       if (!client) {
         return res.status(404).json({ error: 'Client not found' });
       }
-      
+
       // Prepare clinical data for treatment guide
       const treatmentData = {
         clientInfo: {
@@ -4227,7 +4228,7 @@ Format as a structured JSON response with these exact field names: overview, pre
           keyPoints: note.keyPoints
         }))
       };
-      
+
       const treatmentGuidePrompt = `As an expert clinical therapist, create a comprehensive treatment guide for ${client.firstName} ${client.lastName} based on their clinical history.
 
 Clinical History:
@@ -4269,7 +4270,7 @@ Format as a structured JSON response with these exact field names: overview, rec
       });
 
       const treatmentGuide = JSON.parse(response.choices[0].message.content || '{}');
-      
+
       res.json(treatmentGuide);
     } catch (error: any) {
       console.error('Error generating treatment guide:', error);
@@ -4281,7 +4282,7 @@ Format as a structured JSON response with these exact field names: overview, rec
   app.get('/api/ai/treatment-guide/:clientId', async (req, res) => {
     try {
       const { clientId } = req.params;
-      
+
       // For now, return null - in production you might cache these in database
       res.json(null);
     } catch (error: any) {
@@ -4294,7 +4295,7 @@ Format as a structured JSON response with these exact field names: overview, rec
   app.get('/api/session-prep/client/:clientId', async (req, res) => {
     try {
       const { clientId } = req.params;
-      
+
       // Get all session prep notes for this client
       const sessionPrepNotes = await storage.getSessionPrepNotesByClient(clientId);
       res.json(sessionPrepNotes);
@@ -4305,18 +4306,18 @@ Format as a structured JSON response with these exact field names: overview, rec
   });
 
   // ========== SIMPLE PROGRESS NOTES ROUTES ==========
-  
+
   // Simple, fast progress note generation endpoint
   app.post('/api/progress-notes/generate', async (req, res) => {
     try {
       const { content, clientId, sessionDate } = req.body;
-      
+
       if (!content || content.trim().length === 0) {
         return res.status(400).json({ error: 'Session content is required' });
       }
-      
+
       console.log('Generating progress note with OpenAI...');
-      
+
       // Use OpenAI directly for fast, reliable progress note generation
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -4347,7 +4348,7 @@ Return ONLY a JSON object with this exact structure:
       });
 
       const aiResponse = JSON.parse(response.choices[0].message.content || '{}');
-      
+
       const progressNote = {
         id: `note-${Date.now()}`,
         ...aiResponse,
@@ -4358,22 +4359,22 @@ Return ONLY a JSON object with this exact structure:
         tonalAnalysis: 'Professional therapeutic tone observed',
         significantQuotes: aiResponse.keyPoints || []
       };
-      
+
       // CRITICAL FIX: Save progress note to database if we have a valid client ID
       let savedProgressNote = null;
       console.log(`🔍 Attempting to save progress note for client: ${clientId}`);
-      
+
       if (clientId && clientId !== 'unknown') {
         try {
           // Try to find an appointment for this client on the session date
           const sessionDateObj = new Date(sessionDate || new Date());
           console.log(`🔍 Looking for appointments for client ${clientId} on date ${sessionDateObj.toISOString()}`);
-          
+
           const appointments = await storage.getAppointments('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', sessionDateObj);
           const clientAppointment = appointments.find(apt => apt.clientId === clientId);
-          
+
           console.log(`🔍 Found ${appointments.length} appointments on this date, ${clientAppointment ? 'one matches client' : 'none match client'}`);
-          
+
           savedProgressNote = await storage.createProgressNote({
             title: progressNote.title,
             subjective: progressNote.subjective,
@@ -4384,14 +4385,14 @@ Return ONLY a JSON object with this exact structure:
             keyPoints: progressNote.keyPoints || [],
             significantQuotes: progressNote.significantQuotes || [],
             narrativeSummary: progressNote.narrativeSummary,
-            sessionDate: sessionDateObj,
+            sessionDate: new Date(sessionDateObj),
             clientId: clientId,
             therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
             appointmentId: clientAppointment?.id || null
           });
-          
+
           console.log(`✅ Progress note saved to database with ID: ${savedProgressNote.id}`);
-          
+
           // If appointment found, also save to appointment notes
           if (clientAppointment) {
             await storage.updateAppointment(clientAppointment.id, {
@@ -4407,7 +4408,7 @@ Return ONLY a JSON object with this exact structure:
       } else {
         console.log(`⚠️ Skipping database save: invalid client ID (${clientId})`);
       }
-      
+
       console.log('Progress note generated successfully');
       res.json({ 
         success: true, 
@@ -4415,7 +4416,7 @@ Return ONLY a JSON object with this exact structure:
         savedProgressNote,
         model: 'openai-gpt4o' 
       });
-      
+
     } catch (error: any) {
       console.error('Error generating progress note:', error);
       res.status(500).json({ 
@@ -4426,7 +4427,7 @@ Return ONLY a JSON object with this exact structure:
   });
 
   // ========== FILE UPLOAD ROUTES ==========
-  
+
   // Single file upload endpoint for drag-and-drop progress notes processing
   app.post('/api/upload/document', uploadSingle, async (req, res) => {
     try {
@@ -4435,24 +4436,24 @@ Return ONLY a JSON object with this exact structure:
       }
 
       const { clientId, sessionDate } = req.body;
-      
+
       // Process the uploaded document
       const processed = await documentProcessor.processDocument(
         req.file.path,
         req.file.originalname
       );
-      
+
       // Generate progress note from the processed document
       const generatedNote = await documentProcessor.generateProgressNote(
         processed.extractedText,
         clientId || processed.detectedClientName || 'unknown',
         sessionDate || processed.detectedSessionDate || new Date().toISOString()
       );
-      
+
       // Now the critical fix: Save the progress note to the database
       let savedProgressNote = null;
       let appointmentId = null;
-      
+
       // Try to find the actual client ID if we have a client name
       let actualClientId = clientId;
       if (!actualClientId && processed.detectedClientName) {
@@ -4461,32 +4462,30 @@ Return ONLY a JSON object with this exact structure:
         console.log(`🧹 Cleaned client name: "${cleanClientName}" from original: "${processed.detectedClientName}"`);
         actualClientId = await storage.getClientIdByName(cleanClientName);
       }
-      
+
       if (actualClientId) {
         // Try to find an appointment for this client on the session date
         const sessionDateObj = new Date(generatedNote.sessionDate);
         console.log(`🔍 Looking for appointments on ${sessionDateObj.toISOString().split('T')[0]} for client ${actualClientId}`);
-        
+
         const appointments = await storage.getAppointments('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', sessionDateObj);
-        console.log(`📅 Found ${appointments.length} appointments on this date`);
-        
         const clientAppointment = appointments.find(apt => apt.clientId === actualClientId);
-        
+
         if (!clientAppointment) {
           // Try a wider date range (±1 day) in case of time zone issues
           const dayBefore = new Date(sessionDateObj);
           dayBefore.setDate(dayBefore.getDate() - 1);
           const dayAfter = new Date(sessionDateObj);
           dayAfter.setDate(dayAfter.getDate() + 1);
-          
+
           console.log(`🔍 Expanding search to include ${dayBefore.toISOString().split('T')[0]} and ${dayAfter.toISOString().split('T')[0]}`);
-          
+
           const appointmentsBefore = await storage.getAppointments('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', dayBefore);
           const appointmentsAfter = await storage.getAppointments('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', dayAfter);
-          
+
           const allAppointments = [...appointmentsBefore, ...appointments, ...appointmentsAfter];
           const clientAppointmentExpanded = allAppointments.find(apt => apt.clientId === actualClientId);
-          
+
           if (clientAppointmentExpanded) {
             console.log(`✅ Found appointment in expanded search: ${clientAppointmentExpanded.id}`);
             // Use the found appointment from expanded search
@@ -4496,14 +4495,14 @@ Return ONLY a JSON object with this exact structure:
           appointmentId = clientAppointment.id;
           console.log(`✅ Found exact appointment match: ${appointmentId}`);
         }
-        
+
         // Log final result
         if (appointmentId) {
           console.log(`✅ Final appointment ID set: ${appointmentId} for client ${actualClientId} on ${generatedNote.sessionDate}`);
         } else {
           console.log(`⚠️ No appointment found for client ${actualClientId} on ${generatedNote.sessionDate}`);
         }
-        
+
         // Save progress note to database
         savedProgressNote = await storage.createProgressNote({
           title: generatedNote.title,
@@ -4520,9 +4519,9 @@ Return ONLY a JSON object with this exact structure:
           therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
           appointmentId: appointmentId
         });
-        
+
         console.log(`✅ Progress note saved to database with ID: ${savedProgressNote.id}`);
-        
+
         // If we found an appointment, also save to appointment notes field
         if (appointmentId && clientAppointment) {
           await storage.updateAppointment(appointmentId, {
@@ -4530,12 +4529,12 @@ Return ONLY a JSON object with this exact structure:
           });
           console.log(`✅ Progress note content added to appointment ${appointmentId} notes field`);
         }
-        
+
         // Generate session prep for next appointment if exists
         const upcomingAppointments = await storage.getUpcomingAppointmentsByClient(actualClientId);
         if (upcomingAppointments.length > 0) {
           const nextAppointment = upcomingAppointments[0];
-          
+
           // Generate AI insights for the next session
           const sessionPrepContent = `Based on progress note from ${generatedNote.sessionDate}:
 
@@ -4561,11 +4560,10 @@ Follow-up areas for next session:
               clientGoals: [],
               riskFactors: [],
               homeworkReview: null,
-              sessionObjectives: [],
-              aiGeneratedInsights: `Generated from uploaded document: ${generatedNote.title}`,
+              sessionObjectives: [`Follow up on: ${generatedNote.keyPoints?.slice(0, 2).join(', ') || 'previous session themes'}`],
               lastUpdatedBy: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'
             });
-            
+
             console.log(`✅ Session prep note created for next appointment ${nextAppointment.id} with ID: ${sessionPrepNote.id}`);
           } catch (sessionPrepError: any) {
             console.error(`❌ Error creating session prep note:`, sessionPrepError);
@@ -4575,10 +4573,10 @@ Follow-up areas for next session:
           console.log(`ℹ️ No upcoming appointments found for client ${actualClientId} - skipping session prep creation`);
         }
       }
-      
+
       // Clean up uploaded file
       fs.unlinkSync(req.file.path);
-      
+
       res.json({
         success: true,
         processed,
@@ -4588,21 +4586,21 @@ Follow-up areas for next session:
         clientId: actualClientId,
         message: 'Document processed, progress note generated and saved to database successfully'
       });
-      
+
     } catch (error: any) {
       // Clean up file if error occurs
       if (req.file && fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
       }
-      
+
       console.error('Error processing uploaded document:', error);
       res.status(500).json({ 
-        error: 'Failed to process document', 
+        error: 'Failed to process document',
         details: error.message 
       });
     }
   });
-  
+
   // Multiple files upload endpoint
   app.post('/api/upload/documents', uploadMultiple, async (req, res) => {
     try {
@@ -4612,41 +4610,41 @@ Follow-up areas for next session:
 
       const { clientId, sessionDate } = req.body;
       const results = [];
-      
+
       for (const file of req.files) {
         try {
           const processed = await documentProcessor.processDocument(
             file.path,
             file.originalname
           );
-          
+
           const generatedNote = await documentProcessor.generateProgressNote(
             processed.extractedText,
             clientId || processed.detectedClientName || 'unknown',
             sessionDate || processed.detectedSessionDate || new Date().toISOString()
           );
-          
+
           // Save progress note to database for each file
           let savedProgressNote = null;
           let appointmentId = null;
-          
+
           // Try to find the actual client ID if we have a client name
           let actualClientId = clientId;
           if (!actualClientId && processed.detectedClientName) {
             actualClientId = await storage.getClientIdByName(processed.detectedClientName);
           }
-          
+
           if (actualClientId) {
             // Try to find an appointment for this client on the session date
             const sessionDateObj = new Date(generatedNote.sessionDate);
             const appointments = await storage.getAppointments('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', sessionDateObj);
             const clientAppointment = appointments.find(apt => apt.clientId === actualClientId);
-            
+
             if (clientAppointment) {
               appointmentId = clientAppointment.id;
               console.log(`✅ Found appointment ${appointmentId} for client ${actualClientId} on ${generatedNote.sessionDate}`);
             }
-            
+
             // Save progress note to database
             savedProgressNote = await storage.createProgressNote({
               title: generatedNote.title,
@@ -4663,9 +4661,9 @@ Follow-up areas for next session:
               therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
               appointmentId: appointmentId
             });
-            
+
             console.log(`✅ Progress note saved to database with ID: ${savedProgressNote.id}`);
-            
+
             // If we found an appointment, also save to appointment notes field
             if (appointmentId && clientAppointment) {
               await storage.updateAppointment(appointmentId, {
@@ -4674,7 +4672,7 @@ Follow-up areas for next session:
               console.log(`✅ Progress note content added to appointment ${appointmentId} notes field`);
             }
           }
-          
+
           results.push({
             filename: file.originalname,
             success: true,
@@ -4684,31 +4682,31 @@ Follow-up areas for next session:
             appointmentId,
             clientId: actualClientId
           });
-          
+
           // Clean up file
           fs.unlinkSync(file.path);
-          
+
         } catch (fileError: any) {
           results.push({
             filename: file.originalname,
             success: false,
             error: fileError.message
           });
-          
+
           // Clean up file on error
           if (fs.existsSync(file.path)) {
             fs.unlinkSync(file.path);
           }
         }
       }
-      
+
       res.json({
         success: true,
         results,
         totalFiles: req.files.length,
         successfulFiles: results.filter(r => r.success).length
       });
-      
+
     } catch (error: any) {
       // Clean up all files if general error occurs
       if (req.files && Array.isArray(req.files)) {
@@ -4718,7 +4716,7 @@ Follow-up areas for next session:
           }
         });
       }
-      
+
       console.error('Error processing uploaded documents:', error);
       res.status(500).json({ 
         error: 'Failed to process documents', 
@@ -4732,11 +4730,11 @@ Follow-up areas for next session:
   app.get('/api/drive/files', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Drive not connected', requiresAuth: true });
       }
-      
+
       // Get Drive files
       const files = await simpleOAuth.getDriveFiles();
       res.json(files);
@@ -4749,11 +4747,11 @@ Follow-up areas for next session:
     try {
       const { q: query } = req.query;
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Drive not connected', requiresAuth: true });
       }
-      
+
       // Search Drive files
       const results = await simpleOAuth.searchDriveFiles(query as string);
       res.json(results);
@@ -4766,11 +4764,11 @@ Follow-up areas for next session:
     try {
       const { fileId } = req.params;
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Drive not connected', requiresAuth: true });
       }
-      
+
       // Get specific Drive file
       const file = await simpleOAuth.getDriveFile(fileId);
       res.json(file);
@@ -4826,7 +4824,7 @@ Follow-up areas for next session:
   app.get('/api/client-checkins', async (req, res) => {
     try {
       const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.query;
-      
+
       // Get all client check-ins for therapist
       const checkins = await storage.getClientCheckins(therapistId as string);
       res.json(checkins);
@@ -4839,7 +4837,7 @@ Follow-up areas for next session:
   app.get('/api/client-checkins/:therapistId', async (req, res) => {
     try {
       const { therapistId } = req.params;
-      
+
       // Get client check-ins for specific therapist
       const checkins = await storage.getClientCheckins(therapistId);
       res.json(checkins);
@@ -4852,18 +4850,18 @@ Follow-up areas for next session:
   app.post('/api/client-checkins', async (req, res) => {
     try {
       const checkinData = req.body;
-      
+
       if (!checkinData.clientId || !checkinData.therapistId) {
         return res.status(400).json({ error: 'Client ID and therapist ID are required' });
       }
-      
+
       // Create new client check-in
       const checkin = await storage.createClientCheckin({
         ...checkinData,
         createdAt: new Date(),
         status: checkinData.status || 'pending'
       });
-      
+
       res.json(checkin);
     } catch (error: any) {
       console.error('Error creating client check-in:', error);
@@ -4874,11 +4872,11 @@ Follow-up areas for next session:
   app.put('/api/client-checkins', async (req, res) => {
     try {
       const { id, ...updates } = req.body;
-      
+
       if (!id) {
         return res.status(400).json({ error: 'Check-in ID is required' });
       }
-      
+
       // Update client check-in
       const updatedCheckin = await storage.updateClientCheckin(id, updates);
       res.json(updatedCheckin);
@@ -4891,11 +4889,11 @@ Follow-up areas for next session:
   app.delete('/api/client-checkins', async (req, res) => {
     try {
       const { id } = req.body;
-      
+
       if (!id) {
         return res.status(400).json({ error: 'Check-in ID is required' });
       }
-      
+
       // Delete client check-in
       await storage.deleteClientCheckin(id);
       res.json({ success: true, message: 'Client check-in deleted' });
@@ -4908,18 +4906,18 @@ Follow-up areas for next session:
   app.post('/api/client-checkins/generate', async (req, res) => {
     try {
       const { clientId, therapistId, type } = req.body;
-      
+
       if (!clientId || !therapistId) {
         return res.status(400).json({ error: 'Client ID and therapist ID are required' });
       }
-      
+
       // Generate AI-powered check-in questions
       const checkInQuestions = await multiModelAI.generateClientCheckIn({
         clientId,
         therapistId,
         type: type || 'standard'
       });
-      
+
       res.json({
         questions: checkInQuestions,
         generatedAt: new Date().toISOString(),
@@ -4936,12 +4934,12 @@ Follow-up areas for next session:
   app.get('/api/session-notes', async (req, res) => {
     try {
       const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', clientId } = req.query;
-      
+
       // Get session notes with optional client filter
       const sessionNotes = clientId 
         ? await storage.getSessionNotesByClientId(clientId as string)
         : await storage.getSessionNotes(therapistId as string);
-        
+
       res.json(sessionNotes);
     } catch (error: any) {
       console.error('Error getting session notes:', error);
@@ -4960,11 +4958,11 @@ Follow-up areas for next session:
   app.post('/api/session-notes', async (req, res) => {
     try {
       const sessionNoteData = req.body;
-      
+
       if (!sessionNoteData.clientId || !sessionNoteData.therapistId) {
         return res.status(400).json({ error: 'Client ID and therapist ID are required' });
       }
-      
+
       // Ensure eventId is properly set for appointment linking
       // Only set appointmentId if it's a valid UUID, otherwise leave it null
       const appointmentIdCandidate = sessionNoteData.appointmentId;
@@ -4973,14 +4971,14 @@ Follow-up areas for next session:
         eventId: sessionNoteData.eventId || sessionNoteData.appointmentId,
         appointmentId: isValidUUID(appointmentIdCandidate) ? appointmentIdCandidate : null
       };
-      
+
       console.log('Creating session note with data:', {
         eventId: noteData.eventId,
         appointmentId: noteData.appointmentId,
         clientId: noteData.clientId,
         therapistId: noteData.therapistId
       });
-      
+
       // Create the session note
       const newSessionNote = await storage.createSessionNote(noteData);
       res.status(201).json(newSessionNote);
@@ -4994,11 +4992,11 @@ Follow-up areas for next session:
   app.post('/api/ai/generate-progress-note', async (req, res) => {
     try {
       const { sessionContent, clientId, therapistId } = req.body;
-      
+
       if (!sessionContent) {
         return res.status(400).json({ error: 'Session content is required' });
       }
-      
+
       // Fast progress note generation using OpenAI
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -5014,7 +5012,7 @@ Follow-up areas for next session:
         ],
         response_format: { type: "json_object" },
         temperature: 0.2,
-        max_tokens: 800
+        max_tokens: 1200
       });
 
       const progressNote = JSON.parse(response.choices[0].message.content || '{}');
@@ -5031,7 +5029,7 @@ Follow-up areas for next session:
       // Check if we have valid OAuth tokens and can access Google Calendar
       const calendars = await storage.getGoogleCalendars();
       const connected = calendars && calendars.length > 0;
-      
+
       res.json({
         connected,
         calendars: connected ? calendars.length : 0,
@@ -5051,11 +5049,11 @@ Follow-up areas for next session:
   app.post('/api/ai/therapist-strengths', async (req, res) => {
     try {
       const { therapistId } = req.body;
-      
+
       if (!therapistId) {
         return res.status(400).json({ error: 'therapistId is required' });
       }
-      
+
       const insights = {
         strengths: [
           "Strong therapeutic rapport building with 95% client satisfaction",
@@ -5074,7 +5072,7 @@ Follow-up areas for next session:
           "Explore: Dialectical Behavior Therapy Intensive"
         ]
       };
-      
+
       res.json(insights);
     } catch (error: any) {
       console.error('Error in therapist strengths:', error);
@@ -5085,11 +5083,11 @@ Follow-up areas for next session:
   app.post('/api/ai/session-efficiency', async (req, res) => {
     try {
       const { therapistId, timeframe = 'month' } = req.body;
-      
+
       if (!therapistId) {
         return res.status(400).json({ error: 'therapistId is required' });
       }
-      
+
       const efficiency = {
         currentEfficiencyMetrics: {
           sessionUtilization: 82,
@@ -5115,7 +5113,7 @@ Follow-up areas for next session:
           }
         ]
       };
-      
+
       res.json(efficiency);
     } catch (error: any) {
       console.error('Error in session efficiency:', error);
@@ -5126,11 +5124,11 @@ Follow-up areas for next session:
   app.post('/api/ai/client-retention', async (req, res) => {
     try {
       const { clientId } = req.body;
-      
+
       if (!clientId) {
         return res.status(400).json({ error: 'clientId is required' });
       }
-      
+
       const retention = {
         retentionRisk: { 
           level: 'low', 
@@ -5144,7 +5142,7 @@ Follow-up areas for next session:
           'Provide homework assignments'
         ]
       };
-      
+
       res.json(retention);
     } catch (error: any) {
       console.error('Error in client retention:', error);
@@ -5155,11 +5153,11 @@ Follow-up areas for next session:
   app.post('/api/ai/predict-treatment-outcome', async (req, res) => {
     try {
       const { clientId, currentSessionCount } = req.body;
-      
+
       if (!clientId) {
         return res.status(400).json({ error: 'clientId is required' });
       }
-      
+
       const insights = {
         treatmentOutcomePrediction: {
           successProbability: 78,
@@ -5177,7 +5175,7 @@ Follow-up areas for next session:
           ]
         },
         riskEscalationAlerts: {
-          riskLevel: 'low' as const,
+          riskLevel: 'low',
           earlyWarningIndicators: [
             'Decreased session engagement',
             'Missed homework assignments',
@@ -5201,7 +5199,7 @@ Follow-up areas for next session:
           timingRationale: 'Client showing strong engagement and therapeutic progress'
         }
       };
-      
+
       res.json(insights);
     } catch (error: any) {
       console.error('Error in treatment outcome prediction:', error);
@@ -5212,19 +5210,19 @@ Follow-up areas for next session:
   app.post('/api/ai/evidence-based-interventions', async (req, res) => {
     try {
       const { clientProfile, sessionHistory } = req.body;
-      
+
       const recommendations = {
         primaryModalities: [
           {
             approach: 'Cognitive Behavioral Therapy',
-            evidenceLevel: 'strong' as const,
+            evidenceLevel: 'strong',
             suitabilityScore: 8.5,
             rationale: 'Strong evidence for anxiety treatment with excellent client fit',
             specificTechniques: ['Thought records', 'Behavioral experiments', 'Cognitive restructuring']
           },
           {
             approach: 'Mindfulness-Based Stress Reduction',
-            evidenceLevel: 'moderate' as const,
+            evidenceLevel: 'moderate',
             suitabilityScore: 7.2,
             rationale: 'Effective for anxiety and relationships with good client engagement',
             specificTechniques: ['Body scan meditation', 'Mindful breathing', 'Progressive muscle relaxation']
@@ -5240,7 +5238,7 @@ Follow-up areas for next session:
           'Monitor for therapy-related anxiety spikes'
         ]
       };
-      
+
       res.json(recommendations);
     } catch (error: any) {
       console.error('Error in evidence-based interventions:', error);
@@ -5264,10 +5262,10 @@ Follow-up areas for next session:
         const { clientId, clientName } = req.body;
         const files = req.files as Express.Multer.File[];
         const file = files?.[0];
-        
+
         console.log('Upload received - clientId:', clientId, 'clientName:', clientName);
         console.log('Files received:', files?.map(f => ({ fieldname: f.fieldname, originalname: f.originalname, mimetype: f.mimetype })));
-        
+
         if (!file || !clientId || !clientName) {
           return res.status(400).json({ 
             error: 'Missing required fields: file, clientId, clientName',
@@ -5317,7 +5315,7 @@ Follow-up areas for next session:
   app.post('/api/documents/process-session-pdf', async (req, res) => {
     try {
       const { documentUrl, filename, clientId, clientName } = req.body;
-      
+
       if (!documentUrl || !filename || !clientId || !clientName) {
         return res.status(400).json({ 
           error: 'Missing required fields: documentUrl, filename, clientId, clientName' 
@@ -5347,7 +5345,7 @@ Follow-up areas for next session:
       // Generate a simple upload URL for testing purposes
       const uploadId = randomUUID();
       const uploadURL = `https://storage.example.com/uploads/${uploadId}`;
-      
+
       res.json({ uploadURL });
     } catch (error) {
       console.error('Error generating upload URL:', error);
@@ -5388,7 +5386,7 @@ Follow-up areas for next session:
           let title = 'Appointment scheduled';
           if (appointment.status === 'completed') title = 'Session completed';
           if (appointment.status === 'cancelled') title = 'Appointment cancelled';
-          
+
           activities.push({
             id: `appointment-${appointment.id}`,
             type: 'appointment',
@@ -5441,7 +5439,7 @@ Follow-up areas for next session:
         if (syncStats && syncStats.lastSyncAt) {
           const lastSync = new Date(syncStats.lastSyncAt);
           const hoursSinceSync = (Date.now() - lastSync.getTime()) / (1000 * 60 * 60);
-          
+
           if (hoursSinceSync < 24) { // Only show if synced in last 24 hours
             activities.push({
               id: `sync-${lastSync.getTime()}`,

@@ -1,10 +1,10 @@
-import { 
+import {
   users, clients, appointments, sessionNotes, sessionPrepNotes, clientCheckins, actionItems, treatmentPlans, aiInsights,
   billingRecords, assessments, progressNotes, medications, communicationLogs, documents, auditLogs,
   compassConversations, compassMemory, sessionRecommendations,
   assessmentCatalog, clientAssessments, assessmentResponses, assessmentScores, assessmentPackages, assessmentAuditLog,
   type User, type InsertUser, type Client, type InsertClient, type Appointment, type InsertAppointment,
-  type SessionNote, type InsertSessionNote, type SessionPrepNote, type InsertSessionPrepNote, 
+  type SessionNote, type InsertSessionNote, type SessionPrepNote, type InsertSessionPrepNote,
   type ClientCheckin, type InsertClientCheckin, type ActionItem, type InsertActionItem,
   type TreatmentPlan, type InsertTreatmentPlan, type AiInsight, type InsertAiInsight,
   type BillingRecord, type InsertBillingRecord, type Assessment, type InsertAssessment,
@@ -52,6 +52,7 @@ export interface IStorage {
   // Session notes methods
   getSessionNotes(clientId: string): Promise<SessionNote[]>;
   getSessionNote(id: string): Promise<SessionNote | undefined>;
+  getSessionNoteById(sessionNoteId: string): Promise<SessionNote | null>;
   getSessionNotesByEventId(eventId: string): Promise<SessionNote[]>;
   createSessionNote(note: InsertSessionNote): Promise<SessionNote>;
   updateSessionNote(id: string, note: Partial<SessionNote>): Promise<SessionNote>;
@@ -163,6 +164,8 @@ export interface IStorage {
   getDashboardStats(therapistId: string): Promise<{
     todaysSessions: number;
     activeClients: number;
+    totalClients: number;
+    totalAppointments: number;
     urgentActionItems: number;
     completionRate: number;
     monthlyRevenue: number;
@@ -189,14 +192,14 @@ export interface IStorage {
   createCompassConversation(conversation: InsertCompassConversation): Promise<CompassConversation>;
   getCompassConversations(therapistId: string, sessionId?: string, limit?: number): Promise<CompassConversation[]>;
   getCompassConversationHistory(therapistId: string, limit?: number): Promise<CompassConversation[]>;
-  
+
   // Compass memory methods
   setCompassMemory(memory: InsertCompassMemory): Promise<CompassMemory>;
   getCompassMemory(therapistId: string, contextType: string, contextKey?: string): Promise<CompassMemory[]>;
   updateCompassMemoryAccess(id: string): Promise<CompassMemory>;
 
   // Assessment Management System methods
-  
+
   // Assessment Catalog methods
   getAssessmentCatalog(): Promise<AssessmentCatalog[]>;
   getAssessmentCatalogByCategory(category: string): Promise<AssessmentCatalog[]>;
@@ -323,7 +326,7 @@ export class DatabaseStorage implements IStorage {
   async getClientIdByName(fullName: string): Promise<string | null> {
     const [firstName, ...lastNameParts] = fullName.split(' ');
     const lastName = lastNameParts.join(' ');
-    
+
     const [client] = await db
       .select({ id: clients.id })
       .from(clients)
@@ -333,17 +336,17 @@ export class DatabaseStorage implements IStorage {
           eq(clients.lastName, lastName)
         )
       );
-    
+
     return client?.id || null;
   }
 
   async getAppointmentsByClientAndDate(clientId: string, sessionDate: Date): Promise<Appointment[]> {
     const startOfDay = new Date(sessionDate);
     startOfDay.setHours(0, 0, 0, 0);
-    
+
     const endOfDay = new Date(sessionDate);
     endOfDay.setHours(23, 59, 59, 999);
-    
+
     return await db
       .select()
       .from(appointments)
@@ -475,9 +478,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async cancelAppointment(id: string, reason: string): Promise<Appointment> {
-    return await this.updateAppointment(id, { 
-      status: 'cancelled', 
-      cancellationReason: reason 
+    return await this.updateAppointment(id, {
+      status: 'cancelled',
+      cancellationReason: reason
     });
   }
 
@@ -546,6 +549,14 @@ export class DatabaseStorage implements IStorage {
   async getSessionNote(id: string): Promise<SessionNote | undefined> {
     const [note] = await db.select().from(sessionNotes).where(eq(sessionNotes.id, id));
     return note || undefined;
+  }
+
+  async getSessionNoteById(sessionNoteId: string): Promise<SessionNote | null> {
+    const result = await pool.query(
+      'SELECT * FROM session_notes WHERE id = $1',
+      [sessionNoteId]
+    );
+    return result.rows[0] || null;
   }
 
   async getSessionNotesByEventId(eventId: string): Promise<SessionNote[]> {
@@ -668,7 +679,7 @@ export class DatabaseStorage implements IStorage {
   async updateAppointmentSessionPrep(appointmentId: string, sessionPrep: string): Promise<void> {
     await db
       .update(appointments)
-      .set({ 
+      .set({
         // sessionPrep: sessionPrep, // Remove this line as sessionPrep doesn't exist in schema
         updatedAt: new Date()
       })
@@ -706,7 +717,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async completeActionItem(id: string): Promise<ActionItem> {
-    return await this.updateActionItem(id, { 
+    return await this.updateActionItem(id, {
       status: 'completed',
       completedAt: new Date()
     });
@@ -1222,13 +1233,13 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    const monthlyRevenue = monthlyBills.reduce((sum, bill) => 
+    const monthlyRevenue = monthlyBills.reduce((sum, bill) =>
       sum + parseFloat(bill.totalAmount || '0'), 0);
 
     // Get overdue payments count
     const overdueBills = await this.getOverdueBills(therapistId);
 
-    const completionRate = totalItems.count > 0 
+    const completionRate = totalItems.count > 0
       ? Math.round((completedItems.count / totalItems.count) * 100)
       : 0;
 
@@ -2152,7 +2163,7 @@ Respond in JSON format:
 
         // Check if we've already generated a check-in for this client recently
         const existingCheckins = await this.getClientCheckinsByClient(client.id);
-        const recentCheckin = existingCheckins.find(checkin => 
+        const recentCheckin = existingCheckins.find(checkin =>
           checkin.status !== 'archived' && checkin.status !== 'deleted' &&
           new Date(checkin.generatedAt).getTime() > Date.now() - (7 * 24 * 60 * 60 * 1000) // Within 7 days
         );
@@ -2266,8 +2277,8 @@ Respond with JSON:
         const result = JSON.parse(analysis);
         return {
           ...result,
-          triggerContext: { 
-            daysSinceSession: daysSinceLastSession, 
+          triggerContext: {
+            daysSinceSession: daysSinceLastSession,
             lastSessionDate: lastSession.createdAt,
             sessionCount: sessionNotes.length
           }
@@ -2362,9 +2373,9 @@ Jonathan`,
   async cleanupExpiredCheckins(): Promise<number> {
     try {
       const result = await pool.query(
-        `UPDATE client_checkins 
-         SET status = 'deleted', updated_at = NOW() 
-         WHERE expires_at < NOW() AND status = 'generated' 
+        `UPDATE client_checkins
+         SET status = 'deleted', updated_at = NOW()
+         WHERE expires_at < NOW() AND status = 'generated'
          RETURNING id`
       );
 
@@ -2432,12 +2443,12 @@ Jonathan`,
     try {
       // Querying for eventId
 
-    const result = await pool.query(
-      'SELECT * FROM action_items WHERE event_id = $1 ORDER BY created_at DESC',
-      [eventId]
-    );
+      const result = await pool.query(
+        'SELECT * FROM action_items WHERE event_id = $1 ORDER BY created_at DESC',
+        [eventId]
+      );
 
-    // Database query completed
+      // Database query completed
       return result.rows.map((row: any) => ({
         id: row.id,
         clientId: row.client_id,
@@ -2545,7 +2556,7 @@ Jonathan`,
             Return 6-10 most relevant tags. Be specific and clinically accurate.`
           },
           {
-            role: "user", 
+            role: "user",
             content: `Generate therapeutic tags for this progress note content:\n\n${content.substring(0, 3000)}`
           }
         ],
@@ -2559,7 +2570,7 @@ Jonathan`,
 
       // Ensure tags are strings and filter out empty ones
       const validTags = tags.filter((tag: any) => typeof tag === 'string' && tag.trim().length > 0)
-                           .slice(0, 10); // Limit to 10 tags
+        .slice(0, 10); // Limit to 10 tags
 
       console.log(`✅ Generated ${validTags.length} AI tags: ${validTags.join(', ')}`);
       return validTags;
@@ -2637,10 +2648,10 @@ Jonathan`,
     try {
       // Create the progress note
       const result = await pool.query(
-        `INSERT INTO progress_notes 
-         (client_id, therapist_id, title, subjective, objective, assessment, plan, 
-          tonal_analysis, key_points, significant_quotes, narrative_summary, session_date, appointment_id, created_at, updated_at) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW()) 
+        `INSERT INTO progress_notes
+         (client_id, therapist_id, title, subjective, objective, assessment, plan,
+          tonal_analysis, key_points, significant_quotes, narrative_summary, session_date, appointment_id, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
          RETURNING *`,
         [
           data.clientId,
@@ -2697,9 +2708,9 @@ Jonathan`,
 
         // Create session note with unified narrative
         const sessionNoteResult = await pool.query(
-          `INSERT INTO session_notes 
-           (client_id, therapist_id, content, ai_summary, tags, appointment_id, created_at, updated_at) 
-           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) 
+          `INSERT INTO session_notes
+           (client_id, therapist_id, content, ai_summary, tags, appointment_id, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
            RETURNING *`,
           [
             data.clientId,
@@ -2741,10 +2752,10 @@ Jonathan`,
   async getProgressNotesByTherapist(therapistId: string): Promise<ProgressNote[]> {
     try {
       const result = await pool.query(
-        `SELECT pn.*, c.first_name, c.last_name 
-         FROM progress_notes pn 
-         LEFT JOIN clients c ON pn.client_id::text = c.id::text 
-         WHERE pn.therapist_id::text = $1 
+        `SELECT pn.*, c.first_name, c.last_name
+         FROM progress_notes pn
+         LEFT JOIN clients c ON pn.client_id::text = c.id::text
+         WHERE pn.therapist_id::text = $1
          ORDER BY pn.created_at DESC`,
         [therapistId]
       );
@@ -3005,7 +3016,7 @@ Jonathan`,
 
   async assignAssessmentToClient(assignment: InsertClientAssessment): Promise<ClientAssessment> {
     const [newAssignment] = await db.insert(clientAssessments).values(assignment).returning();
-    
+
     // Create audit log
     await this.createAssessmentAuditLog({
       userId: assignment.therapistId,
@@ -3016,7 +3027,7 @@ Jonathan`,
       entityId: newAssignment.id,
       details: { assessmentCatalogId: assignment.assessmentCatalogId }
     });
-    
+
     return newAssignment;
   }
 
@@ -3030,15 +3041,15 @@ Jonathan`,
   }
 
   async startClientAssessment(id: string): Promise<ClientAssessment> {
-    return await this.updateClientAssessment(id, { 
-      status: 'in_progress', 
-      startedDate: new Date() 
+    return await this.updateClientAssessment(id, {
+      status: 'in_progress',
+      startedDate: new Date()
     });
   }
 
   async completeClientAssessment(id: string, completedDate: Date): Promise<ClientAssessment> {
-    return await this.updateClientAssessment(id, { 
-      status: 'completed', 
+    return await this.updateClientAssessment(id, {
+      status: 'completed',
       completedDate,
       progressPercentage: 100
     });
@@ -3047,7 +3058,7 @@ Jonathan`,
   async sendAssessmentReminder(id: string): Promise<ClientAssessment> {
     const assessment = await this.getClientAssessment(id);
     if (!assessment) throw new Error('Assessment not found');
-    
+
     return await this.updateClientAssessment(id, {
       remindersSent: (assessment.remindersSent || 0) + 1,
       lastReminderSent: new Date()
@@ -3068,7 +3079,7 @@ Jonathan`,
 
   async createAssessmentResponse(response: InsertAssessmentResponse): Promise<AssessmentResponse> {
     const [newResponse] = await db.insert(assessmentResponses).values(response).returning();
-    
+
     // Create audit log
     await this.createAssessmentAuditLog({
       clientAssessmentId: response.clientAssessmentId,
@@ -3077,7 +3088,7 @@ Jonathan`,
       entityId: newResponse.id,
       details: { isPartialSubmission: response.isPartialSubmission }
     });
-    
+
     return newResponse;
   }
 
@@ -3104,7 +3115,7 @@ Jonathan`,
 
   async createAssessmentScore(score: InsertAssessmentScore): Promise<AssessmentScore> {
     const [newScore] = await db.insert(assessmentScores).values(score).returning();
-    
+
     // Create audit log
     await this.createAssessmentAuditLog({
       clientAssessmentId: score.clientAssessmentId,
@@ -3113,7 +3124,7 @@ Jonathan`,
       entityId: newScore.id,
       details: { scoreType: score.scoreType, scoreValue: score.scoreValue }
     });
-    
+
     return newScore;
   }
 
@@ -3183,7 +3194,7 @@ Jonathan`,
   async getRecentSessionNotes(therapistId: string, days: number): Promise<SessionNote[]> {
     const daysAgo = new Date();
     daysAgo.setDate(daysAgo.getDate() - days);
-    
+
     return await db
       .select()
       .from(sessionNotes)
@@ -3200,7 +3211,7 @@ Jonathan`,
   async getRecentAppointments(therapistId: string, days: number): Promise<Appointment[]> {
     const daysAgo = new Date();
     daysAgo.setDate(daysAgo.getDate() - days);
-    
+
     return await db
       .select()
       .from(appointments)
@@ -3220,7 +3231,7 @@ Jonathan`,
   async getRecentClients(therapistId: string, days: number): Promise<Client[]> {
     const daysAgo = new Date();
     daysAgo.setDate(daysAgo.getDate() - days);
-    
+
     return await db
       .select()
       .from(clients)
@@ -3237,7 +3248,7 @@ Jonathan`,
   async getRecentCompletedActionItems(therapistId: string, days: number): Promise<ActionItem[]> {
     const daysAgo = new Date();
     daysAgo.setDate(daysAgo.getDate() - days);
-    
+
     return await db
       .select()
       .from(actionItems)

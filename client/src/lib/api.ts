@@ -159,10 +159,19 @@ export class ApiClient {
     await apiRequest('DELETE', `/api/session-notes/${id}`);
   }
 
-  static async generateSessionPrep(sessionNoteId: string, clientId: string): Promise<any> {
-    const response = await apiRequest('POST', '/api/ai/session-prep-from-note', {
-      sessionNoteId,
-      clientId
+  static async generateSessionPrep(sessionNoteId: string, clientId: string): Promise<{ appointmentsUpdated: number }> {
+    const response = await apiRequest('/api/session-prep/generate', {
+      method: 'POST',
+      body: JSON.stringify({ sessionNoteId, clientId }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return response.json();
+  }
+
+  static async generateSessionNoteTags(sessionNoteId: string): Promise<SessionNote> {
+    const response = await apiRequest(`/api/session-notes/${sessionNoteId}/generate-tags`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
     });
     return response.json();
   }
@@ -194,7 +203,7 @@ export class ApiClient {
 
   static async getTodaysAppointments(): Promise<Appointment[]> {
     const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-    
+
     try {
       // Use the hardcoded demo therapist ID consistently
       const therapistId = FALLBACK_THERAPIST_ID;
@@ -209,7 +218,7 @@ export class ApiClient {
         return dbAppointments;
       } catch (dbError) {
         console.warn('Database appointments fetch failed, falling back to calendar events');
-        
+
         // Fallback: Get Google Calendar events only if database fails
         try {
           const calendarResponse = await apiRequest('GET', '/api/oauth/events/today');
@@ -247,7 +256,7 @@ export class ApiClient {
 
   static async getAppointments(date?: string): Promise<Appointment[]> {
     const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-    
+
     // If asking for today's date, use the combined approach
     const today = new Date().toISOString().split('T')[0];
     if (date === today) {
@@ -263,7 +272,7 @@ export class ApiClient {
 
   static async createAppointment(appointment: Omit<Appointment, 'id'>): Promise<Appointment> {
     const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-    
+
     const response = await apiRequest('POST', '/api/appointments', {
       ...appointment,
       therapistId: FALLBACK_THERAPIST_ID
