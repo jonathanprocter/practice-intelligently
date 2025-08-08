@@ -5470,6 +5470,76 @@ Follow-up areas for next session:
     }
   });
 
+  // New calendar events endpoint that uses the working OAuth simple integration
+  app.get('/api/calendar/events/working', async (req, res) => {
+    try {
+      const { timeMin, timeMax, calendarId } = req.query;
+      
+      console.log('📅 API: Fetching calendar events via working OAuth simple integration');
+      
+      // Use the OAuth simple integration which is already successfully fetching events
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        console.log('❌ API: OAuth not connected, trying to get all events anyway');
+        // Try to get events even if not connected, since background service might be working
+      }
+      
+      // Get all calendars and their events
+      const allEvents: any[] = [];
+      
+      try {
+        const calendars = await simpleOAuth.getCalendars();
+        console.log(`📅 API: Found ${calendars.length} calendars`);
+        
+        for (const calendar of calendars) {
+          try {
+            const events = await simpleOAuth.getEvents(
+              calendar.id,
+              timeMin as string || '2015-01-01T00:00:00.000Z',
+              timeMax as string || '2030-12-31T23:59:59.999Z'
+            );
+            
+            if (events && events.length > 0) {
+              console.log(`📊 API: Got ${events.length} events from calendar ${calendar.summary}`);
+              // Transform events to match expected format
+              const transformedEvents = events.map((event: any) => ({
+                id: event.id,
+                title: event.summary || 'Appointment',
+                startTime: event.start?.dateTime || event.start?.date,
+                endTime: event.end?.dateTime || event.end?.date,
+                location: event.location || '',
+                description: event.description || '',
+                calendarId: calendar.id,
+                calendarName: calendar.summary
+              }));
+              allEvents.push(...transformedEvents);
+            }
+          } catch (eventError) {
+            console.log(`❌ API: Error getting events for calendar ${calendar.summary}:`, eventError);
+          }
+        }
+      } catch (calendarError) {
+        console.log('❌ API: Error getting calendars:', calendarError);
+      }
+      
+      // Filter by calendar if specified
+      let filteredEvents = allEvents;
+      if (calendarId && calendarId !== 'all') {
+        filteredEvents = allEvents.filter((event: any) => 
+          event.calendarId === calendarId || event.calendarName?.includes(calendarId as string)
+        );
+      }
+      
+      console.log(`✅ API: Returning ${filteredEvents.length} total events`);
+      return res.json(filteredEvents);
+      
+    } catch (error: any) {
+      console.error('❌ API: Error getting calendar events:', error);
+      res.json([]); // Return empty array instead of error to prevent frontend crashes
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -70,16 +70,15 @@ export default function Calendar() {
         const timeMax = recentEnd.toISOString();
         const calendarParam = selectedCalendarId === 'all' ? '' : `&calendarId=${selectedCalendarId}`;
 
-        // Try getting Simple Practice events specifically first
-        const simplePracticeCalendarId = '79dfcb90ce59b1b0345b24f5c8d342bd308eac9521d063a684a8bbd377f2b822@group.calendar.google.com';
-        const simplePracticeResponse = await fetch(`/api/calendar/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&calendarId=${simplePracticeCalendarId}`);
+        // Use the new working API endpoint
+        const workingResponse = await fetch(`/api/calendar/events/working?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}${calendarParam}`);
         
-        if (simplePracticeResponse.ok) {
-          const simplePracticeEvents = await simplePracticeResponse.json();
-          console.log(`Successfully loaded ${simplePracticeEvents.length} events from Simple Practice calendar`);
+        if (workingResponse.ok) {
+          const workingEvents = await workingResponse.json();
+          console.log(`🎉 Frontend: Successfully loaded ${workingEvents.length} events from working API`);
           
-          if (simplePracticeEvents.length > 0) {
-            return simplePracticeEvents.map((event: any) => ({
+          if (workingEvents.length > 0) {
+            return workingEvents.map((event: any) => ({
               id: event.id,
               title: event.title || event.summary || 'Appointment',
               startTime: new Date(event.startTime || event.start?.dateTime || event.start?.date),
@@ -90,27 +89,8 @@ export default function Calendar() {
               calendarName: event.calendarName || 'Simple Practice'
             }));
           }
-        }
-        
-        // Fallback: Get all calendar events
-        const allEventsResponse = await fetch(`/api/calendar/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}${calendarParam}`);
-
-        if (allEventsResponse.ok) {
-          const allEvents = await allEventsResponse.json();
-          console.log(`Successfully loaded ${allEvents.length} events from all calendars`);
-
-          if (allEvents.length > 0) {
-            return allEvents.map((event: any) => ({
-              id: event.id,
-              title: event.title || event.summary || 'Appointment',  
-              startTime: new Date(event.startTime || event.start?.dateTime || event.start?.date),
-              endTime: new Date(event.endTime || event.end?.dateTime || event.end?.date),
-              location: event.location || getCalendarLocationDisplay(event.startTime || event.start?.dateTime || event.start?.date),
-              description: event.description || '',
-              calendarId: event.calendarId || 'simple-practice',
-              calendarName: event.calendarName || 'Simple Practice'
-            }));
-          }
+        } else {
+          console.log('❌ Frontend: Working API failed, status:', workingResponse.status);
         }
 
         // Fallback: Get today's events from Simple Practice integration
