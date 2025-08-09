@@ -127,10 +127,54 @@ class SimpleOAuth {
     return this.isAuthenticated && this.tokens !== null;
   }
 
+  // Add automatic token refresh method
+  private async refreshTokensIfNeeded(): Promise<void> {
+    if (!this.tokens || !this.tokens.refresh_token) {
+      console.log('No refresh token available, need to re-authenticate');
+      this.isAuthenticated = false;
+      return;
+    }
+
+    // Check if token is expired or will expire soon (within 5 minutes)
+    const now = Date.now();
+    if (this.tokens.expiry_date && this.tokens.expiry_date > now + 5 * 60 * 1000) {
+      // Token is still valid for more than 5 minutes
+      return;
+    }
+
+    try {
+      console.log('Refreshing OAuth tokens...');
+      const { credentials } = await this.oauth2Client.refreshAccessToken();
+      
+      // Update tokens with new access token but preserve refresh token
+      this.tokens = {
+        ...this.tokens,
+        ...credentials,
+        refresh_token: this.tokens.refresh_token // Ensure refresh token is preserved
+      };
+      
+      this.oauth2Client.setCredentials(this.tokens);
+      await this.saveTokens(this.tokens);
+      this.isAuthenticated = true;
+      
+      console.log('Successfully refreshed OAuth tokens');
+    } catch (error: any) {
+      console.error('Failed to refresh tokens:', error.message);
+      // Clear invalid tokens
+      this.tokens = null;
+      this.isAuthenticated = false;
+      await this.clearTokens();
+      throw new Error('Token refresh failed. Please re-authenticate.');
+    }
+  }
+
   async getCalendars() {
     if (!this.isConnected()) {
       throw new Error('Not authenticated. Please complete OAuth flow first.');
     }
+
+    // Attempt to refresh tokens before making API call
+    await this.refreshTokensIfNeeded();
 
     try {
       const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
@@ -139,7 +183,8 @@ class SimpleOAuth {
       const response = await calendar.calendarList.list({
         maxResults: 250, // Increase to ensure we get all calendars and subcalendars
         showDeleted: false,
-        showHidden: false // Include hidden calendars that might contain subcalendars
+        showHidden: true, // CHANGED: Include hidden calendars that might contain subcalendars
+        minAccessRole: 'reader' // Ensure we only get calendars we can actually read from
       });
       
       const calendars = response.data.items || [];
@@ -147,7 +192,10 @@ class SimpleOAuth {
       // Enhanced logging to understand calendar structure
       console.log(`Found ${calendars.length} calendars including subcalendars:`);
       calendars.forEach((cal, index) => {
-        console.log(`  ${index + 1}. ${cal.summary} (${cal.id}) [${cal.accessRole}] ${cal.primary ? '[PRIMARY]' : ''}`);
+        const calendarType = cal.primary ? '[PRIMARY]' : 
+                           cal.id?.includes('@group.calendar.google.com') ? '[SUBCALENDAR]' :
+                           cal.id?.includes('@gmail.com') ? '[PERSONAL]' : '[OTHER]';
+        console.log(`  ${index + 1}. ${cal.summary} (${cal.id}) [${cal.accessRole}] ${calendarType}`);
       });
       
       return calendars;
@@ -165,6 +213,9 @@ class SimpleOAuth {
     if (!this.isConnected()) {
       throw new Error('Not authenticated. Please complete OAuth flow first.');
     }
+
+    // Attempt to refresh tokens before making API call
+    await this.refreshTokensIfNeeded();
 
     try {
       const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });

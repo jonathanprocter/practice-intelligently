@@ -100,6 +100,26 @@ export default function CalendarIntegration() {
     window.location.href = '/api/auth/google';
   };
 
+  const refreshTokens = async () => {
+    try {
+      const response = await fetch('/api/auth/google/refresh', { method: 'POST' });
+      if (response.ok) {
+        refetchStatus();
+        alert('Tokens refreshed successfully!');
+      } else {
+        const error = await response.json();
+        alert('Token refresh failed. Please reconnect your Google Calendar.');
+        if (error.requiresAuth) {
+          connectToGoogle();
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing tokens:', error);
+      alert('Failed to refresh tokens. Please reconnect your Google Calendar.');
+      connectToGoogle();
+    }
+  };
+
   const formatEventTime = (dateTimeStr: string) => {
     return new Date(dateTimeStr).toLocaleString();
   };
@@ -172,6 +192,17 @@ export default function CalendarIntegration() {
               </div>
             </div>
             <div className="flex items-center space-x-2">
+              {connectionStatus?.connected && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={refreshTokens}
+                  className="mr-2"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Refresh Tokens
+                </Button>
+              )}
               <Badge variant={connectionStatus?.connected ? "default" : "outline"}>
                 {connectionStatus?.connected ? 'Connected' : 'Disconnected'}
               </Badge>

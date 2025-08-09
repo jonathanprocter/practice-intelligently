@@ -1485,6 +1485,25 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
     }
   });
 
+  // Add Google Calendar token refresh endpoint
+  app.post('/api/auth/google/refresh', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      // Force refresh tokens
+      await (simpleOAuth as any).refreshTokensIfNeeded();
+      
+      if (simpleOAuth.isConnected()) {
+        res.json({ success: true, message: 'Tokens refreshed successfully' });
+      } else {
+        res.status(401).json({ error: 'Failed to refresh tokens. Please re-authenticate.', requiresAuth: true });
+      }
+    } catch (error: any) {
+      console.error('Token refresh error:', error);
+      res.status(401).json({ error: 'Token refresh failed. Please re-authenticate.', requiresAuth: true });
+    }
+  });
+
   // Enhanced Calendar sync endpoints - fetches from ALL calendars and subcalendars AND creates appointments
   app.post('/api/calendar/sync', async (req, res) => {
     try {
@@ -1492,6 +1511,14 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
 
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+
+      // Try to refresh tokens before sync
+      try {
+        await (simpleOAuth as any).refreshTokensIfNeeded();
+      } catch (tokenError: any) {
+        console.error('Token refresh failed during sync:', tokenError);
+        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
       }
 
       // Get ALL calendars and subcalendars first
@@ -1595,6 +1622,14 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
 
         if (!simpleOAuth.isConnected()) {
           return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+        }
+
+        // Try to refresh tokens before fetching events
+        try {
+          await (simpleOAuth as any).refreshTokensIfNeeded();
+        } catch (tokenError: any) {
+          console.error('Token refresh failed during hybrid event fetch:', tokenError);
+          return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
         }
 
         const events = await simpleOAuth.getEvents(
@@ -3229,10 +3264,31 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
 
+      // Try to refresh tokens before fetching calendars
+      try {
+        await (simpleOAuth as any).refreshTokensIfNeeded();
+      } catch (tokenError: any) {
+        console.error('Token refresh failed during calendar list fetch:', tokenError);
+        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
+      }
+
       const calendars = await simpleOAuth.getCalendars();
+      
+      // Log calendar information for debugging
+      console.log(`📅 Retrieved ${calendars.length} calendars including subcalendars:`);
+      calendars.forEach((cal: any, index: number) => {
+        const calType = cal.primary ? 'PRIMARY' : 
+                       cal.id?.includes('@group.calendar.google.com') ? 'SUBCALENDAR' :
+                       'PERSONAL';
+        console.log(`  ${index + 1}. "${cal.summary}" (${calType}) - Access: ${cal.accessRole}`);
+      });
+      
       res.json(calendars);
     } catch (error: any) {
       console.error('Error getting calendars:', error);
+      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
+        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
+      }
       res.status(500).json({ error: 'Failed to get calendars', details: error.message });
     }
   });
