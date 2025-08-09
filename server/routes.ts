@@ -3480,6 +3480,37 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     }
   });
 
+  // Google OAuth callback endpoint
+  app.get('/api/auth/google/callback', async (req, res) => {
+    try {
+      const { code, error, state } = req.query;
+      
+      if (error) {
+        console.error('OAuth authorization error:', error);
+        return res.redirect(`/calendar-integration?error=${encodeURIComponent('Authorization failed. Please try again.')}`);
+      }
+      
+      if (!code) {
+        return res.redirect(`/calendar-integration?error=${encodeURIComponent('No authorization code received.')}`);
+      }
+
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      try {
+        await simpleOAuth.exchangeCodeForTokens(code as string);
+        console.log('✅ OAuth callback successful - tokens exchanged and saved');
+        return res.redirect('/calendar-integration?success=true&message=Successfully connected to Google Calendar');
+      } catch (tokenError: any) {
+        console.error('❌ OAuth token exchange failed:', tokenError);
+        return res.redirect(`/calendar-integration?error=${encodeURIComponent('Failed to complete authentication. Please try again.')}`);
+      }
+      
+    } catch (error: any) {
+      console.error('OAuth callback error:', error);
+      res.redirect(`/calendar-integration?error=${encodeURIComponent('Authentication failed. Please try again.')}`);
+    }
+  });
+
   app.get('/api/auth/google', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');

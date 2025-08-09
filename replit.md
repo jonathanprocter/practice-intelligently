@@ -68,3 +68,17 @@ Client requests from the React frontend are processed by the Express backend, in
 ### Development Tools
 - **Drizzle Kit**: Database schema management and migrations.
 - **ESBuild**: Server-side code bundling for production.
+
+## Recent Changes
+
+### Google Calendar Integration Fixed (August 9, 2025)
+- **Issue**: Google Calendar tokens expired causing "invalid_grant" error and 0 events syncing
+- **Root Cause**: OAuth refresh tokens expired, preventing calendar access and subcalendar synchronization
+- **Solution Implemented**: 
+  - Added automatic token refresh functionality with `refreshTokensIfNeeded()` method
+  - Enhanced subcalendar detection (shows PRIMARY, SUBCALENDAR, PERSONAL types in logs)
+  - Added `/api/auth/google/refresh` endpoint for manual token refresh
+  - Added missing OAuth callback endpoint `/api/auth/google/callback` with proper error handling
+  - Improved error handling across all calendar endpoints with authentication retry logic
+  - Updated Calendar Integration UI with token refresh button and clearer status messages
+- **Status**: Fixed - User needs to visit OAuth URL to reconnect Google Calendar authentication
