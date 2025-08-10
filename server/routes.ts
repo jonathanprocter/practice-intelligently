@@ -3436,17 +3436,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       
       for (const calendar of calendars) {
         try {
-          // Get events from past year to future 2 years for practical sync
-          const timeMin = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
-          const timeMax = new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString();
+          // Get comprehensive historical events - 2010 to 2035
+          const timeMin = new Date('2010-01-01T00:00:00.000Z').toISOString();
+          const timeMax = new Date('2035-12-31T23:59:59.999Z').toISOString();
           
-          const events = await simpleOAuth.getEvents(calendar.id, {
-            timeMin,
-            timeMax,
-            maxResults: 2500, // Reasonable limit per calendar
-            singleEvents: true,
-            orderBy: 'startTime'
-          });
+          const events = await simpleOAuth.getEvents(calendar.id, timeMin, timeMax);
 
           console.log(`📅 Syncing ${events.length} events from ${calendar.summary}...`);
 
