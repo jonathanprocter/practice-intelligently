@@ -1,7 +1,7 @@
 import {
   users, clients, appointments, sessionNotes, sessionPrepNotes, clientCheckins, actionItems, treatmentPlans, aiInsights,
   billingRecords, assessments, progressNotes, medications, communicationLogs, documents, auditLogs,
-  compassConversations, compassMemory, sessionRecommendations,
+  compassConversations, compassMemory, sessionRecommendations, calendarEvents,
   assessmentCatalog, clientAssessments, assessmentResponses, assessmentScores, assessmentPackages, assessmentAuditLog,
   type User, type InsertUser, type Client, type InsertClient, type Appointment, type InsertAppointment,
   type SessionNote, type InsertSessionNote, type SessionPrepNote, type InsertSessionPrepNote,
@@ -12,12 +12,13 @@ import {
   type CommunicationLog, type InsertCommunicationLog, type Document, type InsertDocument,
   type AuditLog, type InsertAuditLog, type CompassConversation, type InsertCompassConversation,
   type CompassMemory, type InsertCompassMemory, type SessionRecommendation, type InsertSessionRecommendation,
+  type CalendarEvent, type InsertCalendarEvent,
   type AssessmentCatalog, type InsertAssessmentCatalog, type ClientAssessment, type InsertClientAssessment,
   type AssessmentResponse, type InsertAssessmentResponse, type AssessmentScore, type InsertAssessmentScore,
   type AssessmentPackage, type InsertAssessmentPackage, type AssessmentAuditLog, type InsertAssessmentAuditLog
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, desc, and, gte, lte, count, like, or, sql } from "drizzle-orm";
+import { eq, desc, and, gte, lte, count, like, or, sql, asc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import OpenAI from 'openai';
 
@@ -257,6 +258,14 @@ export interface IStorage {
     patterns: any;
     frequentQueries: any;
   }>;
+
+  // Calendar Events methods
+  getCalendarEvents(therapistId: string, startDate?: Date, endDate?: Date): Promise<CalendarEvent[]>;
+  getCalendarEvent(id: string): Promise<CalendarEvent | undefined>;
+  getCalendarEventByGoogleId(googleEventId: string): Promise<CalendarEvent | undefined>;
+  upsertCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent>;
+  deleteCalendarEvent(id: string): Promise<void>;
+  syncCalendarEvents(events: InsertCalendarEvent[]): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3464,6 +3473,77 @@ Generate recommendations in the following JSON format:
       console.error('Error generating session recommendations:', error);
       throw error;
     }
+  }
+
+  // Calendar Events methods
+  async getCalendarEvents(therapistId: string, startDate?: Date, endDate?: Date): Promise<CalendarEvent[]> {
+    let query = db.select().from(calendarEvents).where(eq(calendarEvents.therapistId, therapistId));
+    
+    if (startDate && endDate) {
+      query = query.where(
+        and(
+          gte(calendarEvents.startTime, startDate),
+          lte(calendarEvents.startTime, endDate)
+        )
+      );
+    }
+    
+    return await query.orderBy(asc(calendarEvents.startTime));
+  }
+
+  async getCalendarEvent(id: string): Promise<CalendarEvent | undefined> {
+    const [event] = await db.select().from(calendarEvents).where(eq(calendarEvents.id, id));
+    return event || undefined;
+  }
+
+  async getCalendarEventByGoogleId(googleEventId: string): Promise<CalendarEvent | undefined> {
+    const [event] = await db.select().from(calendarEvents).where(eq(calendarEvents.googleEventId, googleEventId));
+    return event || undefined;
+  }
+
+  async upsertCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent> {
+    // Try to find existing event by Google Event ID
+    const existingEvent = await this.getCalendarEventByGoogleId(event.googleEventId);
+    
+    if (existingEvent) {
+      // Update existing event
+      const [updatedEvent] = await db
+        .update(calendarEvents)
+        .set({ 
+          ...event,
+          lastSyncTime: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(calendarEvents.id, existingEvent.id))
+        .returning();
+      return updatedEvent;
+    } else {
+      // Create new event
+      const [newEvent] = await db
+        .insert(calendarEvents)
+        .values(event)
+        .returning();
+      return newEvent;
+    }
+  }
+
+  async deleteCalendarEvent(id: string): Promise<void> {
+    await db.delete(calendarEvents).where(eq(calendarEvents.id, id));
+  }
+
+  async syncCalendarEvents(events: InsertCalendarEvent[]): Promise<number> {
+    let syncedCount = 0;
+    
+    for (const event of events) {
+      try {
+        await this.upsertCalendarEvent(event);
+        syncedCount++;
+      } catch (error) {
+        console.error('Error syncing calendar event:', error);
+      }
+    }
+    
+    return syncedCount;
   }
 }
 

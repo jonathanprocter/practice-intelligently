@@ -1,35 +1,27 @@
 {
-  "audit_timestamp": "2025-08-10T20:15:59.106757",
+  "audit_timestamp": "2025-08-10T20:18:19.239933",
   "summary": {
-    "passed_checks": 40,
+    "passed_checks": 43,
     "warnings": 1,
-    "critical_issues": 1,
+    "critical_issues": 0,
     "other_issues": 1,
     "recommendations": 2
   },
-  "critical_issues": [
-    {
-      "category": "OAUTH",
-      "severity": "CRITICAL",
-      "description": "Google OAuth not authenticated",
-      "fix": "Complete OAuth flow at /oauth-simple or /oauth-debug",
-      "timestamp": "2025-08-10T20:15:57.501663"
-    }
-  ],
+  "critical_issues": [],
   "issues": [
     {
       "category": "DATABASE",
       "severity": "HIGH",
       "description": "calendar_events missing column: title",
       "fix": "Add column title to calendar_events table",
-      "timestamp": "2025-08-10T20:15:57.570384"
+      "timestamp": "2025-08-10T20:18:17.488375"
     }
   ],
   "warnings": [
     {
       "category": "DATABASE",
       "description": "No calendar events found in database - may need to sync from Google Calendar",
-      "timestamp": "2025-08-10T20:15:57.590068"
+      "timestamp": "2025-08-10T20:18:17.509214"
     }
   ],
   "recommendations": [
@@ -37,215 +29,230 @@
       "category": "LOGGING",
       "description": "Implement comprehensive error logging for calendar operations",
       "priority": "HIGH",
-      "timestamp": "2025-08-10T20:15:59.106674"
+      "timestamp": "2025-08-10T20:18:19.236234"
     },
     {
       "category": "MONITORING",
       "description": "Set up monitoring alerts for calendar API failures",
       "priority": "MEDIUM",
-      "timestamp": "2025-08-10T20:15:59.106677"
+      "timestamp": "2025-08-10T20:18:19.236248"
     }
   ],
   "passed_checks": [
     {
       "category": "DATABASE",
       "description": "Successfully connected to PostgreSQL database",
-      "timestamp": "2025-08-10T20:15:57.493584"
+      "timestamp": "2025-08-10T20:18:17.410561"
     },
     {
       "category": "ENVIRONMENT",
       "description": "DATABASE_URL is set",
-      "timestamp": "2025-08-10T20:15:57.493625"
+      "timestamp": "2025-08-10T20:18:17.410668"
     },
     {
       "category": "ENVIRONMENT",
       "description": "GOOGLE_CLIENT_ID is set",
-      "timestamp": "2025-08-10T20:15:57.493630"
+      "timestamp": "2025-08-10T20:18:17.410674"
     },
     {
       "category": "ENVIRONMENT",
       "description": "GOOGLE_CLIENT_SECRET is set",
-      "timestamp": "2025-08-10T20:15:57.493633"
+      "timestamp": "2025-08-10T20:18:17.410678"
     },
     {
       "category": "ENVIRONMENT",
       "description": "GOOGLE_API_KEY is set",
-      "timestamp": "2025-08-10T20:15:57.493636"
+      "timestamp": "2025-08-10T20:18:17.410681"
     },
     {
       "category": "ENVIRONMENT",
       "description": "GEMINI_API_KEY is set",
-      "timestamp": "2025-08-10T20:15:57.493639"
+      "timestamp": "2025-08-10T20:18:17.410684"
     },
     {
       "category": "ENVIRONMENT",
       "description": "OPENAI_API_KEY is set",
-      "timestamp": "2025-08-10T20:15:57.493642"
+      "timestamp": "2025-08-10T20:18:17.410687"
+    },
+    {
+      "category": "OAUTH",
+      "description": "Google OAuth is authenticated",
+      "timestamp": "2025-08-10T20:18:17.418120"
+    },
+    {
+      "category": "OAUTH",
+      "description": "Required scope granted: https://www.googleapis.com/auth/calendar.readonly",
+      "timestamp": "2025-08-10T20:18:17.418127"
+    },
+    {
+      "category": "OAUTH",
+      "description": "Required scope granted: https://www.googleapis.com/auth/calendar.events",
+      "timestamp": "2025-08-10T20:18:17.418129"
     },
     {
       "category": "DATABASE",
       "description": "Table 'calendar_events' exists",
-      "timestamp": "2025-08-10T20:15:57.543263"
+      "timestamp": "2025-08-10T20:18:17.461364"
     },
     {
       "category": "DATABASE",
       "description": "Table 'appointments' exists",
-      "timestamp": "2025-08-10T20:15:57.543270"
+      "timestamp": "2025-08-10T20:18:17.461377"
     },
     {
       "category": "DATABASE",
       "description": "Table 'clients' exists",
-      "timestamp": "2025-08-10T20:15:57.543272"
+      "timestamp": "2025-08-10T20:18:17.461379"
     },
     {
       "category": "DATABASE",
       "description": "Table 'users' exists",
-      "timestamp": "2025-08-10T20:15:57.543274"
+      "timestamp": "2025-08-10T20:18:17.461380"
     },
     {
       "category": "DATABASE",
       "description": "calendar_events has column 'id'",
-      "timestamp": "2025-08-10T20:15:57.570376"
+      "timestamp": "2025-08-10T20:18:17.488360"
     },
     {
       "category": "DATABASE",
       "description": "calendar_events has column 'start_time'",
-      "timestamp": "2025-08-10T20:15:57.570387"
+      "timestamp": "2025-08-10T20:18:17.488381"
     },
     {
       "category": "DATABASE",
       "description": "calendar_events has column 'end_time'",
-      "timestamp": "2025-08-10T20:15:57.570391"
+      "timestamp": "2025-08-10T20:18:17.488388"
     },
     {
       "category": "DATABASE",
       "description": "calendar_events has column 'client_id'",
-      "timestamp": "2025-08-10T20:15:57.570393"
+      "timestamp": "2025-08-10T20:18:17.488391"
     },
     {
       "category": "DATABASE",
       "description": "calendar_events has column 'therapist_id'",
-      "timestamp": "2025-08-10T20:15:57.570394"
+      "timestamp": "2025-08-10T20:18:17.488393"
     },
     {
       "category": "DATABASE",
       "description": "calendar_events has column 'google_event_id'",
-      "timestamp": "2025-08-10T20:15:57.570395"
+      "timestamp": "2025-08-10T20:18:17.488396"
     },
     {
       "category": "DATABASE",
       "description": "calendar_events has column 'google_calendar_id'",
-      "timestamp": "2025-08-10T20:15:57.570397"
+      "timestamp": "2025-08-10T20:18:17.488399"
     },
     {
       "category": "GOOGLE_API",
       "description": "Successfully fetched 4 calendars",
-      "timestamp": "2025-08-10T20:15:57.684033"
+      "timestamp": "2025-08-10T20:18:17.613915"
     },
     {
       "category": "GOOGLE_API",
       "description": "Available calendar: Holidays in United States (en.usa#holiday@group.v.calendar.google.com)",
-      "timestamp": "2025-08-10T20:15:57.684044"
+      "timestamp": "2025-08-10T20:18:17.613929"
     },
     {
       "category": "GOOGLE_API",
       "description": "Available calendar: Simple Practice (79dfcb90ce59b1b0345b24f5c8d342bd308eac9521d063a684a8bbd377f2b822@group.calendar.google.com)",
-      "timestamp": "2025-08-10T20:15:57.684052"
+      "timestamp": "2025-08-10T20:18:17.613932"
     },
     {
       "category": "GOOGLE_API",
       "description": "Successfully fetched 142 events from calendar",
-      "timestamp": "2025-08-10T20:15:57.884873"
+      "timestamp": "2025-08-10T20:18:17.826029"
     },
     {
       "category": "GOOGLE_API",
       "description": "Event has required field: id",
-      "timestamp": "2025-08-10T20:15:57.884885"
+      "timestamp": "2025-08-10T20:18:17.826040"
     },
     {
       "category": "GOOGLE_API",
       "description": "Event has required field: summary",
-      "timestamp": "2025-08-10T20:15:57.884886"
+      "timestamp": "2025-08-10T20:18:17.826042"
     },
     {
       "category": "GOOGLE_API",
       "description": "Event has required field: start",
-      "timestamp": "2025-08-10T20:15:57.884888"
+      "timestamp": "2025-08-10T20:18:17.826043"
     },
     {
       "category": "GOOGLE_API",
       "description": "Event has required field: end",
-      "timestamp": "2025-08-10T20:15:57.884891"
+      "timestamp": "2025-08-10T20:18:17.826046"
     },
     {
       "category": "GOOGLE_API",
       "description": "Found 124 appointment events",
-      "timestamp": "2025-08-10T20:15:57.884918"
+      "timestamp": "2025-08-10T20:18:17.826074"
     },
     {
       "category": "GOOGLE_API",
       "description": "Available calendar: Google (jonathan.procter@gmail.com)",
-      "timestamp": "2025-08-10T20:15:57.885232"
+      "timestamp": "2025-08-10T20:18:17.826370"
     },
     {
       "category": "GOOGLE_API",
       "description": "Available calendar: TrevorAI (c2ffec13aa77af8e71cac14a327928e34da57bddaadf18c4e0f669827e1454ff@group.calendar.google.com)",
-      "timestamp": "2025-08-10T20:15:57.885240"
+      "timestamp": "2025-08-10T20:18:17.826380"
     },
     {
       "category": "API_ENDPOINTS",
       "description": "Health check endpoint is accessible",
-      "timestamp": "2025-08-10T20:15:57.888653"
+      "timestamp": "2025-08-10T20:18:17.829708"
     },
     {
       "category": "API_ENDPOINTS",
       "description": "OAuth status endpoint is accessible",
-      "timestamp": "2025-08-10T20:15:57.892133"
+      "timestamp": "2025-08-10T20:18:17.832990"
     },
     {
       "category": "API_ENDPOINTS",
       "description": "Calendar list endpoint is accessible",
-      "timestamp": "2025-08-10T20:15:57.993465"
+      "timestamp": "2025-08-10T20:18:17.969190"
     },
     {
       "category": "API_ENDPOINTS",
       "description": "Calendar events endpoint is accessible",
-      "timestamp": "2025-08-10T20:15:58.422659"
+      "timestamp": "2025-08-10T20:18:18.475789"
     },
     {
       "category": "API_ENDPOINTS",
       "description": "Dashboard stats is accessible",
-      "timestamp": "2025-08-10T20:15:59.100852"
+      "timestamp": "2025-08-10T20:18:19.229514"
     },
     {
       "category": "FRONTEND",
       "description": "Calendar page is accessible",
-      "timestamp": "2025-08-10T20:15:59.106350"
+      "timestamp": "2025-08-10T20:18:19.235816"
     },
     {
       "category": "FRONTEND",
       "description": "Frontend file exists: client/src/pages/calendar.tsx",
-      "timestamp": "2025-08-10T20:15:59.106432"
+      "timestamp": "2025-08-10T20:18:19.235866"
     },
     {
       "category": "FRONTEND",
       "description": "Frontend file exists: client/src/components/calendar/WeeklyCalendarGrid.tsx",
-      "timestamp": "2025-08-10T20:15:59.106474"
+      "timestamp": "2025-08-10T20:18:19.235908"
     },
     {
       "category": "FRONTEND",
       "description": "Frontend file exists: client/src/components/calendar/DailyView.tsx",
-      "timestamp": "2025-08-10T20:15:59.106509"
+      "timestamp": "2025-08-10T20:18:19.235942"
     },
     {
       "category": "FRONTEND",
       "description": "Frontend file exists: client/src/types/calendar.ts",
-      "timestamp": "2025-08-10T20:15:59.106550"
+      "timestamp": "2025-08-10T20:18:19.235975"
     },
     {
       "category": "FRONTEND",
       "description": "Frontend file exists: client/src/utils/dateUtils.ts",
-      "timestamp": "2025-08-10T20:15:59.106584"
+      "timestamp": "2025-08-10T20:18:19.236008"
     }
   ]
 }

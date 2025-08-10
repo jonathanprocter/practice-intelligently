@@ -216,7 +216,7 @@ class CalendarAuditor:
                 columns = cursor.fetchall()
                 
                 required_columns = [
-                    "id", "title", "start_time", "end_time", "client_id", 
+                    "id", "summary", "start_time", "end_time", "client_id", 
                     "therapist_id", "google_event_id", "google_calendar_id"
                 ]
                 
@@ -239,7 +239,7 @@ class CalendarAuditor:
                 
                 # Sample recent events
                 cursor.execute("""
-                    SELECT id, title, start_time, google_event_id, created_at 
+                    SELECT id, summary, start_time, google_event_id, created_at 
                     FROM calendar_events 
                     ORDER BY created_at DESC 
                     LIMIT 5

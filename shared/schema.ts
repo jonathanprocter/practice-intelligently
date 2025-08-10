@@ -1002,6 +1002,13 @@ export const insertCompassMemorySchema = createInsertSchema(compassMemory).omit(
   updatedAt: true,
 });
 
+export const insertCalendarEventSchema = createInsertSchema(calendarEvents).omit({
+  id: true,
+  lastSyncTime: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Assessment Management System Insert Schemas
 export const insertAssessmentCatalogSchema = createInsertSchema(assessmentCatalog).omit({
   id: true,
@@ -1078,6 +1085,8 @@ export type CompassConversation = typeof compassConversations.$inferSelect;
 export type InsertCompassConversation = z.infer<typeof insertCompassConversationSchema>;
 export type CompassMemory = typeof compassMemory.$inferSelect;
 export type InsertCompassMemory = z.infer<typeof insertCompassMemorySchema>;
+export type CalendarEvent = typeof calendarEvents.$inferSelect;
+export type InsertCalendarEvent = z.infer<typeof insertCalendarEventSchema>;
 
 // Assessment Management System Types
 export type AssessmentCatalog = typeof assessmentCatalog.$inferSelect;

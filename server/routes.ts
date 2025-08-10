@@ -1647,7 +1647,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
   });
 
   // Enhanced Calendar sync endpoints - fetches from ALL calendars and subcalendars AND creates appointments
-  app.post('/api/calendar/sync', async (req, res) => {
+  app.post('/api/calendar/sync/appointments', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
 
@@ -3418,6 +3418,90 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       res.status(500).json({ error: 'Failed to create session prep note', details: error.message });
     }
   });
+  // Calendar Events Sync Endpoint - Sync Google Calendar events to database
+  app.post('/api/calendar/sync', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected' });
+      }
+
+      console.log('🔄 Starting calendar events sync to database...');
+      
+      // Get comprehensive events from all calendars
+      const calendars = await simpleOAuth.getCalendars();
+      let totalSynced = 0;
+      let errors = [];
+      
+      for (const calendar of calendars) {
+        try {
+          // Get events from past year to future 2 years for practical sync
+          const timeMin = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
+          const timeMax = new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString();
+          
+          const events = await simpleOAuth.getEvents(calendar.id, {
+            timeMin,
+            timeMax,
+            maxResults: 2500, // Reasonable limit per calendar
+            singleEvents: true,
+            orderBy: 'startTime'
+          });
+
+          console.log(`📅 Syncing ${events.length} events from ${calendar.summary}...`);
+
+          for (const event of events) {
+            try {
+              const eventData = {
+                googleEventId: event.id,
+                googleCalendarId: calendar.id,
+                calendarName: calendar.summary,
+                therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', // Default therapist ID
+                summary: event.summary || 'Untitled Event',
+                description: event.description || '',
+                startTime: new Date(event.start?.dateTime || event.start?.date),
+                endTime: new Date(event.end?.dateTime || event.end?.date),
+                timeZone: event.start?.timeZone || 'America/New_York',
+                location: event.location || '',
+                status: event.status || 'confirmed',
+                attendees: event.attendees || [],
+                isAllDay: !event.start?.dateTime, // All day if no specific time
+                recurringEventId: event.recurringEventId || null
+              };
+
+              // Insert or update event in database
+              await storage.upsertCalendarEvent(eventData);
+              totalSynced++;
+            } catch (eventError: any) {
+              console.error(`Error syncing event ${event.id}:`, eventError.message);
+              errors.push(`Event ${event.summary}: ${eventError.message}`);
+            }
+          }
+        } catch (calendarError: any) {
+          console.error(`Error syncing calendar ${calendar.summary}:`, calendarError.message);
+          errors.push(`Calendar ${calendar.summary}: ${calendarError.message}`);
+        }
+      }
+
+      console.log(`✅ Calendar sync complete! Synced ${totalSynced} events`);
+      
+      res.json({
+        success: true,
+        totalSynced,
+        calendars: calendars.length,
+        errors: errors.length > 0 ? errors : null,
+        message: `Successfully synced ${totalSynced} events from ${calendars.length} calendars`
+      });
+
+    } catch (error: any) {
+      console.error('❌ Calendar sync error:', error);
+      res.status(500).json({ 
+        error: 'Failed to sync calendar events', 
+        details: error.message 
+      });
+    }
+  });
+
   // ========== CALENDAR API ROUTES (Auto-generated) ==========
 
   // Calendar events for a specific therapist (frontend compatibility)
@@ -3584,7 +3668,65 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       res.status(500).json({ error: 'Failed to get calendars', details: error.message });
     }
   });
+  // New database-first calendar events endpoint
   app.get('/api/calendar/events', async (req, res) => {
+    try {
+      const { timeMin, timeMax } = req.query;
+      const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'; // Default therapist ID
+      
+      console.log(`📅 Frontend requesting calendar events from DATABASE for therapist: ${therapistId}`);
+      
+      // Parse timeMin and timeMax parameters
+      let startDate: Date | undefined;
+      let endDate: Date | undefined;
+      
+      if (timeMin) {
+        startDate = new Date(timeMin as string);
+        console.log(`📅 Filtering events from: ${startDate.toISOString()}`);
+      }
+      
+      if (timeMax) {
+        endDate = new Date(timeMax as string);
+        console.log(`📅 Filtering events to: ${endDate.toISOString()}`);
+      }
+      
+      // Get events from database
+      const dbEvents = await storage.getCalendarEvents(therapistId, startDate, endDate);
+      console.log(`📊 Found ${dbEvents.length} events in database`);
+      
+      // Transform database events to match Google Calendar API format for frontend compatibility
+      const transformedEvents = dbEvents.map((event: any) => ({
+        id: event.googleEventId,
+        summary: event.summary,
+        description: event.description,
+        start: event.isAllDay 
+          ? { date: event.startTime.toISOString().split('T')[0] }
+          : { dateTime: event.startTime.toISOString(), timeZone: event.timeZone },
+        end: event.isAllDay
+          ? { date: event.endTime.toISOString().split('T')[0] }
+          : { dateTime: event.endTime.toISOString(), timeZone: event.timeZone },
+        location: event.location,
+        status: event.status,
+        attendees: Array.isArray(event.attendees) ? event.attendees : [],
+        recurringEventId: event.recurringEventId,
+        calendarId: event.googleCalendarId,
+        calendarName: event.calendarName,
+        // Add database metadata
+        dbId: event.id,
+        lastSyncTime: event.lastSyncTime,
+        source: 'database'
+      }));
+      
+      console.log(`✅ Returning ${transformedEvents.length} events from database`);
+      res.json(transformedEvents);
+    } catch (error: any) {
+      console.error('Error getting calendar events from database:', error);
+      res.status(500).json({ error: 'Failed to get calendar events from database', details: error.message });
+    }
+  });
+
+  // Fallback endpoint to fetch directly from Google Calendar API (for emergency use)
+  app.get('/api/calendar/events/google', async (req, res) => {
     try {
       const { timeMin, timeMax, calendarId } = req.query;
       const { simpleOAuth } = await import('./oauth-simple');
@@ -3606,7 +3748,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       if (!calendarId || calendarId === 'all') {
         // Fetch from ALL calendars when no specific calendar is requested
         const calendars = await simpleOAuth.getCalendars();
-        console.log(`📅 Frontend requesting events from ALL ${calendars.length} calendars`);
+        console.log(`📅 Frontend requesting events from ALL ${calendars.length} calendars (GOOGLE API DIRECT)`);
 
         for (const calendar of calendars) {
           try {
@@ -3621,7 +3763,8 @@ I can help you analyze this data, provide insights, and assist with clinical dec
               const eventsWithCalendar = events.map((event: any) => ({
                 ...event,
                 calendarId: calendar.id,
-                calendarName: calendar.summary
+                calendarName: calendar.summary,
+                source: 'google-api'
               }));
               allEvents = allEvents.concat(eventsWithCalendar);
               console.log(`  ✅ Found ${events.length} events in calendar: ${calendar.summary}`);
@@ -3633,10 +3776,10 @@ I can help you analyze this data, provide insights, and assist with clinical dec
           }
         }
         
-        console.log(`📊 Total events from all calendars: ${allEvents.length}`);
+        console.log(`📊 Total events from all calendars (GOOGLE API): ${allEvents.length}`);
       } else {
         // Fetch from specific calendar
-        console.log(`📅 Fetching events from specific calendar: ${calendarId}`);
+        console.log(`📅 Fetching events from specific calendar: ${calendarId} (GOOGLE API DIRECT)`);
         const events = await simpleOAuth.getEvents(
           calendarId as string,
           timeMin as string,
@@ -3648,11 +3791,11 @@ I can help you analyze this data, provide insights, and assist with clinical dec
 
       res.json(allEvents);
     } catch (error: any) {
-      console.error('Error getting calendar events:', error);
+      console.error('Error getting calendar events from Google API:', error);
       if (error.message?.includes('authentication') || error.message?.includes('expired')) {
         return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
       }
-      res.status(500).json({ error: 'Failed to get calendar events', details: error.message });
+      res.status(500).json({ error: 'Failed to get calendar events from Google API', details: error.message });
     }
   });
   app.get('/api/calendar/events/:eventId/:calendarId', async (req, res) => {
