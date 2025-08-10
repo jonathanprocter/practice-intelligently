@@ -1140,11 +1140,11 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
         message: `Successfully processed ${results.created} therapy sessions for ${results.matched} clients`
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error processing comprehensive progress notes:", error);
       res.status(500).json({ 
         error: "Failed to process progress notes",
-        details: error.message 
+        details: error?.message || 'Unknown error'
       });
     }
   });
