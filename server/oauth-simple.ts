@@ -236,7 +236,7 @@ class SimpleOAuth {
         timeMax: endTime,
         singleEvents: true,
         orderBy: 'startTime',
-        maxResults: 2500, // Google Calendar API limit
+        maxResults: 2500, // Google Calendar API limit per request
         showDeleted: false
       });
 
