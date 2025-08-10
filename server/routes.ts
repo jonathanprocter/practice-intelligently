@@ -2703,6 +2703,70 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
 
   // ========== END ASSESSMENT MANAGEMENT SYSTEM ROUTES ==========
 
+  // Working calendar events endpoint for frontend stability
+  app.get('/api/calendar/events/working', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+
+      // Try to refresh tokens before fetching events
+      try {
+        await (simpleOAuth as any).refreshTokensIfNeeded();
+      } catch (tokenError: any) {
+        console.error('Token refresh failed during working event fetch:', tokenError);
+        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
+      }
+
+      // Get all calendars and fetch comprehensive historical data
+      const calendars = await simpleOAuth.getCalendars();
+      let allEvents: any[] = [];
+
+      console.log(`📅 Therapist working requesting events from ALL ${calendars.length} calendars`);
+
+      // Comprehensive time range to get ALL historical and future events
+      const timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
+      const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
+
+      for (const calendar of calendars) {
+        try {
+          console.log(`🔍 Calendar fetch params: timeMin=${timeMin}, timeMax=${timeMax}`);
+          const events = await simpleOAuth.getEvents(
+            calendar.id,
+            timeMin,
+            timeMax
+          );
+          
+          if (events && events.length > 0) {
+            console.log(`  → Fetched ${events.length} events from calendar: ${calendar.id} (2015-2030)`);
+            const eventsWithCalendar = events.map((event: any) => ({
+              ...event,
+              calendarId: calendar.id,
+              calendarName: calendar.summary
+            }));
+            allEvents = allEvents.concat(eventsWithCalendar);
+            console.log(`  ✅ Found ${events.length} events in calendar: ${calendar.summary}`);
+          } else {
+            console.log(`  📭 No events found in calendar: ${calendar.summary}`);
+          }
+        } catch (calError: any) {
+          console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError?.message || calError);
+        }
+      }
+
+      console.log(`📊 Total events from all calendars for therapist working: ${allEvents.length}`);
+      res.json(allEvents);
+    } catch (error: any) {
+      console.error('Error in working calendar events endpoint:', error);
+      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
+        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
+      }
+      res.status(500).json({ error: 'Failed to fetch working calendar events', details: error.message });
+    }
+  });
+
   // Compass AI Assistant Chat
   app.post('/api/compass/chat', async (req, res) => {
     try {

@@ -53,67 +53,45 @@ export default function Calendar() {
     window.location.href = '/api/auth/google';
   };
 
-  // Get events for the current week - optimized for 4,700+ events
+  // Get events for the current week using the working live API endpoint
   const { data: googleEvents = [], isLoading, error, refetch } = useQuery({
     queryKey: ['google-calendar-events', selectedCalendarId],
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
-    retry: 3,
     queryFn: async () => {
-      console.log('🔄 Frontend: Starting calendar events fetch...');
-      
       try {
-        // Primary endpoint: Use the comprehensive working API with 2015-2030 timeframe
-        const comprehensiveTimeMin = '2015-01-01T00:00:00.000Z';
-        const comprehensiveTimeMax = '2030-12-31T23:59:59.999Z';
-        const workingResponse = await fetch(`/api/calendar/events/working?timeMin=${encodeURIComponent(comprehensiveTimeMin)}&timeMax=${encodeURIComponent(comprehensiveTimeMax)}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        console.log('📅 Frontend: Fetching calendar events from working live API...');
+        
+        // Always use the working API endpoint that we know is functioning
+        const workingResponse = await fetch('/api/calendar/events/working');
 
         if (workingResponse.ok) {
           const workingEvents = await workingResponse.json();
-          console.log(`✅ Frontend: Loaded ${workingEvents.length} events from comprehensive API`);
+          console.log(`🎉 Frontend: Successfully loaded ${workingEvents.length} events from working live API`);
 
-          if (Array.isArray(workingEvents) && workingEvents.length > 0) {
-            const processedEvents = workingEvents.map((event: any) => {
-              // Handle both Google Calendar format and processed format
-              const startTime = event.startTime || event.start?.dateTime || event.start?.date;
-              const endTime = event.endTime || event.end?.dateTime || event.end?.date;
-              
-              return {
-                id: event.id,
-                title: event.title || event.summary || 'Appointment',
-                startTime: new Date(startTime),
-                endTime: new Date(endTime),
-                location: event.location || '',
-                description: event.description || '',
-                calendarId: event.calendarId || 'google-calendar',
-                calendarName: event.calendarName || 'Calendar'
-              };
-            });
-            
-            console.log(`🎯 Frontend: Processed ${processedEvents.length} events successfully`);
-            return processedEvents;
-          } else {
-            console.log('⚠️ Frontend: Working API returned empty array');
-          }
+          // Transform events to the expected format
+          const transformedEvents = workingEvents.map((event: any) => ({
+            id: event.id,
+            title: event.title || event.summary || 'Appointment',
+            startTime: new Date(event.startTime || event.start?.dateTime || event.start?.date),
+            endTime: new Date(event.endTime || event.end?.dateTime || event.end?.date),
+            location: event.location || 'Office',
+            description: event.description || '',
+            calendarId: event.calendarId || 'simple-practice',
+            calendarName: event.calendarName || 'Simple Practice'
+          }));
+
+          return transformedEvents;
         } else {
-          const errorText = await workingResponse.text();
-          console.log(`❌ Frontend: Working API failed with status ${workingResponse.status}: ${errorText}`);
+          console.error('❌ Frontend: Working API failed, status:', workingResponse.status);
+          throw new Error(`Working API failed with status: ${workingResponse.status}`);
         }
-
-        // Fallback: Return empty array if primary API fails
-        console.log('⚠️ Frontend: Using fallback empty array');
-        return [];
-
       } catch (err) {
         console.error('Calendar fetch error:', err);
-        return [];
+        throw err;
       }
     },
+    retry: 1,
     refetchOnWindowFocus: false,
     refetchOnMount: true
   });
@@ -136,86 +114,119 @@ export default function Calendar() {
     enabled: !!googleEvents?.length || !error // Only fetch if we have events or no error
   });
 
-  // Convert Google Calendar events to calendar events with proper error handling
-  // Apply comprehensive filtering to calendar events
-  const filteredGoogleEvents = googleEvents.filter((event: any) => {
-    // Text search filter
-    const textMatch = searchFilter === "" || 
-      (event.title || event.summary || '').toLowerCase().includes(searchFilter.toLowerCase()) ||
-      (event.description || '').toLowerCase().includes(searchFilter.toLowerCase());
+  // Apply filtering to calendar events with null safety
+  const filteredGoogleEvents = (googleEvents || []).filter((event: any) => {
+    try {
+      // Ensure event exists and has required properties
+      if (!event || !event.id) return false;
 
-    // Location filter
-    const locationMatch = locationFilter === "" || 
-      (event.location || '').toLowerCase().includes(locationFilter.toLowerCase()) ||
-      (event.calendarName || '').toLowerCase().includes(locationFilter.toLowerCase());
+      // Text search filter with null safety
+      const eventTitle = event.title || event.summary || '';
+      const eventDescription = event.description || '';
+      const textMatch = searchFilter === "" || 
+        eventTitle.toLowerCase().includes(searchFilter.toLowerCase()) ||
+        eventDescription.toLowerCase().includes(searchFilter.toLowerCase());
 
-    // Calendar type filter
-    const calendarMatch = calendarTypeFilter.length === 0 || 
-      calendarTypeFilter.includes(event.calendarName || event.calendarId || 'unknown');
+      // Location filter with null safety
+      const eventLocation = event.location || '';
+      const eventCalendarName = event.calendarName || '';
+      const locationMatch = locationFilter === "" || 
+        eventLocation.toLowerCase().includes(locationFilter.toLowerCase()) ||
+        eventCalendarName.toLowerCase().includes(locationFilter.toLowerCase());
 
-    return textMatch && locationMatch && calendarMatch;
+      // Calendar type filter with null safety
+      const calendarMatch = calendarTypeFilter.length === 0 || 
+        calendarTypeFilter.includes(eventCalendarName || event.calendarId || 'unknown');
+
+      return textMatch && locationMatch && calendarMatch;
+    } catch (filterError) {
+      console.warn('Error filtering event:', filterError, event);
+      return false;
+    }
   });
 
   const calendarEvents: CalendarEvent[] = filteredGoogleEvents.map((event: any) => {
-    // Handle both dateTime and date formats from Google Calendar
-    let startTime: Date, endTime: Date;
-
     try {
-      // Use the direct startTime if already converted by backend
-      if (event.startTime) {
+      // Handle both dateTime and date formats from Google Calendar with null safety
+      let startTime: Date, endTime: Date;
+
+      // Use the direct startTime if already converted by backend (working API format)
+      if (event.startTime && typeof event.startTime === 'string') {
         startTime = new Date(event.startTime);
       } else if (event.start?.dateTime) {
         startTime = new Date(event.start.dateTime);
       } else if (event.start?.date) {
         startTime = new Date(event.start.date + 'T00:00:00');
       } else {
-        console.warn('Event missing start time:', event);
+        console.warn('Event missing start time, using current time:', event);
         startTime = new Date();
       }
 
-      if (event.end?.dateTime) {
+      // Handle end time
+      if (event.endTime && typeof event.endTime === 'string') {
+        endTime = new Date(event.endTime);
+      } else if (event.end?.dateTime) {
         endTime = new Date(event.end.dateTime);
       } else if (event.end?.date) {
         endTime = new Date(event.end.date + 'T23:59:59');
       } else {
         endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour default
       }
-    } catch (dateError) {
-      console.error('Error parsing event dates:', dateError, event);
-      startTime = new Date();
-      endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+
+      // Validate dates
+      if (isNaN(startTime.getTime())) {
+        console.warn('Invalid start time, using current time:', event);
+        startTime = new Date();
+      }
+      if (isNaN(endTime.getTime())) {
+        console.warn('Invalid end time, using start time + 1 hour:', event);
+        endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+      }
+
+      return {
+        id: event.id || `event-${Date.now()}-${Math.random()}`,
+        title: event.title || event.summary || 'Appointment',
+        startTime: startTime,
+        endTime: endTime,
+        clientId: undefined,
+        clientName: event.title || event.summary || 'Appointment',
+        type: 'individual' as CalendarEvent['type'],
+        status: 'scheduled' as CalendarEvent['status'],
+        location: event.location || 'Office',
+        notes: event.description || '',
+        source: 'google' as CalendarEvent['source'],
+        therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+        attendees: Array.isArray(event.attendees) ? event.attendees.map((a: any) => a.email || '').join(', ') : '',
+        calendarName: event.calendarName || 'Simple Practice'
+      };
+    } catch (eventError) {
+      console.error('Error processing event:', eventError, event);
+      // Return a safe fallback event
+      return {
+        id: `error-event-${Date.now()}`,
+        title: 'Error Loading Event',
+        startTime: new Date(),
+        endTime: new Date(Date.now() + 60 * 60 * 1000),
+        clientId: undefined,
+        clientName: 'Error Loading Event',
+        type: 'individual' as CalendarEvent['type'],
+        status: 'scheduled' as CalendarEvent['status'],
+        location: 'Office',
+        notes: 'Error loading event details',
+        source: 'google' as CalendarEvent['source'],
+        therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+        attendees: '',
+        calendarName: 'Simple Practice'
+      };
     }
-
-    const startDateForLocation = event.start?.dateTime ? 
-      new Date(event.start.dateTime) : 
-      event.start?.date ? new Date(event.start.date) : new Date();
-
-    return {
-      id: event.id || `event-${Math.random()}`,
-      title: event.title || event.summary || 'Appointment',
-      startTime: startTime,
-      endTime: endTime,
-      clientId: undefined, // Let DailyView component handle client lookup by name
-      clientName: event.title || event.summary || 'Appointment',
-      type: 'individual' as CalendarEvent['type'],
-      status: (event.status === 'confirmed' ? 'scheduled' : 'pending') as CalendarEvent['status'],
-      location: event.location || getDefaultLocationForDate(startDateForLocation),
-      notes: event.description || '',
-      source: 'google' as CalendarEvent['source'],
-      therapistId: 'default-therapist', // Add required therapistId field
-      attendees: event.attendees?.map((a: any) => a.email).join(', ') || '',
-      calendarName: event.calendarName || 'Simple Practice'
-    };
   }).filter((event: CalendarEvent) => {
-    // Filter out invalid events - check if we have valid dates (Date objects or valid date strings)
-    const hasValidStart = event.startTime && (event.startTime instanceof Date || !isNaN(new Date(event.startTime).getTime()));
-    const hasValidEnd = event.endTime && (event.endTime instanceof Date || !isNaN(new Date(event.endTime).getTime()));
-    const isValid = hasValidStart && hasValidEnd;
-
-    if (!isValid) {
-      console.warn('Filtering out invalid event:', event);
-    }
-    return isValid;
+    // Filter out error events and invalid events
+    if (event.title === 'Error Loading Event') return false;
+    
+    const hasValidStart = event.startTime instanceof Date && !isNaN(event.startTime.getTime());
+    const hasValidEnd = event.endTime instanceof Date && !isNaN(event.endTime.getTime());
+    
+    return hasValidStart && hasValidEnd;
   });
 
   // Calendar events processed and organized by week
