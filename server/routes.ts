@@ -1496,7 +1496,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
 
           do {
             console.log(`📄 Fetching page ${pageCount + 1} for calendar: ${calendar.summary}`);
-            
+
             const events = await simpleOAuth.getEvents(
               calendar.id,
               timeMin,
@@ -1599,9 +1599,12 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
 
     try {
       const { id } = req.params;
-      const { method = 'email' } = req.body;
+      const { method = 'email', therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.body; // Add therapistId to body for context
 
-      const success = await storage.sendCheckin(id, method);
+      // Fetch therapist details to get their preferred contact method or specific client info
+      const therapist = await storage.getUser(therapistId); // Assuming therapist object contains contact preferences
+
+      const success = await storage.sendCheckin(id, method, therapist); // Pass therapist object to sendCheckin
 
       if (success) {
         res.json({ success: true, message: 'Check-in sent successfully' });
@@ -1631,10 +1634,10 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
   app.post('/api/auth/google/refresh', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       // Force refresh tokens
       await (simpleOAuth as any).refreshTokensIfNeeded();
-      
+
       if (simpleOAuth.isConnected()) {
         res.json({ success: true, message: 'Tokens refreshed successfully' });
       } else {
@@ -1777,7 +1780,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
         // If fullHistory requested, use expanded date range
         let finalTimeMin = timeMin as string;
         let finalTimeMax = timeMax as string;
-        
+
         if (fullHistory === 'true') {
           finalTimeMin = new Date('2005-01-01T00:00:00.000Z').toISOString();
           finalTimeMax = new Date('2040-12-31T23:59:59.999Z').toISOString();
@@ -1795,7 +1798,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
               finalTimeMin,
               finalTimeMax
             );
-            
+
             if (events && events.length > 0) {
               const eventsWithCalendar = events.map((event: any) => ({
                 ...event,
@@ -2703,743 +2706,28 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
 
   // ========== END ASSESSMENT MANAGEMENT SYSTEM ROUTES ==========
 
-  // Working calendar events endpoint for frontend stability
-  app.get('/api/calendar/events/working', async (req, res) => {
-    try {
-      const { simpleOAuth } = await import('./oauth-simple');
-
-      if (!simpleOAuth.isConnected()) {
-        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
-      }
-
-      // Try to refresh tokens before fetching events
-      try {
-        await (simpleOAuth as any).refreshTokensIfNeeded();
-      } catch (tokenError: any) {
-        console.error('Token refresh failed during working event fetch:', tokenError);
-        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
-      }
-
-      // Get all calendars and fetch comprehensive historical data
-      const calendars = await simpleOAuth.getCalendars();
-      let allEvents: any[] = [];
-
-      console.log(`📅 Therapist working requesting events from ALL ${calendars.length} calendars`);
-
-      // Comprehensive time range to get ALL historical and future events
-      const timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
-      const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
-
-      for (const calendar of calendars) {
-        try {
-          console.log(`🔍 Calendar fetch params: timeMin=${timeMin}, timeMax=${timeMax}`);
-          const events = await simpleOAuth.getEvents(
-            calendar.id,
-            timeMin,
-            timeMax
-          );
-          
-          if (events && events.length > 0) {
-            console.log(`  → Fetched ${events.length} events from calendar: ${calendar.id} (2015-2030)`);
-            const eventsWithCalendar = events.map((event: any) => ({
-              ...event,
-              calendarId: calendar.id,
-              calendarName: calendar.summary
-            }));
-            allEvents = allEvents.concat(eventsWithCalendar);
-            console.log(`  ✅ Found ${events.length} events in calendar: ${calendar.summary}`);
-          } else {
-            console.log(`  📭 No events found in calendar: ${calendar.summary}`);
-          }
-        } catch (calError: any) {
-          console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError?.message || calError);
-        }
-      }
-
-      console.log(`📊 Total events from all calendars for therapist working: ${allEvents.length}`);
-      res.json(allEvents);
-    } catch (error: any) {
-      console.error('Error in working calendar events endpoint:', error);
-      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
-        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
-      }
-      res.status(500).json({ error: 'Failed to fetch working calendar events', details: error.message });
-    }
-  });
-
-  // Compass AI Assistant Chat
-  app.post('/api/compass/chat', async (req, res) => {
-    try {
-      const { message, therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.body;
-
-      if (!message) {
-        return res.status(400).json({ error: 'Message is required' });
-      }
-
-      // Add conversation tracking
-      const currentSessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-      // Get comprehensive context about the practice
-      const [clients, appointments, sessionNotes, actionItems, conversationHistory, learningContext] = await Promise.all([
-        storage.getClients(therapistId),
-        storage.getAppointments(therapistId),
-        storage.getSessionNotes(therapistId),
-        storage.getActionItems(therapistId),
-        storage.getCompassConversations(therapistId),
-        storage.getCompassLearningContext(therapistId)
-      ]);
-
-      // Create context summary for Compass
-      const practiceContext = {
-        totalClients: clients.length,
-        activeClients: clients.filter(c => c.status === 'active').length,
-        archivedClients: clients.filter(c => c.status === 'archived').length,
-        todayAppointments: appointments.filter(a => {
-          const today = new Date().toDateString();
-          return new Date(a.startTime).toDateString() === today;
-        }).length,
-        totalAppointments: appointments.length,
-        recentNotes: sessionNotes.slice(0, 5),
-        pendingActionItems: actionItems.filter(a => a.status === 'pending').length,
-        totalActionItems: actionItems.length,
-        todayNames: appointments.filter(a => {
-          const today = new Date().toDateString();
-          return new Date(a.startTime).toDateString() === today;
-        }).map(a => `Client ${a.clientId}`).join(', ')
-      };
-
-      // Store user message
-      await storage.createCompassConversation({
-        therapistId,
-        sessionId: currentSessionId,
-        messageId: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        role: 'user',
-        content: message,
-        context: { timestamp: new Date().toISOString() }
-      });
-
-      // Try OpenAI first (primary), then fallback to Anthropic
-      let response;
-      let aiProvider = 'openai';
-
-      try {
-        const openaiResponse = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content: `You are Compass, a warm, knowledgeable, and supportive AI assistant for Dr. Jonathan Procter's therapy practice. Think of yourself as a trusted clinical colleague who's always ready to help with genuine enthusiasm and care.
-
-PERSONALITY TRAITS:
-- Warm and approachable, like a supportive colleague
-- Genuinely excited to help and solve problems
-- Speaks with kindness but maintains professional competence
-- Proactive in offering specific, actionable suggestions
-- Uses encouraging language and shows appreciation for the therapist's work
-
-WHEN HELPING WITH CLIENT COMMUNICATIONS (check-ins, emails, messages):
-Use Jonathan's authentic writing style:
-- Warm, clear, and professional but never stiff or corporate
-- Use contractions (I'll, that's, you're)
-- Conversational but composed (not too casual)
-- Emotionally attuned, not sentimental
-- Keep messages short and balanced
-- Examples: "Hi [Name] — just wanted to check in briefly." / "Hope things have been going okay since we last met." / "No pressure to reply right away—just wanted to touch base."
-
-CRITICAL FORMATTING REQUIREMENTS - FOLLOW STRICTLY:
-- ABSOLUTELY NO markdown formatting whatsoever (no **bold**, *italics*, ## headers, ### subheaders, - bullet points, 1. numbered lists, \`code\`, etc.)
-- ABSOLUTELY NO JSON formatting, code blocks, or structured data formats
-- ABSOLUTELY NO special characters like asterisks, hashes, backticks, or brackets for formatting
-- Use ONLY plain conversational text as if speaking naturally to a colleague
-- Use normal punctuation: periods, commas, colons, exclamation points only
-- Write in flowing paragraphs with natural line breaks
-- Think of this as a warm phone conversation, not a technical document
-
-Current Practice Overview:
-- Total Clients: ${practiceContext.totalClients} (${practiceContext.activeClients} active, ${practiceContext.archivedClients} archived)
-- Today's Appointments: ${practiceContext.todayAppointments}${practiceContext.todayNames ? ` (${practiceContext.todayNames})` : ''}
-- Total Appointments: ${practiceContext.totalAppointments}
-- Pending Action Items: ${practiceContext.pendingActionItems}/${practiceContext.totalActionItems}
-- Recent Session Notes: ${practiceContext.recentNotes.length} available
-
-ALWAYS start responses with contextual observations and end with 2-3 specific, actionable suggestions relevant to the current practice state. Examples:
-- "I notice you have X today - would you like me to help prepare for those sessions?"
-- "With X pending action items, shall I help prioritize them?"
-- "I see some recent session notes - would you like insights on patterns or themes?"
-
-You can help with:
-- Client management and personalized insights
-- Appointment preparation and scheduling
-- Session note analysis and therapeutic insights
-- Treatment planning and evidence-based recommendations
-- Practice analytics and meaningful trends
-- Clinical pattern recognition
-- Workflow optimization and administrative support
-
-Always be specific, helpful, and ready to dive deeper into any topic. Show genuine interest in supporting excellent client care.`
-            },
-            {
-              role: "user",
-              content: message
-            }
-          ],
-          max_tokens: 800,
-          temperature: 0.7
-        });
-
-        response = openaiResponse.choices[0].message.content;
-
-        // Post-process to strip any remaining markdown formatting aggressively
-        if (response) {
-          response = response
-            .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove **bold**
-            .replace(/\*(.*?)\*/g, '$1')      // Remove *italics*
-            .replace(/`(.*?)`/g, '$1')        // Remove `code`
-            .replace(/#{1,6}\s*/g, '')        // Remove # headers
-            .replace(/^\s*[-*+•]\s*/gm, '')   // Remove bullet points (including unicode bullets)
-            .replace(/^\s*\d+\.\s*/gm, '')    // Remove numbered lists
-            .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Remove [links](url)
-            .replace(/(\r\n|\r|\n){3,}/g, '\n\n') // Limit consecutive line breaks
-            .trim(); // Clean up whitespace
-        }
-      } catch (error) {
-        console.log('OpenAI failed, trying Anthropic...', error);
-
-        try {
-          // Fallback to Anthropic
-          const { Anthropic } = await import('@anthropic-ai/sdk');
-          const anthropic = new Anthropic({
-            apiKey: process.env.ANTHROPIC_API_KEY,
-          });
-
-          const anthropicResponse = await anthropic.messages.create({
-            model: "claude-3-5-sonnet-20241022",
-            max_tokens: 800,
-            system: `You are Compass, a warm, knowledgeable, and supportive AI assistant for Dr. Jonathan Procter's therapy practice. Think of yourself as a trusted clinical colleague who's always ready to help with genuine enthusiasm and care.
-
-PERSONALITY TRAITS:
-- Warm and approachable, like a supportive colleague
-- Genuinely excited to help and solve problems
-- Speaks with kindness but maintains professional competence
-- Proactive in offering specific, actionable suggestions
-- Uses encouraging language and shows appreciation for the therapist's work
-
-WHEN HELPING WITH CLIENT COMMUNICATIONS (check-ins, emails, messages):
-Use Jonathan's authentic writing style:
-- Warm, clear, and professional but never stiff or corporate
-- Use contractions (I'll, that's, you're)
-- Conversational but composed (not too casual)
-- Emotionally attuned, not sentimental
-- Keep messages short and balanced
-- Examples: "Hi [Name] — just wanted to check in briefly." / "Hope things have been going okay since we last met." / "No pressure to reply right away—just wanted to touch base."
-
-CRITICAL FORMATTING REQUIREMENTS - FOLLOW STRICTLY:
-- ABSOLUTELY NO markdown formatting whatsoever (no **bold**, *italics*, ## headers, ### subheaders, - bullet points, 1. numbered lists, \`code\`, etc.)
-- ABSOLUTELY NO JSON formatting, code blocks, or structured data formats
-- ABSOLUTELY NO special characters like asterisks, hashes, backticks, or brackets for formatting
-- Use ONLY plain conversational text as if speaking naturally to a colleague
-- Use normal punctuation: periods, commas, colons, exclamation points only
-- Write in flowing paragraphs with natural line breaks
-- Think of this as a warm phone conversation, not a technical document
-
-Current Practice Overview:
-- Total Clients: ${practiceContext.totalClients} (${practiceContext.activeClients} active, ${practiceContext.archivedClients} archived)
-- Today's Appointments: ${practiceContext.todayAppointments}${practiceContext.todayNames ? ` (${practiceContext.todayNames})` : ''}
-- Total Appointments: ${practiceContext.totalAppointments}
-- Pending Action Items: ${practiceContext.pendingActionItems}/${practiceContext.totalActionItems}
-- Recent Session Notes: ${practiceContext.recentNotes.length} available
-
-ALWAYS start responses with contextual observations and end with 2-3 specific, actionable suggestions relevant to the current practice state. Always be specific, helpful, and ready to dive deeper into any topic. Show genuine interest in supporting excellent client care.`,
-            messages: [
-              {
-                role: "user",
-                content: `You are Compass, an expert AI assistant for Dr. Jonathan Procter's therapy practice. 
-
-Practice Overview:
-- Total Clients: ${practiceContext.totalClients} (${practiceContext.activeClients} active, ${practiceContext.archivedClients} archived)
-- Today's Appointments: ${practiceContext.todayAppointments}
-- Pending Action Items: ${practiceContext.pendingActionItems}
-
-User question: ${message}
-
-Provide a helpful, professional response with clinical insights and actionable recommendations.`
-              }
-            ],
-          });
-
-          response = anthropicResponse.content[0].type === 'text' ? anthropicResponse.content[0].text : 'Unable to generate response';
-
-          // Post-process to strip any remaining markdown formatting aggressively
-          if (response) {
-            response = response
-              .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove **bold**
-              .replace(/\*(.*?)\*/g, '$1')      // Remove *italics*
-              .replace(/`(.*?)`/g, '$1')        // Remove `code`
-              .replace(/#{1,6}\s*/g, '')        // Remove # headers
-              .replace(/^\s*[-*+•]\s*/gm, '')   // Remove bullet points (including unicode bullets)
-              .replace(/^\s*\d+\.\s*/gm, '')    // Remove numbered lists
-              .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Remove [links](url)
-              .replace(/(\r\n|\r|\n){3,}/g, '\n\n') // Limit consecutive line breaks
-              .trim(); // Clean up whitespace
-          }
-
-          aiProvider = 'anthropic';
-        } catch (anthropicError) {
-          console.log('Anthropic also failed, using fallback response');
-          response = `I'm Compass, your AI assistant. I understand you're asking about: "${message}". 
-
-Based on your practice data:
-- You have ${practiceContext.totalClients} total clients (${practiceContext.activeClients} active)
-- ${practiceContext.todayAppointments} appointments scheduled for today
-- ${practiceContext.pendingActionItems} pending action items
-
-I can help you analyze this data, provide insights, and assist with clinical decisions. Could you be more specific about what you'd like to know?`;
-          aiProvider = 'fallback';
-        }
-      }
-
-      res.json({
-        content: response,
-        aiProvider,
-        practiceContext: {
-          clientCount: practiceContext.totalClients,
-          activeClients: practiceContext.activeClients,
-          todayAppointments: practiceContext.todayAppointments,
-          pendingActionItems: practiceContext.pendingActionItems
-        }
-      });
-
-    } catch (error: any) {
-      console.error('Error in Compass chat:', error);
-      res.status(500).json({ error: 'Failed to process Compass request', details: error.message });
-    }
-  });
-
-  // OAuth events endpoint - get today's events only
-  app.get('/api/oauth/events/today', async (req, res) => {
-    try {
-      const { simpleOAuth } = await import('./oauth-simple');
-
-      if (!simpleOAuth.isConnected()) {
-        return res.json([]); // Return empty array instead of error to prevent frontend warnings
-      }
-
-      // Get today's events only - Fixed to use actual today's date range
-      const today = new Date();
-      const timeMin = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-      const timeMax = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
-
-      const calendars = await simpleOAuth.getCalendars();
-      let todaysEvents: any[] = [];
-
-      for (const calendar of calendars) {
-        try {
-          const events = await simpleOAuth.getEvents(
-            calendar.id || '',
-            timeMin,
-            timeMax
-          );
-          todaysEvents = todaysEvents.concat(events);
-        } catch (error) {
-          console.warn(`Failed to fetch events from calendar ${calendar.summary}:`, error);
-        }
-      }
-
-      // Filter events to only include today's events (using the same today date already defined above)
-      const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
-
-      console.log(`🔍 DEBUG: Retrieved ${todaysEvents.length} events, filtering for today: ${today.toDateString()}`);
-
-      const filteredEvents = todaysEvents.filter(event => {
-        if (!event.start) return false;
-
-        // Use the original dateTime string to avoid timezone conversion issues
-        const originalDateTimeString = event.start.dateTime || event.start.date;
-
-        // Extract just the date part (YYYY-MM-DD) from the original string
-        const eventDateString = originalDateTimeString.split('T')[0]; // Gets "2025-08-04" or "2025-08-05"
-        const todayDateString = today.toISOString().split('T')[0]; // Gets today's date in YYYY-MM-DD format
-
-        console.log(`🔍 Event: ${event.summary} - OriginalDateTime: ${originalDateTimeString} - EventDate: ${eventDateString} - TodayDate: ${todayDateString} - Match: ${eventDateString === todayDateString}`);
-
-        // Only include events that are exactly on today's date (no timezone conversion)
-        return eventDateString === todayDateString;
-      });
-
-      console.log(`🔍 DEBUG: Filtered to ${filteredEvents.length} events for today`);
-
-      res.json(filteredEvents);
-    } catch (error: any) {
-      console.warn('OAuth events today error:', error);
-      res.json([]); // Return empty array to prevent frontend errors
-    }
-  });
-
-  // OAuth events endpoint - get events for a specific date
-  app.get('/api/oauth/events/date/:date', async (req, res) => {
-    try {
-      const { simpleOAuth } = await import('./oauth-simple');
-      const { date } = req.params; // Expected format: YYYY-MM-DD
-
-      if (!simpleOAuth.isConnected()) {
-        return res.json([]); // Return empty array instead of error to prevent frontend warnings
-      }
-
-      // Parse the date parameter to create time bounds
-      const targetDate = new Date(date + 'T00:00:00.000Z');
-      if (isNaN(targetDate.getTime())) {
-        return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
-      }
-
-      const timeMin = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()).toISOString();
-      const timeMax = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999).toISOString();
-
-      const calendars = await simpleOAuth.getCalendars();
-      let dateEvents: any[] = [];
-
-      for (const calendar of calendars) {
-        try {
-          const events = await simpleOAuth.getEvents(
-            calendar.id || '',
-            timeMin,
-            timeMax
-          );
-          dateEvents = dateEvents.concat(events);
-        } catch (error) {
-          console.warn(`Failed to fetch events from calendar ${calendar.summary}:`, error);
-        }
-      }
-
-      console.log(`📅 Found ${dateEvents.length} events for date: ${date}`);
-
-      // Filter events to only include the target date events
-      const filteredEvents = dateEvents.filter(event => {
-        if (!event.start) return false;
-
-        const originalDateTimeString = event.start.dateTime || event.start.date;
-        const eventDateString = originalDateTimeString.split('T')[0]; // Gets YYYY-MM-DD
-
-        return eventDateString === date;
-      });
-
-      console.log(`📅 Filtered to ${filteredEvents.length} events for ${date}`);
-      res.json(filteredEvents);
-    } catch (error: any) {
-      console.warn('OAuth events date error:', error);
-      res.json([]); // Return empty array to prevent frontend errors
-    }
-  });
-
-  // ========== AI INTELLIGENCE API ROUTES (Auto-generated) ==========
-
-  app.post('/api/ai/predict-treatment-outcome', async (req, res) => {
-    try {
-      const { clientId, currentTreatment, symptoms, duration } = req.body;
-
-      if (!clientId) {
-        return res.status(400).json({ error: 'Client ID is required' });
-      }
-
-      // Get client data for context
-      const client = await storage.getClient(clientId);
-      if (!client) {
-        return res.status(404).json({ error: 'Client not found' });
-      }
-
-      // Generate treatment outcome prediction using AI (placeholder implementation)
-      const prediction = {
-        outcome: 'positive',
-        confidence: 0.8,
-        timeframe: '3-6 months',
-        recommendedActions: ['Continue current treatment', 'Monitor progress weekly']
-      };
-
-      res.json({ prediction, model: 'multimodel-ai' });
-    } catch (error: any) {
-      console.error('Error predicting treatment outcome:', error);
-      res.status(500).json({ error: 'Failed to predict treatment outcome', details: error.message });
-    }
-  });
-  app.get('/api/ai/cross-client-patterns', async (req, res) => {
-    try {
-      const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', clientId } = req.query;
-
-      // Get all clients for pattern analysis
-      const clients = await storage.getClients(therapistId as string);
-      const sessionNotes = await storage.getSessionNotes(therapistId as string);
-
-      // Analyze cross-client patterns (placeholder implementation)
-      const patterns = {
-        commonThemes: ['anxiety management', 'relationship issues'],
-        successFactors: ['regular attendance', 'homework completion'],
-        insights: ['Clients with regular check-ins show 40% better outcomes']
-      };
-
-      res.json({ patterns, model: 'multimodel-ai' });
-    } catch (error: any) {
-      console.error('Error analyzing cross-client patterns:', error);
-      res.status(500).json({ error: 'Failed to analyze patterns', details: error.message });
-    }
-  });
-  app.post('/api/ai/evidence-based-interventions', async (req, res) => {
-    try {
-      const { condition, clientProfile, preferences } = req.body;
-
-      if (!condition) {
-        return res.status(400).json({ error: 'Condition is required' });
-      }
-
-      // Get evidence-based intervention recommendations
-      const interventions = await multiModelAI.getEvidenceBasedInterventions({
-        condition,
-        clientProfile: clientProfile || {},
-        preferences: preferences || {}
-      });
-
-      res.json({ interventions, model: 'multimodel-ai' });
-    } catch (error: any) {
-      console.error('Error getting evidence-based interventions:', error);
-      res.status(500).json({ error: 'Failed to get interventions', details: error.message });
-    }
-  });
-  app.get('/api/ai/session-efficiency', async (req, res) => {
-    try {
-      const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', timeframe = '30' } = req.query;
-
-      // Get session data for efficiency analysis
-      const sessionNotes = await storage.getSessionNotes(therapistId as string);
-      const appointments = await storage.getAppointments(therapistId as string);
-
-      // Analyze session efficiency
-      const efficiency = await multiModelAI.analyzeSessionEfficiency({
-        sessionNotes,
-        appointments,
-        timeframeDays: parseInt(timeframe as string)
-      });
-
-      res.json({ efficiency, model: 'multimodel-ai' });
-    } catch (error: any) {
-      console.error('Error analyzing session efficiency:', error);
-      res.status(500).json({ error: 'Failed to analyze efficiency', details: error.message });
-    }
-  });
-  app.get('/api/ai/client-retention', async (req, res) => {
-    try {
-      const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.query;
-
-      // Get client and appointment data
-      const clients = await storage.getClients(therapistId as string);
-      const appointments = await storage.getAppointments(therapistId as string);
-
-      // Predict client retention
-      const retention = await multiModelAI.predictClientRetention({
-        clients,
-        appointments,
-        analysisType: 'comprehensive'
-      });
-
-      res.json({ retention, model: 'multimodel-ai' });
-    } catch (error: any) {
-      console.error('Error predicting client retention:', error);
-      res.status(500).json({ error: 'Failed to predict retention', details: error.message });
-    }
-  });
-  app.get('/api/ai/therapist-strengths', async (req, res) => {
-    try {
-      const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.query;
-
-      // Get comprehensive practice data
-      const clients = await storage.getClients(therapistId as string);
-      const sessionNotes = await storage.getSessionNotes(therapistId as string);
-      const appointments = await storage.getAppointments(therapistId as string);
-
-      // Analyze therapist strengths
-      const strengths = await multiModelAI.analyzeTherapistStrengths({
-        clients,
-        sessionNotes,
-        appointments,
-        analysisType: 'comprehensive'
-      });
-
-      res.json({ strengths, model: 'multimodel-ai' });
-    } catch (error: any) {
-      console.error('Error analyzing therapist strengths:', error);
-      res.status(500).json({ error: 'Failed to analyze strengths', details: error.message });
-    }
-  });
-  app.post('/api/ai/appointment-insights', async (req, res) => {
-    try {
-      const { appointment } = req.body;
-
-      if (!appointment) {
-        return res.status(400).json({ error: 'Appointment data is required' });
-      }
-
-      // Get client history if clientId is provided
-      let clientHistory = [];
-      if (appointment.clientName) {
-        try {
-          const clientId = await storage.getClientIdByName(appointment.clientName);
-          if (clientId) {
-            clientHistory = await storage.getSessionNotesByClientId(clientId);
-          }
-        } catch (err) {
-          console.log('Could not get client history:', err);
-        }
-      }
-
-      // Get appointment insights
-      const insights = await multiModelAI.generateAppointmentInsights({
-        appointment,
-        clientHistory
-      });
-
-      res.json({ insights, model: 'multimodel-ai' });
-    } catch (error: any) {
-      console.error('Error generating appointment insights:', error);
-      res.status(500).json({ error: 'Failed to generate insights', details: error.message || error.toString() });
-    }
-  });
-  // ========== SESSION PREP API ROUTES (Auto-generated) ==========
-
-  app.post('/api/session-prep/:eventId/ai-insights', async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const { clientId } = req.body;
-
-      if (!eventId) {
-        return res.status(400).json({ error: 'Event ID is required' });
-      }
-
-      if (!clientId) {
-        return res.status(400).json({ error: 'Client ID is required in request body' });
-      }
-
-      // Get comprehensive client data from database/chart
-      const sessionHistory = await storage.getSessionNotesByClientId(clientId);
-
-      // Get client information
-      let clientInfo = null;
-      try {
-        clientInfo = await storage.getClient(clientId);
-      } catch (error) {
-        console.warn('Could not fetch client info:', error);
-      }
-
-      // Get treatment plans
-      let treatmentPlans = [];
-      try {
-        treatmentPlans = await storage.getTreatmentPlans(clientId);
-      } catch (error) {
-        console.warn('Could not fetch treatment plans:', error);
-      }
-
-      // Get action items
-      let actionItems = [];
-      try {
-        actionItems = await storage.getActionItems(clientId);
-      } catch (error) {
-        console.warn('Could not fetch action items:', error);
-      }
-
-      // Get assessments if available
-      let assessments = [];
-      try {
-        assessments = await storage.getClientAssessments(clientId);
-      } catch (error) {
-        console.warn('Could not fetch assessments:', error);
-      }
-
-      console.log(`Generating contextual session prep insights for client ${clientInfo?.firstName || clientId} with ${sessionHistory.length} sessions, ${treatmentPlans.length} treatment plans, and ${actionItems.length} action items`);
-
-      // Generate AI insights for session prep with comprehensive context
-      const insights = await multiModelAI.generateSessionPrepInsights({
-        eventId,
-        clientId,
-        sessionHistory,
-        clientInfo,
-        treatmentPlans,
-        actionItems,
-        assessments
-      });
-
-      res.json({ insights, model: 'multimodel-ai', contextual: insights.contextual });
-    } catch (error: any) {
-      console.error('Error generating session prep insights:', error);
-      res.status(500).json({ error: 'Failed to generate insights', details: error.message || error.toString() });
-    }
-  });
-  app.get('/api/session-prep/:eventId', async (req, res) => {
-    try {
-      const { eventId } = req.params;
-
-      // Get session prep notes for event
-      const prepNotes = await storage.getSessionPrepNoteByEventId(eventId);
-      res.json(prepNotes);
-    } catch (error: any) {
-      console.error('Error getting session prep notes:', error);
-      res.status(500).json({ error: 'Failed to get session prep notes', details: error.message });
-    }
-  });
-
-  app.put('/api/session-prep/:param', async (req, res) => {
-    try {
-      const { id } = req.params;
-      const updates = req.body;
-
-      // Update session prep note
-      const updatedNote = await storage.updateSessionPrepNote(id, updates);
-      res.json(updatedNote);
-    } catch (error: any) {
-      console.error('Error updating session prep note:', error);
-      res.status(500).json({ error: 'Failed to update session prep note', details: error.message });
-    }
-  });
-  app.post('/api/session-prep', async (req, res) => {
-    try {
-      const { eventId, clientId, content, type } = req.body;
-
-      if (!eventId || !content) {
-        return res.status(400).json({ error: 'Event ID and content are required' });
-      }
-
-      // Create session prep note
-      const prepNote = await storage.createSessionPrepNote({
-        eventId,
-        clientId: clientId || null,
-        therapistId: clientId, // We'll need to get the actual therapist ID
-        prepContent: content
-      });
-
-      res.json(prepNote);
-    } catch (error: any) {
-      console.error('Error creating session prep note:', error);
-      res.status(500).json({ error: 'Failed to create session prep note', details: error.message });
-    }
-  });
-  // Calendar Events Sync Endpoint - Sync Google Calendar events to database
+  // Calendar events sync endpoint - Sync Google Calendar events to database
   app.post('/api/calendar/sync', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected' });
       }
 
       console.log('🔄 Starting calendar events sync to database...');
-      
+
       // Get comprehensive events from all calendars
       const calendars = await simpleOAuth.getCalendars();
       let totalSynced = 0;
       let errors = [];
-      
+
       for (const calendar of calendars) {
         try {
           // Get comprehensive historical events - 2010 to 2035
           const timeMin = new Date('2010-01-01T00:00:00.000Z').toISOString();
           const timeMax = new Date('2035-12-31T23:59:59.999Z').toISOString();
-          
+
           const events = await simpleOAuth.getEvents(calendar.id, timeMin, timeMax);
 
           console.log(`📅 Syncing ${events.length} events from ${calendar.summary}...`);
@@ -3478,7 +2766,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       }
 
       console.log(`✅ Calendar sync complete! Synced ${totalSynced} events`);
-      
+
       res.json({
         success: true,
         totalSynced,
@@ -3531,7 +2819,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
               timeMin as string,
               timeMax as string
             );
-            
+
             if (events && events.length > 0) {
               // Add calendar metadata to each event
               const eventsWithCalendar = events.map((event: any) => ({
@@ -3548,7 +2836,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
             console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError?.message || calError);
           }
         }
-        
+
         console.log(`📊 Total events from all calendars for therapist ${therapistId}: ${allEvents.length}`);
       } else {
         // Fetch from specific calendar
@@ -3643,7 +2931,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
       }
 
       const calendars = await simpleOAuth.getCalendars();
-      
+
       // Log calendar information for debugging
       console.log(`📅 Retrieved ${calendars.length} calendars including subcalendars:`);
       calendars.forEach((cal: any, index: number) => {
@@ -3652,7 +2940,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
                        'PERSONAL';
         console.log(`  ${index + 1}. "${cal.summary}" (${calType}) - Access: ${cal.accessRole}`);
       });
-      
+
       res.json(calendars);
     } catch (error: any) {
       console.error('Error getting calendars:', error);
@@ -3667,27 +2955,27 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     try {
       const { timeMin, timeMax } = req.query;
       const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'; // Default therapist ID
-      
+
       console.log(`📅 Frontend requesting calendar events from DATABASE for therapist: ${therapistId}`);
-      
+
       // Parse timeMin and timeMax parameters
       let startDate: Date | undefined;
       let endDate: Date | undefined;
-      
+
       if (timeMin) {
         startDate = new Date(timeMin as string);
         console.log(`📅 Filtering events from: ${startDate.toISOString()}`);
       }
-      
+
       if (timeMax) {
         endDate = new Date(timeMax as string);
         console.log(`📅 Filtering events to: ${endDate.toISOString()}`);
       }
-      
+
       // Get events from database
       const dbEvents = await storage.getCalendarEvents(therapistId, startDate, endDate);
       console.log(`📊 Found ${dbEvents.length} events in database`);
-      
+
       // Transform database events to match Google Calendar API format for frontend compatibility
       const transformedEvents = dbEvents.map((event: any) => ({
         id: event.googleEventId,
@@ -3710,7 +2998,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         lastSyncTime: event.lastSyncTime,
         source: 'database'
       }));
-      
+
       console.log(`✅ Returning ${transformedEvents.length} events from database`);
       res.json(transformedEvents);
     } catch (error: any) {
@@ -3751,7 +3039,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
               timeMin as string,
               timeMax as string
             );
-            
+
             if (events && events.length > 0) {
               // Add calendar metadata to each event
               const eventsWithCalendar = events.map((event: any) => ({
@@ -3769,7 +3057,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
             console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError?.message || calError);
           }
         }
-        
+
         console.log(`📊 Total events from all calendars (GOOGLE API): ${allEvents.length}`);
       } else {
         // Fetch from specific calendar
@@ -3928,18 +3216,18 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   app.get('/api/auth/google/callback', async (req, res) => {
     try {
       const { code, error, state } = req.query;
-      
+
       if (error) {
         console.error('OAuth authorization error:', error);
         return res.redirect(`/calendar-integration?error=${encodeURIComponent('Authorization failed. Please try again.')}`);
       }
-      
+
       if (!code) {
         return res.redirect(`/calendar-integration?error=${encodeURIComponent('No authorization code received.')}`);
       }
 
       const { simpleOAuth } = await import('./oauth-simple');
-      
+
       try {
         await simpleOAuth.exchangeCodeForTokens(code as string);
         console.log('✅ OAuth callback successful - tokens exchanged and saved');
@@ -3948,7 +3236,7 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         console.error('❌ OAuth token exchange failed:', tokenError);
         return res.redirect(`/calendar-integration?error=${encodeURIComponent('Failed to complete authentication. Please try again.')}`);
       }
-      
+
     } catch (error: any) {
       console.error('OAuth callback error:', error);
       res.redirect(`/calendar-integration?error=${encodeURIComponent('Authentication failed. Please try again.')}`);

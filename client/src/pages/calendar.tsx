@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { ApiClient } from '@/lib/api';
 import { CalendarEvent, CalendarDay } from '../types/calendar';
@@ -20,6 +20,12 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings, Search, Filter, MapPin, User, X, RefreshCw } from 'lucide-react';
+
+// Helper function to check if a date is today
+const isToday = (date: Date): boolean => {
+  const today = new Date();
+  return date.toDateString() === today.toDateString();
+};
 
 export default function Calendar() {
   const [currentWeek, setCurrentWeek] = useState(() => {
@@ -61,19 +67,19 @@ export default function Calendar() {
     queryFn: async () => {
       try {
         console.log('📅 Frontend: Fetching comprehensive calendar events (2015-2030)...');
-        
+
         // Use comprehensive timeframe to get all events - using correct endpoint
         const comprehensiveTimeMin = '2015-01-01T00:00:00.000Z';
         const comprehensiveTimeMax = '2030-12-31T23:59:59.999Z';
         const url = `/api/calendar/events?timeMin=${encodeURIComponent(comprehensiveTimeMin)}&timeMax=${encodeURIComponent(comprehensiveTimeMax)}`;
-        
+
         const workingResponse = await fetch(url);
 
         if (workingResponse.ok) {
           const workingEvents = await workingResponse.json();
           console.log(`🎉 Frontend: Successfully loaded ${workingEvents.length} comprehensive events`);
           console.log('Sample raw event from database:', workingEvents[0]);
-          
+
           console.log('📝 Raw event sample start:', workingEvents[0]?.start);
           console.log('📝 Raw event sample summary:', workingEvents[0]?.summary);
 
@@ -82,7 +88,7 @@ export default function Calendar() {
             try {
               // Handle both database format (summary, start.date) and Google API format (title, startTime)
               const title = event.summary || event.title || 'Appointment';
-              
+
               // Parse start time - handle multiple formats
               let startTime: Date;
               if (event.startTime) {
@@ -95,7 +101,7 @@ export default function Calendar() {
                 console.warn('Event missing start time:', event);
                 startTime = new Date();
               }
-              
+
               // Parse end time - handle multiple formats  
               let endTime: Date;
               if (event.endTime) {
@@ -107,7 +113,7 @@ export default function Calendar() {
               } else {
                 endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour default
               }
-              
+
               return {
                 id: event.id,
                 title: title,
@@ -265,57 +271,77 @@ export default function Calendar() {
   }).filter((event: CalendarEvent) => {
     // Filter out error events and invalid events
     if (event.title === 'Error Loading Event') return false;
-    
+
     const hasValidStart = event.startTime instanceof Date && !isNaN(event.startTime.getTime());
     const hasValidEnd = event.endTime instanceof Date && !isNaN(event.endTime.getTime());
-    
+
     return hasValidStart && hasValidEnd;
   });
 
   // Calendar events processed and organized by week
 
   // Create calendar days with events (filtered to current week for display)
-  const calendarDays: CalendarDay[] = weekDays.map(date => {
-    const dayEvents = calendarEvents.filter(event => {
-      if (!event.startTime) return false;
+  const calendarDays = useMemo(() => {
+    console.log('📅 Computing calendar days for week starting:', currentWeek.toDateString());
+    console.log('📅 Total events available for filtering:', calendarEvents.length);
 
-      const eventDate = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+    const days = [];
+    const startOfWeek = new Date(currentWeek);
+    // Ensure startOfWeek is the beginning of the week (Sunday) based on locale
+    startOfWeek.setDate(currentWeek.getDate() - currentWeek.getDay());
 
-      // Handle invalid dates
-      if (isNaN(eventDate.getTime())) {
-        console.warn('Invalid event date:', event);
-        return false;
-      }
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + i);
 
-      // Use date comparison that accounts for timezone differences
-      const eventDateStr = eventDate.toLocaleDateString('en-CA'); // YYYY-MM-DD format
-      const dayDateStr = date.toLocaleDateString('en-CA'); // YYYY-MM-DD format
-      const matches = eventDateStr === dayDateStr;
+      const dayEvents = calendarEvents.filter(event => {
+        if (!event || !event.startTime) {
+          return false;
+        }
 
-      // Debug logging for troubleshooting
-      if (matches) {
-        console.log(`Event "${event.title}" matches day ${dayDateStr}`, {
-          eventDate: eventDate.toISOString(),
-          eventDateStr,
-          dayDateStr
-        });
-      }
+        try {
+          const eventDate = new Date(event.startTime);
+          if (isNaN(eventDate.getTime())) {
+            console.warn('Invalid event date:', event.startTime);
+            return false;
+          }
 
-      return matches;
-    });
+          // Simple date comparison - same year, month, and day
+          const eventYear = eventDate.getFullYear();
+          const eventMonth = eventDate.getMonth();
+          const eventDay = eventDate.getDate();
 
-    // Debug logging for each day
-    if (dayEvents.length > 0) {
-      console.log(`${date.toDateString()}: ${dayEvents.length} events`, dayEvents.map(e => e.title));
+          const dayYear = date.getFullYear();
+          const dayMonth = date.getMonth();
+          const dayDay = date.getDate();
+
+          const matches = eventYear === dayYear && eventMonth === dayMonth && eventDay === dayDay;
+
+          if (matches) {
+            console.log(`📅 Event "${event.title}" matches ${date.toDateString()}`);
+          }
+
+          return matches;
+        } catch (error) {
+          console.error('Error processing event date:', error, event);
+          return false;
+        }
+      });
+
+      console.log(`📅 ${date.toDateString()}: Found ${dayEvents.length} events`);
+
+      days.push({
+        date,
+        events: dayEvents,
+        isToday: isToday(date),
+        isCurrentMonth: date.getMonth() === currentWeek.getMonth()
+      });
     }
 
-    return {
-      date,
-      isToday: date.toDateString() === new Date().toDateString(),
-      isCurrentMonth: date.getMonth() === new Date().getMonth(),
-      events: dayEvents
-    };
-  });
+    console.log('📅 Calendar days computed:', days.map(d => `${d.date.toDateString()}: ${d.events.length} events`));
+    return days;
+  }, [currentWeek, calendarEvents]);
+
 
   // Log statistics for both total events and current week
   const weekEventCount = calendarDays.reduce((total, day) => total + day.events.length, 0);
