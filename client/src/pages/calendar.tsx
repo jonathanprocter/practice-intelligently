@@ -83,30 +83,23 @@ export default function Calendar() {
           console.log('📝 Raw event sample start:', workingEvents[0]?.start);
           console.log('📝 Raw event sample summary:', workingEvents[0]?.summary);
 
-          // Transform events to the expected format - FIX: Handle database format correctly
-          const transformedEvents = workingEvents.map((event: any) => {
+          // Transform events to CalendarEvent format - handle database response properly
+          const transformedEvents: CalendarEvent[] = workingEvents.map((event: any) => {
             try {
-              // Handle both database format (summary, start.date) and Google API format (title, startTime)
-              const title = event.summary || event.title || 'Appointment';
-
-              // Parse start time - handle multiple formats
+              // Parse start time from database format
               let startTime: Date;
-              if (event.startTime) {
-                startTime = new Date(event.startTime);
-              } else if (event.start?.dateTime) {
+              if (event.start?.dateTime) {
                 startTime = new Date(event.start.dateTime);
               } else if (event.start?.date) {
                 startTime = new Date(event.start.date + 'T00:00:00');
               } else {
-                console.warn('Event missing start time:', event);
+                // Fallback for any other format
                 startTime = new Date();
               }
 
-              // Parse end time - handle multiple formats  
+              // Parse end time from database format
               let endTime: Date;
-              if (event.endTime) {
-                endTime = new Date(event.endTime);
-              } else if (event.end?.dateTime) {
+              if (event.end?.dateTime) {
                 endTime = new Date(event.end.dateTime);
               } else if (event.end?.date) {
                 endTime = new Date(event.end.date + 'T23:59:59');
@@ -114,21 +107,35 @@ export default function Calendar() {
                 endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour default
               }
 
-              return {
-                id: event.id,
-                title: title,
+              // Ensure we have a valid CalendarEvent structure
+              const calendarEvent: CalendarEvent = {
+                id: event.id || `event-${Date.now()}-${Math.random()}`,
+                title: event.summary || event.title || 'Appointment',
                 startTime: startTime,
                 endTime: endTime,
-                location: event.location || 'Office',
-                description: event.description || '',
-                calendarId: event.calendarId || 'simple-practice',
-                calendarName: event.calendarName || 'Simple Practice'
+                clientId: undefined,
+                clientName: event.summary || event.title || 'Appointment',
+                type: 'individual' as const,
+                status: 'scheduled' as const,
+                location: event.location || '',
+                notes: event.description || '',
+                isAllDay: !!event.start?.date && !event.start?.dateTime,
+                priority: 'medium' as const,
+                color: undefined,
+                source: 'google' as const,
+                therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+                attendees: event.attendees || '',
+                calendarName: event.calendarName || 'Google Calendar',
+                createdAt: event.created ? new Date(event.created) : new Date(),
+                updatedAt: event.updated ? new Date(event.updated) : new Date()
               };
+
+              return calendarEvent;
             } catch (transformError) {
               console.error('Error transforming event:', transformError, event);
               return null;
             }
-          }).filter(Boolean);
+          }).filter((event): event is CalendarEvent => event !== null);
 
           return transformedEvents;
         } else {
@@ -163,29 +170,29 @@ export default function Calendar() {
     enabled: !!googleEvents?.length || !error // Only fetch if we have events or no error
   });
 
-  // Apply filtering to calendar events with null safety
-  const filteredGoogleEvents = (googleEvents || []).filter((event: any) => {
+  // Apply filtering to the already transformed calendar events
+  const filteredCalendarEvents = (googleEvents || []).filter((event: CalendarEvent) => {
     try {
       // Ensure event exists and has required properties
       if (!event || !event.id) return false;
 
-      // Text search filter with null safety
-      const eventTitle = event.title || event.summary || '';
-      const eventDescription = event.description || '';
+      // Text search filter
+      const eventTitle = event.title || '';
+      const eventNotes = event.notes || '';
       const textMatch = searchFilter === "" || 
         eventTitle.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        eventDescription.toLowerCase().includes(searchFilter.toLowerCase());
+        eventNotes.toLowerCase().includes(searchFilter.toLowerCase());
 
-      // Location filter with null safety
+      // Location filter
       const eventLocation = event.location || '';
       const eventCalendarName = event.calendarName || '';
       const locationMatch = locationFilter === "" || 
         eventLocation.toLowerCase().includes(locationFilter.toLowerCase()) ||
         eventCalendarName.toLowerCase().includes(locationFilter.toLowerCase());
 
-      // Calendar type filter with null safety
+      // Calendar type filter
       const calendarMatch = calendarTypeFilter.length === 0 || 
-        calendarTypeFilter.includes(eventCalendarName || event.calendarId || 'unknown');
+        calendarTypeFilter.includes(eventCalendarName);
 
       return textMatch && locationMatch && calendarMatch;
     } catch (filterError) {
@@ -194,89 +201,8 @@ export default function Calendar() {
     }
   });
 
-  const calendarEvents: CalendarEvent[] = filteredGoogleEvents.map((event: any) => {
-    try {
-      // Handle both dateTime and date formats from Google Calendar with null safety
-      let startTime: Date, endTime: Date;
-
-      // Use the direct startTime if already converted by backend (working API format)
-      if (event.startTime && typeof event.startTime === 'string') {
-        startTime = new Date(event.startTime);
-      } else if (event.start?.dateTime) {
-        startTime = new Date(event.start.dateTime);
-      } else if (event.start?.date) {
-        startTime = new Date(event.start.date + 'T00:00:00');
-      } else {
-        console.warn('Event missing start time, using current time:', event);
-        startTime = new Date();
-      }
-
-      // Handle end time
-      if (event.endTime && typeof event.endTime === 'string') {
-        endTime = new Date(event.endTime);
-      } else if (event.end?.dateTime) {
-        endTime = new Date(event.end.dateTime);
-      } else if (event.end?.date) {
-        endTime = new Date(event.end.date + 'T23:59:59');
-      } else {
-        endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour default
-      }
-
-      // Validate dates
-      if (isNaN(startTime.getTime())) {
-        console.warn('Invalid start time, using current time:', event);
-        startTime = new Date();
-      }
-      if (isNaN(endTime.getTime())) {
-        console.warn('Invalid end time, using start time + 1 hour:', event);
-        endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
-      }
-
-      return {
-        id: event.id || `event-${Date.now()}-${Math.random()}`,
-        title: event.title || event.summary || 'Appointment',
-        startTime: startTime,
-        endTime: endTime,
-        clientId: undefined,
-        clientName: event.title || event.summary || 'Appointment',
-        type: 'individual' as CalendarEvent['type'],
-        status: 'scheduled' as CalendarEvent['status'],
-        location: event.location || 'Office',
-        notes: event.description || '',
-        source: 'google' as CalendarEvent['source'],
-        therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
-        attendees: Array.isArray(event.attendees) ? event.attendees.map((a: any) => a.email || '').join(', ') : '',
-        calendarName: event.calendarName || 'Simple Practice'
-      };
-    } catch (eventError) {
-      console.error('Error processing event:', eventError, event);
-      // Return a safe fallback event
-      return {
-        id: `error-event-${Date.now()}`,
-        title: 'Error Loading Event',
-        startTime: new Date(),
-        endTime: new Date(Date.now() + 60 * 60 * 1000),
-        clientId: undefined,
-        clientName: 'Error Loading Event',
-        type: 'individual' as CalendarEvent['type'],
-        status: 'scheduled' as CalendarEvent['status'],
-        location: 'Office',
-        notes: 'Error loading event details',
-        source: 'google' as CalendarEvent['source'],
-        therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
-        attendees: '',
-        calendarName: 'Simple Practice'
-      };
-    }
-  }).filter((event: CalendarEvent) => {
-    // Filter out error events and invalid events
-    if (event.title === 'Error Loading Event') return false;
-
-    const hasValidStart = event.startTime instanceof Date && !isNaN(event.startTime.getTime());
-    const hasValidEnd = event.endTime instanceof Date && !isNaN(event.endTime.getTime());
-
-    return hasValidStart && hasValidEnd;
-  });
+  // Use the already transformed and filtered events
+  const calendarEvents: CalendarEvent[] = filteredCalendarEvents;
 
   // Calendar events processed and organized by week
 
@@ -895,7 +821,7 @@ export default function Calendar() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-therapy-text">Calendar Stats</label>
                     <div className="space-y-1 text-xs text-gray-600">
-                      <div>Total Events: {filteredGoogleEvents.length}</div>
+                      <div>Total Events: {calendarEvents.length}</div>
                       <div>This Week: {calendarDays.reduce((sum, day) => sum + day.events.length, 0)}</div>
                       <div>Today: {calendarDays.find(day => day.isToday)?.events.length || 0}</div>
                       {(searchFilter || locationFilter || calendarTypeFilter.length > 0) && (
