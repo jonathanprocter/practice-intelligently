@@ -263,12 +263,12 @@ export function SessionPrepCard({
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg p-4">
               <div className="text-sm text-muted-foreground leading-relaxed">
                 {showFullInsights ? (
-                  <>{formatFullContent(aiInsights.prep_content)}</>
+                  <>{formatFullContent(aiInsights?.prep_content || '')}</>
                 ) : (
-                  <p>{formatInsightContent(aiInsights.prep_content)}</p>
+                  <p>{formatInsightContent(aiInsights?.prep_content || '')}</p>
                 )}
               </div>
-              {aiInsights.prep_content.length > 200 && (
+              {aiInsights?.prep_content && aiInsights.prep_content.length > 200 && (
                 <Button
                   variant="link"
                   size="sm"
