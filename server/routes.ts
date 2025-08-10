@@ -5796,32 +5796,47 @@ Follow-up areas for next session:
       const { timeMin, timeMax, calendarId } = req.query;
       
       console.log('📅 API: Fetching calendar events via working OAuth simple integration');
+      console.log(`📅 API: Timeframe: ${timeMin} to ${timeMax}`);
       
       // Use the OAuth simple integration which is already successfully fetching events
       const { simpleOAuth } = await import('./oauth-simple');
       
       if (!simpleOAuth.isConnected()) {
-        console.log('❌ API: OAuth not connected, trying to get all events anyway');
-        // Try to get events even if not connected, since background service might be working
+        console.log('❌ API: OAuth not connected');
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+
+      // Try to refresh tokens before fetching events
+      try {
+        await (simpleOAuth as any).refreshTokensIfNeeded();
+      } catch (tokenError: any) {
+        console.error('Token refresh failed during working endpoint:', tokenError);
+        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
       }
       
-      // Get all calendars and their events
+      // Get all calendars and their events with forced comprehensive timeframe
       const allEvents: any[] = [];
+      
+      // Force comprehensive timeframe for all historical data
+      const comprehensiveTimeMin = '2015-01-01T00:00:00.000Z';
+      const comprehensiveTimeMax = '2030-12-31T23:59:59.999Z';
       
       try {
         const calendars = await simpleOAuth.getCalendars();
-        console.log(`📅 API: Found ${calendars.length} calendars`);
+        console.log(`📅 API: Found ${calendars.length} calendars including subcalendars`);
+        console.log('📅 API: Fetching comprehensive event history (2015-2030) from all calendars');
         
         for (const calendar of calendars) {
           try {
+            console.log(`🔍 Fetching events from calendar: "${calendar.summary}" (${calendar.id})`);
             const events = await simpleOAuth.getEvents(
               calendar.id,
-              timeMin as string || '2015-01-01T00:00:00.000Z',
-              timeMax as string || '2030-12-31T23:59:59.999Z'
+              comprehensiveTimeMin,
+              comprehensiveTimeMax
             );
             
             if (events && events.length > 0) {
-              console.log(`📊 API: Got ${events.length} events from calendar ${calendar.summary}`);
+              console.log(`  ✅ Found ${events.length} events in calendar: ${calendar.summary}`);
               // Transform events to match expected frontend format
               const transformedEvents = events.map((event: any) => ({
                 id: event.id,
@@ -5843,6 +5858,8 @@ Follow-up areas for next session:
                 updated: event.updated
               }));
               allEvents.push(...transformedEvents);
+            } else {
+              console.log(`  📭 No events found in calendar: ${calendar.summary}`);
             }
           } catch (eventError) {
             console.log(`❌ API: Error getting events for calendar ${calendar.summary}:`, eventError);
@@ -5850,17 +5867,20 @@ Follow-up areas for next session:
         }
       } catch (calendarError) {
         console.log('❌ API: Error getting calendars:', calendarError);
+        return res.status(500).json({ error: 'Failed to get calendars', details: calendarError });
       }
       
       // Filter by calendar if specified
       let filteredEvents = allEvents;
       if (calendarId && calendarId !== 'all') {
+        console.log(`🔍 Filtering events for specific calendar: ${calendarId}`);
         filteredEvents = allEvents.filter((event: any) => 
           event.calendarId === calendarId || event.calendarName?.includes(calendarId as string)
         );
       }
       
-      console.log(`✅ API: Returning ${filteredEvents.length} total events`);
+      console.log(`📊 Total events from all calendars (2015-2030): ${allEvents.length}`);
+      console.log(`✅ API: Returning ${filteredEvents.length} filtered events`);
       return res.json(filteredEvents);
       
     } catch (error: any) {
