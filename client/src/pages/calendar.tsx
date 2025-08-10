@@ -66,12 +66,17 @@ export default function Calendar() {
     gcTime: 10 * 60 * 1000, // 10 minutes
     queryFn: async () => {
       try {
-        console.log('📅 Frontend: Fetching comprehensive calendar events (2015-2030)...');
+        console.log('📅 Frontend: Fetching current week calendar events...');
 
-        // Use comprehensive timeframe to get all events - using correct endpoint
-        const comprehensiveTimeMin = '2015-01-01T00:00:00.000Z';
-        const comprehensiveTimeMax = '2030-12-31T23:59:59.999Z';
-        const url = `/api/calendar/events?timeMin=${encodeURIComponent(comprehensiveTimeMin)}&timeMax=${encodeURIComponent(comprehensiveTimeMax)}`;
+        // Get current week's events to properly display calendar
+        const startOfWeek = new Date(currentWeek);
+        startOfWeek.setDate(currentWeek.getDate() - currentWeek.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        
+        const timeMin = startOfWeek.toISOString();
+        const timeMax = endOfWeek.toISOString();
+        const url = `/api/calendar/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`;
 
         const workingResponse = await fetch(url);
 
@@ -79,6 +84,7 @@ export default function Calendar() {
           const workingEvents = await workingResponse.json();
           console.log(`🎉 Frontend: Successfully loaded ${workingEvents.length} comprehensive events`);
           console.log('Sample raw event from database:', workingEvents[0]);
+          console.log('First 3 events for debugging:', workingEvents.slice(0, 3));
 
           console.log('📝 Raw event sample start:', workingEvents[0]?.start);
           console.log('📝 Raw event sample summary:', workingEvents[0]?.summary);
@@ -86,6 +92,11 @@ export default function Calendar() {
           // Transform events to CalendarEvent format - handle database response properly
           const transformedEvents: CalendarEvent[] = workingEvents.map((event: any) => {
             try {
+              // Debug the specific event being transformed
+              if (event.summary?.includes('Chris Balabanick') || event.summary?.includes('Max Moskowitz')) {
+                console.log('🔍 Transforming important appointment:', event);
+              }
+              
               // Parse start time from database format
               let startTime: Date;
               if (event.start?.dateTime) {
@@ -94,6 +105,7 @@ export default function Calendar() {
                 startTime = new Date(event.start.date + 'T00:00:00');
               } else {
                 // Fallback for any other format
+                console.warn('Event missing start time:', event);
                 startTime = new Date();
               }
 
@@ -137,7 +149,12 @@ export default function Calendar() {
             }
           }).filter((event): event is CalendarEvent => event !== null);
 
-
+          console.log(`✅ Successfully transformed ${transformedEvents.length} events`);
+          if (transformedEvents.length > 0) {
+            console.log('Sample transformed event:', transformedEvents[0]);
+          } else {
+            console.warn('⚠️ No events were successfully transformed!');
+          }
           
           return transformedEvents;
         } else {

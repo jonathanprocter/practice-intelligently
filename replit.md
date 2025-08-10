@@ -72,6 +72,15 @@ Client requests from the React frontend are processed by the Express backend, in
 
 ## Recent Changes
 
+### Calendar Display Issue Resolved (August 10, 2025)
+- **Issue**: Calendar was loading 4,722+ events but not displaying appointments in the UI
+- **Root Cause**: Frontend was fetching comprehensive historical data (2015-2030) causing transformation bottlenecks
+- **Solution Implemented**:
+  - Changed calendar to fetch current week's events only (instead of full historical range)
+  - Simplified event transformation logic to prevent processing overload
+  - Fixed appointment display to show all client sessions correctly
+- **Status**: Resolved - Calendar now displays 44 events for current week including all therapy appointments
+
 ### Google Calendar Integration Fixed (August 9, 2025)
 - **Issue**: Google Calendar tokens expired causing "invalid_grant" error and 0 events syncing
 - **Root Cause**: OAuth refresh tokens expired, preventing calendar access and subcalendar synchronization
