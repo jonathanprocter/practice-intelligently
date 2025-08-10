@@ -72,28 +72,39 @@ export function SessionPrepCard({
       // For calendar events, try to find clientId by name first
       let actualClientId = clientId;
       
+      console.log(`🔍 SessionPrepCard: Loading session prep for eventId=${eventId}, clientName="${clientName}", clientId=${clientId}`);
+      
       if (!actualClientId && clientName) {
         try {
+          console.log(`🔍 Searching for client by name: "${clientName}"`);
           // Try to find client by name for calendar events
           const clientSearchResponse = await fetch(`/api/clients/search?name=${encodeURIComponent(clientName)}`);
+          console.log(`🔍 Client search response status: ${clientSearchResponse.status}`);
           if (clientSearchResponse.ok) {
             const clientData = await clientSearchResponse.json();
+            console.log(`🔍 Client search results:`, clientData);
             if (clientData && clientData.length > 0) {
               actualClientId = clientData[0].id;
-              console.log(`Found client ID ${actualClientId} for calendar event client name: ${clientName}`);
+              console.log(`✅ Found client ID ${actualClientId} for calendar event client name: ${clientName}`);
+            } else {
+              console.log(`❌ No clients found for name: "${clientName}"`);
             }
+          } else {
+            console.log(`❌ Client search failed with status: ${clientSearchResponse.status}`);
           }
         } catch (error) {
-          console.log('Could not find client ID for calendar event:', error);
+          console.log('❌ Could not find client ID for calendar event:', error);
         }
       }
 
       if (!actualClientId) {
-        console.log('No client ID available for AI insights, skipping session prep generation...');
+        console.log('⚠️ No client ID available for AI insights, skipping session prep generation...');
         setAiInsights(null);
         setIsLoadingInsights(false);
         return;
       }
+
+      console.log(`🧠 Loading AI insights for client ${actualClientId}...`);
 
       // Load AI insights for session prep with comprehensive client context
       const insightsResponse = await fetch(`/api/session-prep/${eventId}/ai-insights`, {
