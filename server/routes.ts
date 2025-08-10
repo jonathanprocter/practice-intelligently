@@ -3170,6 +3170,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
       }
       if (error.status === 404 || error.code === 404) {
         // Event not found in Google Calendar, try to remove from database anyway
+        const { eventId } = req.params;
         try {
           await storage.deleteCalendarEvent(eventId);
           console.log(`✅ Event ${eventId} not found in Google Calendar but removed from database`);
