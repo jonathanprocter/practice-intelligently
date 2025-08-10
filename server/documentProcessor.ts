@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
 import OpenAI from 'openai';
+import fs from 'fs/promises';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -41,11 +42,11 @@ export class DocumentProcessor {
         content: pdfContent,
         extractedDate: analysis.extractedDate,
         suggestedAppointments,
-        aiTags: analysis.aiTags,
+        aiTags: analysis.aiTags || [],
         sessionType: analysis.sessionType,
-        keyTopics: analysis.keyTopics,
+        keyTopics: analysis.keyTopics || [],
         mood: analysis.mood,
-        progressIndicators: analysis.progressIndicators
+        progressIndicators: analysis.progressIndicators || []
       };
       
     } catch (error) {
@@ -56,21 +57,30 @@ export class DocumentProcessor {
 
   private async extractPDFContent(filePath: string, filename: string): Promise<string> {
     try {
-      // For now, return a placeholder text indicating PDF processing is available
-      // This can be expanded with proper PDF parsing when needed
-      return `PDF document uploaded: ${filename}
-File path: ${filePath}
+      console.log(`📄 Extracting PDF content from: ${filePath}`);
       
-This is a placeholder for PDF content extraction. The document has been uploaded successfully and can be processed with AI analysis for:
-- Session content analysis
-- Date extraction
-- Therapeutic themes identification
-- Progress indicators
-
-The full PDF parsing functionality will extract actual text content from uploaded PDFs.`;
+      // Dynamic import to avoid issues with pdf-parse test files
+      const pdfParse = (await import('pdf-parse')).default;
+      
+      // Read the PDF file as buffer
+      const pdfBuffer = await fs.readFile(filePath);
+      
+      // Parse PDF content using pdf-parse
+      const pdfData = await pdfParse(pdfBuffer);
+      
+      // Extract text content
+      const extractedText = pdfData.text.trim();
+      
+      if (!extractedText || extractedText.length === 0) {
+        throw new Error('No text content found in PDF');
+      }
+      
+      console.log(`📄 Successfully extracted ${extractedText.length} characters from PDF: ${filename}`);
+      
+      return extractedText;
     } catch (error) {
       console.error('Error extracting PDF content:', error);
-      throw new Error('Failed to extract content from PDF');
+      throw new Error(`Failed to extract content from PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -194,7 +204,7 @@ Be precise and clinical in your analysis.
       const response = await fetch(`${process.env.BASE_URL || 'http://localhost:5000'}/api/calendar/events?date=${date}&client=${encodeURIComponent(clientName)}`);
       
       if (response.ok) {
-        const events = await response.json();
+        const events: any[] = await response.json();
         return events.map((event: any) => ({
           id: event.id,
           title: event.title || event.summary,
@@ -225,7 +235,7 @@ Be precise and clinical in your analysis.
       );
       
       if (response.ok) {
-        const events = await response.json();
+        const events: any[] = await response.json();
         return events.map((event: any) => ({
           id: event.id,
           title: event.title || event.summary,
