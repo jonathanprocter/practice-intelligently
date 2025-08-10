@@ -53,33 +53,44 @@ export default function Calendar() {
     window.location.href = '/api/auth/google';
   };
 
-  // Get events for the current week using the working live API endpoint
+  // Get comprehensive events from 2015-2030 using the working live API endpoint
   const { data: googleEvents = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['google-calendar-events', selectedCalendarId],
+    queryKey: ['google-calendar-events-comprehensive', selectedCalendarId],
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     queryFn: async () => {
       try {
-        console.log('📅 Frontend: Fetching calendar events from working live API...');
+        console.log('📅 Frontend: Fetching comprehensive calendar events (2015-2030)...');
         
-        // Always use the working API endpoint that we know is functioning
-        const workingResponse = await fetch('/api/calendar/events/working');
+        // Use comprehensive timeframe to get all 4,700+ events
+        const comprehensiveTimeMin = '2015-01-01T00:00:00.000Z';
+        const comprehensiveTimeMax = '2030-12-31T23:59:59.999Z';
+        const url = `/api/calendar/events/working?timeMin=${encodeURIComponent(comprehensiveTimeMin)}&timeMax=${encodeURIComponent(comprehensiveTimeMax)}`;
+        
+        const workingResponse = await fetch(url);
 
         if (workingResponse.ok) {
           const workingEvents = await workingResponse.json();
-          console.log(`🎉 Frontend: Successfully loaded ${workingEvents.length} events from working live API`);
+          console.log(`🎉 Frontend: Successfully loaded ${workingEvents.length} comprehensive events`);
 
-          // Transform events to the expected format
-          const transformedEvents = workingEvents.map((event: any) => ({
-            id: event.id,
-            title: event.title || event.summary || 'Appointment',
-            startTime: new Date(event.startTime || event.start?.dateTime || event.start?.date),
-            endTime: new Date(event.endTime || event.end?.dateTime || event.end?.date),
-            location: event.location || 'Office',
-            description: event.description || '',
-            calendarId: event.calendarId || 'simple-practice',
-            calendarName: event.calendarName || 'Simple Practice'
-          }));
+          // Transform events to the expected format with better error handling
+          const transformedEvents = workingEvents.map((event: any) => {
+            try {
+              return {
+                id: event.id,
+                title: event.title || event.summary || 'Appointment',
+                startTime: new Date(event.startTime || event.start?.dateTime || event.start?.date),
+                endTime: new Date(event.endTime || event.end?.dateTime || event.end?.date),
+                location: event.location || 'Office',
+                description: event.description || '',
+                calendarId: event.calendarId || 'simple-practice',
+                calendarName: event.calendarName || 'Simple Practice'
+              };
+            } catch (transformError) {
+              console.error('Error transforming event:', transformError, event);
+              return null;
+            }
+          }).filter(Boolean);
 
           return transformedEvents;
         } else {
