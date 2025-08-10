@@ -217,9 +217,13 @@ export class ApiClient {
         console.warn('Database appointments fetch failed:', dbError);
       }
 
-      // Fetch calendar events
+      // Fetch calendar events for today
       try {
-        const calendarResponse = await apiRequest('GET', '/api/oauth/events/today');
+        const today = new Date();
+        const timeMin = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+        const timeMax = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
+        
+        const calendarResponse = await apiRequest('GET', `/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}`);
         calendarEvents = await calendarResponse.json();
       } catch (calendarError) {
         console.warn('Calendar events fetch failed:', calendarError);
