@@ -205,45 +205,82 @@ export class ApiClient {
     const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
 
     try {
-      // Use the hardcoded demo therapist ID consistently
-      const therapistId = FALLBACK_THERAPIST_ID;
+      // Get both database appointments and calendar events to ensure complete coverage
+      let dbAppointments: Appointment[] = [];
+      let calendarEvents: any[] = [];
 
-      // Get database appointments first (they're synced with Google Calendar and have proper client names)
+      // Fetch database appointments
       try {
-        const dbResponse = await apiRequest('GET', `/api/appointments/today/${therapistId}`);
-        const dbAppointments = await dbResponse.json();
-
-        // Database appointments already have proper client names and are synced with Google Calendar
-        // No need to combine with calendar events since they're duplicates
-        return dbAppointments;
+        const dbResponse = await apiRequest('GET', `/api/appointments/today/${FALLBACK_THERAPIST_ID}`);
+        dbAppointments = await dbResponse.json();
       } catch (dbError) {
-        console.warn('Database appointments fetch failed, falling back to calendar events');
+        console.warn('Database appointments fetch failed:', dbError);
+      }
 
-        // Fallback: Get Google Calendar events only if database fails
-        try {
-          const calendarResponse = await apiRequest('GET', '/api/oauth/events/today');
-          const calendarEvents = await calendarResponse.json();
+      // Fetch calendar events
+      try {
+        const calendarResponse = await apiRequest('GET', '/api/oauth/events/today');
+        calendarEvents = await calendarResponse.json();
+      } catch (calendarError) {
+        console.warn('Calendar events fetch failed:', calendarError);
+      }
 
-          // Convert Google Calendar events to appointment format
-          const calendarAppointments: Appointment[] = calendarEvents.map((event: any) => ({
-            id: event.id || `calendar-${Date.now()}`,
-            clientId: 'calendar-event',
-            startTime: event.start?.dateTime || event.start?.date,
-            endTime: event.end?.dateTime || event.end?.date,
-            type: event.summary || 'Calendar Event',
-            status: 'confirmed',
-            notes: event.description || ''
-          }));
+      // Convert calendar events to appointment format, filtering out non-appointment events
+      const calendarAppointments: Appointment[] = calendarEvents
+        .filter((event: any) => {
+          // Only include events that look like appointments (not birthdays, etc.)
+          const summary = event.summary || '';
+          return summary.toLowerCase().includes('appointment') && 
+                 !summary.toLowerCase().includes('birthday');
+        })
+        .map((event: any) => {
+          // Extract client name from event summary (e.g., "Chris Balabanick Appointment" -> "Chris Balabanick")
+          const summary = event.summary || '';
+          const clientName = summary.replace(/\s+appointment$/i, '').trim();
 
-          return calendarAppointments;
-        } catch (calendarError) {
-          console.warn('Both database and calendar fetch failed');
-          return [];
+          return {
+            id: event.id || `calendar-${event.summary}-${event.start?.dateTime}`,
+            clientId: `calendar-${clientName.replace(/\s+/g, '-').toLowerCase()}`,
+            clientName: clientName,
+            therapistId: FALLBACK_THERAPIST_ID,
+            startTime: new Date(event.start?.dateTime || event.start?.date),
+            endTime: new Date(event.end?.dateTime || event.end?.date),
+            type: 'therapy',
+            status: 'confirmed' as const,
+            notes: event.description || '',
+            location: event.location || '',
+            isCalendarEvent: true, // Flag to distinguish from database appointments
+            googleEventId: event.id
+          };
+        });
+
+      // Combine appointments, avoiding duplicates
+      // Database appointments take priority over calendar events for the same time/client
+      const combinedAppointments = [...dbAppointments];
+      
+      for (const calendarAppt of calendarAppointments) {
+        // Check if there's already a database appointment for the same time and client
+        const isDuplicate = dbAppointments.some(dbAppt => {
+          const dbTime = new Date(dbAppt.startTime).getTime();
+          const calTime = new Date(calendarAppt.startTime).getTime();
+          const timeDiff = Math.abs(dbTime - calTime);
+          return timeDiff < 60000 && // Within 1 minute
+                 (dbAppt.clientName?.toLowerCase() === calendarAppt.clientName?.toLowerCase() ||
+                  dbAppt.googleEventId === calendarAppt.googleEventId);
+        });
+
+        if (!isDuplicate) {
+          combinedAppointments.push(calendarAppt);
         }
       }
+
+      // Sort by start time
+      return combinedAppointments.sort((a, b) => 
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+      );
+
     } catch (error) {
       console.error('Error fetching appointments:', error);
-      // Final fallback - return empty array to prevent crashes
       return [];
     }
   }

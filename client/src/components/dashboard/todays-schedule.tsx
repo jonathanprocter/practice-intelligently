@@ -379,7 +379,7 @@ export default function TodaysSchedule() {
                     {appointment.status.replace('_', ' ')}
                   </Badge>
                   <span className="text-xs text-therapy-text/50">
-                    {appointment.clientId === 'calendar-event' ? 'Calendar Event' : calculateDuration(appointment.startTime, appointment.endTime)}
+                    {(appointment as any).isCalendarEvent ? 'Calendar Event' : calculateDuration(appointment.startTime, appointment.endTime)}
                   </span>
                 </div>
                   </div>
@@ -451,7 +451,7 @@ export default function TodaysSchedule() {
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem 
                       onClick={() => {
-                        if (appointment.clientId !== 'calendar-event') {
+                        if (!(appointment as any).isCalendarEvent) {
                           // For database appointments, navigate to edit
                           navigate(`/appointments`);
                         } else {
@@ -477,7 +477,7 @@ export default function TodaysSchedule() {
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => {
-                        if (appointment.clientId !== 'calendar-event') {
+                        if (!(appointment as any).isCalendarEvent) {
                           navigate('/clients');
                         } else {
                           toast({
@@ -504,7 +504,7 @@ export default function TodaysSchedule() {
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => {
-                        if (appointment.clientId !== 'calendar-event') {
+                        if (!(appointment as any).isCalendarEvent) {
                           // For database appointments
                           navigate('/appointments');
                         } else {
@@ -522,7 +522,7 @@ export default function TodaysSchedule() {
                     <DropdownMenuItem 
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       onClick={() => {
-                        if (appointment.clientId !== 'calendar-event') {
+                        if (!(appointment as any).isCalendarEvent) {
                           // For database appointments, allow deletion
                           handleDeleteClick(appointment);
                         } else {
