@@ -283,18 +283,9 @@ export const DailyView = ({
                                             {formatClientName(event.clientName)}
                                         </div>
                                     )}
-                                    {event.description && (
+                                    {event.notes && (
                                         <div className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                                            {event.description}
-                                        </div>
-                                    )}
-                                    {event.tags && event.tags.length > 0 && (
-                                        <div className="mt-2">
-                                            {event.tags.map((tag, index) => (
-                                                <Badge key={index} variant="secondary" className="mr-1">
-                                                    {tag}
-                                                </Badge>
-                                            ))}
+                                            {event.notes}
                                         </div>
                                     )}
                                 </CardContent>
@@ -389,7 +380,7 @@ export const DailyView = ({
                                     </Button>
                                     {aiInsights && (
                                         <div className="mt-4 p-3 border rounded-md bg-secondary/50">
-                                            <AppointmentSummary insights={aiInsights} />
+                                            <AppointmentSummary eventId={selectedEvent?.id || ''} />
                                         </div>
                                     )}
                                 </div>
