@@ -62,10 +62,10 @@ export default function Calendar() {
       try {
         console.log('📅 Frontend: Fetching comprehensive calendar events (2015-2030)...');
         
-        // Use comprehensive timeframe to get all 4,700+ events
+        // Use comprehensive timeframe to get all events - using correct endpoint
         const comprehensiveTimeMin = '2015-01-01T00:00:00.000Z';
         const comprehensiveTimeMax = '2030-12-31T23:59:59.999Z';
-        const url = `/api/calendar/events/working?timeMin=${encodeURIComponent(comprehensiveTimeMin)}&timeMax=${encodeURIComponent(comprehensiveTimeMax)}`;
+        const url = `/api/calendar/events?timeMin=${encodeURIComponent(comprehensiveTimeMin)}&timeMax=${encodeURIComponent(comprehensiveTimeMax)}`;
         
         const workingResponse = await fetch(url);
 
@@ -78,7 +78,7 @@ export default function Calendar() {
             try {
               return {
                 id: event.id,
-                title: event.title || event.summary || 'Appointment',
+                title: event.summary || event.title || 'Appointment',
                 startTime: new Date(event.startTime || event.start?.dateTime || event.start?.date),
                 endTime: new Date(event.endTime || event.end?.dateTime || event.end?.date),
                 location: event.location || 'Office',

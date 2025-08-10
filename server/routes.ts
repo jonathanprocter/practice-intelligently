@@ -3752,15 +3752,25 @@ I can help you analyze this data, provide insights, and assist with clinical dec
 
       const isConnected = simpleOAuth.isConnected();
       const status = {
+        authenticated: isConnected,
         connected: isConnected,
         hasTokens: isConnected,
-        service: 'google'
+        service: 'google',
+        scopes: isConnected ? [
+          "https://www.googleapis.com/auth/calendar.readonly",
+          "https://www.googleapis.com/auth/calendar.events"
+        ] : []
       };
 
       res.json(status);
     } catch (error: any) {
       console.error('Error checking auth status:', error);
-      res.status(500).json({ error: 'Failed to check auth status', details: error.message });
+      res.status(500).json({ 
+        authenticated: false,
+        connected: false,
+        error: 'Failed to check auth status', 
+        details: error.message 
+      });
     }
   });
   app.post('/api/auth/google/clear', async (req, res) => {
@@ -5407,27 +5417,7 @@ Follow-up areas for next session:
     }
   });
 
-  // OAuth status endpoint for audit compatibility
-  app.get('/api/auth/google/status', async (req, res) => {
-    try {
-      // Check if we have valid OAuth tokens and can access Google Calendar
-      const calendars = await storage.getGoogleCalendars();
-      const connected = calendars && calendars.length > 0;
 
-      res.json({
-        connected,
-        calendars: connected ? calendars.length : 0,
-        service: 'google_calendar'
-      });
-    } catch (error: any) {
-      console.error('OAuth status check failed:', error);
-      res.json({
-        connected: false,
-        calendars: 0,
-        error: error.message
-      });
-    }
-  });
 
   // Additional frontend compatibility endpoints for AI Intelligence Dashboard
   app.post('/api/ai/therapist-strengths', async (req, res) => {
