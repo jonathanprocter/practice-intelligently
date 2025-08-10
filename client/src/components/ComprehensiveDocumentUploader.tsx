@@ -74,10 +74,13 @@ export function ComprehensiveDocumentUploader({
   };
 
   const processFile = async (file: File) => {
-    if (!file.name.toLowerCase().endsWith('.docx')) {
+    const allowedExtensions = ['.pdf', '.docx', '.doc', '.txt', '.md', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.xlsx', '.xls', '.csv'];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    
+    if (!allowedExtensions.includes(fileExtension)) {
       toast({
         title: "Invalid File Type",
-        description: "Please upload a .docx file containing comprehensive progress notes.",
+        description: "Please upload a supported file type: PDF, DOCX, TXT, images, Excel, or CSV.",
         variant: "destructive"
       });
       return;
@@ -308,7 +311,7 @@ export function ComprehensiveDocumentUploader({
           AI-Powered Document Processing
         </CardTitle>
         <CardDescription>
-          Upload comprehensive progress notes documents (.docx) to automatically extract client information, 
+          Upload comprehensive progress notes documents (PDF, DOCX, TXT, images, Excel, CSV) to automatically extract client information, 
           session data, and sync to your database with intelligent client matching.
         </CardDescription>
       </CardHeader>
@@ -360,7 +363,7 @@ export function ComprehensiveDocumentUploader({
                 Drop your comprehensive progress notes here
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Supports .docx files with multiple clients and sessions
+                Supports PDF, DOCX, TXT, images, Excel, CSV with multiple clients and sessions
               </p>
               <div className="space-y-2">
                 <Button
@@ -372,7 +375,7 @@ export function ComprehensiveDocumentUploader({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".docx"
+                  accept=".pdf,.docx,.doc,.txt,.md,.png,.jpg,.jpeg,.gif,.bmp,.xlsx,.xls,.csv"
                   onChange={handleFileSelect}
                   className="hidden"
                   data-testid="file-input"

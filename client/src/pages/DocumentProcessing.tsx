@@ -110,7 +110,7 @@ export default function DocumentProcessing() {
                     <div className="space-y-1">
                       <div className="font-medium">Prepare Your Document</div>
                       <div className="text-sm text-muted-foreground">
-                        Ensure your .docx file contains client names and session dates. 
+                        Ensure your document (PDF, DOCX, TXT, etc.) contains client names and session dates. 
                         The AI works best with structured content.
                       </div>
                     </div>
