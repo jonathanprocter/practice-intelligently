@@ -266,8 +266,12 @@ export const DailyView = ({
                                     <CardTitle className="text-lg truncate">{cleanEventTitle(event.title)}</CardTitle>
                                     <div className="text-sm text-muted-foreground flex items-center">
                                         <Clock className="mr-1 h-4 w-4" />
-                                        {event.startTime && parseEventDate(event.startTime)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        {event.endTime && ` - ${parseEventDate(event.endTime)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                        {event.isAllDay ? 'All Day' : (
+                                            <>
+                                                {event.startTime && parseEventDate(event.startTime)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {event.endTime && !event.isAllDay && ` - ${parseEventDate(event.endTime)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                            </>
+                                        )}
                                     </div>
                                 </CardHeader>
                                 <CardContent>
@@ -310,8 +314,12 @@ export const DailyView = ({
                                 <div className="flex flex-col space-y-2">
                                     <div className="flex items-center text-sm text-muted-foreground">
                                         <Clock className="mr-1 h-4 w-4" />
-                                        {selectedEvent.startTime && parseEventDate(selectedEvent.startTime)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        {selectedEvent.endTime && ` - ${parseEventDate(selectedEvent.endTime)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                        {selectedEvent.isAllDay ? 'All Day' : (
+                                            <>
+                                                {selectedEvent.startTime && parseEventDate(selectedEvent.startTime)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {selectedEvent.endTime && !selectedEvent.isAllDay && ` - ${parseEventDate(selectedEvent.endTime)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                            </>
+                                        )}
                                     </div>
                                     {selectedEvent.location && (
                                         <div className="flex items-center text-sm text-muted-foreground">

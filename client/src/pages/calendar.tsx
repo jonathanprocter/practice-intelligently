@@ -93,8 +93,10 @@ export default function Calendar() {
           const transformedEvents: CalendarEvent[] = workingEvents.map((event: any) => {
             try {
               // Debug the specific event being transformed
-              if (event.summary?.includes('Chris Balabanick') || event.summary?.includes('Max Moskowitz')) {
-                console.log('🔍 Transforming important appointment:', event);
+              if (event.summary?.includes('Chris Balabanick') || event.summary?.includes('Max Moskowitz') || event.summary?.includes('Sarah Palladino')) {
+                console.log('🔍 Transforming important event:', event);
+                console.log('🔍 Event start:', event.start);
+                console.log('🔍 Event end:', event.end);
               }
               
               // Parse start time from database format
