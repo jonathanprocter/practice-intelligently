@@ -66,11 +66,47 @@ export default function Appointments() {
   const { data: appointmentsData, isLoading } = useQuery({
     queryKey: ['appointments', quickFilterType, dateRange, selectedDate],
     queryFn: async () => {
+      let dbAppointments = [];
+      let calendarEvents = [];
+
       if (quickFilterType === 'today' || selectedDate === new Date().toISOString().split('T')[0]) {
-        return ApiClient.getTodaysAppointments();
+        // Get both database appointments and calendar events for today
+        dbAppointments = await ApiClient.getTodaysAppointments();
+        
+        // Also fetch calendar events for today to show appointments that aren't in the database yet
+        const today = new Date();
+        const timeMin = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+        const timeMax = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString();
+        
+        try {
+          const response = await fetch(`/api/calendar/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`);
+          if (response.ok) {
+            const events = await response.json();
+            // Filter for appointment-like events (containing "Appointment" in summary)
+            calendarEvents = events.filter((event: any) => 
+              event.summary?.includes('Appointment') || 
+              event.summary?.includes('Session') ||
+              event.summary?.includes('Therapy')
+            ).map((event: any) => ({
+              id: event.id,
+              clientId: null,
+              therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', // Current therapist
+              startTime: event.start?.dateTime || event.start?.date,
+              endTime: event.end?.dateTime || event.end?.date,
+              type: event.summary,
+              status: 'scheduled',
+              location: event.location || 'Office',
+              googleEventId: event.id,
+              notes: event.description,
+              clientName: event.summary?.replace(' Appointment', '').replace(' Session', '').trim(),
+              isCalendarEvent: true
+            }));
+          }
+        } catch (error) {
+          console.warn('Could not fetch calendar events:', error);
+        }
       } else if (quickFilterType === 'custom' && dateRange.start && dateRange.end) {
         // For date range queries, fetch appointments for each day and combine
-        const appointments = [];
         const start = new Date(dateRange.start);
         const end = new Date(dateRange.end);
 
@@ -78,22 +114,27 @@ export default function Appointments() {
           const dateStr = d.toISOString().split('T')[0];
           try {
             const dayAppointments = await ApiClient.getAppointments(dateStr);
-            appointments.push(...dayAppointments);
+            dbAppointments.push(...dayAppointments);
           } catch (err) {
             console.warn(`Could not fetch appointments for ${dateStr}`);
           }
         }
-        return appointments;
       } else {
-        return ApiClient.getAppointments(selectedDate);
+        dbAppointments = await ApiClient.getAppointments(selectedDate);
       }
+
+      // Combine database appointments and calendar events, avoiding duplicates
+      const existingEventIds = new Set(dbAppointments.map((apt: any) => apt.googleEventId).filter(Boolean));
+      const uniqueCalendarEvents = calendarEvents.filter((event: any) => !existingEventIds.has(event.googleEventId));
+      
+      return [...dbAppointments, ...uniqueCalendarEvents];
     },
   });
 
   // Transform appointments data with client info
-  const appointments: ExtendedAppointment[] = (appointmentsData || []).map((apt: Appointment) => {
-    // Check if this is a calendar event (non-UUID ID)
-    const isCalendarEvent = apt.id && !apt.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+  const appointments: ExtendedAppointment[] = (appointmentsData || []).map((apt: any) => {
+    // Check if this is a calendar event (non-UUID ID or marked as calendar event)
+    const isCalendarEvent = apt.isCalendarEvent || (apt.id && !apt.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i));
 
     // Use the clientName from backend if available, otherwise try to extract from type field
     const clientName = apt.clientName || 
@@ -104,10 +145,10 @@ export default function Appointments() {
       ...apt,
       clientName,
       clientPhone: '', // Would be populated from client database records when available
-      clientInitials: clientName.split(' ').map(n => n[0]).join('').substring(0, 2),
+      clientInitials: clientName.split(' ').map((n: string) => n[0]).join('').substring(0, 2),
       isCustomType: apt.type !== 'Individual Counseling' && apt.type !== 'therapy_session',
       location: apt.location || 'Office',
-      isCalendarEvent,
+      isCalendarEvent: Boolean(isCalendarEvent),
     };
   });
 
@@ -218,8 +259,8 @@ export default function Appointments() {
   };
 
   // Get unique clients for filter dropdown
-  const uniqueClients = [...new Set(appointments.map(apt => apt.clientName).filter(Boolean))];
-  const uniqueLocations = [...new Set(appointments.map(apt => apt.location).filter(Boolean))];
+  const uniqueClients = Array.from(new Set(appointments.map(apt => apt.clientName).filter(Boolean)));
+  const uniqueLocations = Array.from(new Set(appointments.map(apt => apt.location).filter(Boolean)));
   const availableStatuses = ['confirmed', 'pending', 'completed', 'cancelled', 'no_show'];
 
   const handleMarkComplete = (appointmentId: string) => {
