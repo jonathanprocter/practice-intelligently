@@ -74,6 +74,12 @@ export function SessionPrepCard({
       
       console.log(`🔍 SessionPrepCard: Loading session prep for eventId=${eventId}, clientName="${clientName}", clientId=${clientId}`);
       
+      // Check if clientId is a fake/placeholder ID (starts with 'calendar-')
+      if (actualClientId && typeof actualClientId === 'string' && actualClientId.startsWith('calendar-')) {
+        console.log(`🔍 Detected fake client ID: ${actualClientId}, treating as undefined`);
+        actualClientId = undefined;
+      }
+      
       if (!actualClientId && clientName) {
         try {
           console.log(`🔍 Searching for client by name: "${clientName}"`);
