@@ -348,6 +348,17 @@ export default function Appointments() {
   });
 
   const handleStatusChange = (appointmentId: string, newStatus: string) => {
+    // Check if this is a calendar event (non-UUID ID or marked as calendar event)
+    const appointment = appointments.find(apt => apt.id === appointmentId);
+    if (appointment?.isCalendarEvent) {
+      toast({
+        title: "Calendar Event",
+        description: "Calendar events must be updated through Google Calendar. Use the delete button to remove them.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     let reason = undefined;
     
     // For cancelled or no-show statuses, you might want to add a reason prompt
@@ -799,7 +810,14 @@ export default function Appointments() {
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" className="text-xs h-7" data-testid={`status-dropdown-${appointment.id}`}>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-xs h-7" 
+                            data-testid={`status-dropdown-${appointment.id}`}
+                            disabled={appointment.isCalendarEvent}
+                            title={appointment.isCalendarEvent ? "Calendar events must be managed through Google Calendar" : "Change appointment status"}
+                          >
                             <Edit className="h-3 w-3" />
                             Status
                           </Button>
@@ -878,7 +896,11 @@ export default function Appointments() {
                             <strong>Status:</strong> 
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Badge className={`ml-2 cursor-pointer hover:opacity-80 ${getStatusColor(appointment.status)}`} data-testid={`status-badge-${appointment.id}`}>
+                                <Badge 
+                                  className={`ml-2 hover:opacity-80 ${getStatusColor(appointment.status)} ${appointment.isCalendarEvent ? 'cursor-default opacity-70' : 'cursor-pointer'}`} 
+                                  data-testid={`status-badge-${appointment.id}`}
+                                  title={appointment.isCalendarEvent ? "Calendar event status cannot be changed here" : "Click to change status"}
+                                >
                                   {appointment.status}
                                 </Badge>
                               </DropdownMenuTrigger>
