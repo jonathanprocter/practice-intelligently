@@ -137,6 +137,8 @@ export default function Calendar() {
             }
           }).filter((event): event is CalendarEvent => event !== null);
 
+
+          
           return transformedEvents;
         } else {
           console.error('❌ Frontend: Working API failed, status:', workingResponse.status);
@@ -171,6 +173,7 @@ export default function Calendar() {
   });
 
   // Apply filtering to the already transformed calendar events
+
   const filteredCalendarEvents = (googleEvents || []).filter((event: CalendarEvent) => {
     try {
       // Ensure event exists and has required properties
@@ -202,6 +205,7 @@ export default function Calendar() {
   });
 
   // Use the already transformed and filtered events
+
   const calendarEvents: CalendarEvent[] = filteredCalendarEvents;
 
   // Calendar events processed and organized by week
