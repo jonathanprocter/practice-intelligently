@@ -107,7 +107,48 @@ export const DailyView = ({
                             return false;
                   }
 
-                  const eventS
+                  const eventStart = parseEventDate(event.startTime);
+                  if (!eventStart) {
+                            console.warn('DailyView: Could not parse event start time:', event.startTime);
+                            return false;
+                  }
+
+                  const matches = isSameDay(eventStart, date);
+                  if (matches) {
+                            console.log('DailyView: Event matches date:', event.title || event.summary, eventStart);
+                  }
+
+                  return matches;
+          });
+
+          console.log('DailyView: Filtered events count:', filtered.length);
+
+          // Sort events by start time
+          const sorted = filtered.sort((a, b) => {
+                  const aTime = parseEventDate(a.startTime);
+                  const bTime = parseEventDate(b.startTime);
+
+                  if (!aTime || !bTime) return 0;
+
+                  return aTime.getTime() - bTime.getTime();
+          });
+
+          console.log('DailyView: Final sorted events:', sorted.map(e => ({
+                  title: e.title || e.summary,
+                  startTime: e.startTime
+          })));
+
+          return sorted;
+    }, [events, date]);
+
+    // Generate time slots for the day (24 hours)
+    const timeSlots = useMemo(() => {
+          const slots
+    })
+          })))
+          })
+                  }
+                  }
                   }
           })
           }
