@@ -362,7 +362,7 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">AI-Powered Clinical Document Processing</h3>
         <p className="text-sm text-gray-600 mb-6">
-          Upload clinical documents and our AI will automatically extract client information and generate comprehensive progress notes.
+          Upload clinical documents in any supported format (PDF, DOCX, TXT, images, Excel, CSV) and our AI will automatically extract client information and generate comprehensive progress notes.
         </p>
 
         {/* Drop Zone */}
@@ -382,7 +382,7 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
             <div>
               <p className="text-lg mb-2">Drag & drop clinical documents here, or click to select</p>
               <p className="text-sm text-gray-500">
-                AI will automatically extract client information and session details
+                Supports PDF, DOCX, TXT, images, Excel, CSV - AI will automatically extract client information and session details
               </p>
             </div>
           )}
@@ -393,7 +393,7 @@ export function DocumentUploadZone({ onProgressNoteGenerated }: DocumentUploadZo
           <p className="font-medium mb-2">Supported formats:</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <span className="flex items-center gap-1">
-              <FileText className="w-4 h-4" /> PDF, DOCX, TXT
+              <FileText className="w-4 h-4" /> <strong>PDF</strong>, DOCX, TXT
             </span>
             <span className="flex items-center gap-1">
               <Image className="w-4 h-4" /> Images (PNG, JPG)
