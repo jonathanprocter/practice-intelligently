@@ -5822,16 +5822,25 @@ Follow-up areas for next session:
             
             if (events && events.length > 0) {
               console.log(`📊 API: Got ${events.length} events from calendar ${calendar.summary}`);
-              // Transform events to match expected format
+              // Transform events to match expected frontend format
               const transformedEvents = events.map((event: any) => ({
                 id: event.id,
                 title: event.summary || 'Appointment',
+                summary: event.summary || 'Appointment', // Keep both for compatibility
                 startTime: event.start?.dateTime || event.start?.date,
                 endTime: event.end?.dateTime || event.end?.date,
+                start: event.start, // Keep original Google Calendar format
+                end: event.end,     // Keep original Google Calendar format
                 location: event.location || '',
                 description: event.description || '',
                 calendarId: calendar.id,
-                calendarName: calendar.summary
+                calendarName: calendar.summary,
+                kind: event.kind,
+                etag: event.etag,
+                status: event.status,
+                htmlLink: event.htmlLink,
+                created: event.created,
+                updated: event.updated
               }));
               allEvents.push(...transformedEvents);
             }
