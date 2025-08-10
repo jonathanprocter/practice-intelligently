@@ -1877,8 +1877,24 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
         return res.status(404).json({ error: 'Client not found' });
       }
       
+      // Get client session history and notes for context
+      const sessionNotes = await storage.getSessionNotesByClientId(clientId);
+      const appointments = await storage.getAppointmentsByClientId(clientId);
+      
+      // Build appointment data for AI insights
+      const appointmentData = {
+        clientName: client.name || 'Unknown Client',
+        date: new Date().toISOString(),
+        startTime: new Date().toISOString(),
+        endTime: new Date(Date.now() + 50 * 60 * 1000).toISOString(), // 50 min session
+        location: 'Therapy Office',
+        status: 'scheduled',
+        notes: sessionNotes.slice(0, 3).map(note => note.content).join('\n\n'),
+        sessionNotes: sessionNotes.length > 0 ? sessionNotes[0].content : 'No previous session notes'
+      };
+      
       // Generate comprehensive session prep insights
-      const insights = await generateAppointmentInsights(clientId, eventId);
+      const insights = await generateAppointmentInsights(appointmentData);
       
       res.json({ 
         insights: {
