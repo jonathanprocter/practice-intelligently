@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ApiClient, type Client } from "@/lib/api";
-import { Users, Plus, Search, Filter, Edit2, Calendar, Phone, Mail, UserCheck, Upload, FileText, Archive, ChartLine } from "lucide-react";
+import { Users, Plus, Search, Filter, Edit2, Calendar, Phone, Mail, UserCheck, Upload, FileText, Archive, ChartLine, Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import { ClientListGenerator } from "@/components/clients/ClientListGenerator";
 import { RealClientImporter } from "@/components/clients/RealClientImporter";
 import { QuickClientUpdate } from "@/components/clients/QuickClientUpdate";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { format } from "date-fns";
@@ -20,10 +22,30 @@ export default function Clients() {
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const { data: clients, isLoading, error } = useQuery({
     queryKey: ['clients'],
     queryFn: () => ApiClient.getClients(),
+  });
+
+  const deleteClientMutation = useMutation({
+    mutationFn: (clientId: string) => ApiClient.deleteClient(clientId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      toast({
+        title: "Client Deleted",
+        description: "The client has been permanently deleted from the system.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Delete Failed",
+        description: "There was an error deleting the client. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   // Debug logging - check for API errors
@@ -100,6 +122,10 @@ export default function Clients() {
   const handleCloseForm = () => {
     setShowClientForm(false);
     setEditingClient(null);
+  };
+
+  const handleDeleteClient = (clientId: string) => {
+    deleteClientMutation.mutate(clientId);
   };
 
   const formatAge = (dateOfBirth: string) => {
@@ -228,6 +254,37 @@ export default function Clients() {
                   >
                     Call
                   </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        data-testid={`button-delete-${client.id}`}
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Client</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to permanently delete {client.firstName} {client.lastName}? 
+                          This action cannot be undone and will remove all client data, session notes, and appointments.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => handleDeleteClient(client.id)}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          Delete Permanently
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </div>

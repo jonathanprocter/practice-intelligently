@@ -201,6 +201,10 @@ export class ApiClient {
     return response.json();
   }
 
+  static async deleteClient(id: string): Promise<void> {
+    await apiRequest('DELETE', `/api/clients/${id}`);
+  }
+
   static async getTodaysAppointments(): Promise<Appointment[]> {
     const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
 
