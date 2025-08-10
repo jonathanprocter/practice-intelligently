@@ -423,15 +423,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const clients = await storage.getClients('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c');
       const searchTerm = (name as string).toLowerCase().trim();
 
-      // Search for clients by name (first name, last name, or full name)
+      // Common nickname mappings for better matching
+      const nicknameMap: Record<string, string[]> = {
+        'chris': ['christopher', 'christian', 'christin'],
+        'christopher': ['chris'],
+        'mike': ['michael'],
+        'michael': ['mike'],
+        'bob': ['robert'],
+        'robert': ['bob'],
+        'bill': ['william'],
+        'william': ['bill'],
+        'tom': ['thomas'],
+        'thomas': ['tom'],
+        'steve': ['steven', 'stephen'],
+        'steven': ['steve'],
+        'stephen': ['steve'],
+        'dave': ['david'],
+        'david': ['dave'],
+        'jim': ['james'],
+        'james': ['jim'],
+        'joe': ['joseph'],
+        'joseph': ['joe'],
+        'dan': ['daniel'],
+        'daniel': ['dan'],
+        'matt': ['matthew'],
+        'matthew': ['matt'],
+        'max': ['maximilian', 'maxwell']
+      };
+
+      // Search for clients by name (first name, last name, or full name) including nicknames
       const matchingClients = clients.filter(client => {
         const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
         const firstName = client.firstName?.toLowerCase() || '';
         const lastName = client.lastName?.toLowerCase() || '';
 
-        return fullName.includes(searchTerm) || 
-               firstName.includes(searchTerm) || 
-               lastName.includes(searchTerm);
+        // Direct matching
+        if (fullName.includes(searchTerm) || 
+            firstName.includes(searchTerm) || 
+            lastName.includes(searchTerm)) {
+          return true;
+        }
+
+        // Split search term to handle "Chris Balabanick" type searches
+        const searchWords = searchTerm.split(' ').filter(word => word.length > 0);
+        
+        // Check if all search words match (with nickname support)
+        const allWordsMatch = searchWords.every(word => {
+          // Check direct word match
+          if (fullName.includes(word) || firstName.includes(word) || lastName.includes(word)) {
+            return true;
+          }
+          
+          // Check nickname match for this word
+          const possibleNicknames = nicknameMap[word] || [];
+          return possibleNicknames.some(nickname => 
+            firstName.includes(nickname) || fullName.includes(nickname)
+          );
+        });
+
+        return allWordsMatch;
       });
 
       res.json(matchingClients);
@@ -1883,7 +1933,8 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
       
       // Build appointment data for AI insights
       const appointmentData = {
-        clientName: client.name || 'Unknown Client',
+        title: `Session with ${client.firstName} ${client.lastName}`,
+        clientName: `${client.firstName} ${client.lastName}` || 'Unknown Client',
         date: new Date().toISOString(),
         startTime: new Date().toISOString(),
         endTime: new Date(Date.now() + 50 * 60 * 1000).toISOString(), // 50 min session
