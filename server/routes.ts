@@ -1859,6 +1859,40 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
     }
   });
 
+  // Generate AI insights for session prep
+  app.post('/api/session-prep/:eventId/ai-insights', async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const { clientId } = req.body;
+      
+      if (!clientId) {
+        return res.status(400).json({ error: 'Client ID is required' });
+      }
+
+      console.log(`🧠 Generating AI insights for event ${eventId}, client ${clientId}`);
+      
+      // Verify client exists before generating insights
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ error: 'Client not found' });
+      }
+      
+      // Generate comprehensive session prep insights
+      const insights = await generateAppointmentInsights(clientId, eventId);
+      
+      res.json({ 
+        insights: {
+          contextual: true,
+          content: insights,
+          generatedAt: new Date().toISOString()
+        }
+      });
+    } catch (error: any) {
+      console.error('Error generating session prep insights:', error);
+      res.status(500).json({ error: 'Failed to generate AI insights', details: error.message });
+    }
+  });
+
   // Save AI insights as session note
   app.post('/api/ai-insights/:eventId/save', async (req, res) => {
     try {

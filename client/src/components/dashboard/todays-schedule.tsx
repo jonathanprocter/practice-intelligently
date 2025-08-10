@@ -127,10 +127,33 @@ export default function TodaysSchedule() {
 
   const generateAIInsights = async (eventId: string, clientName: string) => {
     try {
+      // First, try to find the client ID by name
+      let actualClientId = null;
+      try {
+        const clientSearchResponse = await fetch(`/api/clients/search?name=${encodeURIComponent(clientName)}`);
+        if (clientSearchResponse.ok) {
+          const clientData = await clientSearchResponse.json();
+          if (clientData && clientData.length > 0) {
+            actualClientId = clientData[0].id;
+          }
+        }
+      } catch (error) {
+        console.log('Could not find client ID for AI insights:', error);
+      }
+
+      if (!actualClientId) {
+        toast({
+          title: "Unable to generate insights",
+          description: "Could not find client information for AI insights generation.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const response = await fetch(`/api/session-prep/${eventId}/ai-insights`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId: eventId })
+        body: JSON.stringify({ clientId: actualClientId })
       });
 
       if (response.ok) {

@@ -103,9 +103,18 @@ export function SessionPrepCard({
       });
       
       if (insightsResponse.ok) {
-        const data = await insightsResponse.json();
-        console.log('Received contextual AI insights:', data.insights.contextual ? 'with client context' : 'basic insights');
-        setAiInsights(data.insights);
+        const contentType = insightsResponse.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await insightsResponse.json();
+          console.log('Received contextual AI insights:', data.insights.contextual ? 'with client context' : 'basic insights');
+          setAiInsights(data.insights);
+        } else {
+          console.error('Expected JSON response but received HTML');
+          throw new Error('Server returned HTML instead of JSON');
+        }
+      } else {
+        console.error('AI insights request failed:', insightsResponse.status, insightsResponse.statusText);
+        throw new Error(`Failed to load AI insights: ${insightsResponse.status}`);
       }
     } catch (error) {
       console.error('Error loading session prep insights:', error);
