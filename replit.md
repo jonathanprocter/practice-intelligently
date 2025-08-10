@@ -5,6 +5,7 @@ This is a comprehensive full-stack web application designed to streamline therap
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+AI Service Priority Order: OpenAI API (primary) → Claude/Anthropic (secondary) → Gemini (tertiary) → Perplexity (fallback)
 
 ## System Architecture
 The application follows a monorepo structure, clearly separating client and server code, and emphasizes a clean, production-ready state.
@@ -34,7 +35,7 @@ The system utilizes a comprehensive PostgreSQL database with tables for core cli
 - **Session Documentation**: Rich text session notes, transcript processing, automated AI insights generation, progress tracking, and AI-enhanced session prep.
 - **Action Items & Tasks**: Priority-based task management.
 - **Robust Storage Layer**: Over 65 methods supporting comprehensive CRUD operations, advanced querying, and integration with business logic.
-- **Advanced AI Integration & Clinical Intelligence**: Integrates multiple AI models (OpenAI GPT-4o primary, Claude Sonnet-4, Google Gemini, Perplexity Sonar) for predictive clinical modeling, advanced pattern recognition, personalized therapeutic recommendations, and practice management intelligence.
+- **Advanced AI Integration & Clinical Intelligence**: Integrates multiple AI models with prioritized fallback system (OpenAI GPT-4o primary, Claude Sonnet-4 secondary, Google Gemini tertiary, Perplexity Sonar fallback) for predictive clinical modeling, advanced pattern recognition, personalized therapeutic recommendations, and practice management intelligence.
 - **Intelligent Document Processing**: Upload clinical documents (TXT, DOC, DOCX, XLS, XLSX, CSV, images) for AI-driven extraction and progress note generation (SOAP format).
 - **Analytics Dashboard**: Modern card-based layout with smart insights, AI-powered summaries, and interactive data visualization.
 - **Client Check-ins System**: AI-powered check-ins with database lifecycle management and OpenAI analysis.
