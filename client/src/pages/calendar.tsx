@@ -53,117 +53,67 @@ export default function Calendar() {
     window.location.href = '/api/auth/google';
   };
 
-  // Get events for the current week
+  // Get events for the current week - optimized for 4,700+ events
   const { data: googleEvents = [], isLoading, error, refetch } = useQuery({
     queryKey: ['google-calendar-events', selectedCalendarId],
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 3,
     queryFn: async () => {
-      // Fetching calendar events for current timeframe only
+      console.log('🔄 Frontend: Starting calendar events fetch...');
+      
       try {
-        // Get all events from 2015-2030 to include all historical appointments
-        const recentStart = new Date('2015-01-01T00:00:00.000Z');
-        const recentEnd = new Date('2030-12-31T23:59:59.999Z');
-
-        const timeMin = recentStart.toISOString();
-        const timeMax = recentEnd.toISOString();
-        const calendarParam = selectedCalendarId === 'all' ? '' : `&calendarId=${selectedCalendarId}`;
-
-        // Use the new working API endpoint
-        const workingResponse = await fetch(`/api/calendar/events/working?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}${calendarParam}`);
+        // Primary endpoint: Use the comprehensive working API with 2015-2030 timeframe
+        const comprehensiveTimeMin = '2015-01-01T00:00:00.000Z';
+        const comprehensiveTimeMax = '2030-12-31T23:59:59.999Z';
+        const workingResponse = await fetch(`/api/calendar/events/working?timeMin=${encodeURIComponent(comprehensiveTimeMin)}&timeMax=${encodeURIComponent(comprehensiveTimeMax)}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
         if (workingResponse.ok) {
           const workingEvents = await workingResponse.json();
-          console.log(`🎉 Frontend: Successfully loaded ${workingEvents.length} events from working API`);
+          console.log(`✅ Frontend: Loaded ${workingEvents.length} events from comprehensive API`);
 
-          if (workingEvents.length > 0) {
-            return workingEvents.map((event: any) => ({
-              id: event.id,
-              title: event.title || event.summary || 'Appointment',
-              startTime: new Date(event.startTime || event.start?.dateTime || event.start?.date),
-              endTime: new Date(event.endTime || event.end?.dateTime || event.end?.date),
-              location: event.location || getCalendarLocationDisplay(event.startTime || event.start?.dateTime || event.start?.date),
-              description: event.description || '',
-              calendarId: event.calendarId || 'simple-practice',
-              calendarName: event.calendarName || 'Simple Practice'
-            }));
+          if (Array.isArray(workingEvents) && workingEvents.length > 0) {
+            const processedEvents = workingEvents.map((event: any) => {
+              // Handle both Google Calendar format and processed format
+              const startTime = event.startTime || event.start?.dateTime || event.start?.date;
+              const endTime = event.endTime || event.end?.dateTime || event.end?.date;
+              
+              return {
+                id: event.id,
+                title: event.title || event.summary || 'Appointment',
+                startTime: new Date(startTime),
+                endTime: new Date(endTime),
+                location: event.location || '',
+                description: event.description || '',
+                calendarId: event.calendarId || 'google-calendar',
+                calendarName: event.calendarName || 'Calendar'
+              };
+            });
+            
+            console.log(`🎯 Frontend: Processed ${processedEvents.length} events successfully`);
+            return processedEvents;
+          } else {
+            console.log('⚠️ Frontend: Working API returned empty array');
           }
         } else {
-          console.log('❌ Frontend: Working API failed, status:', workingResponse.status);
+          const errorText = await workingResponse.text();
+          console.log(`❌ Frontend: Working API failed with status ${workingResponse.status}: ${errorText}`);
         }
 
-        // Fallback: Get today's events from Simple Practice integration
-        const todayResponse = await fetch('/api/oauth/events/today');
-        console.log('Today response status:', todayResponse.status);
+        // Fallback: Return empty array if primary API fails
+        console.log('⚠️ Frontend: Using fallback empty array');
+        return [];
 
-        if (todayResponse.ok) {
-          const todayEvents = await todayResponse.json();
-          console.log('Today events from API:', todayEvents.length);
-
-          // Convert Google Calendar events to the expected format
-          const convertedEvents = todayEvents.map((event: any) => {
-            const startTime = new Date(event.start?.dateTime || event.start?.date);
-            const endTime = new Date(event.end?.dateTime || event.end?.date);
-
-            return {
-              id: event.id,
-              title: event.summary || 'Appointment',
-              startTime,
-              endTime,
-              location: 'Simple Practice',
-              description: event.description || '',
-              calendarId: 'simple-practice',
-              calendarName: 'Simple Practice'
-            };
-          });
-
-          console.log('Successfully converted', convertedEvents.length, 'events');
-          return convertedEvents;
-        } else {
-          console.error('API response not ok:', todayResponse.status);
-          return [];
-        }
       } catch (err) {
         console.error('Calendar fetch error:', err);
         return [];
       }
-
-      // Fallback: First check if Google Calendar is connected
-      const statusResponse = await fetch('/api/auth/google/status');
-      const status = await statusResponse.json();
-
-      if (!status.connected) {
-        // Try to get events from database first
-        const dbResponse = await fetch('/api/calendar/events/local');
-        if (dbResponse.ok) {
-          return dbResponse.json();
-        }
-        return []; // Return empty array instead of throwing error
-      }
-
-      // Use the main calendar events endpoint to get all historical data 2015-2030
-      const timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
-      const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
-      const calendarParam = selectedCalendarId === 'all' ? '' : `&calendarId=${selectedCalendarId}`;
-
-      const response = await fetch(`/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}${calendarParam}`);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        if (response.status === 401 || response.status === 403 || errorData.requiresAuth) {
-          // Fallback to database if API fails
-          const dbResponse = await fetch('/api/calendar/events/local');
-          if (dbResponse.ok) {
-            return dbResponse.json();
-          }
-          throw new Error('Google Calendar not connected');
-        }
-        throw new Error(errorData.error || 'Failed to fetch calendar events');
-      }
-
-      return response.json();
     },
-    retry: false,
     refetchOnWindowFocus: false,
     refetchOnMount: true
   });

@@ -221,11 +221,19 @@ class SimpleOAuth {
       const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
       
       // Use provided time range or default to today only - convert to Eastern Time
-      const today = new Date();
-      // Convert to Eastern Time for proper timezone handling
-      const easternToday = new Date(today.toLocaleString("en-US", {timeZone: "America/New_York"}));
-      const startTime = timeMin || new Date(easternToday.getFullYear(), easternToday.getMonth(), easternToday.getDate()).toISOString();
-      const endTime = timeMax || new Date(easternToday.getFullYear(), easternToday.getMonth(), easternToday.getDate(), 23, 59, 59, 999).toISOString();
+      let startTime: string, endTime: string;
+      
+      if (timeMin && timeMax) {
+        // Use provided comprehensive timeframe (e.g., 2015-2030)
+        startTime = timeMin;
+        endTime = timeMax;
+      } else {
+        // Default to today only when no timeframe specified
+        const today = new Date();
+        const easternToday = new Date(today.toLocaleString("en-US", {timeZone: "America/New_York"}));
+        startTime = new Date(easternToday.getFullYear(), easternToday.getMonth(), easternToday.getDate()).toISOString();
+        endTime = new Date(easternToday.getFullYear(), easternToday.getMonth(), easternToday.getDate(), 23, 59, 59, 999).toISOString();
+      }
       
       // Debug: Log the actual parameters being used  
       console.log(`🔍 Calendar fetch params: timeMin=${startTime}, timeMax=${endTime}`);
