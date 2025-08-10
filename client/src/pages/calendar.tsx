@@ -72,15 +72,47 @@ export default function Calendar() {
         if (workingResponse.ok) {
           const workingEvents = await workingResponse.json();
           console.log(`🎉 Frontend: Successfully loaded ${workingEvents.length} comprehensive events`);
+          console.log('Sample raw event from database:', workingEvents[0]);
+          
+          console.log('📝 Raw event sample start:', workingEvents[0]?.start);
+          console.log('📝 Raw event sample summary:', workingEvents[0]?.summary);
 
-          // Transform events to the expected format with better error handling
+          // Transform events to the expected format - FIX: Handle database format correctly
           const transformedEvents = workingEvents.map((event: any) => {
             try {
+              // Handle both database format (summary, start.date) and Google API format (title, startTime)
+              const title = event.summary || event.title || 'Appointment';
+              
+              // Parse start time - handle multiple formats
+              let startTime: Date;
+              if (event.startTime) {
+                startTime = new Date(event.startTime);
+              } else if (event.start?.dateTime) {
+                startTime = new Date(event.start.dateTime);
+              } else if (event.start?.date) {
+                startTime = new Date(event.start.date + 'T00:00:00');
+              } else {
+                console.warn('Event missing start time:', event);
+                startTime = new Date();
+              }
+              
+              // Parse end time - handle multiple formats  
+              let endTime: Date;
+              if (event.endTime) {
+                endTime = new Date(event.endTime);
+              } else if (event.end?.dateTime) {
+                endTime = new Date(event.end.dateTime);
+              } else if (event.end?.date) {
+                endTime = new Date(event.end.date + 'T23:59:59');
+              } else {
+                endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour default
+              }
+              
               return {
                 id: event.id,
-                title: event.summary || event.title || 'Appointment',
-                startTime: new Date(event.startTime || event.start?.dateTime || event.start?.date),
-                endTime: new Date(event.endTime || event.end?.dateTime || event.end?.date),
+                title: title,
+                startTime: startTime,
+                endTime: endTime,
                 location: event.location || 'Office',
                 description: event.description || '',
                 calendarId: event.calendarId || 'simple-practice',
