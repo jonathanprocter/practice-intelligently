@@ -1632,20 +1632,76 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
           return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
         }
 
-        const events = await simpleOAuth.getEvents(
-          'primary', // Use primary calendar by default
-          timeMin as string,
-          timeMax as string
-        );
+        // Get events from all calendars for the specified time range
+        const calendars = await simpleOAuth.getCalendars();
+        let allEvents: any[] = [];
 
-        res.json(events);
+        for (const calendar of calendars) {
+          try {
+            const events = await simpleOAuth.getEvents(
+              calendar.id,
+              timeMin as string,
+              timeMax as string
+            );
+            // Add calendar info to each event
+            const eventsWithCalendar = events.map((event: any) => ({
+              ...event,
+              calendarId: calendar.id,
+              calendarName: calendar.summary
+            }));
+            allEvents = allEvents.concat(eventsWithCalendar);
+          } catch (error: any) {
+            console.warn(`Failed to fetch events from calendar ${calendar.summary}:`, error.message);
+          }
+        }
+
+        console.log(`📅 Hybrid API: Returning ${allEvents.length} events from ${calendars.length} calendars`);
+        res.json(allEvents);
       } else {
-        // Fetch from database (default and fastest)
-        const events = await googleCalendarService.getEventsFromDatabase(
+        // Fetch from database (default) - but if empty, fallback to live API
+        let events = await googleCalendarService.getEventsFromDatabase(
           finalTherapistId,
           timeMin as string,
           timeMax as string
         );
+
+        // If database is empty, try live API as fallback
+        if (events.length === 0) {
+          console.log('📅 Database empty, falling back to live API');
+          try {
+            const { simpleOAuth } = await import('./oauth-simple');
+            
+            if (simpleOAuth.isConnected()) {
+              const calendars = await simpleOAuth.getCalendars();
+              let allEvents: any[] = [];
+
+              for (const calendar of calendars) {
+                try {
+                  const calendarEvents = await simpleOAuth.getEvents(
+                    calendar.id,
+                    timeMin as string,
+                    timeMax as string
+                  );
+                  const eventsWithCalendar = calendarEvents.map((event: any) => ({
+                    ...event,
+                    calendarId: calendar.id,
+                    calendarName: calendar.summary
+                  }));
+                  allEvents = allEvents.concat(eventsWithCalendar);
+                } catch (error: any) {
+                  console.warn(`Failed to fetch events from calendar ${calendar.summary}:`, error.message);
+                }
+              }
+
+              events = allEvents;
+              console.log(`📅 Hybrid fallback: Retrieved ${events.length} events from live API`);
+            }
+          } catch (error: any) {
+            console.warn('Live API fallback failed:', error.message);
+          }
+        }
+
+        console.log(`📅 Hybrid: Returning ${events.length} events`);
         res.json(events);
       }
     } catch (error: any) {

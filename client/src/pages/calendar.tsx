@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { ApiClient } from '@/lib/api';
 import { CalendarEvent, CalendarDay } from '../types/calendar';
 import { getOfficeLocationByDay, getCalendarLocationDisplay } from '@/utils/locationUtils';
@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings, Search, Filter, MapPin, User, X } from 'lucide-react';
+import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings, Search, Filter, MapPin, User, X, RefreshCw, Calendar } from 'lucide-react';
 
 export default function Calendar() {
   const [currentWeek, setCurrentWeek] = useState(() => {
@@ -30,7 +30,7 @@ export default function Calendar() {
   const [activeTab, setActiveTab] = useState('week');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [selectedCalendarId, setSelectedCalendarId] = useState<string>('all');
-  
+
   // Advanced filtering states for calendar
   const [searchFilter, setSearchFilter] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
@@ -53,8 +53,7 @@ export default function Calendar() {
     window.location.href = '/api/auth/google';
   };
 
-
-
+  // Get events for the current week
   const { data: googleEvents = [], isLoading, error, refetch } = useQuery({
     queryKey: ['google-calendar-events', selectedCalendarId],
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -65,18 +64,18 @@ export default function Calendar() {
         // Get all events from 2015-2030 to include all historical appointments
         const recentStart = new Date('2015-01-01T00:00:00.000Z');
         const recentEnd = new Date('2030-12-31T23:59:59.999Z');
-        
+
         const timeMin = recentStart.toISOString();
         const timeMax = recentEnd.toISOString();
         const calendarParam = selectedCalendarId === 'all' ? '' : `&calendarId=${selectedCalendarId}`;
 
         // Use the new working API endpoint
         const workingResponse = await fetch(`/api/calendar/events/working?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}${calendarParam}`);
-        
+
         if (workingResponse.ok) {
           const workingEvents = await workingResponse.json();
           console.log(`🎉 Frontend: Successfully loaded ${workingEvents.length} events from working API`);
-          
+
           if (workingEvents.length > 0) {
             return workingEvents.map((event: any) => ({
               id: event.id,
@@ -194,16 +193,16 @@ export default function Calendar() {
     const textMatch = searchFilter === "" || 
       (event.title || event.summary || '').toLowerCase().includes(searchFilter.toLowerCase()) ||
       (event.description || '').toLowerCase().includes(searchFilter.toLowerCase());
-    
+
     // Location filter
     const locationMatch = locationFilter === "" || 
       (event.location || '').toLowerCase().includes(locationFilter.toLowerCase()) ||
       (event.calendarName || '').toLowerCase().includes(locationFilter.toLowerCase());
-    
+
     // Calendar type filter
     const calendarMatch = calendarTypeFilter.length === 0 || 
       calendarTypeFilter.includes(event.calendarName || event.calendarId || 'unknown');
-    
+
     return textMatch && locationMatch && calendarMatch;
   });
 
@@ -274,20 +273,20 @@ export default function Calendar() {
   const calendarDays: CalendarDay[] = weekDays.map(date => {
     const dayEvents = calendarEvents.filter(event => {
       if (!event.startTime) return false;
-      
+
       const eventDate = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
-      
+
       // Handle invalid dates
       if (isNaN(eventDate.getTime())) {
         console.warn('Invalid event date:', event);
         return false;
       }
-      
+
       // Use date comparison that accounts for timezone differences
       const eventDateStr = eventDate.toLocaleDateString('en-CA'); // YYYY-MM-DD format
       const dayDateStr = date.toLocaleDateString('en-CA'); // YYYY-MM-DD format
       const matches = eventDateStr === dayDateStr;
-      
+
       // Debug logging for troubleshooting
       if (matches) {
         console.log(`Event "${event.title}" matches day ${dayDateStr}`, {
@@ -296,7 +295,7 @@ export default function Calendar() {
           dayDateStr
         });
       }
-      
+
       return matches;
     });
 
@@ -317,7 +316,7 @@ export default function Calendar() {
   const weekEventCount = calendarDays.reduce((total, day) => total + day.events.length, 0);
   console.log(`Events for current week (${currentWeek.toDateString()} - ${weekEnd.toDateString()}): ${weekEventCount}`);
   console.log(`Total events loaded in calendar: ${calendarEvents.length}`);
-  
+
   // Debug: Show sample event dates and week dates for comparison
   if (calendarEvents.length > 0 && weekEventCount === 0) {
     console.log('DEBUG: Week dates vs Event dates comparison');
@@ -393,14 +392,14 @@ export default function Calendar() {
         console.error('Invalid parameters for event move:', { eventId, newStartTime, newEndTime });
         return;
       }
-      
+
       if (isNaN(newStartTime.getTime()) || isNaN(newEndTime.getTime())) {
         console.error('Invalid dates for event move:', { newStartTime, newEndTime });
         return;
       }
-      
+
       console.log(`Moving event ${eventId} to ${newStartTime.toISOString()}`);
-      
+
       // Find the event to get its calendar information
       const event = calendarEvents.find(e => e.id === eventId);
       if (!event) {
@@ -417,9 +416,9 @@ export default function Calendar() {
       } else if (event.calendarName?.includes('TrevorAI')) {
         calendarId = 'c2ffec13aa77af8e71cac14a327928e34da57bddaadf18c4e0f669827e1454ff@group.calendar.google.com';
       }
-      
+
       console.log(`Moving event in calendar: ${calendarId}`);
-      
+
       // Call the API to update the calendar event
       const response = await fetch(`/api/calendar/events/${eventId}`, {
         method: 'PATCH',
@@ -512,10 +511,27 @@ export default function Calendar() {
   // Get unique calendar types and locations for filtering
   const uniqueCalendarTypes = [...new Set(googleEvents.map(event => event.calendarName).filter(Boolean))];
   const uniqueLocations = [...new Set(googleEvents.map(event => event.location).filter(Boolean))];
-  
+
   const getDefaultLocationForDate = (date: Date) => {
     return getOfficeLocationByDay(date.getDay());
   };
+
+  // Manual Calendar Sync
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      return ApiClient.post('/api/calendar/sync', {});
+    },
+    onSuccess: (data) => {
+      // Refetch events after sync
+      refetch();
+      console.log('✅ Calendar sync successful:', data);
+      alert(`Calendar sync complete! ${data.message || 'Events synchronized successfully'}`);
+    },
+    onError: (error) => {
+      console.error('Sync error:', error);
+      alert('Calendar sync failed. Please check your Google Calendar connection.');
+    }
+  });
 
   // Show connection error with connect button
   if (error && error.message?.includes('Google Calendar not connected')) {
@@ -629,13 +645,13 @@ export default function Calendar() {
                 <span className="text-sm text-gray-600">Google Calendar Connected</span>
               </div>
               <span className="text-sm text-gray-600">
-                {calendarEvents.length} events loaded (2020-2030) • 
+                {googleEvents.length} events loaded (2020-2030) • 
                 {calendars?.length > 0 ? ` ${calendars.length} calendars` : ' Loading calendars...'}
               </span>
-              {calendarEvents.length > 0 && (
+              {googleEvents.length > 0 && (
                 <div className="text-xs text-gray-500 mt-1">
-                  Earliest: {new Date(Math.min(...calendarEvents.map(e => new Date(e.startTime).getTime()))).toLocaleDateString()} • 
-                  Latest: {new Date(Math.max(...calendarEvents.map(e => new Date(e.startTime).getTime()))).toLocaleDateString()}
+                  Earliest: {new Date(Math.min(...googleEvents.map(e => new Date(e.startTime).getTime()))).toLocaleDateString()} • 
+                  Latest: {new Date(Math.max(...googleEvents.map(e => new Date(e.startTime).getTime()))).toLocaleDateString()}
                 </div>
               )}
             </div>
@@ -647,9 +663,9 @@ export default function Calendar() {
                   <SelectValue placeholder="Select calendar" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Calendars ({calendarEvents.length} events)</SelectItem>
+                  <SelectItem value="all">All Calendars ({googleEvents.length} events)</SelectItem>
                   {calendars?.map((cal: any) => {
-                    const calendarEventCount = calendarEvents.filter(event => 
+                    const calendarEventCount = googleEvents.filter(event => 
                       event.calendarName === cal.summary || 
                       (event as any).calendarId === cal.id
                     ).length;
@@ -664,6 +680,26 @@ export default function Calendar() {
             </div>
           </div>
 
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => syncMutation.mutate()}
+              disabled={syncMutation.isPending}
+            >
+              <Calendar className={`w-4 h-4 mr-2 ${syncMutation.isPending ? 'animate-pulse' : ''}`} />
+              {syncMutation.isPending ? 'Syncing...' : 'Sync Calendar'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
           <div className="flex items-center space-x-3">
             <Link href="/calendar/integration">
               <Button variant="outline" size="sm">
