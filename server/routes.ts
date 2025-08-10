@@ -3356,21 +3356,77 @@ I can help you analyze this data, provide insights, and assist with clinical dec
   });
   // ========== CALENDAR API ROUTES (Auto-generated) ==========
 
-  app.get('/api/calendar/events/:eventId', async (req, res) => {
+  // Calendar events for a specific therapist (frontend compatibility)
+  app.get('/api/calendar/events/:therapistId', async (req, res) => {
     try {
-      const { eventId } = req.params;
+      const { therapistId } = req.params;
+      const { timeMin, timeMax, calendarId } = req.query;
       const { simpleOAuth } = await import('./oauth-simple');
 
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
 
-      // Get specific event details
-      const event = await simpleOAuth.getEvent(eventId);
-      res.json(event);
+      // Try to refresh tokens before fetching events
+      try {
+        await (simpleOAuth as any).refreshTokensIfNeeded();
+      } catch (tokenError: any) {
+        console.error('Token refresh failed during therapist event fetch:', tokenError);
+        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
+      }
+
+      let allEvents: any[] = [];
+
+      if (!calendarId || calendarId === 'all') {
+        // Fetch from ALL calendars when no specific calendar is requested
+        const calendars = await simpleOAuth.getCalendars();
+        console.log(`📅 Therapist ${therapistId} requesting events from ALL ${calendars.length} calendars`);
+
+        for (const calendar of calendars) {
+          try {
+            const events = await simpleOAuth.getEvents(
+              calendar.id,
+              timeMin as string,
+              timeMax as string
+            );
+            
+            if (events && events.length > 0) {
+              // Add calendar metadata to each event
+              const eventsWithCalendar = events.map((event: any) => ({
+                ...event,
+                calendarId: calendar.id,
+                calendarName: calendar.summary
+              }));
+              allEvents = allEvents.concat(eventsWithCalendar);
+              console.log(`  ✅ Found ${events.length} events in calendar: ${calendar.summary}`);
+            } else {
+              console.log(`  📭 No events found in calendar: ${calendar.summary}`);
+            }
+          } catch (calError: any) {
+            console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError?.message || calError);
+          }
+        }
+        
+        console.log(`📊 Total events from all calendars for therapist ${therapistId}: ${allEvents.length}`);
+      } else {
+        // Fetch from specific calendar
+        console.log(`📅 Fetching events from specific calendar: ${calendarId} for therapist ${therapistId}`);
+        const events = await simpleOAuth.getEvents(
+          calendarId as string,
+          timeMin as string,
+          timeMax as string
+        );
+        allEvents = events || [];
+        console.log(`📊 Found ${allEvents.length} events in calendar: ${calendarId}`);
+      }
+
+      res.json(allEvents);
     } catch (error: any) {
-      console.error('Error getting calendar event:', error);
-      res.status(500).json({ error: 'Failed to get calendar event', details: error.message });
+      console.error('Error getting calendar events for therapist:', error);
+      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
+        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
+      }
+      res.status(500).json({ error: 'Failed to get calendar events', details: error.message });
     }
   });
 
@@ -3473,16 +3529,65 @@ I can help you analyze this data, provide insights, and assist with clinical dec
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
       }
 
-      // Get calendar events with time range
-      const events = await simpleOAuth.getEvents(
-        calendarId as string || 'primary',
-        timeMin as string,
-        timeMax as string
-      );
+      // Try to refresh tokens before fetching events
+      try {
+        await (simpleOAuth as any).refreshTokensIfNeeded();
+      } catch (tokenError: any) {
+        console.error('Token refresh failed during event fetch:', tokenError);
+        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
+      }
 
-      res.json(events);
+      let allEvents: any[] = [];
+
+      if (!calendarId || calendarId === 'all') {
+        // Fetch from ALL calendars when no specific calendar is requested
+        const calendars = await simpleOAuth.getCalendars();
+        console.log(`📅 Frontend requesting events from ALL ${calendars.length} calendars`);
+
+        for (const calendar of calendars) {
+          try {
+            const events = await simpleOAuth.getEvents(
+              calendar.id,
+              timeMin as string,
+              timeMax as string
+            );
+            
+            if (events && events.length > 0) {
+              // Add calendar metadata to each event
+              const eventsWithCalendar = events.map((event: any) => ({
+                ...event,
+                calendarId: calendar.id,
+                calendarName: calendar.summary
+              }));
+              allEvents = allEvents.concat(eventsWithCalendar);
+              console.log(`  ✅ Found ${events.length} events in calendar: ${calendar.summary}`);
+            } else {
+              console.log(`  📭 No events found in calendar: ${calendar.summary}`);
+            }
+          } catch (calError: any) {
+            console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError?.message || calError);
+          }
+        }
+        
+        console.log(`📊 Total events from all calendars: ${allEvents.length}`);
+      } else {
+        // Fetch from specific calendar
+        console.log(`📅 Fetching events from specific calendar: ${calendarId}`);
+        const events = await simpleOAuth.getEvents(
+          calendarId as string,
+          timeMin as string,
+          timeMax as string
+        );
+        allEvents = events || [];
+        console.log(`📊 Found ${allEvents.length} events in calendar: ${calendarId}`);
+      }
+
+      res.json(allEvents);
     } catch (error: any) {
       console.error('Error getting calendar events:', error);
+      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
+        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
+      }
       res.status(500).json({ error: 'Failed to get calendar events', details: error.message });
     }
   });
@@ -3556,50 +3661,6 @@ I can help you analyze this data, provide insights, and assist with clinical dec
     } catch (error: any) {
       console.error('Error updating calendar event:', error);
       res.status(500).json({ error: 'Failed to update calendar event', details: error.message });
-    }
-  });
-  app.get('/api/calendar/events', async (req, res) => {
-    try {
-      const { timeMin, timeMax, calendarId } = req.query;
-      const { simpleOAuth } = await import('./oauth-simple');
-
-      if (!simpleOAuth.isConnected()) {
-        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
-      }
-
-      // Get calendar events with time range
-      const events = await simpleOAuth.getEvents(
-        calendarId as string || 'primary',
-        timeMin as string,
-        timeMax as string
-      );
-
-      res.json(events);
-    } catch (error: any) {
-      console.error('Error getting calendar events:', error);
-      res.status(500).json({ error: 'Failed to get calendar events', details: error.message });
-    }
-  });
-  app.get('/api/calendar/events', async (req, res) => {
-    try {
-      const { timeMin, timeMax, calendarId } = req.query;
-      const { simpleOAuth } = await import('./oauth-simple');
-
-      if (!simpleOAuth.isConnected()) {
-        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
-      }
-
-      // Get calendar events with time range
-      const events = await simpleOAuth.getEvents(
-        calendarId as string || 'primary',
-        timeMin as string,
-        timeMax as string
-      );
-
-      res.json(events);
-    } catch (error: any) {
-      console.error('Error getting calendar events:', error);
-      res.status(500).json({ error: 'Failed to get calendar events', details: error.message });
     }
   });
   // ========== AUTH API ROUTES (Auto-generated) ==========
