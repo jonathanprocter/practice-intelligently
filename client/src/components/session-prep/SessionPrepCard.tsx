@@ -186,6 +186,11 @@ export function SessionPrepCard({
   }, [clientId]);
 
   const formatInsightContent = (content: string) => {
+    // Handle undefined/null content
+    if (!content || typeof content !== 'string') {
+      return 'No content available';
+    }
+    
     // Format rich text content, preserving natural line breaks and paragraphs
     // Split content into paragraphs and return first paragraph for preview
     const paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
@@ -202,6 +207,11 @@ export function SessionPrepCard({
 
   // Format the complete rich text content for display
   const formatFullContent = (content: string) => {
+    // Handle undefined/null content
+    if (!content || typeof content !== 'string') {
+      return <p className="text-muted-foreground">No content available</p>;
+    }
+    
     // Preserve natural line breaks and paragraph structure
     return content.split('\n\n').map((paragraph, index) => (
       <p key={index} className="mb-2 last:mb-0">
