@@ -15,6 +15,7 @@ export interface CalendarEvent {
   source?: 'system' | 'google' | 'manual';
   therapistId: string;
   attendees?: string;
+  calendarId?: string;
   calendarName?: string;
   createdAt?: Date | string;
   updatedAt?: Date | string;

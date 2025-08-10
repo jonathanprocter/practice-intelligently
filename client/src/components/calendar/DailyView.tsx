@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Clock, MapPin, User, FileText, Brain, Calendar, ChevronLeft, ChevronRight, Plus, Sparkles, MessageSquare, Target, TrendingUp } from 'lucide-react';
+import { Clock, MapPin, User, FileText, Brain, Calendar, ChevronLeft, ChevronRight, Plus, Sparkles, MessageSquare, Target, TrendingUp, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AppointmentSummary } from './AppointmentSummary';
 
@@ -21,6 +21,7 @@ interface DailyViewProps {
     onNextDay: () => void;
     onNewAppointment: () => void;
     onSessionNotes?: (event: CalendarEvent) => void;
+    onDeleteEvent?: (event: CalendarEvent) => void;
 }
 
 interface AIInsight {
@@ -80,7 +81,8 @@ export const DailyView = ({
     onPreviousDay,
     onNextDay,
     onNewAppointment,
-    onSessionNotes
+    onSessionNotes,
+    onDeleteEvent
 }: DailyViewProps) => {
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -237,6 +239,26 @@ export const DailyView = ({
         const newNote = { id: `note_${Date.now()}`, content: sessionNotes, date: new Date().toISOString().split('T')[0] };
         setExistingProgressNotes(prevNotes => [...prevNotes, newNote]);
         setSessionNotes('');
+    };
+
+    const handleDeleteEvent = async () => {
+        if (!selectedEvent || !onDeleteEvent) return;
+        
+        try {
+            await onDeleteEvent(selectedEvent);
+            setSelectedEvent(null);
+            toast({
+                title: "Event Deleted",
+                description: "The calendar event has been successfully deleted.",
+            });
+        } catch (error) {
+            console.error('Error deleting event:', error);
+            toast({
+                title: "Error",
+                description: "Failed to delete the event. Please try again.",
+                variant: "destructive"
+            });
+        }
     };
 
     return (
@@ -408,6 +430,20 @@ export const DailyView = ({
                             </>
                         )}
                     </ScrollArea>
+                    
+                    {/* Dialog Footer with Action Buttons */}
+                    {onDeleteEvent && selectedEvent && (
+                        <div className="flex justify-between items-center pt-4 border-t">
+                            <Button 
+                                variant="destructive" 
+                                onClick={handleDeleteEvent}
+                                className="flex items-center"
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Event
+                            </Button>
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
         </div>

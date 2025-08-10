@@ -3116,6 +3116,41 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
       res.status(500).json({ error: 'Failed to update calendar event', details: error.message });
     }
   });
+
+  // Delete calendar event endpoint
+  app.delete('/api/calendar/events/:eventId/:calendarId', async (req, res) => {
+    try {
+      const { eventId, calendarId } = req.params;
+      const { simpleOAuth } = await import('./oauth-simple');
+
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+
+      console.log(`🗑️ Deleting event ${eventId} from calendar ${calendarId}`);
+
+      // Delete the event from Google Calendar
+      await simpleOAuth.deleteEvent(calendarId, eventId);
+
+      // Also remove from database if it exists
+      try {
+        await storage.deleteCalendarEvent(eventId);
+        console.log(`✅ Event ${eventId} also removed from database`);
+      } catch (dbError: any) {
+        console.warn(`Could not remove event ${eventId} from database:`, dbError.message);
+        // Don't fail the request if database deletion fails
+      }
+
+      console.log(`✅ Successfully deleted event ${eventId}`);
+      res.json({ success: true, message: 'Event deleted successfully' });
+    } catch (error: any) {
+      console.error('Error deleting calendar event:', error);
+      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
+        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
+      }
+      res.status(500).json({ error: 'Failed to delete calendar event', details: error.message });
+    }
+  });
   app.get('/api/calendar/events/:eventId', async (req, res) => {
     try {
       const { eventId } = req.params;

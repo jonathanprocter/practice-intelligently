@@ -139,6 +139,7 @@ export default function Calendar() {
                 source: 'google' as const,
                 therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
                 attendees: event.attendees || '',
+                calendarId: event.calendarId || event.organizer?.email || 'primary',
                 calendarName: event.calendarName || 'Google Calendar',
                 createdAt: event.created ? new Date(event.created) : new Date(),
                 updatedAt: event.updated ? new Date(event.updated) : new Date()
@@ -515,6 +516,54 @@ export default function Calendar() {
       alert('Calendar sync failed. Please check your Google Calendar connection.');
     }
   });
+
+  // Delete event mutation
+  const deleteEventMutation = useMutation({
+    mutationFn: async ({ eventId, calendarId }: { eventId: string; calendarId: string }) => {
+      const response = await fetch(`/api/calendar/events/${eventId}/${calendarId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete event');
+      }
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      // Refetch events after deletion
+      refetch();
+      console.log('✅ Event deleted successfully:', data);
+      alert(`Event deleted successfully!`);
+    },
+    onError: (error, variables) => {
+      console.error('Delete error:', error);
+      alert(`Failed to delete event: ${error.message}`);
+    }
+  });
+
+  // Handle event deletion
+  const handleDeleteEvent = async (event: CalendarEvent) => {
+    if (!event.id || !event.calendarId) {
+      console.error('Missing event ID or calendar ID for deletion:', event);
+      alert('Cannot delete event: missing required information');
+      return;
+    }
+
+    const confirmDelete = confirm(`Are you sure you want to delete "${event.title}"? This action cannot be undone.`);
+    if (!confirmDelete) {
+      return;
+    }
+
+    try {
+      await deleteEventMutation.mutateAsync({
+        eventId: event.id,
+        calendarId: event.calendarId
+      });
+    } catch (error) {
+      console.error('Failed to delete event:', error);
+    }
+  };
 
   // Show connection error with connect button
   if (error && error.message?.includes('Google Calendar not connected')) {
@@ -908,6 +957,7 @@ export default function Calendar() {
               }}
               onNewAppointment={handleNewAppointment}
               onSessionNotes={handleSessionNotes}
+              onDeleteEvent={handleDeleteEvent}
             />
           </TabsContent>
 
