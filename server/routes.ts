@@ -611,6 +611,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete client endpoint
+  app.delete("/api/clients/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      await storage.deleteClient(id);
+      res.json({ success: true, message: "Client deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting client:", error);
+      res.status(500).json({ error: "Failed to delete client" });
+    }
+  });
+
   // Bulk client creation endpoint
   app.post("/api/clients/bulk", async (req, res) => {
     try {

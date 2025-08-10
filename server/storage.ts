@@ -37,6 +37,7 @@ export interface IStorage {
   getClient(id: string): Promise<Client | undefined>;
   createClient(client: InsertClient): Promise<Client>;
   updateClient(id: string, client: Partial<Client>): Promise<Client>;
+  deleteClient(id: string): Promise<void>;
   deactivateClient(id: string): Promise<Client>;
 
   // Appointment methods
@@ -376,6 +377,12 @@ export class DatabaseStorage implements IStorage {
       .where(eq(clients.id, id))
       .returning();
     return updatedClient;
+  }
+
+  async deleteClient(id: string): Promise<void> {
+    await db
+      .delete(clients)
+      .where(eq(clients.id, id));
   }
 
   async deactivateClient(id: string): Promise<Client> {
