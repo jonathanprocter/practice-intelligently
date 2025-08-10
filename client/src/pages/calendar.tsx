@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings, Search, Filter, MapPin, User, X, RefreshCw, Calendar } from 'lucide-react';
+import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings, Search, Filter, MapPin, User, X, RefreshCw } from 'lucide-react';
 
 export default function Calendar() {
   const [currentWeek, setCurrentWeek] = useState(() => {
@@ -252,10 +252,11 @@ export default function Calendar() {
       location: event.location || getDefaultLocationForDate(startDateForLocation),
       notes: event.description || '',
       source: 'google' as CalendarEvent['source'],
+      therapistId: 'default-therapist', // Add required therapistId field
       attendees: event.attendees?.map((a: any) => a.email).join(', ') || '',
       calendarName: event.calendarName || 'Simple Practice'
     };
-  }).filter(event => {
+  }).filter((event: CalendarEvent) => {
     // Filter out invalid events - check if we have valid dates (Date objects or valid date strings)
     const hasValidStart = event.startTime && (event.startTime instanceof Date || !isNaN(new Date(event.startTime).getTime()));
     const hasValidEnd = event.endTime && (event.endTime instanceof Date || !isNaN(new Date(event.endTime).getTime()));
@@ -409,9 +410,7 @@ export default function Calendar() {
 
       // Determine the correct calendar ID from the event
       let calendarId = 'primary';
-      if (event.calendarId) {
-        calendarId = event.calendarId;
-      } else if (event.calendarName?.includes('Simple Practice')) {
+      if (event.calendarName?.includes('Simple Practice')) {
         calendarId = '79dfcb90ce59b1b0345b24f5c8d342bd308eac9521d063a684a8bbd377f2b822@group.calendar.google.com';
       } else if (event.calendarName?.includes('TrevorAI')) {
         calendarId = 'c2ffec13aa77af8e71cac14a327928e34da57bddaadf18c4e0f669827e1454ff@group.calendar.google.com';
@@ -456,10 +455,10 @@ export default function Calendar() {
     // Convert calendar events to appointment format for PDF export
     const appointmentData = calendarEvents.map(event => ({
       id: event.id,
-      clientName: event.clientName,
+      clientName: event.clientName || 'Unknown',
       type: event.type,
-      startTime: event.startTime.toISOString(),
-      endTime: event.endTime.toISOString(),
+      startTime: event.startTime instanceof Date ? event.startTime.toISOString() : event.startTime,
+      endTime: event.endTime instanceof Date ? event.endTime.toISOString() : event.endTime,
       status: event.status,
       notes: event.notes || '',
       attendees: event.attendees || ''
@@ -509,17 +508,22 @@ export default function Calendar() {
   };
 
   // Get unique calendar types and locations for filtering
-  const uniqueCalendarTypes = [...new Set(googleEvents.map(event => event.calendarName).filter(Boolean))];
-  const uniqueLocations = [...new Set(googleEvents.map(event => event.location).filter(Boolean))];
+  const uniqueCalendarTypes = Array.from(new Set(googleEvents.map((event: any) => event.calendarName).filter(Boolean))) as string[];
+  const uniqueLocations = Array.from(new Set(googleEvents.map((event: any) => event.location).filter(Boolean))) as string[];
 
   const getDefaultLocationForDate = (date: Date) => {
-    return getOfficeLocationByDay(date.getDay());
+    return getOfficeLocationByDay(date);
   };
 
   // Manual Calendar Sync
   const syncMutation = useMutation({
     mutationFn: async () => {
-      return ApiClient.post('/api/calendar/sync', {});
+      const response = await fetch('/api/calendar/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      return response.json();
     },
     onSuccess: (data) => {
       // Refetch events after sync
@@ -650,8 +654,8 @@ export default function Calendar() {
               </span>
               {googleEvents.length > 0 && (
                 <div className="text-xs text-gray-500 mt-1">
-                  Earliest: {new Date(Math.min(...googleEvents.map(e => new Date(e.startTime).getTime()))).toLocaleDateString()} • 
-                  Latest: {new Date(Math.max(...googleEvents.map(e => new Date(e.startTime).getTime()))).toLocaleDateString()}
+                  Earliest: {new Date(Math.min(...googleEvents.map((e: any) => new Date(e.startTime).getTime()))).toLocaleDateString()} • 
+                  Latest: {new Date(Math.max(...googleEvents.map((e: any) => new Date(e.startTime).getTime()))).toLocaleDateString()}
                 </div>
               )}
             </div>
@@ -665,9 +669,9 @@ export default function Calendar() {
                 <SelectContent>
                   <SelectItem value="all">All Calendars ({googleEvents.length} events)</SelectItem>
                   {calendars?.map((cal: any) => {
-                    const calendarEventCount = googleEvents.filter(event => 
+                    const calendarEventCount = googleEvents.filter((event: any) => 
                       event.calendarName === cal.summary || 
-                      (event as any).calendarId === cal.id
+                      event.calendarId === cal.id
                     ).length;
                     return (
                       <SelectItem key={cal.id} value={cal.id}>
@@ -687,7 +691,7 @@ export default function Calendar() {
               onClick={() => syncMutation.mutate()}
               disabled={syncMutation.isPending}
             >
-              <Calendar className={`w-4 h-4 mr-2 ${syncMutation.isPending ? 'animate-pulse' : ''}`} />
+              <CalendarIcon className={`w-4 h-4 mr-2 ${syncMutation.isPending ? 'animate-pulse' : ''}`} />
               {syncMutation.isPending ? 'Syncing...' : 'Sync Calendar'}
             </Button>
             <Button
@@ -823,7 +827,7 @@ export default function Calendar() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-therapy-text">Calendar Source</label>
                     <div className="space-y-2">
-                      {uniqueCalendarTypes.map(calendarName => (
+                      {uniqueCalendarTypes.map((calendarName: string) => (
                         <label key={calendarName} className="flex items-center space-x-2 text-sm">
                           <Checkbox
                             checked={calendarTypeFilter.includes(calendarName)}
@@ -834,7 +838,7 @@ export default function Calendar() {
                             variant="secondary"
                             className="text-xs"
                           >
-                            {googleEvents.filter(event => event.calendarName === calendarName).length}
+                            {googleEvents.filter((event: any) => event.calendarName === calendarName).length}
                           </Badge>
                         </label>
                       ))}
@@ -845,7 +849,7 @@ export default function Calendar() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-therapy-text">Quick Locations</label>
                     <div className="space-y-1">
-                      {uniqueLocations.slice(0, 5).map(location => (
+                      {uniqueLocations.slice(0, 5).map((location: string) => (
                         <button
                           key={location}
                           onClick={() => setLocationFilter(location)}
