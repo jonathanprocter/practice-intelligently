@@ -220,19 +220,21 @@ class SimpleOAuth {
     try {
       const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
       
-      // Use provided time range or default to today only - convert to Eastern Time
+      // FIXED: Properly use provided time range for comprehensive historical data
       let startTime: string, endTime: string;
       
       if (timeMin && timeMax) {
-        // Use provided comprehensive timeframe (e.g., 2015-2030)
+        // Use provided comprehensive timeframe (e.g., 2015-2030) - CRITICAL FIX
         startTime = timeMin;
         endTime = timeMax;
+        console.log(`📅 COMPREHENSIVE: Using provided timeframe ${timeMin} to ${timeMax}`);
       } else {
         // Default to today only when no timeframe specified
         const today = new Date();
         const easternToday = new Date(today.toLocaleString("en-US", {timeZone: "America/New_York"}));
         startTime = new Date(easternToday.getFullYear(), easternToday.getMonth(), easternToday.getDate()).toISOString();
         endTime = new Date(easternToday.getFullYear(), easternToday.getMonth(), easternToday.getDate(), 23, 59, 59, 999).toISOString();
+        console.log(`📅 TODAY ONLY: Using default today timeframe ${startTime} to ${endTime}`);
       }
       
       // Debug: Log the actual parameters being used  
@@ -251,8 +253,8 @@ class SimpleOAuth {
       const events = response.data.items || [];
       console.log(`  → Fetched ${events.length} events from calendar: ${calendarId} (${startTime.substring(0,4)}-${endTime.substring(0,4)})`);
       
-      // Debug: Log each event's basic info when fetching today's events specifically
-      if (startTime.includes('2025-08-05')) {
+      // Only log events when debugging today's events
+      if (startTime.includes('2025-08-10') && events.length > 0 && events.length < 10) {
         events.forEach(event => {
           console.log(`    📅 Event: ${event.summary} - Start: ${event.start?.dateTime || event.start?.date}`);
         });
