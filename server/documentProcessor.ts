@@ -28,22 +28,50 @@ export async function extractTextFromFile(filePath: string): Promise<string> {
   
   try {
     if (fileExtension === '.pdf') {
-      // Since the PDF was successfully displayed as text by str_replace_based_edit_tool,
-      // we know it's a text-extractable PDF. Let me try reading it as utf-8
+      // Use pdftotext (from poppler-utils) for proper PDF text extraction
       try {
-        const textContent = await fs.readFile(filePath, 'utf-8');
-        if (textContent && textContent.length > 100) {
-          return textContent;
+        const { execFile } = await import('child_process');
+        const { promisify } = await import('util');
+        const execFileAsync = promisify(execFile);
+        
+        // Use pdftotext to extract text from PDF
+        const { stdout, stderr } = await execFileAsync('pdftotext', [filePath, '-']);
+        
+        if (stdout && stdout.trim().length > 10) {
+          console.log(`Successfully extracted ${stdout.length} characters from PDF`);
+          return stdout.trim();
+        } else {
+          throw new Error(`PDF text extraction returned empty content: ${stderr || 'Unknown error'}`);
         }
-      } catch {
-        // If utf-8 reading fails, try with latin1 encoding
+      } catch (error) {
+        // Fallback to trying to read as text if pdftotext fails
+        console.log('pdftotext not available, trying fallback method');
         const buffer = await fs.readFile(filePath);
-        const textContent = buffer.toString('latin1');
-        if (textContent && textContent.length > 100) {
-          return textContent;
+        const textContent = buffer.toString('utf-8');
+        
+        // Remove PDF metadata and extract readable text
+        const lines = textContent.split('\n');
+        const textLines = lines.filter(line => {
+          // Filter out PDF metadata lines
+          return !line.startsWith('%') && 
+                 !line.includes('obj') && 
+                 !line.includes('endobj') && 
+                 !line.includes('<<') && 
+                 !line.includes('>>') && 
+                 line.trim().length > 0 &&
+                 !/^\d+\s+\d+\s+R/.test(line) &&
+                 !line.includes('/Type') &&
+                 !line.includes('/Creator') &&
+                 !line.includes('/Producer');
+        });
+        
+        const extractedText = textLines.join('\n').trim();
+        if (extractedText.length > 50) {
+          return extractedText;
         }
+        
+        throw new Error('No readable text content found in PDF');
       }
-      throw new Error('No readable text content found in PDF');
     } else if (fileExtension === '.docx') {
       const mammoth = await import('mammoth');
       const fileBuffer = await fs.readFile(filePath);
