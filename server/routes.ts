@@ -2477,9 +2477,9 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
       
       // Gather comprehensive practice context
       const [clients, todayAppointments, recentNotes, actionItems] = await Promise.all([
-        storage.getClientsByTherapist(therapistId).catch(() => []),
-        storage.getTodayAppointments(therapistId).catch(() => []),
-        storage.getRecentSessionNotes(therapistId, 5).catch(() => []),
+        storage.getClients(therapistId).catch(() => []),
+        storage.getTodaysAppointments(therapistId).catch(() => []),
+        storage.getAllSessionNotesByTherapist(therapistId).catch(() => []),
         storage.getUrgentActionItems(therapistId).catch(() => [])
       ]);
 
@@ -2498,10 +2498,26 @@ User message: ${message}
 Please provide a helpful, professional response as Compass. Keep responses concise and actionable.`;
 
       // Use OpenAI as primary AI service
-      const response = await openaiClient.generateText(context);
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are Compass, an AI assistant for therapy practice management. You have access to comprehensive practice data and should provide helpful, professional responses about client management, scheduling, session notes, and therapy practice operations. Keep responses concise and actionable."
+          },
+          {
+            role: "user",
+            content: context
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 500
+      });
+
+      const aiResponse = response.choices[0]?.message?.content || "I'm here to help with your practice management needs!";
       
       res.json({
-        content: response,
+        content: aiResponse,
         sessionId: finalSessionId,
         aiProvider: 'openai',
         timestamp: new Date().toISOString()
