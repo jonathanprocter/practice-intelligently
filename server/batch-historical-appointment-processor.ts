@@ -5,7 +5,7 @@
  * historical appointments for any that don't have proper appointment linkage.
  */
 
-import { processSessionNoteWithHistoricalAppointment } from './historical-appointment-utils';
+import { processSessionNoteWithHistoricalAppointment, processSessionNoteForAppointmentLinking } from './historical-appointment-utils';
 
 interface BatchProcessingResult {
   totalProcessed: number;
@@ -60,15 +60,9 @@ export async function batchProcessAllSessionNotes(storage: any): Promise<BatchPr
         
         console.log(`🔄 Processing unlinked session note for ${clientName}...`);
         
-        // Process the session note to create/link historical appointment
-        const processResult = await processSessionNoteWithHistoricalAppointment(
-          {
-            ...sessionNote,
-            clientId: sessionNote.clientId,
-            therapistId: sessionNote.therapistId,
-            content: sessionNote.content,
-            eventId: sessionNote.eventId || undefined
-          },
+        // Process only the appointment linking, don't try to recreate the session note
+        const processResult = await processSessionNoteForAppointmentLinking(
+          sessionNote,
           storage,
           clientName
         );

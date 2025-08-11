@@ -73,7 +73,13 @@ Be very precise with date extraction. Only return a date if you're confident.
       throw new Error('No analysis received from AI');
     }
 
-    const analysis = JSON.parse(analysisText);
+    // Clean potential markdown formatting from AI response
+    const cleanedText = analysisText
+      .replace(/```json\s*/g, '')
+      .replace(/```\s*/g, '')
+      .trim();
+
+    const analysis = JSON.parse(cleanedText);
     
     return {
       extractedDate: analysis.extractedDate,
@@ -215,6 +221,70 @@ export async function processSessionNoteWithHistoricalAppointment(
   } catch (error) {
     console.error('Error processing session note with historical appointment:', error);
     throw error;
+  }
+}
+
+/**
+ * Process existing session note for appointment linking only (no creation)
+ */
+export async function processSessionNoteForAppointmentLinking(
+  existingSessionNote: any,
+  storage: any,
+  clientName?: string
+): Promise<{
+  sessionNote: any;
+  appointment?: { appointmentId: string; googleEventId: string; created: boolean };
+  linked: boolean;
+}> {
+  try {
+    console.log(`🔗 Processing appointment linking for existing session note ${existingSessionNote.id.substring(0, 8)}...`);
+    
+    // Extract session date from content
+    const dateInfo = await extractSessionDateFromContent(
+      existingSessionNote.content,
+      clientName
+    );
+    
+    if (!dateInfo.extractedDate || dateInfo.confidence < 50) {
+      console.log(`⚠️ Could not extract reliable session date (confidence: ${dateInfo.confidence}%). Session note will remain unlinked.`);
+      return {
+        sessionNote: existingSessionNote,
+        linked: false
+      };
+    }
+    
+    // Parse the extracted date
+    const sessionDate = new Date(dateInfo.extractedDate + 'T14:00:00Z'); // Default to 2pm if no time specified
+    
+    console.log(`📅 Extracted session date: ${sessionDate.toISOString()} (confidence: ${dateInfo.confidence}%)`);
+    
+    // Create or find historical appointment
+    const appointmentInfo = await createOrFindHistoricalAppointment({
+      clientId: existingSessionNote.clientId,
+      therapistId: existingSessionNote.therapistId,
+      sessionDate,
+      sessionType: dateInfo.sessionType,
+      clientName
+    }, storage);
+    
+    // Update the existing session note with appointment linkage
+    const updatedSessionNote = await storage.updateSessionNote(existingSessionNote.id, {
+      appointmentId: appointmentInfo.appointmentId,
+      eventId: appointmentInfo.googleEventId
+    });
+    
+    return {
+      sessionNote: updatedSessionNote,
+      appointment: appointmentInfo,
+      linked: true
+    };
+    
+  } catch (error) {
+    console.error('Error processing session note for appointment linking:', error);
+    return {
+      sessionNote: existingSessionNote,
+      linked: false
+    };
   }
 }
 
