@@ -5498,7 +5498,7 @@ Follow-up areas for next session:
       try {
         const recentSessionNotes = await storage.getRecentSessionNotes(therapistId, 7);
         for (const note of recentSessionNotes.slice(0, 5)) {
-          const client = await storage.getClientById(note.clientId || '');
+          const client = await storage.getClient(note.clientId || '');
           const clientName = client ? `${client.firstName} ${client.lastName}` : 'Unknown Client';
           activities.push({
             id: `session-${note.id}`,
@@ -5516,7 +5516,7 @@ Follow-up areas for next session:
       try {
         const recentAppointments = await storage.getRecentAppointments(therapistId, 3);
         for (const appointment of recentAppointments.slice(0, 3)) {
-          const client = await storage.getClientById(appointment.clientId);
+          const client = await storage.getClient(appointment.clientId);
           const clientName = client ? `${client.firstName} ${client.lastName}` : 'Unknown Client';
           let title = 'Appointment scheduled';
           if (appointment.status === 'completed') title = 'Session completed';
@@ -5554,7 +5554,7 @@ Follow-up areas for next session:
       try {
         const completedActionItems = await storage.getRecentCompletedActionItems(therapistId, 7);
         for (const item of completedActionItems.slice(0, 2)) {
-          const client = item.clientId ? await storage.getClientById(item.clientId) : null;
+          const client = item.clientId ? await storage.getClient(item.clientId) : null;
           const clientName = client ? ` for ${client.firstName} ${client.lastName}` : '';
           activities.push({
             id: `goal-${item.id}`,
