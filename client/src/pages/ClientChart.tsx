@@ -24,6 +24,7 @@ import {
 import { DocumentProcessor } from '@/components/documents/DocumentProcessor';
 import { SessionNoteLinkingModal } from '@/components/SessionNoteLinkingModal';
 import { SessionRecommendations } from '@/components/SessionRecommendations';
+import { CreateSessionNoteModal } from '@/components/CreateSessionNoteModal';
 
 interface Client {
   id: string;
@@ -67,6 +68,8 @@ export default function ClientChart() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
   const [isLinkingModalOpen, setIsLinkingModalOpen] = useState(false);
+  const [isCreateNoteModalOpen, setIsCreateNoteModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -586,11 +589,8 @@ export default function ClientChart() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              // TODO: Implement create session note for this appointment
-                              toast({
-                                title: "Feature Coming Soon",
-                                description: "Creating session notes for specific appointments will be available soon.",
-                              });
+                              setSelectedAppointment(appointment);
+                              setIsCreateNoteModalOpen(true);
                             }}
                             className="text-gray-400 hover:text-gray-600 hover:bg-gray-50"
                             data-testid={`button-add-note-${appointment.id}`}
@@ -682,6 +682,21 @@ export default function ClientChart() {
         appointments={appointments}
         onLinkingComplete={handleLinkingComplete}
       />
+
+      {/* Create Session Note Modal */}
+      {selectedAppointment && (
+        <CreateSessionNoteModal
+          isOpen={isCreateNoteModalOpen}
+          onClose={() => {
+            setIsCreateNoteModalOpen(false);
+            setSelectedAppointment(null);
+          }}
+          clientId={params.clientId!}
+          clientName={clientName}
+          appointmentId={selectedAppointment.id}
+          appointmentDate={selectedAppointment.startTime}
+        />
+      )}
     </div>
   );
 }

@@ -914,6 +914,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create a new session note
+  app.post("/api/session-notes", async (req, res) => {
+    try {
+      const { clientId, therapistId, content, appointmentId, aiTags, source } = req.body;
+
+      if (!clientId || !therapistId || !content) {
+        return res.status(400).json({ error: "clientId, therapistId, and content are required" });
+      }
+
+      const sessionNote = await storage.createSessionNote({
+        clientId,
+        therapistId,
+        content,
+        appointmentId: appointmentId || null,
+        aiTags: aiTags || [],
+        source: source || 'manual',
+        createdAt: new Date()
+      });
+
+      console.log(`✅ Created new session note with ID: ${sessionNote.id}`);
+      res.status(201).json(sessionNote);
+    } catch (error) {
+      console.error("Error creating session note:", error);
+      res.status(500).json({ error: "Failed to create session note" });
+    }
+  });
+
   // AI-powered automatic linking of session notes to appointments
   app.post("/api/session-notes/auto-link/:clientId", async (req, res) => {
     try {
