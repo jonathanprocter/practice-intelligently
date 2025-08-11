@@ -1404,7 +1404,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
           type: insight.type,
           title: insight.title,
           content: insight.description,
-          confidence: insight.confidence,
+          confidence: insight.confidence.toString(),
           metadata: { actionable: insight.actionable }
         });
       }
@@ -1660,7 +1660,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
     }
   });
 
-
+  app.post('/api/client-checkins/:id/send', async (req, res) => {
     try {
       const { id } = req.params;
       const { method = 'email', therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.body; // Add therapistId to body for context
@@ -1668,7 +1668,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
       // Fetch therapist details to get their preferred contact method or specific client info
       const therapist = await storage.getUser(therapistId); // Assuming therapist object contains contact preferences
 
-      const success = await storage.sendCheckin(id, method, therapist); // Pass therapist object to sendCheckin
+      const success = await storage.sendCheckin(id, method);
 
       if (success) {
         res.json({ success: true, message: 'Check-in sent successfully' });
@@ -4914,7 +4914,7 @@ Follow-up areas for next session:
       res.status(500).json({ error: 'Failed to search Drive files', details: error.message });
     }
   });
-  app.get('/api/drive/files/:param', async (req, res) => {
+  app.get('/api/drive/files/:fileId', async (req, res) => {
     try {
       const { fileId } = req.params;
       const { simpleOAuth } = await import('./oauth-simple');

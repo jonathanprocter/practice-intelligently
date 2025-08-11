@@ -85,6 +85,7 @@ export interface IStorage {
   generateAICheckins(therapistId: string): Promise<ClientCheckin[]>;
   sendCheckin(id: string, method: 'email' | 'sms'): Promise<boolean>;
   cleanupExpiredCheckins(): Promise<number>;
+  deleteClientCheckin(id: string): Promise<void>;
 
   // Action items methods
   getActionItems(therapistId: string): Promise<ActionItem[]>;
@@ -649,14 +650,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(sessionNotes.id, id));
   }
 
-  async getSessionNoteById(id: string): Promise<SessionNote | null> {
-    const [note] = await db
-      .select()
-      .from(sessionNotes)
-      .where(eq(sessionNotes.id, id))
-      .limit(1);
-    return note || null;
-  }
+
 
   async getUpcomingAppointmentsByClient(clientId: string): Promise<Appointment[]> {
     const now = new Date();
@@ -691,16 +685,7 @@ export class DatabaseStorage implements IStorage {
     return appointment || null;
   }
 
-  async getClientIdByName(clientName: string): Promise<string | null> {
-    const [client] = await db
-      .select({ id: clients.id })
-      .from(clients)
-      .where(
-        sql`LOWER(${clients.firstName} || ' ' || ${clients.lastName}) = LOWER(${clientName})`
-      )
-      .limit(1);
-    return client?.id || null;
-  }
+
 
   async updateAppointmentSessionPrep(appointmentId: string, sessionPrep: string): Promise<void> {
     await db
@@ -2441,6 +2426,15 @@ Jonathan`,
     } catch (error) {
       console.error('Error cleaning up expired check-ins:', error);
       return 0;
+    }
+  }
+
+  async deleteClientCheckin(id: string): Promise<void> {
+    try {
+      await pool.query('DELETE FROM client_checkins WHERE id = $1', [id]);
+    } catch (error) {
+      console.error('Error in deleteClientCheckin:', error);
+      throw error;
     }
   }
 
