@@ -22,6 +22,7 @@ import Assessments from "@/pages/assessments";
 import DocumentProcessing from "@/pages/DocumentProcessing";
 import ProcessingResults from "@/pages/ProcessingResults";
 import ClientChart from "@/pages/ClientChart";
+import SessionSummaries from "@/pages/session-summaries";
 import { lazy, Suspense } from "react";
 
 
@@ -65,6 +66,7 @@ function Router() {
       <Route path="/calendar/setup" component={GoogleCloudSetup} />
       <Route path="/oauth/debug" component={OAuthDebug} />
       <Route path="/session-notes" component={SessionNotes} />
+      <Route path="/session-summaries" component={SessionSummaries} />
       <Route path="/progress-notes" component={ProgressNotesPage} />
       <Route path="/document-processing" component={DocumentProcessing} />
       <Route path="/processing-results" component={ProcessingResults} />

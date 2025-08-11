@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Brain, Users, Calendar, FileText, CheckSquare, BarChart, Bot, Settings, Menu, MessageSquare, FolderOpen, ClipboardList, Upload, Activity } from "lucide-react";
+import { Brain, Users, Calendar, FileText, CheckSquare, BarChart, Bot, Settings, Menu, MessageSquare, FolderOpen, ClipboardList, Upload, Activity, PieChart } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +11,7 @@ const getNavigationItems = (clientCount: number, urgentActionItemCount: number) 
   { path: "/appointments", label: "Appointments", icon: Calendar },
   { path: "/calendar", label: "Calendar", icon: Calendar },
   { path: "/session-notes", label: "Session Notes", icon: FileText },
+  { path: "/session-summaries", label: "Session Summaries", icon: PieChart },
   { path: "/progress-notes", label: "Progress Notes", icon: FileText },
   { path: "/assessments", label: "Assessments", icon: ClipboardList },
   { path: "/document-processing", label: "Document Processing", icon: Upload },

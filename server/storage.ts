@@ -1,7 +1,7 @@
 import {
   users, clients, appointments, sessionNotes, sessionPrepNotes, clientCheckins, actionItems, treatmentPlans, aiInsights,
   billingRecords, assessments, progressNotes, medications, communicationLogs, documents, auditLogs,
-  compassConversations, compassMemory, sessionRecommendations, calendarEvents,
+  compassConversations, compassMemory, sessionRecommendations, sessionSummaries, calendarEvents,
   assessmentCatalog, clientAssessments, assessmentResponses, assessmentScores, assessmentPackages, assessmentAuditLog,
   type User, type InsertUser, type Client, type InsertClient, type Appointment, type InsertAppointment,
   type SessionNote, type InsertSessionNote, type SessionPrepNote, type InsertSessionPrepNote,
@@ -12,7 +12,7 @@ import {
   type CommunicationLog, type InsertCommunicationLog, type Document, type InsertDocument,
   type AuditLog, type InsertAuditLog, type CompassConversation, type InsertCompassConversation,
   type CompassMemory, type InsertCompassMemory, type SessionRecommendation, type InsertSessionRecommendation,
-  type CalendarEvent, type InsertCalendarEvent,
+  type SessionSummary, type InsertSessionSummary, type CalendarEvent, type InsertCalendarEvent,
   type AssessmentCatalog, type InsertAssessmentCatalog, type ClientAssessment, type InsertClientAssessment,
   type AssessmentResponse, type InsertAssessmentResponse, type AssessmentScore, type InsertAssessmentScore,
   type AssessmentPackage, type InsertAssessmentPackage, type AssessmentAuditLog, type InsertAssessmentAuditLog
@@ -261,6 +261,14 @@ export interface IStorage {
     patterns: any;
     frequentQueries: any;
   }>;
+
+  // Session summaries methods
+  getSessionSummaries(clientId: string): Promise<SessionSummary[]>;
+  getSessionSummariesByTherapist(therapistId: string): Promise<SessionSummary[]>;
+  getSessionSummary(id: string): Promise<SessionSummary | undefined>;
+  createSessionSummary(summary: InsertSessionSummary): Promise<SessionSummary>;
+  updateSessionSummary(id: string, summary: Partial<SessionSummary>): Promise<SessionSummary>;
+  generateAISessionSummary(sessionNoteIds: string[], clientId: string, therapistId: string, timeframe: string): Promise<SessionSummary>;
 
   // Calendar Events methods
   getCalendarEvents(therapistId: string, startDate?: Date, endDate?: Date): Promise<CalendarEvent[]>;
@@ -3004,6 +3012,216 @@ Jonathan`,
         patterns: {},
         frequentQueries: {}
       };
+    }
+  }
+
+  // Session Summaries Implementation
+  async getSessionSummaries(clientId: string): Promise<SessionSummary[]> {
+    return await db
+      .select()
+      .from(sessionSummaries)
+      .where(eq(sessionSummaries.clientId, clientId))
+      .orderBy(desc(sessionSummaries.createdAt));
+  }
+
+  async getSessionSummariesByTherapist(therapistId: string): Promise<SessionSummary[]> {
+    return await db
+      .select()
+      .from(sessionSummaries)
+      .where(eq(sessionSummaries.therapistId, therapistId))
+      .orderBy(desc(sessionSummaries.createdAt));
+  }
+
+  async getSessionSummary(id: string): Promise<SessionSummary | undefined> {
+    const [summary] = await db.select().from(sessionSummaries).where(eq(sessionSummaries.id, id));
+    return summary || undefined;
+  }
+
+  async createSessionSummary(summary: InsertSessionSummary): Promise<SessionSummary> {
+    const [newSummary] = await db
+      .insert(sessionSummaries)
+      .values(summary)
+      .returning();
+    return newSummary;
+  }
+
+  async updateSessionSummary(id: string, summary: Partial<SessionSummary>): Promise<SessionSummary> {
+    const [updatedSummary] = await db
+      .update(sessionSummaries)
+      .set({ ...summary, updatedAt: new Date() })
+      .where(eq(sessionSummaries.id, id))
+      .returning();
+    return updatedSummary;
+  }
+
+  async generateAISessionSummary(
+    sessionNoteIds: string[], 
+    clientId: string, 
+    therapistId: string, 
+    timeframe: string
+  ): Promise<SessionSummary> {
+    try {
+      // Fetch session notes data
+      const sessionNotes = await Promise.all(
+        sessionNoteIds.map(id => this.getSessionNote(id))
+      );
+      
+      // Get client information
+      const client = await this.getClient(clientId);
+      if (!client) {
+        throw new Error('Client not found');
+      }
+
+      // Filter out any null session notes
+      const validSessionNotes = sessionNotes.filter(note => note != null);
+      
+      if (validSessionNotes.length === 0) {
+        throw new Error('No valid session notes found');
+      }
+
+      // Prepare context for AI analysis
+      const sessionContext = validSessionNotes.map(note => ({
+        date: note.sessionDate,
+        content: note.content,
+        tags: note.tags || [],
+        insights: note.insights || {}
+      }));
+
+      const dateRange = {
+        startDate: new Date(Math.min(...sessionContext.map(s => new Date(s.date).getTime()))),
+        endDate: new Date(Math.max(...sessionContext.map(s => new Date(s.date).getTime())))
+      };
+
+      // Generate AI summary using OpenAI
+      const aiPrompt = `As an expert clinical therapist, analyze the following session notes for ${client.firstName} ${client.lastName} and generate a comprehensive clinical summary with visual data insights.
+
+Client Context:
+- Name: ${client.firstName} ${client.lastName}  
+- Primary Concerns: ${client.primaryConcerns || 'Not specified'}
+- Risk Level: ${client.riskLevel || 'Low'}
+
+Session Notes (${timeframe}):
+${JSON.stringify(sessionContext, null, 2)}
+
+Generate a comprehensive summary in the following JSON format:
+{
+  "keyInsights": [
+    "Primary therapeutic insights and breakthroughs",
+    "Behavioral patterns observed",
+    "Progress indicators"
+  ],
+  "progressMetrics": {
+    "therapyEngagement": 85,
+    "goalProgress": 70,
+    "symptomImprovement": 60,
+    "functionalImprovement": 75
+  },
+  "moodTrends": {
+    "averageMood": 6.5,
+    "moodStability": "improving",
+    "trendData": [
+      {"session": 1, "mood": 5.0, "anxiety": 7.0, "energy": 4.0},
+      {"session": 2, "mood": 6.0, "anxiety": 6.0, "energy": 5.0},
+      {"session": 3, "mood": 7.0, "anxiety": 5.0, "energy": 6.0}
+    ]
+  },
+  "goalProgress": [
+    {
+      "goal": "Reduce anxiety symptoms",
+      "baseline": 8.0,
+      "current": 5.5,
+      "target": 3.0,
+      "progressPercentage": 45
+    }
+  ],
+  "interventionEffectiveness": {
+    "mostEffective": ["CBT techniques", "Mindfulness exercises"],
+    "leastEffective": ["Exposure therapy"],
+    "effectivenessScores": {
+      "CBT": 85,
+      "Mindfulness": 78,
+      "ExposureTherapy": 45
+    }
+  },
+  "riskAssessment": {
+    "currentRiskLevel": "low",
+    "riskFactors": [],
+    "protectiveFactors": ["Strong support system", "Medication compliance"]
+  },
+  "recommendedActions": [
+    "Continue current CBT approach",
+    "Increase mindfulness practice frequency",
+    "Schedule medication review"
+  ],
+  "visualData": {
+    "chartConfigurations": [
+      {
+        "type": "line",
+        "title": "Mood Progression",
+        "data": "moodTrends.trendData",
+        "xAxis": "session",
+        "yAxis": "mood"
+      },
+      {
+        "type": "bar",
+        "title": "Goal Progress",
+        "data": "goalProgress",
+        "xAxis": "goal",
+        "yAxis": "progressPercentage"
+      }
+    ]
+  },
+  "clinicalNarrative": "Comprehensive clinical narrative summarizing the therapeutic journey, key themes, and overall progress assessment."
+}`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert clinical therapist specializing in data analysis and progress tracking. Generate comprehensive session summaries with actionable insights."
+          },
+          {
+            role: "user",
+            content: aiPrompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+        max_tokens: 3000
+      });
+
+      const aiAnalysis = JSON.parse(response.choices[0].message.content || '{}');
+
+      // Create session summary record
+      const summaryData: InsertSessionSummary = {
+        clientId,
+        therapistId,
+        sessionNoteIds,
+        title: `${timeframe} Session Summary - ${client.firstName} ${client.lastName}`,
+        timeframe,
+        summaryType: 'comprehensive',
+        keyInsights: aiAnalysis.keyInsights || [],
+        progressMetrics: aiAnalysis.progressMetrics || {},
+        moodTrends: aiAnalysis.moodTrends || null,
+        goalProgress: aiAnalysis.goalProgress || null,
+        interventionEffectiveness: aiAnalysis.interventionEffectiveness || null,
+        riskAssessment: aiAnalysis.riskAssessment || null,
+        recommendedActions: aiAnalysis.recommendedActions || null,
+        visualData: aiAnalysis.visualData || {},
+        aiGeneratedContent: aiAnalysis.clinicalNarrative || '',
+        confidence: 0.85,
+        dateRange: { startDate, endDate },
+        sessionCount: validSessionNotes.length,
+        avgSessionRating: null,
+        aiModel: 'gpt-4o',
+        status: 'generated'
+      };
+
+      return await this.createSessionSummary(summaryData);
+    } catch (error) {
+      console.error('Error generating AI session summary:', error);
+      throw error;
     }
   }
 

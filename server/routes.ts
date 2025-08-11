@@ -13,7 +13,8 @@ import {
   insertClientSchema, insertAppointmentSchema, insertSessionNoteSchema, 
   insertActionItemSchema, insertTreatmentPlanSchema,
   insertAssessmentCatalogSchema, insertClientAssessmentSchema, insertAssessmentResponseSchema,
-  insertAssessmentScoreSchema, insertAssessmentPackageSchema, insertSessionRecommendationSchema
+  insertAssessmentScoreSchema, insertAssessmentPackageSchema, insertSessionRecommendationSchema,
+  insertSessionSummarySchema
 } from "@shared/schema";
 import { z } from "zod";
 import { randomUUID } from 'crypto';
@@ -5604,6 +5605,118 @@ Follow-up areas for next session:
   });
 
   // REMOVED DUPLICATE: Consolidated into single working endpoint above
+
+  // ========== SESSION SUMMARIES ROUTES ==========
+
+  // Get session summaries for a specific client
+  app.get('/api/session-summaries/client/:clientId', async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const summaries = await storage.getSessionSummaries(clientId);
+      res.json(summaries);
+    } catch (error: any) {
+      console.error('Error fetching session summaries:', error);
+      res.status(500).json({ error: 'Failed to fetch session summaries', details: error.message });
+    }
+  });
+
+  // Get all session summaries for a therapist
+  app.get('/api/session-summaries/therapist/:therapistId', async (req, res) => {
+    try {
+      const { therapistId } = req.params;
+      const summaries = await storage.getSessionSummariesByTherapist(therapistId);
+      res.json(summaries);
+    } catch (error: any) {
+      console.error('Error fetching therapist session summaries:', error);
+      res.status(500).json({ error: 'Failed to fetch session summaries', details: error.message });
+    }
+  });
+
+  // Get a specific session summary by ID
+  app.get('/api/session-summaries/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const summary = await storage.getSessionSummary(id);
+      if (!summary) {
+        return res.status(404).json({ error: 'Session summary not found' });
+      }
+      res.json(summary);
+    } catch (error: any) {
+      console.error('Error fetching session summary:', error);
+      res.status(500).json({ error: 'Failed to fetch session summary', details: error.message });
+    }
+  });
+
+  // Create a new session summary
+  app.post('/api/session-summaries', async (req, res) => {
+    try {
+      const validatedData = insertSessionSummarySchema.parse(req.body);
+      const summary = await storage.createSessionSummary(validatedData);
+      res.status(201).json(summary);
+    } catch (error: any) {
+      console.error('Error creating session summary:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: 'Invalid session summary data', details: error.errors });
+      }
+      res.status(500).json({ error: 'Failed to create session summary', details: error.message });
+    }
+  });
+
+  // Generate AI-powered session summary
+  app.post('/api/session-summaries/generate', async (req, res) => {
+    try {
+      const { sessionNoteIds, clientId, therapistId, timeframe } = req.body;
+
+      // Validate required fields
+      if (!sessionNoteIds || !Array.isArray(sessionNoteIds) || sessionNoteIds.length === 0) {
+        return res.status(400).json({ error: 'sessionNoteIds array is required and must not be empty' });
+      }
+      if (!clientId) {
+        return res.status(400).json({ error: 'clientId is required' });
+      }
+      if (!therapistId) {
+        return res.status(400).json({ error: 'therapistId is required' });
+      }
+      if (!timeframe) {
+        return res.status(400).json({ error: 'timeframe is required' });
+      }
+
+      console.log(`🤖 Generating AI session summary for ${sessionNoteIds.length} session notes`);
+      console.log(`📊 Client: ${clientId}, Therapist: ${therapistId}, Timeframe: ${timeframe}`);
+
+      const summary = await storage.generateAISessionSummary(
+        sessionNoteIds,
+        clientId,
+        therapistId,
+        timeframe
+      );
+
+      console.log(`✅ AI session summary generated successfully with ID: ${summary.id}`);
+      res.status(201).json(summary);
+    } catch (error: any) {
+      console.error('Error generating AI session summary:', error);
+      res.status(500).json({ error: 'Failed to generate AI session summary', details: error.message });
+    }
+  });
+
+  // Update a session summary
+  app.patch('/api/session-summaries/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      // Remove id and timestamps from updates if present
+      delete updates.id;
+      delete updates.createdAt;
+      delete updates.updatedAt;
+
+      const summary = await storage.updateSessionSummary(id, updates);
+      res.json(summary);
+    } catch (error: any) {
+      console.error('Error updating session summary:', error);
+      res.status(500).json({ error: 'Failed to update session summary', details: error.message });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

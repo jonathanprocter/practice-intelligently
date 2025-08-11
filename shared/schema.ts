@@ -215,6 +215,38 @@ export const aiInsights = pgTable("ai_insights", {
   clientIdx: index("ai_insights_client_idx").on(table.clientId),
 }));
 
+export const sessionSummaries = pgTable("session_summaries", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }).notNull(),
+  therapistId: uuid("therapist_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  sessionNoteIds: jsonb("session_note_ids").notNull(), // Array of session note IDs included in summary
+  title: text("title").notNull(),
+  timeframe: text("timeframe").notNull(), // 'single_session', 'week', 'month', 'quarter', 'custom'
+  summaryType: text("summary_type").notNull().default("comprehensive"), // 'comprehensive', 'progress_focus', 'intervention_analysis'
+  keyInsights: jsonb("key_insights").notNull(), // Main therapeutic insights and patterns
+  progressMetrics: jsonb("progress_metrics").notNull(), // Quantified progress data for charts
+  moodTrends: jsonb("mood_trends"), // Mood tracking data over time
+  goalProgress: jsonb("goal_progress"), // Treatment goals and completion status
+  interventionEffectiveness: jsonb("intervention_effectiveness"), // Which interventions worked best
+  riskAssessment: jsonb("risk_assessment"), // Current risk factors and changes
+  recommendedActions: jsonb("recommended_actions"), // Next steps and recommendations
+  visualData: jsonb("visual_data").notNull(), // Chart data for infographics
+  aiGeneratedContent: text("ai_generated_content").notNull(), // AI summary narrative
+  confidence: decimal("confidence", { precision: 3, scale: 2 }).default("0.85"), // AI confidence score
+  dateRange: jsonb("date_range").notNull(), // Start and end dates for the summary period
+  sessionCount: integer("session_count").notNull().default(1), // Number of sessions included
+  avgSessionRating: decimal("avg_session_rating", { precision: 3, scale: 2 }), // Average session rating if available
+  aiModel: text("ai_model").notNull().default("gpt-4o"), // AI model used for generation
+  status: text("status").notNull().default("generated"), // 'generated', 'reviewed', 'approved', 'archived'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  clientIdx: index("session_summaries_client_idx").on(table.clientId),
+  therapistIdx: index("session_summaries_therapist_idx").on(table.therapistId),
+  timeframeIdx: index("session_summaries_timeframe_idx").on(table.timeframe),
+  createdAtIdx: index("session_summaries_created_at_idx").on(table.createdAt),
+}));
+
 export const sessionRecommendations = pgTable("session_recommendations", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   clientId: uuid("client_id").references(() => clients.id, { onDelete: "cascade" }).notNull(),
@@ -620,6 +652,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   actionItems: many(actionItems),
   treatmentPlans: many(treatmentPlans),
   aiInsights: many(aiInsights),
+  sessionSummaries: many(sessionSummaries),
   sessionRecommendations: many(sessionRecommendations),
   billingRecords: many(billingRecords),
   assessments: many(assessments),
@@ -639,6 +672,7 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   actionItems: many(actionItems),
   treatmentPlans: many(treatmentPlans),
   aiInsights: many(aiInsights),
+  sessionSummaries: many(sessionSummaries),
   sessionRecommendations: many(sessionRecommendations),
   billingRecords: many(billingRecords),
   assessments: many(assessments),
@@ -707,6 +741,17 @@ export const aiInsightsRelations = relations(aiInsights, ({ one }) => ({
   }),
   therapist: one(users, {
     fields: [aiInsights.therapistId],
+    references: [users.id],
+  }),
+}));
+
+export const sessionSummariesRelations = relations(sessionSummaries, ({ one }) => ({
+  client: one(clients, {
+    fields: [sessionSummaries.clientId],
+    references: [clients.id],
+  }),
+  therapist: one(users, {
+    fields: [sessionSummaries.therapistId],
     references: [users.id],
   }),
 }));
@@ -911,12 +956,20 @@ export const insertSessionNoteSchema = createInsertSchema(sessionNotes).omit({
   updatedAt: true,
 });
 
+export const insertSessionSummarySchema = createInsertSchema(sessionSummaries).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertSessionRecommendationSchema = createInsertSchema(sessionRecommendations).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
+export type SessionSummary = typeof sessionSummaries.$inferSelect;
+export type InsertSessionSummary = z.infer<typeof insertSessionSummarySchema>;
 export type SessionRecommendation = typeof sessionRecommendations.$inferSelect;
 export type InsertSessionRecommendation = z.infer<typeof insertSessionRecommendationSchema>;
 
