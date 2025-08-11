@@ -571,6 +571,13 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(sessionNotes.createdAt));
   }
 
+  async getAllSessionNotes(): Promise<SessionNote[]> {
+    return await db
+      .select()
+      .from(sessionNotes)
+      .orderBy(desc(sessionNotes.createdAt));
+  }
+
   async getSessionNote(id: string): Promise<SessionNote | undefined> {
     const [note] = await db.select().from(sessionNotes).where(eq(sessionNotes.id, id));
     return note || undefined;

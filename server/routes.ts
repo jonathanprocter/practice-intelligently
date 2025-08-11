@@ -5109,7 +5109,7 @@ Follow-up areas for next session:
     return uuidRegex.test(str);
   }
 
-  // POST endpoint for creating session notes
+  // POST endpoint for creating session notes with automatic historical appointment creation
   app.post('/api/session-notes', async (req, res) => {
     try {
       const sessionNoteData = req.body;
@@ -5117,6 +5117,9 @@ Follow-up areas for next session:
       if (!sessionNoteData.clientId || !sessionNoteData.therapistId) {
         return res.status(400).json({ error: 'Client ID and therapist ID are required' });
       }
+
+      // Import historical appointment utilities
+      const { processSessionNoteWithHistoricalAppointment } = await import('./historical-appointment-utils');
 
       // Ensure eventId is properly set for appointment linking
       // Only set appointmentId if it's a valid UUID, otherwise leave it null
@@ -5127,19 +5130,91 @@ Follow-up areas for next session:
         appointmentId: isValidUUID(appointmentIdCandidate) ? appointmentIdCandidate : null
       };
 
-      console.log('Creating session note with data:', {
+      console.log('🔄 Creating session note with automatic appointment processing:', {
         eventId: noteData.eventId,
         appointmentId: noteData.appointmentId,
         clientId: noteData.clientId,
         therapistId: noteData.therapistId
       });
 
-      // Create the session note
-      const newSessionNote = await storage.createSessionNote(noteData);
-      res.status(201).json(newSessionNote);
+      // Process session note with automatic historical appointment creation if needed
+      try {
+        const result = await processSessionNoteWithHistoricalAppointment(noteData, storage);
+        
+        console.log(`📄 Session note created: ${result.sessionNote.id.substring(0, 8)}...`);
+        if (result.linked && result.appointment) {
+          console.log(`🔗 Linked to ${result.appointment.created ? 'new historical' : 'existing'} appointment: ${result.appointment.googleEventId}`);
+        }
+        
+        // Return session note with appointment information
+        const responseData = {
+          ...result.sessionNote,
+          appointmentInfo: result.appointment ? {
+            appointmentId: result.appointment.appointmentId,
+            googleEventId: result.appointment.googleEventId,
+            created: result.appointment.created,
+            linked: result.linked
+          } : null
+        };
+        
+        res.status(201).json(responseData);
+        
+      } catch (historicalError) {
+        console.warn('⚠️ Historical appointment processing failed, creating session note without appointment link:', historicalError.message);
+        
+        // Fallback: create session note without appointment link
+        const newSessionNote = await storage.createSessionNote(noteData);
+        res.status(201).json(newSessionNote);
+      }
+      
     } catch (error: any) {
       console.error('Error creating session note:', error);
       res.status(500).json({ error: 'Failed to create session note', details: error.message });
+    }
+  });
+
+  // Batch process all session notes to create historical appointments
+  app.post('/api/session-notes/batch-process-historical-appointments', async (req, res) => {
+    try {
+      const { batchProcessAllSessionNotes } = await import('./batch-historical-appointment-processor');
+      
+      console.log('🔄 Starting batch historical appointment processing for all session notes...');
+      const result = await batchProcessAllSessionNotes(storage);
+      
+      res.json({
+        success: true,
+        message: 'Batch processing completed',
+        ...result
+      });
+    } catch (error: any) {
+      console.error('Error in batch processing:', error);
+      res.status(500).json({ 
+        error: 'Failed to batch process historical appointments', 
+        details: error.message 
+      });
+    }
+  });
+
+  // Batch process session notes for a specific client
+  app.post('/api/session-notes/batch-process-client/:clientId', async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const { batchProcessSessionNotesForClient } = await import('./batch-historical-appointment-processor');
+      
+      console.log(`🔄 Starting batch processing for client ${clientId}...`);
+      const result = await batchProcessSessionNotesForClient(clientId, storage);
+      
+      res.json({
+        success: true,
+        message: `Batch processing completed for client ${clientId}`,
+        ...result
+      });
+    } catch (error: any) {
+      console.error('Error in client batch processing:', error);
+      res.status(500).json({ 
+        error: 'Failed to batch process client session notes', 
+        details: error.message 
+      });
     }
   });
 

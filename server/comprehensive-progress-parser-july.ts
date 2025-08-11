@@ -109,20 +109,29 @@ export async function processComprehensiveProgressNotes(
       );
       
       let appointmentId = null;
+      let googleEventId = null;
+      
       if (existingAppointments.length > 0) {
         appointmentId = existingAppointments[0].id;
+        googleEventId = existingAppointments[0].google_event_id;
         console.log(`🔗 Found existing appointment: ${appointmentId.substring(0, 8)}...`);
       } else {
-        // Create new appointment for this session
+        // Create new historical appointment for this session
+        console.log(`📅 Creating historical appointment for ${session.clientName} on ${session.sessionDate}`);
+        
+        // Generate a unique historical event ID
+        googleEventId = `historical_${session.sessionDate.replace(/-/g, '')}_${clientId.substring(0, 8)}_${Date.now()}`;
+        
         const appointmentData = {
           clientId,
           therapistId,
           startTime: sessionDateTime,
           endTime: new Date(sessionDateTime.getTime() + (50 * 60 * 1000)), // 50 minutes default
-          type: session.sessionType || 'Individual Therapy',
+          type: session.sessionType || 'therapy_session',
           status: 'completed',
           location: 'Office',
-          notes: `${session.sessionType} session - ${session.narrativeSummary}`
+          googleEventId,
+          notes: `Historical ${session.sessionType} session - ${session.narrativeSummary}`
         };
         
         const newAppointment = await storage.createAppointment(appointmentData);
@@ -150,12 +159,29 @@ export async function processComprehensiveProgressNotes(
       
       const progressNote = await storage.createProgressNote(progressNoteData);
       console.log(`📝 Created progress note: ${progressNote.id.substring(0, 8)}...`);
+
+      // Also create a session note linked to this appointment for comprehensive documentation
+      const sessionNoteContent = `Subjective:\n${session.subjective}\n\nObjective:\n${session.objective}\n\nAssessment:\n${session.assessment}\n\nPlan:\n${session.plan}${session.tonalAnalysis ? `\n\nTonal Analysis:\n${session.tonalAnalysis}` : ''}`;
+      
+      const sessionNoteData = {
+        clientId,
+        therapistId,
+        content: sessionNoteContent,
+        eventId: googleEventId, // Link to the appointment via event ID
+        aiSummary: session.narrativeSummary,
+        tags: session.aiTags
+      };
+      
+      const sessionNote = await storage.createSessionNote(sessionNoteData);
+      console.log(`📄 Created session note: ${sessionNote.id.substring(0, 8)}... (linked to appointment: ${googleEventId})`);
       
       createdSessions.push({
         clientName: session.clientName,
         clientId,
         appointmentId,
         progressNoteId: progressNote.id,
+        sessionNoteId: sessionNote.id,
+        googleEventId,
         sessionDate: session.sessionDate,
         sessionTime: session.sessionTime
       });
