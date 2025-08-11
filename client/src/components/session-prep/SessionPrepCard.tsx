@@ -280,12 +280,13 @@ export function SessionPrepCard({
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg p-4">
               <div className="text-sm text-muted-foreground leading-relaxed">
                 {showFullInsights ? (
-                  <>{formatFullContent(aiInsights?.prep_content || '')}</>
+                  <>{formatFullContent(aiInsights?.content?.summary || aiInsights?.prep_content || '')}</>
                 ) : (
-                  <p>{formatInsightContent(aiInsights?.prep_content || '')}</p>
+                  <p>{formatInsightContent(aiInsights?.content?.summary || aiInsights?.prep_content || '')}</p>
                 )}
               </div>
-              {aiInsights?.prep_content && aiInsights.prep_content.length > 200 && (
+              {(aiInsights?.content?.summary || aiInsights?.prep_content) && 
+               (aiInsights?.content?.summary || aiInsights?.prep_content)?.length > 200 && (
                 <Button
                   variant="link"
                   size="sm"
@@ -297,8 +298,25 @@ export function SessionPrepCard({
               )}
             </div>
 
-            {/* Focus Areas */}
-            {aiInsights.key_focus_areas && aiInsights.key_focus_areas.length > 0 && (
+            {/* Key Points */}
+            {aiInsights?.content?.keyPoints && aiInsights.content.keyPoints.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-green-500" />
+                  <span className="text-sm font-medium">Key Points</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {aiInsights.content.keyPoints.map((point, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {point}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Focus Areas - fallback for backward compatibility */}
+            {aiInsights?.key_focus_areas && aiInsights.key_focus_areas.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Target className="h-4 w-4 text-green-500" />
@@ -314,8 +332,25 @@ export function SessionPrepCard({
               </div>
             )}
 
-            {/* Suggested Techniques */}
-            {aiInsights.suggested_techniques && aiInsights.suggested_techniques.length > 0 && (
+            {/* Suggested Questions */}
+            {aiInsights?.content?.suggestedQuestions && aiInsights.content.suggestedQuestions.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4 text-yellow-500" />
+                  <span className="text-sm font-medium">Suggested Questions</span>
+                </div>
+                <div className="space-y-1">
+                  {aiInsights.content.suggestedQuestions.slice(0, 3).map((question, index) => (
+                    <div key={index} className="text-xs text-muted-foreground bg-white/50 dark:bg-black/20 rounded p-2">
+                      {question}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Suggested Techniques - fallback for backward compatibility */}
+            {aiInsights?.suggested_techniques && aiInsights.suggested_techniques.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Lightbulb className="h-4 w-4 text-yellow-500" />

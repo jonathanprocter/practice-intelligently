@@ -1,0 +1,108 @@
+📅 Event "Sarah Palladino Appointment" matches Fri Aug 15 2025
+📅 Event "Trendall Storey Appointment" matches Fri Aug 15 2025
+📅 Event "Michael Bower & Bob Delmond Appointment" matches Fri Aug 15 2025
+📅 Fri Aug 15 2025: Found 10 events
+📅 Event "Calvin Hill Appointment" matches Sat Aug 16 2025
+📅 Sat Aug 16 2025: Found 1 events
+📅 Calendar days computed: 
+(7) ["Sun Aug 10 2025: 2 events", "Mon Aug 11 2025: 11 events", "Tue Aug 12 2025: 3 events", "Wed Aug 13 2025: 10 events", "Thu Aug 14 2025: 8 events", "Fri Aug 15 2025: 10 events", "Sat Aug 16 2025: 1 events"]
+Events for current week (Sun Aug 10 2025 - Sat Aug 16 2025): 45
+Total events loaded in calendar: 45
+📅 Computing calendar days for week starting: Sun Aug 10 2025
+📅 Total events available for filtering: 45
+📅 Event "🔒 Max Moskowitz Appointment" matches Sun Aug 10 2025
+📅 Event "🔒 Chris Balabanick Appointment" matches Sun Aug 10 2025
+📅 Sun Aug 10 2025: Found 2 events
+📅 Event "Blocked" matches Mon Aug 11 2025
+📅 Event "Dan re: Supervision" matches Mon Aug 11 2025
+📅 Event "Gavin Fisch Appointment" matches Mon Aug 11 2025
+📅 Event "Amberly Comeau Appointment" matches Mon Aug 11 2025
+📅 Event "Sarah Palladino Appointment" matches Mon Aug 11 2025
+📅 Event "Brian Kolsch Appointment" matches Mon Aug 11 2025
+📅 Event "Jason Laskin Appointment" matches Mon Aug 11 2025
+📅 Event "Nick Dabreu Appointment" matches Mon Aug 11 2025
+📅 Event "Noah Silverman Appointment" matches Mon Aug 11 2025
+📅 Event "David Grossman Appointment" matches Mon Aug 11 2025
+📅 Event "Ava Moskowitz Appointment" matches Mon Aug 11 2025
+📅 Mon Aug 11 2025: Found 11 events
+📅 Event "Coffee with Nora" matches Tue Aug 12 2025
+📅 Event "Call with Blake" matches Tue Aug 12 2025
+📅 Event "Vivian Meador Appointment" matches Tue Aug 12 2025
+📅 Tue Aug 12 2025: Found 3 events
+📅 Event "Courtney's Birthday" matches Wed Aug 13 2025
+📅 Event "Krista Flood Appointment" matches Wed Aug 13 2025
+📅 Event "Meeting with Partner" matches Wed Aug 13 2025
+📅 Event "Maryellen Dankenbrink Appointment" matches Wed Aug 13 2025
+📅 Event "Paul Benjamin Appointment" matches Wed Aug 13 2025
+📅 Event "Max Hafker Appointment" matches Wed Aug 13 2025
+📅 Event "Gavin Perna Appointment" matches Wed Aug 13 2025
+📅 Event "Max Moskowitz Appointment" matches Wed Aug 13 2025
+📅 Event "Owen Lennon Appointment" matches Wed Aug 13 2025
+📅 Event "David Grossman Appointment" matches Wed Aug 13 2025
+📅 Wed Aug 13 2025: Found 10 events
+📅 Event "Ruben Spilberg Appointment" matches Thu Aug 14 2025
+📅 Event "Sherrifa Hoosein Appointment" matches Thu Aug 14 2025
+📅 Event "Kristi Rook Appointment" matches Thu Aug 14 2025
+📅 Event "Zena Frey Appointment" matches Thu Aug 14 2025
+📅 Event "Hector Mendez Appointment" matches Thu Aug 14 2025
+📅 Event "Freddy Rodriguez Appointment" matches Thu Aug 14 2025
+📅 Event "Chris Balabanick Appointment" matches Thu Aug 14 2025
+📅 Event "Ava Moskowitz Appointment" matches Thu Aug 14 2025
+📅 Thu Aug 14 2025: Found 8 events
+📅 Event "Richie Hayes Appointment" matches Fri Aug 15 2025
+📅 Event "John Best Appointment" matches Fri Aug 15 2025
+📅 Event "Meera Zucker Appointment" matches Fri Aug 15 2025
+📅 Event "Valentina Gjidoda Appointment" matches Fri Aug 15 2025
+📅 Event "Brian Kolsch Appointment" matches Fri Aug 15 2025
+📅 Event "Noah Silverman Appointment" matches Fri Aug 15 2025
+📅 Event "Luke Knox Appointment" matches Fri Aug 15 2025
+📅 Event "Sarah Palladino Appointment" matches Fri Aug 15 2025
+📅 Event "Trendall Storey Appointment" matches Fri Aug 15 2025
+📅 Event "Michael Bower & Bob Delmond Appointment" matches Fri Aug 15 2025
+📅 Fri Aug 15 2025: Found 10 events
+📅 Event "Calvin Hill Appointment" matches Sat Aug 16 2025
+📅 Sat Aug 16 2025: Found 1 events
+📅 Calendar days computed: 
+(7) ["Sun Aug 10 2025: 2 events", "Mon Aug 11 2025: 11 events", "Tue Aug 12 2025: 3 events", "Wed Aug 13 2025: 10 events", "Thu Aug 14 2025: 8 events", "Fri Aug 15 2025: 10 events", "Sat Aug 16 2025: 1 events"]
+Events for current week (Sun Aug 10 2025 - Sat Aug 16 2025): 45
+Total events loaded in calendar: 45
+📅 Computing calendar days for week starting: Sun Aug 10 2025
+📅 Total events available for filtering: 0
+📅 Sun Aug 10 2025: Found 0 events
+📅 Mon Aug 11 2025: Found 0 events
+📅 Tue Aug 12 2025: Found 0 events
+📅 Wed Aug 13 2025: Found 0 events
+📅 Thu Aug 14 2025: Found 0 events
+📅 Fri Aug 15 2025: Found 0 events
+📅 Sat Aug 16 2025: Found 0 events
+📅 Calendar days computed: 
+(7) ["Sun Aug 10 2025: 0 events", "Mon Aug 11 2025: 0 events", "Tue Aug 12 2025: 0 events", "Wed Aug 13 2025: 0 events", "Thu Aug 14 2025: 0 events", "Fri Aug 15 2025: 0 events", "Sat Aug 16 2025: 0 events"]
+Events for current week (Sun Aug 10 2025 - Sat Aug 16 2025): 0
+Total events loaded in calendar: 0
+📅 Frontend: Fetching daily calendar events for: Mon Aug 11 2025
+🎉 Frontend: Successfully loaded 11 comprehensive events
+Sample raw event from database: 
+Object {id: "dpgafjkg5ihi0mu0qgt4k5mr4o", summary: "Blocked", description: "", start: {…}, end: {…}, …}
+First 3 events for debugging: 
+(3) [{…}, {…}, {…}]
+📝 Raw event sample start: 
+Object {dateTime: "2025-08-11T11:00:00.000Z", timeZone: "America/New_York"}
+📝 Raw event sample summary: Blocked
+🔍 Transforming important event: 
+Object {id: "adprlcmog0jucsb4iibnabuas8", summary: "Sarah Palladino Appointment", description: "", start: {…}, end: {…}, …}
+🔍 Event start: 
+Object {dateTime: "2025-08-11T16:30:00.000Z", timeZone: "America/New_York"}
+🔍 Event end: 
+Object {dateTime: "2025-08-11T17:30:00.000Z", timeZone: "America/New_York"}
+✅ Successfully transformed 11 events
+Sample transformed event: 
+Object {id: "dpgafjkg5ihi0mu0qgt4k5mr4o", title: "Blocked", startTime: Date, endTime: Date, clientId: undefined, …}
+📅 Computing calendar days for week starting: Sun Aug 10 2025
+📅 Total events available for filtering: 11
+📅 Sun Aug 10 2025: Found 0 events
+📅 Event "Blocked" matches Mon Aug 11 2025
+📅 Event "Dan re: Supervision" matches Mon Aug 11 2025
+📅 Event "Gavin Fisch Appointment" matches Mon Aug 11 2025
+📅 Event "Amberly Comeau Appointment" matches Mon Aug 11 2025
+📅 Event "Sarah Palladino Appointment" matches Mon Aug 11 2025
+📅 Event "Brian Kolsch Appointment" matches Mon Aug 11 2025

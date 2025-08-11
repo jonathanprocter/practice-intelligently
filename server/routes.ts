@@ -1077,7 +1077,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
         }
       } else if (sessionNoteId) {
         // Get the session note by ID
-        sessionNote = await storage.getSessionNoteById(sessionNoteId);
+        sessionNote = await storage.getSessionNote(sessionNoteId);
         if (!sessionNote) {
           return res.status(404).json({ error: "Session note not found" });
         }
