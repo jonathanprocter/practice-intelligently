@@ -39,13 +39,7 @@ export function CreateSessionNoteModal({
 
   const createSessionNoteMutation = useMutation({
     mutationFn: async (data: SessionNoteData) => {
-      return apiRequest('/api/session-notes', {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      return apiRequest('POST', '/api/session-notes', data);
     },
     onSuccess: () => {
       toast({
