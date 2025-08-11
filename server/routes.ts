@@ -1944,7 +1944,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
       
       // Get client session history and notes for context
       const sessionNotes = await storage.getSessionNotesByClientId(clientId);
-      const appointments = await storage.getAppointmentsByClientId(clientId);
+      const appointments = await storage.getAppointmentsByClient(clientId);
       
       // Build appointment data for AI insights
       const appointmentData = {
