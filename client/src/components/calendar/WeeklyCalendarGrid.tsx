@@ -32,12 +32,18 @@ export const WeeklyCalendarGrid = ({
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
   const [dropZone, setDropZone] = useState<{date: Date, time: string} | null>(null);
 
-  // Assuming weekStart is derived from the 'week' prop or passed in another way.
-  // For the provided fix, 'weekStart' is crucial for the 'useMemo' dependency.
-  // If 'week' prop is the source, it needs to be processed to get the start date.
-  // For the purpose of this fix, we'll assume 'weekStart' is available and correctly derived.
-  // Let's infer weekStart from the first day of the 'week' prop if available.
-  const weekStart = week && week.length > 0 ? week[0].date : new Date(); // Fallback to current date if week is empty or not provided
+  // Calculate weekStart from the week prop - ensure it's the beginning of the week (Sunday)
+  const weekStart = useMemo(() => {
+    if (week && week.length > 0) {
+      const firstDay = week[0].date;
+      // Ensure we get the start of the week (Sunday)
+      const startOfWeek = new Date(firstDay);
+      startOfWeek.setDate(firstDay.getDate() - firstDay.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+      return startOfWeek;
+    }
+    return new Date(); // Fallback to current date
+  }, [week]);
 
   const handleDragStart = (e: React.DragEvent, event: CalendarEvent) => {
     // Ensure dates are properly parsed
@@ -150,47 +156,56 @@ export const WeeklyCalendarGrid = ({
 
   // Rendering weekly calendar grid
 
-  // Corrected useMemo for calendarDays
+  // Use the week prop directly instead of recalculating
   const calendarDays = useMemo(() => {
-    console.log('📅 Computing calendar days for week starting:', format(weekStart, 'EEE MMM dd yyyy'));
+    console.log('📅 Computing calendar days for week starting:', week && week.length > 0 ? format(week[0].date, 'EEE MMM dd yyyy') : 'No week provided');
     console.log('📅 Total events available for filtering:', events?.length || 0);
+
+    if (!week || week.length === 0) {
+      console.log('⚠️ No week data provided to calendar grid');
+      return [];
+    }
 
     if (!events || events.length === 0) {
       console.log('⚠️ No events provided to calendar grid');
-      return Array.from({ length: 7 }, (_, i) => ({
-        date: addDays(weekStart, i),
-        events: [],
-        isToday: format(addDays(weekStart, i), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd'),
-        isCurrentMonth: addDays(weekStart, i).getMonth() === weekStart.getMonth()
+      return week.map(day => ({
+        ...day,
+        events: []
       }));
     }
 
-    return Array.from({ length: 7 }, (_, i) => {
-      const date = addDays(weekStart, i);
+    return week.map(day => {
       const dayEvents = events.filter(event => {
         if (!event || !event.startTime) return false;
 
-        const eventDate = format(event.startTime, 'yyyy-MM-dd');
-        const currentDate = format(date, 'yyyy-MM-dd');
-        const matches = eventDate === currentDate;
+        try {
+          const eventDate = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+          if (isNaN(eventDate.getTime())) return false;
 
-        if (matches) {
-          console.log(`📅 Event "${event.title}" matches ${format(date, 'EEE MMM dd yyyy')}`);
+          // Use Eastern Time for consistent date comparison
+          const eventDateEDT = eventDate.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+          const dayDateEDT = day.date.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+          const matches = eventDateEDT === dayDateEDT;
+
+          if (matches) {
+            console.log(`📅 Event "${event.title}" matches ${format(day.date, 'EEE MMM dd yyyy')}`);
+          }
+
+          return matches;
+        } catch (error) {
+          console.error('Error filtering event:', error, event);
+          return false;
         }
-
-        return matches;
       });
 
-      console.log(`📅 ${format(date, 'EEE MMM dd yyyy')}: Found ${dayEvents.length} events`);
+      console.log(`📅 ${format(day.date, 'EEE MMM dd yyyy')}: Found ${dayEvents.length} events`);
 
       return {
-        date,
-        events: dayEvents,
-        isToday: format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd'),
-        isCurrentMonth: date.getMonth() === weekStart.getMonth()
+        ...day,
+        events: dayEvents
       };
     });
-  }, [weekStart, events]);
+  }, [week, events]);
 
 
   return (
