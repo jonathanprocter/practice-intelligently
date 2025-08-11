@@ -146,12 +146,18 @@ export default function Clients() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-3 mb-2">
                     <h3 className="font-semibold text-therapy-text text-lg">
-                      {client.firstName} {client.lastName}
-                      {client.preferredName && (
-                        <span className="text-sm text-therapy-text/60 ml-2">
-                          "{client.preferredName}"
-                        </span>
-                      )}
+                      <button
+                        onClick={() => handleEditClient(client)}
+                        className="hover:text-therapy-primary transition-colors text-left underline-offset-4 hover:underline"
+                        data-testid={`button-edit-client-name-${client.id}`}
+                      >
+                        {client.firstName} {client.lastName}
+                        {client.preferredName && (
+                          <span className="text-sm text-therapy-text/60 ml-2">
+                            "{client.preferredName}"
+                          </span>
+                        )}
+                      </button>
                     </h3>
                     {client.pronouns && (
                       <span className="text-xs bg-therapy-accent/10 text-therapy-accent px-2 py-1 rounded">

@@ -19,12 +19,14 @@ import {
   AlertCircle,
   Trash2,
   Link,
-  CheckCircle2
+  CheckCircle2,
+  Edit2
 } from 'lucide-react';
 import { DocumentProcessor } from '@/components/documents/DocumentProcessor';
 import { SessionNoteLinkingModal } from '@/components/SessionNoteLinkingModal';
 import { SessionRecommendations } from '@/components/SessionRecommendations';
 import { CreateSessionNoteModal } from '@/components/CreateSessionNoteModal';
+import EditableClientInfo from '@/components/clients/EditableClientInfo';
 
 interface Client {
   id: string;
@@ -70,6 +72,7 @@ export default function ClientChart() {
   const [isLinkingModalOpen, setIsLinkingModalOpen] = useState(false);
   const [isCreateNoteModalOpen, setIsCreateNoteModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [isEditingHeader, setIsEditingHeader] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -187,16 +190,25 @@ export default function ClientChart() {
               <User className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{clientName}</h1>
-              <p className="text-gray-600">{client.email}</p>
+              <h1 className="text-2xl font-bold text-gray-900" data-testid="text-client-name">{clientName}</h1>
+              <p className="text-gray-600" data-testid="text-client-email">{client.email}</p>
               <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                <span>DOB: {new Date(client.dateOfBirth).toLocaleDateString()}</span>
-                <span>Phone: {client.phone}</span>
+                <span data-testid="text-client-dob">DOB: {new Date(client.dateOfBirth).toLocaleDateString()}</span>
+                <span data-testid="text-client-phone">Phone: {client.phone}</span>
               </div>
             </div>
           </div>
           
           <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setIsEditingHeader(!isEditingHeader)}
+              data-testid="button-edit-client-header"
+            >
+              <Edit2 className="w-4 h-4 mr-2" />
+              {isEditingHeader ? 'Cancel Edit' : 'Edit Info'}
+            </Button>
             <Button variant="outline" size="sm">
               <Calendar className="w-4 h-4 mr-2" />
               Schedule Appointment
@@ -207,12 +219,20 @@ export default function ClientChart() {
             </Button>
           </div>
         </div>
+
+        {/* Inline Header Edit Section */}
+        {isEditingHeader && (
+          <div className="mt-6 p-4 border rounded-lg bg-gray-50">
+            <EditableClientInfo client={client} mode="compact" />
+          </div>
+        )}
       </div>
 
       {/* Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="client-info">Client Info</TabsTrigger>
           <TabsTrigger value="sessions">Session Notes</TabsTrigger>
           <TabsTrigger value="appointments">Appointments</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -338,6 +358,11 @@ export default function ClientChart() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Client Information Tab */}
+        <TabsContent value="client-info" className="space-y-6">
+          <EditableClientInfo client={client} mode="full" />
         </TabsContent>
 
         {/* Session Notes Tab */}

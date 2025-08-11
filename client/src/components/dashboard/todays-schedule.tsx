@@ -80,11 +80,35 @@ export default function TodaysSchedule() {
     });
   };
 
-  const handleClientNameClick = (clientName: string) => {
-    setClientInfoModal({
-      isOpen: true,
-      clientName: clientName
-    });
+  const handleClientNameClick = async (clientName: string) => {
+    try {
+      // Find client by name to get their ID
+      const clients = await ApiClient.getClients();
+      const [firstName, ...lastNameParts] = clientName.split(' ');
+      const lastName = lastNameParts.join(' ');
+      
+      const client = clients.find(c => 
+        c.firstName.toLowerCase() === firstName.toLowerCase() && 
+        c.lastName.toLowerCase() === lastName.toLowerCase()
+      );
+      
+      if (client) {
+        navigate(`/clients/${client.id}/chart`);
+      } else {
+        // Fallback to info modal if client not found
+        setClientInfoModal({
+          isOpen: true,
+          clientName: clientName
+        });
+      }
+    } catch (error) {
+      console.error('Error finding client:', error);
+      // Fallback to info modal on error
+      setClientInfoModal({
+        isOpen: true,
+        clientName: clientName
+      });
+    }
   };
 
   const toggleReminder = (appointmentId: string) => {
