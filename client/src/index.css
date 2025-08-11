@@ -183,6 +183,30 @@
   }
 
   /* Ensure proper pointer events for mobile */
+  
+  /* Rich text formatting for Compass messages */
+  .rich-text-content {
+    line-height: 1.5;
+  }
+  
+  .rich-text-content strong {
+    font-weight: 600;
+    color: var(--therapy-primary);
+  }
+  
+  .rich-text-content em {
+    font-style: italic;
+    color: var(--therapy-secondary);
+  }
+  
+  .rich-text-content .bullet-point {
+    margin: 0.25rem 0;
+  }
+  
+  .rich-text-content .bullet-point .bullet {
+    color: var(--therapy-primary);
+    font-weight: bold;
+  }
   @media (pointer: coarse) {
     .compass-interface button {
       min-height: 44px;

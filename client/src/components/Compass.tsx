@@ -13,6 +13,99 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import compassAvatar from '@assets/compass-avatar.svg';
 
+// Function to format rich text content
+const formatRichText = (content: string) => {
+  // Split content into lines and process each line
+  const lines = content.split('\n');
+  const elements: JSX.Element[] = [];
+  
+  lines.forEach((line, lineIndex) => {
+    if (!line.trim()) {
+      elements.push(<br key={`br-${lineIndex}`} />);
+      return;
+    }
+    
+    // Process the line for formatting
+    const processedLine = processFormattedText(line);
+    elements.push(
+      <div key={`line-${lineIndex}`} className="mb-1">
+        {processedLine}
+      </div>
+    );
+  });
+  
+  return <div>{elements}</div>;
+};
+
+// Helper function to process formatted text within a line
+const processFormattedText = (text: string) => {
+  const elements: (string | JSX.Element)[] = [];
+  let currentIndex = 0;
+  
+  // Process **bold** text
+  const boldRegex = /\*\*(.*?)\*\*/g;
+  let match;
+  
+  while ((match = boldRegex.exec(text)) !== null) {
+    // Add text before the match
+    if (match.index > currentIndex) {
+      elements.push(text.slice(currentIndex, match.index));
+    }
+    
+    // Add bold text
+    elements.push(
+      <strong key={`bold-${match.index}`} className="font-semibold">
+        {match[1]}
+      </strong>
+    );
+    
+    currentIndex = match.index + match[0].length;
+  }
+  
+  // Add remaining text
+  if (currentIndex < text.length) {
+    let remainingText = text.slice(currentIndex);
+    
+    // Process *italic* text in remaining content
+    const italicRegex = /\*(.*?)\*/g;
+    const italicElements: (string | JSX.Element)[] = [];
+    let italicIndex = 0;
+    
+    while ((match = italicRegex.exec(remainingText)) !== null) {
+      if (match.index > italicIndex) {
+        italicElements.push(remainingText.slice(italicIndex, match.index));
+      }
+      
+      italicElements.push(
+        <em key={`italic-${match.index}`} className="italic">
+          {match[1]}
+        </em>
+      );
+      
+      italicIndex = match.index + match[0].length;
+    }
+    
+    if (italicIndex < remainingText.length) {
+      italicElements.push(remainingText.slice(italicIndex));
+    }
+    
+    // Process bullet points
+    if (remainingText.includes('•')) {
+      const bulletText = remainingText.replace('•', '').trim();
+      elements.push(
+        <div key={`bullet-${currentIndex}`} className="flex items-start gap-2">
+          <span className="text-therapy-primary font-bold">•</span>
+          <span>{bulletText}</span>
+        </div>
+      );
+    } else {
+      elements.push(...italicElements);
+    }
+  }
+  
+  return <>{elements}</>;
+};
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -720,7 +813,9 @@ export function Compass({ className }: CompassProps) {
                         )}
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <p className="flex-1">{message.content}</p>
+                          <div className="flex-1 rich-text-content">
+                            {formatRichText(message.content)}
+                          </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             {message.role === 'assistant' && (
                               <Button
