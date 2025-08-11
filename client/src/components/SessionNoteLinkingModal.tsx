@@ -71,11 +71,7 @@ export function SessionNoteLinkingModal({
 
     setIsLinking(true);
     try {
-      await apiRequest(`/api/session-notes/${selectedNote.id}/link-appointment`, {
-        method: 'PUT',
-        body: JSON.stringify({ appointmentId: selectedAppointment }),
-        headers: { 'Content-Type': 'application/json' }
-      });
+      await apiRequest('PUT', `/api/session-notes/${selectedNote.id}/link-appointment`, { appointmentId: selectedAppointment });
 
       toast({
         title: "Note Linked Successfully",
@@ -99,9 +95,7 @@ export function SessionNoteLinkingModal({
   const handleUnlinkNote = async (noteId: string) => {
     setIsUnlinking(true);
     try {
-      await apiRequest(`/api/session-notes/${noteId}/unlink-appointment`, {
-        method: 'PUT'
-      });
+      await apiRequest('PUT', `/api/session-notes/${noteId}/unlink-appointment`);
 
       toast({
         title: "Note Unlinked Successfully",
@@ -123,9 +117,7 @@ export function SessionNoteLinkingModal({
   const handleAutoLink = async () => {
     setIsAutoLinking(true);
     try {
-      const response = await apiRequest(`/api/session-notes/auto-link/${clientId}`, {
-        method: 'POST'
-      });
+      const response = await apiRequest('POST', `/api/session-notes/auto-link/${clientId}`);
 
       const result = await response.json();
 
