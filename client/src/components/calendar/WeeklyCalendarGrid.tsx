@@ -415,72 +415,54 @@ export const WeeklyCalendarGrid = ({
                         style={{ 
                           fontSize: event.slotsToSpan >= 3 ? '12px' : event.slotsToSpan >= 2 ? '11px' : '10px',
                           lineHeight: '1.2',
-                          marginBottom: 'auto',
+                          marginBottom: '1px',
                           wordWrap: 'break-word',
                           wordBreak: 'break-word',
-                          overflow: 'hidden',
-                          flex: '1',
-                          paddingBottom: '2px'
+                          overflow: 'hidden'
                         }}
                       >
                         {event.clientName || cleanEventTitle(event.title || 'Event')}
                       </div>
-                      <div style={{ marginTop: 'auto' }}>
-                        <div 
-                          className="appointment-source text-blue-600"
-                          style={{ 
-                            fontSize: event.slotsToSpan >= 3 ? '9px' : event.slotsToSpan >= 2 ? '8px' : '7px',
-                            lineHeight: '1.0',
-                            marginBottom: '1px',
-                            fontWeight: '500',
-                            paddingBottom: '1px',
-                            borderBottom: event.slotsToSpan >= 2 ? '1px solid #e2e8f0' : 'none',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            maxWidth: '100%'
-                          }}
-                        >
-                          {(() => {
-                            const isSimplePractice = event.calendarName?.includes('Simple Practice');
-                            const source = isSimplePractice ? 'SP' : 'GC';
-                            const location = event.location || 'Office';
-                            
-                            // For very small slots, show minimal info
-                            if (event.slotsToSpan === 1) {
-                              return `${source}`;
-                            }
-                            
-                            // For medium slots, show abbreviated
-                            if (event.slotsToSpan === 2) {
-                              return `${source} | ${location.length > 8 ? location.substring(0, 8) + '...' : location}`;
-                            }
-                            
-                            // For large slots, show full info
-                            return `${isSimplePractice ? 'SimplePractice' : 'Google Calendar'} | ${location}`;
-                          })()}
-                        </div>
-                        <div 
-                          className="appointment-time text-gray-600"
-                          style={{ 
-                            fontSize: event.slotsToSpan >= 3 ? '9px' : event.slotsToSpan >= 2 ? '8px' : '7px',
-                            lineHeight: '1.1',
-                            fontWeight: '500',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          {new Date(event.startTime).toLocaleTimeString('en-US', { 
-                            hour: '2-digit', 
-                            minute: '2-digit',
-                            hour12: false 
-                          })} - {new Date(event.endTime).toLocaleTimeString('en-US', { 
-                            hour: '2-digit', 
-                            minute: '2-digit',
-                            hour12: false 
-                          })}
-                        </div>
+                      <div 
+                        className="appointment-source text-blue-600"
+                        style={{ 
+                          fontSize: event.slotsToSpan >= 3 ? '10px' : '9px',
+                          lineHeight: '1.1',
+                          marginBottom: 'auto',
+                          fontWeight: '500',
+                          paddingBottom: '2px',
+                          borderBottom: '1px solid #e2e8f0',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          flex: '1'
+                        }}
+                      >
+                        {event.calendarName?.includes('Simple Practice') ? 'SimplePractice' : 
+                         event.calendarName?.includes('Google') ? 'Google Calendar' : 
+                         event.source === 'google' ? 'Google Calendar' : 'SimplePractice'} | {event.location || 'Office'}
+                      </div>
+                      <div 
+                        className="appointment-time text-gray-600"
+                        style={{ 
+                          fontSize: event.slotsToSpan >= 3 ? '10px' : '9px',
+                          lineHeight: '1.1',
+                          fontWeight: '500',
+                          paddingTop: '2px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {new Date(event.startTime).toLocaleTimeString('en-US', { 
+                          hour: '2-digit', 
+                          minute: '2-digit',
+                          hour12: false 
+                        })} - {new Date(event.endTime).toLocaleTimeString('en-US', { 
+                          hour: '2-digit', 
+                          minute: '2-digit',
+                          hour12: false 
+                        })}
                       </div>
                     </div>
                   ))}
