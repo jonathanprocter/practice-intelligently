@@ -136,7 +136,7 @@ export class OptimizedComprehensiveProgressNotesParser {
   private extractClientIndex(text: string): Array<{name: string, firstName: string, lastName: string, expectedSessions: number}> {
     const clientList = [];
     
-    // Look for client index section
+    // First, look for comprehensive document with client index section
     const indexMatch = text.match(/Client Index([\s\S]*?)(?=\n\n[A-Z]|\n\n\w+\s+\w+\n|$)/i);
     
     if (indexMatch) {
@@ -159,20 +159,60 @@ export class OptimizedComprehensiveProgressNotesParser {
           expectedSessions: parseInt(sessionCount)
         });
       }
+    } else {
+      // If no client index found, try to extract client name from document title/filename patterns
+      // Look for patterns like "Vivian Meador Appointment" or client names in content
+      const namePatterns = [
+        // Pattern 1: Client Name followed by "Appointment" 
+        /([A-Z][a-z]+\s+[A-Z][a-z]+)\s+Appointment/i,
+        // Pattern 2: "Client:" followed by name
+        /Client:\s*([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
+        // Pattern 3: "Patient:" followed by name
+        /Patient:\s*([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
+        // Pattern 4: Look for names in first line or title
+        /^([A-Z][a-z]+\s+[A-Z][a-z]+)/i
+      ];
+      
+      for (const pattern of namePatterns) {
+        const match = text.match(pattern);
+        if (match) {
+          const name = match[1].trim();
+          const nameParts = name.split(/\s+/);
+          const firstName = nameParts[0];
+          const lastName = nameParts.slice(1).join(' ');
+          
+          clientList.push({
+            name,
+            firstName,
+            lastName,
+            expectedSessions: 1 // Assume single session document
+          });
+          break; // Only take the first match to avoid duplicates
+        }
+      }
     }
     
     return clientList;
   }
 
   private extractClientSection(text: string, clientName: string): string | null {
-    // Find the client's section in the document
+    // For comprehensive documents, find the client's section 
     const clientSectionRegex = new RegExp(
       `${clientName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\n[\\s\\S]*?(?=\\n\\n[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)*\\s*\\n|$)`, 
       'i'
     );
     
     const match = text.match(clientSectionRegex);
-    return match ? match[0] : null;
+    if (match) {
+      return match[0];
+    }
+    
+    // For individual session documents, return the entire document if client name is found
+    if (text.toLowerCase().includes(clientName.toLowerCase())) {
+      return text;
+    }
+    
+    return null;
   }
 
   private async parseClientSessionsOptimized(clientInfo: any, clientSection: string): Promise<ExtractedClient | null> {
