@@ -72,6 +72,22 @@ Client requests from the React frontend are processed by the Express backend, in
 
 ## Recent Changes
 
+### Historical Session Notes Appointment Tagging Fixed (August 11, 2025)
+- **Achievement**: Successfully resolved appointment tagging issue for uploaded session notes
+- **Problem Identified**: Session notes uploaded from documents contained historical dates (2024) but no corresponding appointments existed in database, leaving notes unlinked
+- **Technical Implementation**:
+  - Created historical appointments for documented session dates (July 15, 2024, July 10, 2024, June 24, 2024)
+  - Linked session notes to their corresponding historical appointments using proper event_id mapping
+  - Fixed AI insights data structure mismatch in SessionPrepCard component
+  - Updated component to handle both legacy and new API response formats
+  - Enhanced insights display with keyPoints, suggestedQuestions, and proper styling
+- **Features Delivered**:
+  - Proper appointment-to-session-note linkage for historical therapeutic sessions
+  - AI insights now display correctly with contextual therapeutic guidance
+  - Comprehensive clinical documentation properly organized by appointment dates
+  - Enhanced session preparation cards with rich therapeutic content
+- **Status**: Fully operational - Historical session notes now properly tagged to appointments with working AI insights generation
+
 ### Compass Voice Mode API Fixed (August 11, 2025)
 - **Achievement**: Successfully implemented and fixed the missing `/api/compass/chat` endpoint
 - **Technical Implementation**:
