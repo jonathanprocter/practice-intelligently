@@ -33,7 +33,7 @@ export default function Calendar() {
     return getWeekStart(new Date());
   });
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [activeTab, setActiveTab] = useState('week');
+  const [activeTab, setActiveTab] = useState('day');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [selectedCalendarId, setSelectedCalendarId] = useState<string>('all');
 
@@ -59,23 +59,36 @@ export default function Calendar() {
     window.location.href = '/api/auth/google';
   };
 
-  // Get comprehensive events from 2015-2030 using the working live API endpoint
+  // Get events based on current view - daily by default, weekly when needed
   const { data: googleEvents = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['google-calendar-events-comprehensive', selectedCalendarId],
+    queryKey: ['google-calendar-events', selectedCalendarId, activeTab, selectedDate, currentWeek],
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     queryFn: async () => {
       try {
-        console.log('📅 Frontend: Fetching current week calendar events...');
-
-        // Get current week's events to properly display calendar
-        const startOfWeek = new Date(currentWeek);
-        startOfWeek.setDate(currentWeek.getDate() - currentWeek.getDay());
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        let timeMin: string, timeMax: string;
         
-        const timeMin = startOfWeek.toISOString();
-        const timeMax = endOfWeek.toISOString();
+        if (activeTab === 'day') {
+          // For daily view, only fetch current day's events
+          console.log('📅 Frontend: Fetching daily calendar events for:', selectedDate.toDateString());
+          const dayStart = new Date(selectedDate);
+          dayStart.setHours(0, 0, 0, 0);
+          const dayEnd = new Date(selectedDate);
+          dayEnd.setHours(23, 59, 59, 999);
+          
+          timeMin = dayStart.toISOString();
+          timeMax = dayEnd.toISOString();
+        } else {
+          // For week view or appointments view, fetch current week's events
+          console.log('📅 Frontend: Fetching weekly calendar events...');
+          const startOfWeek = new Date(currentWeek);
+          startOfWeek.setDate(currentWeek.getDate() - currentWeek.getDay());
+          const endOfWeek = new Date(startOfWeek);
+          endOfWeek.setDate(startOfWeek.getDate() + 7);
+          
+          timeMin = startOfWeek.toISOString();
+          timeMax = endOfWeek.toISOString();
+        }
         const url = `/api/calendar/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`;
 
         const workingResponse = await fetch(url);
@@ -914,30 +927,19 @@ export default function Calendar() {
       <div className="flex-1 p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
           <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="week" className="flex items-center gap-2">
-              <CalendarDays className="w-4 h-4" />
-              Week View
-            </TabsTrigger>
             <TabsTrigger value="day" className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Daily View
+            </TabsTrigger>
+            <TabsTrigger value="week" className="flex items-center gap-2">
+              <CalendarDays className="w-4 h-4" />
+              Week View
             </TabsTrigger>
             <TabsTrigger value="appointments" className="flex items-center gap-2">
               <List className="w-4 h-4" />
               Appointments
             </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="week" className="h-full">
-            <WeeklyCalendarGrid
-              week={calendarDays}
-              events={calendarEvents}
-              onDayClick={handleDayClick}
-              onTimeSlotClick={handleTimeSlotClick}
-              onEventClick={handleEventClick}
-              onEventMove={handleEventMove}
-            />
-          </TabsContent>
 
           <TabsContent value="day" className="h-full">
             <DailyView
@@ -958,6 +960,17 @@ export default function Calendar() {
               onNewAppointment={handleNewAppointment}
               onSessionNotes={handleSessionNotes}
               onDeleteEvent={handleDeleteEvent}
+            />
+          </TabsContent>
+
+          <TabsContent value="week" className="h-full">
+            <WeeklyCalendarGrid
+              week={calendarDays}
+              events={calendarEvents}
+              onDayClick={handleDayClick}
+              onTimeSlotClick={handleTimeSlotClick}
+              onEventClick={handleEventClick}
+              onEventMove={handleEventMove}
             />
           </TabsContent>
 
