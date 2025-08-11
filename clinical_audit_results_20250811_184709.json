@@ -1,0 +1,42 @@
+{
+  "audit_timestamp": "2025-08-11T18:47:09.301571",
+  "duration_seconds": 3.6469485759735107,
+  "pass_rate_percent": 100.0,
+  "total_tests": 26,
+  "results": {
+    "critical_issues": [],
+    "warnings": [
+      "Found 5 orphaned session notes"
+    ],
+    "passed_tests": [
+      "GET /api/health",
+      "GET /api/health/ai-services",
+      "GET /api/clients",
+      "GET /api/appointments/today/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c",
+      "GET /api/session-notes/today/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c",
+      "GET /api/calendar/events",
+      "GET /api/dashboard/stats/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c",
+      "GET /api/recent-activity/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c",
+      "Database table 'clients' exists with 69 records",
+      "Database table 'appointments' exists with 2110 records",
+      "Database table 'session_notes' exists with 94 records",
+      "Database table 'progress_notes' exists with 130 records",
+      "Database table 'therapists' exists with 1 records",
+      "Database table 'users' exists with 1 records",
+      "Database table 'calendar_events' exists with 4773 records",
+      "AI Service 'openai' is online",
+      "AI Service 'anthropic' is online",
+      "AI Service 'perplexity' is online",
+      "AI Service 'gemini' is online",
+      "Session note creation works",
+      "Today's appointments: 9 found",
+      "Calendar events: 4773 found",
+      "Client data endpoint /api/session-notes/client/b64bcedf-16d9-4dab-ac99-04e240141910: 2 records",
+      "Client data endpoint /api/appointments/client/b64bcedf-16d9-4dab-ac99-04e240141910: 61 records",
+      "Client data endpoint /api/progress-notes/client/b64bcedf-16d9-4dab-ac99-04e240141910: 0 records",
+      "Document processing endpoint exists"
+    ],
+    "failed_tests": [],
+    "test_summary": {}
+  }
+}

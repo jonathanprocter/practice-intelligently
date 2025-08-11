@@ -26,29 +26,29 @@ The application follows a monorepo structure, clearly separating client and serv
 - **Session Management**: Connect-pg-simple for PostgreSQL session storage
 
 ### Database Architecture
-The system utilizes a comprehensive PostgreSQL database with tables for core clinical data (`users`, `clients`, `appointments`, `sessionNotes`, `treatmentPlans`, `progressNotes`), assessment and monitoring (`assessments`, `medications`, `actionItems`), business operations (`billingRecords`, `communicationLogs`, `documents`), and analytics and compliance (`aiInsights`, `auditLogs`).
+The system utilizes a comprehensive PostgreSQL database with tables for core clinical data, assessment and monitoring, business operations, and analytics and compliance.
 
 ### Key Features & Technical Implementations
-- **Authentication & Authorization**: Role-based access control, session-based authentication with PostgreSQL storage, and secure user management.
+- **Authentication & Authorization**: Role-based access control and session-based authentication.
 - **Client Management**: Comprehensive client profiles with HIPAA compliance.
-- **Appointment Scheduling**: Full CRUD operations with status management, real-time updates, Google Calendar integration, and dynamic office location display.
+- **Appointment Scheduling**: Full CRUD operations with status management, real-time updates, and Google Calendar integration.
 - **Session Documentation**: Rich text session notes, transcript processing, automated AI insights generation, progress tracking, and AI-enhanced session prep.
 - **Action Items & Tasks**: Priority-based task management.
-- **Robust Storage Layer**: Over 65 methods supporting comprehensive CRUD operations, advanced querying, and integration with business logic.
-- **Advanced AI Integration & Clinical Intelligence**: Integrates multiple AI models with prioritized fallback system (OpenAI GPT-4o primary, Claude Sonnet-4 secondary, Google Gemini tertiary, Perplexity Sonar fallback) for predictive clinical modeling, advanced pattern recognition, personalized therapeutic recommendations, and practice management intelligence.
-- **Intelligent Document Processing**: Upload clinical documents (TXT, DOC, DOCX, XLS, XLSX, CSV, images) for AI-driven extraction and progress note generation (SOAP format).
+- **Robust Storage Layer**: Over 65 methods supporting comprehensive CRUD operations and advanced querying.
+- **Advanced AI Integration & Clinical Intelligence**: Integrates multiple AI models with prioritized fallback for predictive clinical modeling, pattern recognition, personalized therapeutic recommendations, and practice management intelligence.
+- **Intelligent Document Processing**: Upload clinical documents (TXT, DOC, DOCX, XLS, XLSX, CSV, images) for AI-driven extraction and progress note generation (SOAP format). Includes multiple file drag and drop functionality.
 - **Analytics Dashboard**: Modern card-based layout with smart insights, AI-powered summaries, and interactive data visualization.
-- **Client Check-ins System**: AI-powered check-ins with database lifecycle management and OpenAI analysis.
+- **Client Check-ins System**: AI-powered check-ins with database lifecycle management.
 - **Streamlined Appointments Tab**: Snapshot summary, enhanced appointment cards, and advanced search & filtering.
 - **Comprehensive US Holidays Integration**: Federal holidays system (2015-2030) integrated with Google Calendar OAuth.
-- **Enhanced Calendar Layout**: Clean day headers, military time format, and improved visual hierarchy.
-- **Complete Eastern Daylight Time (EDT) Synchronization**: Comprehensive timezone alignment across all system components including server configuration, database connections, Google Calendar API integration, frontend dateUtils, and all time-related operations to ensure accurate EDT-based scheduling and data consistency.
+- **Enhanced Calendar Layout**: Clean day headers, military time format, improved visual hierarchy, and optimized event display for current week.
+- **Complete Eastern Daylight Time (EDT) Synchronization**: Comprehensive timezone alignment across all system components for accurate scheduling and data consistency.
 - **Compass AI Assistant**: Floating AI assistant connected to all practice data with a minimizable chat interface and comprehensive practice context awareness.
 - **Google Drive & Notion Integration**: Content viewer with OAuth authentication for Google Calendar, Drive, and Notion workspace integration.
-- **Assessment Management System**: Integration of clinical assessments (e.g., Beck Depression Inventory) and therapeutic tools (e.g., breathing exercises, Life in Weeks visualization).
+- **Assessment Management System**: Integration of clinical assessments and therapeutic tools.
 - **Client Chart Review System**: Dedicated interface for comprehensive clinical overview including progress notes, session prep history, AI-powered case conceptualization, and AI treatment guide generation.
 - **Session Notes Integration**: Robust session notes system with proper Google Calendar event ID linking, error-resilient loading, and seamless UI integration for appointment-based documentation.
-- **Intelligent Session Recommendation Engine**: AI-powered therapeutic recommendations based on client history, session patterns, and clinical data. Features include automated generation using OpenAI GPT-4o, confidence scoring, clinical rationale, implementation tracking, and comprehensive feedback collection.
+- **Intelligent Session Recommendation Engine**: AI-powered therapeutic recommendations based on client history, session patterns, and clinical data.
 
 ### Data Flow
 Client requests from the React frontend are processed by the Express backend, interacting with PostgreSQL via Drizzle ORM. External AI services process therapeutic content, and TanStack Query manages real-time UI updates.
@@ -69,77 +69,3 @@ Client requests from the React frontend are processed by the Express backend, in
 ### Development Tools
 - **Drizzle Kit**: Database schema management and migrations.
 - **ESBuild**: Server-side code bundling for production.
-
-## Recent Changes
-
-### Comprehensive Automated Historical Appointment System Complete (August 11, 2025)
-- **Achievement**: Successfully implemented comprehensive automated historical appointment creation system
-- **Technical Implementation**:
-  - Enhanced session notes POST endpoint with automatic historical appointment creation
-  - Created `batch-historical-appointment-processor.ts` for retroactive processing of existing session notes
-  - Added `processSessionNoteForAppointmentLinking` function for safe processing of existing notes
-  - Implemented `getAllSessionNotes` method in storage layer for comprehensive data retrieval
-  - Fixed JSON parsing issues in AI date extraction with proper markdown cleanup
-  - Added batch processing API endpoint `/api/session-notes/batch-process-historical-appointments`
-  - Created comprehensive historical appointment utilities with date extraction and appointment linking
-- **Features Delivered**:
-  - **Automatic appointment creation**: New session note uploads automatically create historical appointments
-  - **Batch processing system**: Retroactively processes all existing session notes to create missing appointments
-  - **Safe processing**: Uses separate function for existing notes to prevent duplicate key violations
-  - **AI-powered date extraction**: Intelligently extracts session dates from clinical content with confidence scoring
-  - **Comprehensive documentation linking**: Every session note properly linked to corresponding appointment
-  - **Enhanced clinical workflow**: Complete therapeutic documentation organization by appointment dates
-- **Status**: Fully operational - System automatically processing existing session notes and creating historical appointments for complete clinical documentation organization
-
-### Compass Voice Mode API Fixed (August 11, 2025)
-- **Achievement**: Successfully implemented and fixed the missing `/api/compass/chat` endpoint
-- **Technical Implementation**:
-  - Added comprehensive `/api/compass/chat` POST endpoint to server routes
-  - Integrated OpenAI GPT-4o for intelligent conversational responses 
-  - Fixed storage method calls to use correct interface methods (getClients, getTodaysAppointments, getAllSessionNotesByTherapist, getUrgentActionItems)
-  - Added comprehensive practice context integration including client count, appointment data, session notes, and action items
-  - Implemented proper error handling and session management
-- **Features Delivered**:
-  - Real-time AI-powered conversational interface for practice management
-  - Context-aware responses with access to full practice data
-  - Session tracking and conversation continuity
-  - Professional therapeutic assistant persona
-  - Integration with existing voice interface functionality
-- **Status**: Fully operational - Compass AI assistant now responds to voice and text inputs with comprehensive practice management assistance
-
-### Multiple File Drag and Drop System Completed (August 11, 2025)
-- **Achievement**: Successfully implemented comprehensive multiple file drag and drop functionality
-- **Technical Implementation**:
-  - Fixed critical PDF text extraction by creating custom extractTextFromFile function to bypass pdf-parse library import issues
-  - Enhanced client name recognition patterns to handle individual session documents (not just comprehensive documents)
-  - Improved filename pattern matching to extract client names from formats like "Vivian Meador Appointment"
-  - Added fallback text encoding support (utf-8 and latin1) for various PDF formats
-- **Features Delivered**:
-  - Batch file processing with sequential upload queue
-  - Progress tracking with individual file status indicators
-  - Support for PDF, DOCX, TXT, images, Excel, CSV file formats
-  - Individual file removal and "Clear Queue" functionality
-  - "Process All Files" batch operation
-  - Real-time processing feedback and error handling
-- **Status**: Fully operational - users can now upload multiple documents simultaneously with automatic client matching and progress note generation
-
-### Calendar Display Issue Resolved (August 10, 2025)
-- **Issue**: Calendar was loading 4,722+ events but not displaying appointments in the UI
-- **Root Cause**: Frontend was fetching comprehensive historical data (2015-2030) causing transformation bottlenecks
-- **Solution Implemented**:
-  - Changed calendar to fetch current week's events only (instead of full historical range)
-  - Simplified event transformation logic to prevent processing overload
-  - Fixed appointment display to show all client sessions correctly
-- **Status**: Resolved - Calendar now displays 44 events for current week including all therapy appointments
-
-### Google Calendar Integration Fixed (August 9, 2025)
-- **Issue**: Google Calendar tokens expired causing "invalid_grant" error and 0 events syncing
-- **Root Cause**: OAuth refresh tokens expired, preventing calendar access and subcalendar synchronization
-- **Solution Implemented**: 
-  - Added automatic token refresh functionality with `refreshTokensIfNeeded()` method
-  - Enhanced subcalendar detection (shows PRIMARY, SUBCALENDAR, PERSONAL types in logs)
-  - Added `/api/auth/google/refresh` endpoint for manual token refresh
-  - Added missing OAuth callback endpoint `/api/auth/google/callback` with proper error handling
-  - Improved error handling across all calendar endpoints with authentication retry logic
-  - Updated Calendar Integration UI with token refresh button and clearer status messages
-- **Status**: Fixed - User needs to visit OAuth URL to reconnect Google Calendar authentication
