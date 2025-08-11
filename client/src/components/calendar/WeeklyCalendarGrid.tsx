@@ -433,9 +433,12 @@ export const WeeklyCalendarGrid = ({
                           paddingBottom: '2px',
                           borderBottom: '1px solid #e2e8f0',
                           overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          flex: '1'
+                          wordWrap: 'break-word',
+                          wordBreak: 'break-word',
+                          flex: '1',
+                          display: '-webkit-box',
+                          WebkitLineClamp: event.slotsToSpan >= 3 ? 3 : event.slotsToSpan >= 2 ? 2 : 1,
+                          WebkitBoxOrient: 'vertical'
                         }}
                       >
                         {event.calendarName?.includes('Simple Practice') ? 'SimplePractice' : 
