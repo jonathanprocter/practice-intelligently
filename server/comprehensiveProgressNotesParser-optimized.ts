@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import * as fs from 'fs';
-import mammoth from 'mammoth';
 import { storage } from './storage';
+import { extractTextFromFile } from './documentProcessor';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -72,22 +72,20 @@ export class OptimizedComprehensiveProgressNotesParser {
         errors: []
       };
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in parseComprehensiveDocument:', error);
-      throw new Error(`Failed to parse comprehensive progress notes: ${error.message}`);
+      throw new Error(`Failed to parse comprehensive progress notes: ${error?.message || 'Unknown error'}`);
     }
   }
 
   private async extractTextFromDocument(filePath: string): Promise<string> {
-    const fileBuffer = fs.readFileSync(filePath);
-    
-    if (filePath.endsWith('.docx')) {
-      const result = await mammoth.extractRawText({ buffer: fileBuffer });
-      return result.value;
-    } else if (filePath.endsWith('.txt')) {
-      return fileBuffer.toString('utf-8');
-    } else {
-      throw new Error('Unsupported file format');
+    try {
+      // Use the existing documentProcessor which already handles PDF, DOCX, TXT, etc.
+      const extractedText = await extractTextFromFile(filePath);
+      return extractedText;
+    } catch (error) {
+      console.error('Error extracting text from document:', error);
+      throw new Error(`Failed to extract text from document: ${(error as Error)?.message || 'Unknown error'}`);
     }
   }
 
@@ -129,9 +127,9 @@ export class OptimizedComprehensiveProgressNotesParser {
       
       return allClients;
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in optimized parsing:', error);
-      throw new Error(`Failed to parse document structure: ${error.message}`);
+      throw new Error(`Failed to parse document structure: ${error?.message || 'Unknown error'}`);
     }
   }
 
@@ -412,6 +410,7 @@ ${section.substring(0, 15000)}
             id: `pn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             clientId: match.matchedDbClient.id,
             therapistId,
+            title: `Session ${session.sessionNumber} - ${session.sessionDate}`,
             sessionDate: new Date(session.sessionDate),
             sessionType: 'Individual Therapy',
             duration: 50,
@@ -420,6 +419,7 @@ ${section.substring(0, 15000)}
             objective: session.objective || '',
             assessment: session.assessment || '',
             plan: session.plan || '',
+            tonalAnalysis: 'Comprehensive progress note analysis',
             keyPoints: session.keyPoints || [],
             significantQuotes: session.significantQuotes || [],
             narrativeSummary: session.narrativeSummary || '',

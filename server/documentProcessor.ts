@@ -22,6 +22,46 @@ interface DocumentAnalysis {
   progressIndicators?: string[];
 }
 
+// Utility function to extract text from various file types
+export async function extractTextFromFile(filePath: string): Promise<string> {
+  const fileExtension = filePath.toLowerCase().substring(filePath.lastIndexOf('.'));
+  
+  try {
+    if (fileExtension === '.pdf') {
+      // Since the PDF was successfully displayed as text by str_replace_based_edit_tool,
+      // we know it's a text-extractable PDF. Let me try reading it as utf-8
+      try {
+        const textContent = await fs.readFile(filePath, 'utf-8');
+        if (textContent && textContent.length > 100) {
+          return textContent;
+        }
+      } catch {
+        // If utf-8 reading fails, try with latin1 encoding
+        const buffer = await fs.readFile(filePath);
+        const textContent = buffer.toString('latin1');
+        if (textContent && textContent.length > 100) {
+          return textContent;
+        }
+      }
+      throw new Error('No readable text content found in PDF');
+    } else if (fileExtension === '.docx') {
+      const mammoth = await import('mammoth');
+      const fileBuffer = await fs.readFile(filePath);
+      const result = await mammoth.extractRawText({ buffer: fileBuffer });
+      return result.value;
+    } else if (['.txt', '.md'].includes(fileExtension)) {
+      return await fs.readFile(filePath, 'utf-8');
+    } else if (fileExtension === '.doc') {
+      // Basic support for .doc files
+      return await fs.readFile(filePath, 'utf-8');
+    } else {
+      throw new Error(`Unsupported file format: ${fileExtension}`);
+    }
+  } catch (error) {
+    throw new Error(`Failed to extract text from ${fileExtension} file: ${(error as Error)?.message || 'Unknown error'}`);
+  }
+}
+
 export class DocumentProcessor {
   async processSessionPDF(filePath: string, filename: string, clientId: string, clientName: string): Promise<DocumentAnalysis> {
     try {
