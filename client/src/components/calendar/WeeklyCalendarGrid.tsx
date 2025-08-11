@@ -6,9 +6,11 @@ import { wrapText } from '../../utils/textWrappers';
 import { CalendarEvent, CalendarDay } from '../../types/calendar';
 import { cn } from '@/lib/utils';
 import { getLocationDisplay } from '../../utils/locationUtils';
+import { addDays, format } from 'date-fns'; // Assuming date-fns is used for formatting and date manipulation
+import { useMemo } from 'react'; // Import useMemo
 
 interface WeeklyCalendarGridProps {
-  week: CalendarDay[];
+  week: CalendarDay[]; // This prop seems unused in the provided code, but kept for signature completeness.
   events: CalendarEvent[];
   onDayClick: (date: Date) => void;
   onTimeSlotClick: (date: Date, time: string) => void;
@@ -17,7 +19,7 @@ interface WeeklyCalendarGridProps {
 }
 
 export const WeeklyCalendarGrid = ({
-  week,
+  week, // This prop is defined but not used in the component's render logic.
   events,
   onDayClick,
   onTimeSlotClick,
@@ -29,6 +31,13 @@ export const WeeklyCalendarGrid = ({
   const timeSlots = generateTimeSlots();
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
   const [dropZone, setDropZone] = useState<{date: Date, time: string} | null>(null);
+
+  // Assuming weekStart is derived from the 'week' prop or passed in another way.
+  // For the provided fix, 'weekStart' is crucial for the 'useMemo' dependency.
+  // If 'week' prop is the source, it needs to be processed to get the start date.
+  // For the purpose of this fix, we'll assume 'weekStart' is available and correctly derived.
+  // Let's infer weekStart from the first day of the 'week' prop if available.
+  const weekStart = week && week.length > 0 ? week[0].date : new Date(); // Fallback to current date if week is empty or not provided
 
   const handleDragStart = (e: React.DragEvent, event: CalendarEvent) => {
     // Ensure dates are properly parsed
@@ -141,13 +150,56 @@ export const WeeklyCalendarGrid = ({
 
   // Rendering weekly calendar grid
 
+  // Corrected useMemo for calendarDays
+  const calendarDays = useMemo(() => {
+    console.log('📅 Computing calendar days for week starting:', format(weekStart, 'EEE MMM dd yyyy'));
+    console.log('📅 Total events available for filtering:', events?.length || 0);
+
+    if (!events || events.length === 0) {
+      console.log('⚠️ No events provided to calendar grid');
+      return Array.from({ length: 7 }, (_, i) => ({
+        date: addDays(weekStart, i),
+        events: [],
+        isToday: format(addDays(weekStart, i), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd'),
+        isCurrentMonth: addDays(weekStart, i).getMonth() === weekStart.getMonth()
+      }));
+    }
+
+    return Array.from({ length: 7 }, (_, i) => {
+      const date = addDays(weekStart, i);
+      const dayEvents = events.filter(event => {
+        if (!event || !event.startTime) return false;
+
+        const eventDate = format(event.startTime, 'yyyy-MM-dd');
+        const currentDate = format(date, 'yyyy-MM-dd');
+        const matches = eventDate === currentDate;
+
+        if (matches) {
+          console.log(`📅 Event "${event.title}" matches ${format(date, 'EEE MMM dd yyyy')}`);
+        }
+
+        return matches;
+      });
+
+      console.log(`📅 ${format(date, 'EEE MMM dd yyyy')}: Found ${dayEvents.length} events`);
+
+      return {
+        date,
+        events: dayEvents,
+        isToday: format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd'),
+        isCurrentMonth: date.getMonth() === weekStart.getMonth()
+      };
+    });
+  }, [weekStart, events]);
+
+
   return (
     <div className="weekly-calendar-container">
       {/* Day headers with day names */}
       <div className="grid grid-cols-8 border border-gray-200 mb-0">
         {/* Empty corner for alignment */}
         <div className="border-r border-gray-200 p-2 bg-gray-50"></div>
-        
+
         {/* Day headers */}
         {week.map((day) => (
           <div
@@ -234,7 +286,7 @@ export const WeeklyCalendarGrid = ({
                 if (!event.startTime) return false;
                 const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
                 if (isNaN(eventStart.getTime())) return false;
-                
+
                 // Use Eastern Time for consistent date comparison
                 const eventDateEDT = eventStart.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
                 const dayDateEDT = day.date.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
@@ -244,7 +296,7 @@ export const WeeklyCalendarGrid = ({
               // Filter events that START in this specific time slot (not span through it)
               const slotStartEvents = allDayEvents.filter(event => {
                 const eventStart = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
-                
+
                 // Convert to Eastern Time for hour/minute comparison
                 const edtTime = eventStart.toLocaleString('en-US', { 
                   timeZone: 'America/New_York',

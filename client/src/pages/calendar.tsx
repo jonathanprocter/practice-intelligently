@@ -67,7 +67,7 @@ export default function Calendar() {
     queryFn: async () => {
       try {
         let timeMin: string, timeMax: string;
-        
+
         if (activeTab === 'day') {
           // For daily view, only fetch current day's events
           console.log('📅 Frontend: Fetching daily calendar events for:', selectedDate.toDateString());
@@ -75,7 +75,7 @@ export default function Calendar() {
           dayStart.setHours(0, 0, 0, 0);
           const dayEnd = new Date(selectedDate);
           dayEnd.setHours(23, 59, 59, 999);
-          
+
           timeMin = dayStart.toISOString();
           timeMax = dayEnd.toISOString();
         } else {
@@ -85,7 +85,7 @@ export default function Calendar() {
           startOfWeek.setDate(currentWeek.getDate() - currentWeek.getDay());
           const endOfWeek = new Date(startOfWeek);
           endOfWeek.setDate(startOfWeek.getDate() + 7);
-          
+
           timeMin = startOfWeek.toISOString();
           timeMax = endOfWeek.toISOString();
         }
@@ -111,7 +111,7 @@ export default function Calendar() {
                 console.log('🔍 Event start:', event.start);
                 console.log('🔍 Event end:', event.end);
               }
-              
+
               // Parse start time from database format
               let startTime: Date;
               if (event.start?.dateTime) {
@@ -171,7 +171,7 @@ export default function Calendar() {
           } else {
             console.warn('⚠️ No events were successfully transformed!');
           }
-          
+
           return transformedEvents;
         } else {
           console.error('❌ Frontend: Working API failed, status:', workingResponse.status);
@@ -240,8 +240,6 @@ export default function Calendar() {
   // Use the already transformed and filtered events
 
   const calendarEvents: CalendarEvent[] = filteredCalendarEvents;
-
-  // Calendar events processed and organized by week
 
   // Create calendar days with events (filtered to current week for display)
   const calendarDays = useMemo(() => {
