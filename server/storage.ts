@@ -332,9 +332,7 @@ export class DatabaseStorage implements IStorage {
     return client || undefined;
   }
 
-  async getClientById(id: string): Promise<Client | undefined> {
-    return this.getClient(id);
-  }
+
 
   async createClient(client: InsertClient): Promise<Client> {
     const [newClient] = await db
@@ -578,13 +576,7 @@ export class DatabaseStorage implements IStorage {
     return note || undefined;
   }
 
-  async getSessionNoteById(sessionNoteId: string): Promise<SessionNote | null> {
-    const result = await pool.query(
-      'SELECT * FROM session_notes WHERE id = $1',
-      [sessionNoteId]
-    );
-    return result.rows[0] || null;
-  }
+
 
   async getSessionNotesByEventId(eventId: string): Promise<SessionNote[]> {
     try {
@@ -2438,30 +2430,7 @@ Jonathan`,
     }
   }
 
-  async getAppointmentsByClientId(clientId: string): Promise<Appointment[]> {
-    try {
-      const result = await pool.query(
-        'SELECT * FROM appointments WHERE client_id = $1 ORDER BY start_time DESC',
-        [clientId]
-      );
 
-      return result.rows.map((row: any) => ({
-        id: row.id,
-        clientId: row.client_id,
-        therapistId: row.therapist_id,
-        appointmentDate: new Date(row.start_time),
-        status: row.status,
-        type: row.type,
-        duration: row.duration,
-        notes: row.notes,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
-      }));
-    } catch (error) {
-      console.error('Error in getAppointmentsByClientId:', error);
-      return [];
-    }
-  }
 
   async getClientOutcomesByTherapist(therapistId: string): Promise<Assessment[]> {
     try {

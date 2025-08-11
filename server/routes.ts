@@ -1518,8 +1518,9 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
     }
   });
 
-  app.post('/api/client-checkins/:id/send', async (req, res) => {
-
+  // Disabled endpoint - implementation incomplete
+  // app.post('/api/client-checkins/:id/send', async (req, res) => {
+  // });
 
   // Full historical calendar sync endpoint - fetches ALL events from ALL time periods
   app.post('/api/calendar/sync-full-history', async (req, res) => {
@@ -2924,14 +2925,14 @@ Please provide a helpful, professional response as Compass. Keep responses conci
           for (const event of events) {
             try {
               const eventData = {
-                googleEventId: event.id,
-                googleCalendarId: calendar.id,
-                calendarName: calendar.summary,
+                googleEventId: event.id || '',
+                googleCalendarId: calendar.id || '',
+                calendarName: calendar.summary || '',
                 therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', // Default therapist ID
                 summary: event.summary || 'Untitled Event',
                 description: event.description || '',
-                startTime: new Date(event.start?.dateTime || event.start?.date),
-                endTime: new Date(event.end?.dateTime || event.end?.date),
+                startTime: new Date(event.start?.dateTime || event.start?.date || new Date()),
+                endTime: new Date(event.end?.dateTime || event.end?.date || new Date()),
                 timeZone: event.start?.timeZone || 'America/New_York',
                 location: event.location || '',
                 status: event.status || 'confirmed',
@@ -3234,7 +3235,7 @@ Please provide a helpful, professional response as Compass. Keep responses conci
               const eventsWithCalendar = events.map((event: any) => ({
                 ...event,
                 calendarId: calendar.id,
-                calendarName: calendar.summary,
+                calendarName: calendar.summary || '',
                 source: 'google-api'
               }));
               allEvents = allEvents.concat(eventsWithCalendar);
@@ -4671,7 +4672,7 @@ Return ONLY a JSON object with this exact structure:
           sessionDate: new Date(generatedNote.sessionDate),
           clientId: actualClientId,
           therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
-          appointmentId: appointmentId
+          appointmentId: appointmentId || null
         });
 
         console.log(`✅ Progress note saved to database with ID: ${savedProgressNote.id}`);
@@ -4813,7 +4814,7 @@ Follow-up areas for next session:
               sessionDate: new Date(generatedNote.sessionDate),
               clientId: actualClientId,
               therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
-              appointmentId: appointmentId
+              appointmentId: appointmentId || null
             });
 
             console.log(`✅ Progress note saved to database with ID: ${savedProgressNote.id}`);
@@ -5721,4 +5722,3 @@ Follow-up areas for next session:
   const httpServer = createServer(app);
   return httpServer;
 }
-// Adds a database storage system for persistent memory for Compass conversations and context.
