@@ -136,6 +136,8 @@ export interface IStorage {
   getRecentProgressNotes(therapistId: string, limit?: number): Promise<ProgressNote[]>;
   createProgressNote(note: InsertProgressNote): Promise<ProgressNote>;
   updateProgressNote(id: string, note: Partial<ProgressNote>): Promise<ProgressNote>;
+  linkProgressNoteToAppointment(progressNoteId: string, appointmentId: string): Promise<ProgressNote>;
+  findMatchingAppointment(clientId: string, sessionDate: Date): Promise<Appointment | null>;
 
   // Medication methods
   getClientMedications(clientId: string): Promise<Medication[]>;
@@ -988,6 +990,38 @@ export class DatabaseStorage implements IStorage {
       .where(eq(progressNotes.id, id))
       .returning();
     return updatedNote;
+  }
+
+  async linkProgressNoteToAppointment(progressNoteId: string, appointmentId: string): Promise<ProgressNote> {
+    const [updatedNote] = await db
+      .update(progressNotes)
+      .set({ appointmentId, updatedAt: new Date() })
+      .where(eq(progressNotes.id, progressNoteId))
+      .returning();
+    return updatedNote;
+  }
+
+  async findMatchingAppointment(clientId: string, sessionDate: Date): Promise<Appointment | null> {
+    // Find appointments within 3 days of the session date for the client
+    const startDate = new Date(sessionDate);
+    startDate.setDate(startDate.getDate() - 3);
+    const endDate = new Date(sessionDate);
+    endDate.setDate(endDate.getDate() + 3);
+
+    const [appointment] = await db
+      .select()
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.clientId, clientId),
+          gte(appointments.startTime, startDate),
+          lte(appointments.startTime, endDate)
+        )
+      )
+      .orderBy(sql`ABS(EXTRACT(EPOCH FROM (${appointments.startTime} - ${sessionDate})))`)
+      .limit(1);
+
+    return appointment || null;
   }
 
   // Medication methods

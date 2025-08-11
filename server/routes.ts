@@ -4085,6 +4085,86 @@ Generate specific preparation guidance for the next session including:
     }
   });
 
+  // Link unlinked progress notes to appointments
+  app.post('/api/progress-notes/link-to-appointments', async (req, res) => {
+    try {
+      const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.body;
+      
+      console.log('🔗 Starting automatic progress note linking process...');
+
+      // Get all recent progress notes that don't have an appointment linked
+      const recentProgressNotes = await storage.getRecentProgressNotes(therapistId, 50);
+      const unlinkedNotes = recentProgressNotes.filter(note => !note.appointmentId);
+      
+      console.log(`📋 Found ${unlinkedNotes.length} unlinked progress notes to process`);
+
+      let linkedCount = 0;
+      const results = [];
+
+      for (const note of unlinkedNotes) {
+        try {
+          // Find matching appointment for this progress note
+          const matchingAppointment = await storage.findMatchingAppointment(
+            note.clientId, 
+            new Date(note.sessionDate)
+          );
+
+          if (matchingAppointment) {
+            // Link the progress note to the appointment
+            await storage.linkProgressNoteToAppointment(note.id, matchingAppointment.id);
+            linkedCount++;
+            
+            results.push({
+              progressNoteId: note.id,
+              appointmentId: matchingAppointment.id,
+              clientId: note.clientId,
+              sessionDate: note.sessionDate,
+              appointmentDate: matchingAppointment.startTime,
+              status: 'linked'
+            });
+
+            console.log(`✅ Linked progress note ${note.id} to appointment ${matchingAppointment.id}`);
+          } else {
+            results.push({
+              progressNoteId: note.id,
+              clientId: note.clientId,
+              sessionDate: note.sessionDate,
+              status: 'no_matching_appointment'
+            });
+
+            console.log(`⚠️ No matching appointment found for progress note ${note.id} (${note.sessionDate})`);
+          }
+        } catch (error) {
+          console.error(`❌ Error processing progress note ${note.id}:`, error);
+          results.push({
+            progressNoteId: note.id,
+            clientId: note.clientId,
+            sessionDate: note.sessionDate,
+            status: 'error',
+            error: error.message
+          });
+        }
+      }
+
+      console.log(`🎉 Progress note linking complete: ${linkedCount}/${unlinkedNotes.length} notes linked`);
+
+      res.json({
+        success: true,
+        message: `Successfully linked ${linkedCount} progress notes to appointments`,
+        totalProcessed: unlinkedNotes.length,
+        linkedCount,
+        results
+      });
+
+    } catch (error) {
+      console.error('Error linking progress notes to appointments:', error);
+      res.status(500).json({ 
+        error: 'Failed to link progress notes to appointments',
+        details: error.message 
+      });
+    }
+  });
+
   // API route to get session prep notes for a specific appointment
   app.get('/api/session-prep/appointment/:appointmentId', async (req, res) => {
     try {
