@@ -2460,6 +2460,64 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
     }
   });
 
+  // Compass AI chat endpoint
+  app.post("/api/compass/chat", async (req, res) => {
+    try {
+      const { message, sessionId } = req.body;
+
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      // Generate session ID if not provided
+      const finalSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      // Get context from practice data for more comprehensive responses
+      const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'; // Default therapist ID
+      
+      // Gather comprehensive practice context
+      const [clients, todayAppointments, recentNotes, actionItems] = await Promise.all([
+        storage.getClientsByTherapist(therapistId).catch(() => []),
+        storage.getTodayAppointments(therapistId).catch(() => []),
+        storage.getRecentSessionNotes(therapistId, 5).catch(() => []),
+        storage.getUrgentActionItems(therapistId).catch(() => [])
+      ]);
+
+      // Build context for AI
+      const context = `
+You are Compass, an AI assistant for therapy practice management. You have access to comprehensive practice data and should provide helpful, professional responses about client management, scheduling, session notes, and therapy practice operations.
+
+Current Practice Context:
+- Total active clients: ${clients.length}
+- Today's appointments: ${todayAppointments.length}
+- Recent session notes: ${recentNotes.length}
+- Urgent action items: ${actionItems.length}
+
+User message: ${message}
+
+Please provide a helpful, professional response as Compass. Keep responses concise and actionable.`;
+
+      // Use OpenAI as primary AI service
+      const response = await openaiClient.generateText(context);
+      
+      res.json({
+        content: response,
+        sessionId: finalSessionId,
+        aiProvider: 'openai',
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error: any) {
+      console.error("Error in compass chat:", error);
+      res.status(500).json({ 
+        error: "Failed to process chat message",
+        content: "I'm having trouble processing your request right now. Please try again.",
+        sessionId: req.body.sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        aiProvider: 'error'
+      });
+    }
+  });
+
   // ========== ASSESSMENT MANAGEMENT SYSTEM API ROUTES ==========
 
   // Assessment Catalog routes
