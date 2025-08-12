@@ -1,0 +1,586 @@
+Daily View
+
+Based on my search through the codebase, here are the main files used to generate the daily view within the planner:
+Core Daily View Components:
+	1.	client/src/components/calendar/DailyView.tsx - The main React component that renders the daily planner view. It handles:
+	•	Event filtering for the selected date
+	•	Time slot grid generation (6:00 AM to 11:30 PM)
+	•	Event display and positioning
+	•	Daily notes functionality
+	•	Event interactions (click, edit, move, delete)
+	•	Navigation between days
+	2.	client/src/components/calendar/DailyView.css - Styles specific to the daily view layout
+Supporting Utilities:
+	1.	client/src/utils/timeSlots.ts - Generates the time grid structure:
+	•	Creates 30-minute time slots from 6:00 AM to 11:30 PM
+	•	Calculates event positions on the time grid
+	•	Formats time ranges
+	2.	client/src/utils/dateUtils.ts - Date manipulation functions used for filtering and navigation
+PDF Export Utilities (for generating printable daily views):
+	1.	client/src/utils/comprehensiveDailyPDFExport.ts - Comprehensive daily planner PDF export
+	2.	client/src/utils/enhancedDailyPDFExport.ts - Enhanced daily PDF generation
+	3.	client/src/utils/dynamicDailyPlannerGenerator.ts - Dynamic daily planner generation
+	4.	client/src/components/PerfectDailyReplicaPDF.tsx - Component for pixel-perfect PDF replication
+Main Integration Point:
+	1.	client/src/pages/planner.tsx - The main planner page that integrates the DailyView component and handles view switching between daily, weekly, monthly, and yearly views
+The daily view works by:
+	1.	Filtering all events to show only those for the selected date
+	2.	Creating a time grid with 30-minute intervals
+	3.	Positioning events on the grid based on their start/end times
+	4.	Providing interactive features for event management
+	5.	Supporting PDF export for printing daily schedules
+
+
+Daily view.tsx
+
+import { useState, useEffect, useCallback } from 'react';
+
+}}
+className="text-xs"
+>
+Delete
+</Button>
+<Button
+variant="outline"
+size="sm"
+onClick={() => setExpandedEventId(null)}
+className="text-xs"
+>
+Close
+</Button>
+</div>
+</div>
+</div>
+)}
+</div>
+);
+})}
+</div>
+</div>
+
+{/* Footer Navigation Bar - styled buttons implementation */}
+<div className="nav-footer">
+<Button
+variant="outline"
+size="sm"
+onClick={onPreviousDay}
+className="nav-btn prev-btn"
+aria-label={`Navigate to ${getDayNavigationName(getPreviousDay())}`}
+tabIndex={0}
+>
+← {getDayNavigationName(getPreviousDay())}
+</Button>
+<Button
+variant="outline"
+size="sm"
+onClick={onBackToWeek}
+className="nav-btn weekly-btn"
+aria-label="Navigate to weekly overview"
+tabIndex={0}
+>
+📅 Weekly Overview
+</Button>
+<Button
+variant="outline"
+size="sm"
+onClick={onNextDay}
+className="nav-btn next-btn"
+aria-label={`Navigate to ${getDayNavigationName(getNextDay())}`}
+tabIndex={0}
+>
+{getDayNavigationName(getNextDay())} →
+</Button>
+</div>
+</div>
+);
+};
+Daily view.css
+
+/* Daily View Specific Styles */
+
+z-index: 1;
+}
+
+/* Ensure appointments appear above grid lines and are properly contained */
+.daily-view .appointment {
+z-index: 10;
+margin: 1px 4px;
+border-radius: 4px;
+padding: 4px 8px;
+cursor: pointer;
+transition: all 0.2s ease;
+border: 1px solid transparent;
+overflow: hidden;
+box-sizing: border-box;
+width: calc(100% - 8px);
+}
+
+/* Appointment type styling */
+.daily-view .appointment.simplepractice {
+background: white;
+border: 2px solid #6495ED;
+border-left: 4px solid #6495ED;
+}
+
+.daily-view .appointment.google-calendar {
+background: white;
+border: 2px dashed #10B981;
+}
+
+.daily-view .appointment.personal {
+background: white;
+border: 2px solid #F59E0B;
+}
+
+/* Hover effects */
+.daily-view .appointment:hover {
+transform: scale(1.02);
+box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Overlapping appointment positioning */
+.daily-view .appointment {
+position: absolute;
+box-sizing: border-box;
+min-width: 0;
+min-height: 36px;
+}
+
+/* Status-based styling */
+.daily-view .appointment.status-cancelled {
+opacity: 0.7;
+}
+
+.daily-view .appointment.status-confirmed {
+border-width: 3px;
+}
+
+/* Ensure appointments fit within their grid cells */
+.daily-view .appointments-column > .appointment {
+min-height: 36px;
+max-height: calc(40px * var(--grid-span, 1) - 2px);
+}
+
+
+Time slots.ts
+
+/**
+* Time slot generation utility for consistent time grid creation
+*/
+
+export interface TimeSlot {
+hour: number;
+minute: number;
+time: string;
+}
+
+export function generateTimeSlots(): TimeSlot[] {
+const timeSlots: TimeSlot[] = [];
+
+// Generate time slots from 06:00 to 23:30 in 30-minute increments
+for (let hour = 6; hour <= 23; hour++) {
+// Add the top of the hour (e.g., 06:00, 07:00, etc.)
+timeSlots.push({
+hour,
+minute: 0,
+time: `${hour.toString().padStart(2, '0')}:00`
+});
+
+// Add the half hour (e.g., 06:30, 07:30, etc.)
+if (hour < 23) { // Don't add 23:30 as the last slot
+timeSlots.push({
+hour,
+minute: 30,
+time: `${hour.toString().padStart(2, '0')}:30`
+});
+}
+}
+
+// Add the final 23:30 slot
+timeSlots.push({
+hour: 23,
+minute: 30,
+time: '23:30'
+});
+
+return timeSlots;
+}
+
+export function getTimeSlotIndex(time: string): number {
+const timeSlots = generateTimeSlots();
+return timeSlots.findIndex(slot => slot.time === time);
+}
+
+export function calculateSlotPosition(startTime: Date, endTime: Date): { startSlot: number; endSlot: number } {
+const startHour = startTime.getHours();
+const startMinute = startTime.getMinutes();
+const endHour = endTime.getHours();
+const endMinute = endTime.getMinutes();
+
+// Calculate slot positions (each hour has 2 slots: :00 and :30)
+const startSlot = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
+const endSlot = ((endHour - 6) * 2) + (endMinute >= 30 ? 1 : 0);
+
+return { startSlot, endSlot };
+}
+
+export function formatTimeRange(startTime: Date, endTime: Date): string {
+const formatTime = (date: Date) => {
+return date.toLocaleTimeString('en-US', {
+hour: '2-digit',
+minute: '2-digit',
+hour12: false
+});
+};
+
+return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+}
+
+}
+
+Dateutils.ts
+
+export const getWeekNumber = (date: Date): number => {
+const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+const dayNum = d.getUTCDay() || 7;
+d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+};
+
+export const getWeekStartDate = (date: Date): Date => {
+const d = new Date(date);
+const day = d.getDay();
+const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+return new Date(d.setDate(diff));
+};
+
+export const getWeekEndDate = (date: Date): Date => {
+const startDate = getWeekStartDate(date);
+const endDate = new Date(startDate);
+endDate.setDate(startDate.getDate() + 6);
+return endDate;
+};
+
+export const formatDate = (date: Date): string => {
+return date.toLocaleDateString('en-US', {
+weekday: 'long',
+year: 'numeric',
+month: 'long',
+day: 'numeric'
+});
+};
+
+export const formatDateShort = (date: Date): string => {
+return date.toLocaleDateString('en-US', {
+month: 'numeric',
+day: 'numeric'
+});
+};
+
+export const formatWeekRange = (startDate: Date, endDate: Date): string => {
+const weekNumber = getWeekNumber(startDate);
+const startFormat = startDate.toLocaleDateString('en-US', {
+month: 'short',
+day: 'numeric'
+});
+const endFormat = endDate.toLocaleDateString('en-US', {
+month: 'short',
+day: 'numeric'
+});
+
+return `Week ${weekNumber} - ${startFormat} - ${endFormat}`;
+};
+
+export const generateWeekDays = (referenceDate: Date): any[] => {
+const startDate = getWeekStartDate(referenceDate);
+const days = [];
+
+for (let i = 0; i < 7; i++) {
+const date = new Date(startDate);
+date.setDate(startDate.getDate() + i);
+
+days.push({
+date,
+dayOfWeek: date.toLocaleDateString('en-US', { weekday: 'long' }),
+dayNumber: date.getDate(),
+events: []
+});
+
+};
+
+
+Planner.tsx
+
+import React, { useState, useEffect, useMemo } from 'react';
+
+});
+
+const status = data.isAuthenticated
+? (data.hasTokens ? 'Connected with tokens' : 'Connected but missing tokens')
+: 'Not connected';
+
+toast({
+title: 'Google Calendar Auth Status',
+description: `${status} - ${data.user?.email || 'No user'}`,
+variant: data.isAuthenticated && data.hasTokens ? 'default' : 'destructive'
+});
+})
+.catch(err => {
+console.error('Auth Status Error:', err);
+toast({
+title: 'Auth Status Error',
+description: err.message,
+variant: 'destructive'
+});
+});
+}}
+className="w-full bg-red-500 hover:bg-red-600 text-white"
+size="sm"
+>
+🚨 Check Auth Status
+</Button>
+<Button
+onClick={() => {
+console.log('🔄 FORCING GOOGLE RECONNECT');
+window.location.href = '/api/auth/google';
+}}
+className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+size="sm"
+>
+🔗 Force Google Reconnect
+</Button>
+</div>
+</CardContent>
+</Card>
+
+{/* Comprehensive Google Authentication Monitor */}
+<AuthMonitor />
+</div>
+</div>
+</div>
+</div>
+);
+}
+
+
+comprehensivedailyPDFexports.ts
+
+
+
+// Notes and Action Items if present
+let currentY = y + 40;
+
+if (event.notes && event.notes.trim()) {
+pdf.setFontSize(10);
+pdf.setTextColor(75, 85, 99);
+pdf.text('Notes:', x, currentY);
+currentY += 15;
+
+const notesLines = pdf.splitTextToSize(event.notes.trim(), maxWidth - 20);
+pdf.text(notesLines, x + 10, currentY);
+currentY += notesLines.length * 12 + 10;
+}
+
+if (event.actionItems && event.actionItems.trim()) {
+pdf.setFontSize(10);
+pdf.setTextColor(75, 85, 99);
+pdf.text('Action Items:', x, currentY);
+currentY += 15;
+
+const actionLines = pdf.splitTextToSize(event.actionItems.trim(), maxWidth - 20);
+pdf.text(actionLines, x + 10, currentY);
+}
+};
+
+const drawFooterNavigation = (pdf: jsPDF): void => {
+const { pageWidth, pageHeight, margin } = PDF_CONFIG;
+
+// Footer background - ensure it's at the very bottom
+const footerHeight = 50;
+const footerY = pageHeight - footerHeight - margin;
+
+pdf.setFillColor(248, 249, 250);
+pdf.rect(margin, footerY, pageWidth - 2 * margin, footerHeight, 'F');
+
+// Navigation buttons
+pdf.setFontSize(12);
+pdf.setTextColor(34, 34, 34);
+pdf.text('← Previous Day', margin + 20, footerY + 25);
+pdf.text('Weekly Overview', margin + 150, footerY + 25);
+pdf.text('Next Day →', margin + 280, footerY + 25);
+
+// Border
+pdf.setDrawColor(229, 231, 235);
+pdf.setLineWidth(1);
+pdf.rect(margin, footerY, pageWidth - 2 * margin, footerHeight, 'S');
+};
+
+const getAppointmentColor = (source: string): { r: number; g: number; b: number } => {
+switch (source) {
+case 'google':
+return { r: 219, g: 234, b: 254 }; // Light blue
+case 'simplepractice':
+return { r: 220, g: 252, b: 231 }; // Light green
+default:
+return { r: 249, g: 250, b: 251 }; // Light grey
+}
+};
+
+const formatTime = (date: Date): string => {
+return date.toLocaleTimeString('en-US', {
+hour: 'numeric',
+minute: '2-digit',
+hour12: true
+});
+};
+
+const formatDateForFilename = (date: Date): string => {
+return date.toISOString().split('T')[0];
+};
+
+
+enhancedDailyPDFExport.ts
+
+/**
+
+* Enhanced Daily PDF Export System
+* Fixes all audit-detected issues with proper styling, positioning, and source-based formatting
+*/
+
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { CalendarEvent } from '../types/calendar';
+
+interface EnhancedDailyExportConfig {
+pageWidth: number;
+pageHeight: number;
+margins: {
+top: number;
+bottom: number;
+left: number;
+right: number;
+};
+header: {
+height: number;
+fontSize: {
+title: number;
+date: number;
+stats: number;
+};
+};
+timeColumn: {
+width: number;
+fontSize: number;
+};
+timeSlots: {
+height: number;
+count: number;
+startHour: number;
+endHour: number;
+};
+appointments: {
+minHeight: number;
+fontSize: {
+title: number;
+source: number;
+time: number;
+};
+padding: number;
+};
+colors: {
+simplepractice: {
+border: string;
+background: string;
+leftBorder: string;
+};
+google: {
+border: string;
+background: string;
+borderStyle: string;
+};
+holiday: {
+border: string;
+background: string;
+};
+canceled: {
+clinician: string;
+client: string;
+};
+};
+}
+
+const ENHANCED_CONFIG: EnhancedDailyExportConfig = {
+pageWidth: 612, // 8.5 inches
+pageHeight: 792, // 11 inches
+margins: {
+top: 40,
+bottom: 40,
+left: 30,
+right: 30,
+},
+header: {
+height: 80,
+fontSize: {
+title: 22,
+date: 16,
+
+
+
+PerfectDailyReplicaPDF.tsx
+
+import React from 'react';
+
+// Wait for rendering
+await new Promise(resolve => setTimeout(resolve, 2000));
+
+// Generate PDF with high quality
+const canvas = await html2canvas(container, {
+scale: 3,
+useCORS: true,
+backgroundColor: '#ffffff',
+width: 1200,
+height: container.scrollHeight,
+allowTaint: false,
+removeContainer: false
+});
+
+const imgData = canvas.toDataURL('image/png', 1.0);
+const pdf = new jsPDF({
+orientation: 'portrait',
+unit: 'mm',
+format: 'a4'
+});
+
+const pdfWidth = 210;
+const pdfHeight = 297;
+const imgWidth = pdfWidth - 20;
+const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+// If the content is too tall, scale it down to fit
+if (imgHeight > pdfHeight - 20) {
+const scaledHeight = pdfHeight - 20;
+const scaledWidth = (canvas.width * scaledHeight) / canvas.height;
+pdf.addImage(imgData, 'PNG', (pdfWidth - scaledWidth) / 2, 10, scaledWidth, scaledHeight);
+} else {
+pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+}
+
+const dateStr = selectedDate.toLocaleDateString('en-US', {
+year: 'numeric',
+month: '2-digit',
+day: '2-digit'
+}).replace(/\//g, '-');
+
+pdf.save(`perfect-daily-replica-${dateStr}.pdf`);
+
+// Cleanup
+document.body.removeChild(container);
+console.log('✅ Perfect daily replica PDF generated successfully!');
+
+} catch (error) {
+console.error('❌ Perfect daily replica PDF generation failed:', error);
+throw error;
+}
+};
+
