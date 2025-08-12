@@ -175,3 +175,6 @@ export function AsyncBoundary({
     </ErrorBoundary>
   );
 }
+
+// Simple Error Boundary for quick use
+export default ErrorBoundary;

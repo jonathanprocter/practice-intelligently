@@ -135,13 +135,13 @@ export class ApiClient {
 
   // Method to set the current therapist ID
   static setTherapistId(therapistId: string | null) {
-    this.currentTherapistId = therapistId;
+    ApiClient.currentTherapistId = therapistId;
   }
 
   // Get therapist ID with fallback for backwards compatibility
-  private static get therapistId(): string {
-    if (this.currentTherapistId) {
-      return this.currentTherapistId;
+  static getTherapistId(): string {
+    if (ApiClient.currentTherapistId) {
+      return ApiClient.currentTherapistId;
     }
 
     // Try to get from localStorage as fallback
@@ -169,7 +169,7 @@ export class ApiClient {
 
     // Set the therapist ID after successful login
     if (data.therapistId) {
-      this.setTherapistId(data.therapistId);
+      ApiClient.setTherapistId(data.therapistId);
     }
 
     return data;
@@ -177,7 +177,7 @@ export class ApiClient {
 
   static async logout(): Promise<void> {
     await apiRequest('POST', '/api/auth/logout');
-    this.setTherapistId(null);
+    ApiClient.setTherapistId(null);
   }
 
   static async verifyAuth(): Promise<boolean> {
@@ -196,7 +196,8 @@ export class ApiClient {
 
   // Dashboard methods
   static async getDashboardStats(): Promise<DashboardStats> {
-    const response = await apiRequest('GET', `/api/dashboard/stats/${this.therapistId}`);
+    const therapistId = ApiClient.getTherapistId();
+    const response = await apiRequest('GET', `/api/dashboard/stats/${therapistId}`);
     return response.json();
   }
 
@@ -216,7 +217,8 @@ export class ApiClient {
   // Session Notes methods
   static async getSessionNotes(): Promise<SessionNote[]> {
     try {
-      const response = await fetch(`/api/session-notes/therapist/${this.therapistId}`);
+      const therapistId = ApiClient.getTherapistId();
+      const response = await fetch(`/api/session-notes/therapist/${therapistId}`);
       if (response.ok) {
         return response.json();
       }
@@ -248,7 +250,8 @@ export class ApiClient {
 
   // Client methods
   static async getClients(): Promise<Client[]> {
-    const response = await apiRequest('GET', `/api/clients/${this.therapistId}`);
+    const therapistId = ApiClient.getTherapistId();
+    const response = await apiRequest('GET', `/api/clients/${therapistId}`);
     return response.json();
   }
 
@@ -258,9 +261,10 @@ export class ApiClient {
   }
 
   static async createClient(client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Promise<Client> {
+    const therapistId = ApiClient.getTherapistId();
     const response = await apiRequest('POST', '/api/clients', {
       ...client,
-      therapistId: this.therapistId
+      therapistId: therapistId
     });
     return response.json();
   }
@@ -276,13 +280,15 @@ export class ApiClient {
 
   // Appointment methods
   static async getTodaysAppointments(): Promise<Appointment[]> {
+    const therapistId = ApiClient.getTherapistId();
+
     try {
       let dbAppointments: Appointment[] = [];
       let calendarEvents: any[] = [];
 
       // Fetch database appointments
       try {
-        const dbResponse = await apiRequest('GET', `/api/appointments/today/${this.therapistId}`);
+        const dbResponse = await apiRequest('GET', `/api/appointments/today/${therapistId}`);
         dbAppointments = await dbResponse.json();
       } catch (dbError) {
         console.warn('Database appointments fetch failed:', dbError);
@@ -300,9 +306,76 @@ export class ApiClient {
         console.warn('Calendar events fetch failed:', calendarError);
       }
 
-      // Convert and combine appointments
-      const calendarAppointments = this.processCalendarEvents(calendarEvents);
-      return this.combineAppointments(dbAppointments, calendarAppointments);
+      // Process calendar events inline
+      const calendarAppointments: Appointment[] = calendarEvents
+        .filter((event: any) => {
+          const summary = event.summary || '';
+          const lowerSummary = summary.toLowerCase();
+
+          const isAppointment = lowerSummary.includes('appointment') || 
+                               lowerSummary.includes('session') || 
+                               lowerSummary.includes('therapy');
+
+          const isProfessionalMeeting = lowerSummary.includes('meeting with') ||
+                                       lowerSummary.includes('call with') ||
+                                       lowerSummary.includes('coffee with');
+
+          const isExcluded = lowerSummary.includes('birthday') ||
+                            lowerSummary.includes('holiday') ||
+                            lowerSummary.includes('vacation') ||
+                            lowerSummary.includes('flight');
+
+          return (isAppointment || isProfessionalMeeting) && !isExcluded;
+        })
+        .map((event: any) => {
+          const summary = event.summary || '';
+          let clientName = summary;
+
+          if (summary.toLowerCase().includes('appointment')) {
+            clientName = summary.replace(/\s+appointment$/i, '').trim();
+          } else if (summary.toLowerCase().match(/(coffee|call|meeting)\s+with\s+(.+)/i)) {
+            const match = summary.match(/(coffee|call|meeting)\s+with\s+(.+)/i);
+            clientName = match ? match[2].trim() : summary;
+          }
+
+          return {
+            id: event.id || `calendar-${event.summary}-${event.start?.dateTime}`,
+            clientId: `calendar-${clientName.replace(/\s+/g, '-').toLowerCase()}`,
+            clientName: clientName,
+            therapistId: therapistId,
+            startTime: new Date(event.start?.dateTime || event.start?.date).toISOString(),
+            endTime: new Date(event.end?.dateTime || event.end?.date).toISOString(),
+            type: 'therapy',
+            status: 'confirmed' as const,
+            notes: event.description || '',
+            location: event.location || '',
+            isCalendarEvent: true,
+            googleEventId: event.id
+          } as any;
+        });
+
+      // Combine appointments inline
+      const combinedAppointments = [...dbAppointments];
+
+      for (const calendarAppt of calendarAppointments) {
+        const isDuplicate = dbAppointments.some(dbAppt => {
+          const dbTime = new Date(dbAppt.startTime).getTime();
+          const calTime = new Date(calendarAppt.startTime).getTime();
+          const timeDiff = Math.abs(dbTime - calTime);
+          return timeDiff < 60000 && 
+                 (dbAppt.clientName?.toLowerCase() === calendarAppt.clientName?.toLowerCase() ||
+                  (dbAppt as any).googleEventId === (calendarAppt as any).googleEventId);
+        });
+
+        if (!isDuplicate) {
+          combinedAppointments.push(calendarAppt);
+        }
+      }
+
+      // Sort by start time
+      return combinedAppointments.sort((a, b) => 
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+      );
 
     } catch (error) {
       console.error('Error fetching appointments:', error);
@@ -310,98 +383,25 @@ export class ApiClient {
     }
   }
 
-  private static processCalendarEvents(events: any[]): Appointment[] {
-    return events
-      .filter((event: any) => {
-        const summary = event.summary || '';
-        const lowerSummary = summary.toLowerCase();
-
-        const isAppointment = lowerSummary.includes('appointment') || 
-                             lowerSummary.includes('session') || 
-                             lowerSummary.includes('therapy');
-
-        const isProfessionalMeeting = lowerSummary.includes('meeting with') ||
-                                     lowerSummary.includes('call with') ||
-                                     lowerSummary.includes('coffee with');
-
-        const isExcluded = lowerSummary.includes('birthday') ||
-                          lowerSummary.includes('holiday') ||
-                          lowerSummary.includes('vacation') ||
-                          lowerSummary.includes('flight');
-
-        return (isAppointment || isProfessionalMeeting) && !isExcluded;
-      })
-      .map((event: any) => {
-        const summary = event.summary || '';
-        let clientName = summary;
-
-        if (summary.toLowerCase().includes('appointment')) {
-          clientName = summary.replace(/\s+appointment$/i, '').trim();
-        } else if (summary.toLowerCase().match(/(coffee|call|meeting)\s+with\s+(.+)/i)) {
-          const match = summary.match(/(coffee|call|meeting)\s+with\s+(.+)/i);
-          clientName = match ? match[2].trim() : summary;
-        }
-
-        return {
-          id: event.id || `calendar-${event.summary}-${event.start?.dateTime}`,
-          clientId: `calendar-${clientName.replace(/\s+/g, '-').toLowerCase()}`,
-          clientName: clientName,
-          therapistId: this.therapistId,
-          startTime: new Date(event.start?.dateTime || event.start?.date),
-          endTime: new Date(event.end?.dateTime || event.end?.date),
-          type: 'therapy',
-          status: 'confirmed' as const,
-          notes: event.description || '',
-          location: event.location || '',
-          isCalendarEvent: true,
-          googleEventId: event.id
-        };
-      });
-  }
-
-  private static combineAppointments(
-    dbAppointments: Appointment[], 
-    calendarAppointments: Appointment[]
-  ): Appointment[] {
-    const combinedAppointments = [...dbAppointments];
-
-    for (const calendarAppt of calendarAppointments) {
-      const isDuplicate = dbAppointments.some(dbAppt => {
-        const dbTime = new Date(dbAppt.startTime).getTime();
-        const calTime = new Date(calendarAppt.startTime).getTime();
-        const timeDiff = Math.abs(dbTime - calTime);
-        return timeDiff < 60000 && 
-               (dbAppt.clientName?.toLowerCase() === calendarAppt.clientName?.toLowerCase() ||
-                dbAppt.googleEventId === calendarAppt.googleEventId);
-      });
-
-      if (!isDuplicate) {
-        combinedAppointments.push(calendarAppt);
-      }
-    }
-
-    return combinedAppointments.sort((a, b) => 
-      new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-    );
-  }
-
   static async getAppointments(date?: string): Promise<Appointment[]> {
     const today = new Date().toISOString().split('T')[0];
     if (date === today) {
-      return this.getTodaysAppointments();
+      return ApiClient.getTodaysAppointments();
     }
 
+    const therapistId = ApiClient.getTherapistId();
     const url = date 
-      ? `/api/appointments/${this.therapistId}?date=${date}`
-      : `/api/appointments/${this.therapistId}`;
+      ? `/api/appointments/${therapistId}?date=${date}`
+      : `/api/appointments/${therapistId}`;
     const response = await apiRequest('GET', url);
     return response.json();
   }
 
   static async createAppointment(appointment: Omit<Appointment, 'id'>): Promise<Appointment> {
+    const therapistId = ApiClient.getTherapistId();
     const response = await apiRequest('POST', '/api/appointments', {
       ...appointment,
-      therapistId: this.therapistId
+      therapistId: therapistId
     });
     return response.json();
   }
@@ -418,19 +418,22 @@ export class ApiClient {
 
   // Action Items methods
   static async getActionItems(): Promise<ActionItem[]> {
-    const response = await apiRequest('GET', `/api/action-items/${this.therapistId}`);
+    const therapistId = ApiClient.getTherapistId();
+    const response = await apiRequest('GET', `/api/action-items/${therapistId}`);
     return response.json();
   }
 
   static async getUrgentActionItems(): Promise<ActionItem[]> {
-    const response = await apiRequest('GET', `/api/action-items/urgent/${this.therapistId}`);
+    const therapistId = ApiClient.getTherapistId();
+    const response = await apiRequest('GET', `/api/action-items/urgent/${therapistId}`);
     return response.json();
   }
 
   static async createActionItem(item: Omit<ActionItem, 'id'>): Promise<ActionItem> {
+    const therapistId = ApiClient.getTherapistId();
     const response = await apiRequest('POST', '/api/action-items', {
       ...item,
-      therapistId: this.therapistId
+      therapistId: therapistId
     });
     return response.json();
   }
@@ -442,12 +445,14 @@ export class ApiClient {
 
   // AI Insights methods
   static async getAiInsights(): Promise<AiInsight[]> {
-    const response = await apiRequest('GET', `/api/ai-insights/${this.therapistId}`);
+    const therapistId = ApiClient.getTherapistId();
+    const response = await apiRequest('GET', `/api/ai-insights/${therapistId}`);
     return response.json();
   }
 
   static async generateAiInsights(): Promise<AiInsight[]> {
-    const response = await apiRequest('POST', `/api/ai/generate-insights/${this.therapistId}`);
+    const therapistId = ApiClient.getTherapistId();
+    const response = await apiRequest('POST', `/api/ai/generate-insights/${therapistId}`);
     return response.json();
   }
 
@@ -458,15 +463,17 @@ export class ApiClient {
     content: string;
     transcript?: string;
   }): Promise<any> {
+    const therapistId = ApiClient.getTherapistId();
     const response = await apiRequest('POST', '/api/session-notes', {
       ...note,
-      therapistId: this.therapistId
+      therapistId: therapistId
     });
     return response.json();
   }
 
   static async getTodaysSessionNotes(): Promise<SessionNote[]> {
-    const response = await apiRequest('GET', `/api/session-notes/today/${this.therapistId}`);
+    const therapistId = ApiClient.getTherapistId();
+    const response = await apiRequest('GET', `/api/session-notes/today/${therapistId}`);
     return response.json();
   }
 
@@ -483,7 +490,8 @@ export class ApiClient {
 
   // Activity methods
   static async getRecentActivity(): Promise<Activity[]> {
-    const response = await apiRequest('GET', `/api/recent-activity/${this.therapistId}`);
+    const therapistId = ApiClient.getTherapistId();
+    const response = await apiRequest('GET', `/api/recent-activity/${therapistId}`);
     return response.json();
   }
 
