@@ -226,7 +226,13 @@ export class OptimizedComprehensiveProgressNotesParser {
       const prompt = `
 Extract therapy sessions for client: "${clientInfo.name}"
 
-Parse the sessions and return JSON in this format:
+CRITICAL REQUIREMENTS:
+1. Use the EXACT client name "${clientInfo.name}" - do not modify, abbreviate, or change it
+2. Extract actual session dates from the content - look for dates in MM/DD/YYYY, MM-DD-YYYY, YYYY-MM-DD format
+3. If no clear date is found, use "UNKNOWN" for sessionDate
+4. Maintain proper case sensitivity for client names
+
+Parse the sessions and return JSON in this exact format:
 {
   "name": "${clientInfo.name}",
   "firstName": "${clientInfo.firstName}",
@@ -234,7 +240,7 @@ Parse the sessions and return JSON in this format:
   "sessions": [
     {
       "sessionNumber": 1,
-      "sessionDate": "2025-07-07",
+      "sessionDate": "YYYY-MM-DD or UNKNOWN if not found",
       "content": "Full session content",
       "subjective": "What client reported",
       "objective": "Therapist observations", 
@@ -276,7 +282,29 @@ ${truncatedSection}
       }
 
       const parsedResult = JSON.parse(responseText);
-      return parsedResult as ExtractedClient;
+      
+      // Validate and clean the parsed result
+      if (parsedResult && parsedResult.name && parsedResult.sessions) {
+        // Ensure client name exactly matches what was passed in
+        parsedResult.name = clientInfo.name;
+        parsedResult.firstName = clientInfo.firstName;
+        parsedResult.lastName = clientInfo.lastName;
+        
+        // Validate session dates and fix common parsing issues
+        parsedResult.sessions = parsedResult.sessions.map((session: any, index: number) => ({
+          ...session,
+          sessionNumber: session.sessionNumber || index + 1,
+          sessionDate: this.validateAndFixDate(session.sessionDate),
+          content: session.content || 'Session content not extracted',
+          narrativeSummary: session.narrativeSummary || 'Summary not available'
+        }));
+        
+        console.log(`✓ Successfully parsed ${parsedResult.sessions.length} sessions for ${clientInfo.name}`);
+        return parsedResult as ExtractedClient;
+      } else {
+        console.error(`Invalid AI response structure for ${clientInfo.name}:`, parsedResult);
+        return null;
+      }
 
     } catch (error) {
       console.error(`Error parsing sessions for ${clientInfo.name}:`, error);
@@ -307,15 +335,21 @@ ${truncatedSection}
         const prompt = `
 Parse this client section and extract the client name and sessions.
 
+CRITICAL REQUIREMENTS:
+1. Extract the EXACT client name from the document - do not modify it
+2. Find actual session dates - look for MM/DD/YYYY, MM-DD-YYYY, YYYY-MM-DD formats
+3. Use "UNKNOWN" for sessionDate if no clear date is found
+4. Preserve original client name formatting
+
 Return JSON:
 {
-  "name": "Full Client Name",
+  "name": "EXACT Full Client Name as written in document",
   "firstName": "First",
   "lastName": "Last",
   "sessions": [
     {
       "sessionNumber": 1,
-      "sessionDate": "2025-07-07",
+      "sessionDate": "YYYY-MM-DD or UNKNOWN if not found",
       "content": "Session content",
       "narrativeSummary": "Brief summary"
     }
@@ -477,6 +511,48 @@ ${section.substring(0, 15000)}
     }
     
     return createdCount;
+  }
+
+  private validateAndFixDate(dateStr: string): string {
+    if (!dateStr || dateStr.toLowerCase() === 'unknown' || dateStr.toLowerCase() === 'not found') {
+      return 'UNKNOWN';
+    }
+
+    // Try to parse various date formats
+    const datePatterns = [
+      /(\d{4})-(\d{2})-(\d{2})/, // YYYY-MM-DD
+      /(\d{1,2})\/(\d{1,2})\/(\d{4})/, // M/D/YYYY or MM/DD/YYYY
+      /(\d{1,2})-(\d{1,2})-(\d{4})/, // M-D-YYYY or MM-DD-YYYY
+      /(\d{2})\/(\d{2})\/(\d{4})/, // MM/DD/YYYY
+      /(\d{4})\/(\d{2})\/(\d{2})/, // YYYY/MM/DD
+    ];
+
+    for (const pattern of datePatterns) {
+      const match = dateStr.match(pattern);
+      if (match) {
+        try {
+          let year, month, day;
+          
+          if (pattern === datePatterns[0] || pattern === datePatterns[4]) {
+            // YYYY-MM-DD or YYYY/MM/DD format
+            [, year, month, day] = match;
+          } else {
+            // MM/DD/YYYY or MM-DD-YYYY format
+            [, month, day, year] = match;
+          }
+          
+          const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          if (!isNaN(date.getTime())) {
+            return date.toISOString().split('T')[0]; // Return YYYY-MM-DD format
+          }
+        } catch (error) {
+          console.warn(`Failed to parse date: ${dateStr}`, error);
+        }
+      }
+    }
+
+    console.warn(`Could not parse date: ${dateStr}, using UNKNOWN`);
+    return 'UNKNOWN';
   }
 
   async generateProcessingSummary(result: ProcessingResult): Promise<string> {

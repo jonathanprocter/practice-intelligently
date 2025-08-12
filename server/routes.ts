@@ -1973,18 +1973,42 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
         const sessionNotes = await storage.getSessionNotesByClientId(clientId);
         const appointments = await storage.getAppointmentsByClient(clientId);
         
-        // Build appointment data for AI insights
-        appointmentData = {
-          title: `Session with ${client.firstName} ${client.lastName}`,
-          clientName: `${client.firstName} ${client.lastName}` || 'Unknown Client',
-          date: new Date().toISOString(),
-          startTime: new Date().toISOString(),
-          endTime: new Date(Date.now() + 50 * 60 * 1000).toISOString(), // 50 min session
-          location: 'Therapy Office',
-          status: 'scheduled',
-          notes: sessionNotes.slice(0, 3).map(note => note.content).join('\n\n'),
-          sessionNotes: sessionNotes.length > 0 ? sessionNotes[0].content : 'No previous session notes'
-        };
+        // Try to find the actual appointment by event ID first
+        let actualAppointment = null;
+        try {
+          actualAppointment = await storage.getAppointmentByEventId(eventId);
+        } catch (error) {
+          console.log(`No appointment found with eventId: ${eventId}, using client data`);
+        }
+        
+        // Build appointment data for AI insights using actual appointment data if available
+        if (actualAppointment) {
+          appointmentData = {
+            title: `Session with ${client.firstName} ${client.lastName}`,
+            clientName: `${client.firstName} ${client.lastName}`,
+            date: actualAppointment.startTime.toISOString(),
+            startTime: actualAppointment.startTime.toISOString(),
+            endTime: actualAppointment.endTime.toISOString(),
+            location: actualAppointment.location || 'Therapy Office',
+            status: actualAppointment.status || 'scheduled',
+            notes: sessionNotes.slice(0, 3).map(note => note.content).join('\n\n'),
+            sessionNotes: sessionNotes.length > 0 ? sessionNotes[0].content : 'No previous session notes'
+          };
+        } else {
+          // Fallback to recent appointment or default data
+          const recentAppointment = appointments.length > 0 ? appointments[0] : null;
+          appointmentData = {
+            title: `Session with ${client.firstName} ${client.lastName}`,
+            clientName: `${client.firstName} ${client.lastName}`,
+            date: recentAppointment ? recentAppointment.startTime.toISOString() : new Date().toISOString(),
+            startTime: recentAppointment ? recentAppointment.startTime.toISOString() : new Date().toISOString(),
+            endTime: recentAppointment ? recentAppointment.endTime.toISOString() : new Date(Date.now() + 50 * 60 * 1000).toISOString(),
+            location: recentAppointment?.location || 'Therapy Office',
+            status: recentAppointment?.status || 'scheduled',
+            notes: sessionNotes.slice(0, 3).map(note => note.content).join('\n\n'),
+            sessionNotes: sessionNotes.length > 0 ? sessionNotes[0].content : 'No previous session notes'
+          };
+        }
         
         // Generate comprehensive session prep insights
         insights = await generateAppointmentInsights(appointmentData);
