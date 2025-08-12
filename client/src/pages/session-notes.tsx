@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { SessionNoteEntry } from '@/components/SessionNoteEntry';
-import { EditSessionNoteTitleModal } from '@/components/EditSessionNoteTitleModal';
+import { EditSessionNoteModal } from '@/components/EditSessionNoteModal';
 import { Calendar, Plus, Search, FileText, Clock, MapPin, Users, Edit2, Eye, MoreVertical } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -288,7 +288,7 @@ export default function SessionNotesPage() {
                           data-testid={`menu-edit-${note.id}`}
                         >
                           <Edit2 className="w-4 h-4 mr-2" />
-                          Edit Title
+                          Edit Note
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -317,12 +317,12 @@ export default function SessionNotesPage() {
         )}
       </div>
 
-      {/* Edit Title Modal */}
-      <EditSessionNoteTitleModal
+      {/* Edit Note Modal */}
+      <EditSessionNoteModal
         isOpen={!!editingNote}
         onClose={closeEditModal}
         note={editingNote}
-        onTitleUpdated={() => {
+        onNoteUpdated={() => {
           refetchNotes();
           closeEditModal();
         }}
@@ -363,7 +363,7 @@ export default function SessionNotesPage() {
                   data-testid="button-edit-from-view"
                 >
                   <Edit2 className="w-4 h-4 mr-2" />
-                  Edit Title
+                  Edit Note
                 </Button>
                 <Button variant="outline" onClick={closeViewModal} data-testid="button-close-view">
                   ✕
