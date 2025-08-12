@@ -370,14 +370,14 @@ function useRealtimeUpdates(clientId: string, queryClient: any) {
 
   React.useEffect(() => {
     // Skip if no WebSocket URL is configured
-    if (!process.env.NEXT_PUBLIC_WS_URL) {
+    if (!import.meta.env.VITE_WS_URL) {
       console.log('WebSocket URL not configured, skipping real-time updates');
       return;
     }
 
     try {
       // WebSocket connection for real-time updates
-      const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL}/clients/${clientId}/updates`;
+      const wsUrl = `${import.meta.env.VITE_WS_URL}/clients/${clientId}/updates`;
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
