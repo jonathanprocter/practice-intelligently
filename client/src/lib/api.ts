@@ -175,19 +175,12 @@ export class ApiClient {
   }
 
   static async generateSessionPrep(sessionNoteId: string, clientId: string): Promise<{ appointmentsUpdated: number }> {
-    const response = await apiRequest('/api/session-prep/generate', {
-      method: 'POST',
-      body: JSON.stringify({ sessionNoteId, clientId }),
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const response = await apiRequest('POST', '/api/session-prep/generate', { sessionNoteId, clientId });
     return response.json();
   }
 
   static async generateSessionNoteTags(sessionNoteId: string): Promise<SessionNote> {
-    const response = await apiRequest(`/api/session-notes/${sessionNoteId}/generate-tags`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    });
+    const response = await apiRequest('POST', `/api/session-notes/${sessionNoteId}/generate-tags`);
     return response.json();
   }
 
