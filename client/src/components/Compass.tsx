@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { MessageCircle, X, Send, Loader2, Minimize2, Maximize2, Mic, MicOff, Volume2, VolumeX, Settings, Play, Square } from 'lucide-react';
 
 // Mock UI components (replace with your actual shadcn/ui imports)
@@ -21,8 +21,9 @@ const Button = ({ children, className = '', variant = 'default', size = 'default
   </button>
 );
 
-const Input = ({ value, onChange, placeholder, disabled, className = '', ...props }) => (
+const Input = React.forwardRef(({ value, onChange, placeholder, disabled, className = '', ...props }, ref) => (
   <input
+    ref={ref}
     type="text"
     value={value}
     onChange={onChange}
@@ -31,7 +32,7 @@ const Input = ({ value, onChange, placeholder, disabled, className = '', ...prop
     className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-600 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     {...props}
   />
-);
+));
 
 const Select = ({ value, onValueChange, children }) => (
   <select

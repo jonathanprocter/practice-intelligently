@@ -32,7 +32,7 @@ const OAuthSimple = lazy(() => import("./pages/oauth-simple"));
 const OAuthTroubleshoot = lazy(() => import("./pages/oauth-troubleshoot"));
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
-import { Compass } from "@/components/Compass";
+import CompassStable from "@/components/CompassStable";
 import OAuthTestSimple from './pages/oauth-test-simple';
 import OAuthQuickTest from './pages/oauth-quick-test';
 import ContentViewer from './pages/content-viewer';
@@ -48,7 +48,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
-      <Compass />
+      <CompassStable />
     </div>
   );
 }
