@@ -1,5 +1,7 @@
+// lib/api.ts
 import { apiRequest } from "./queryClient";
 
+// Types remain the same as your original file
 export interface DashboardStats {
   todaysSessions: number;
   activeClients: number;
@@ -48,7 +50,7 @@ export interface Appointment {
   status: string;
   notes?: string;
   location?: string;
-  clientName?: string; // Added from backend join
+  clientName?: string;
   clientFirstName?: string;
   clientLastName?: string;
 }
@@ -94,7 +96,6 @@ export interface SessionNote {
   transcript?: string;
   aiSummary?: string;
   tags?: string[];
-  // SOAP fields from merged progress notes
   title?: string;
   subjective?: string;
   objective?: string;
@@ -127,12 +128,73 @@ export interface ApiStatus {
   error?: string;
 }
 
+// API Client with context-aware methods
 export class ApiClient {
+  // Store therapist ID in a static variable that can be set
+  private static currentTherapistId: string | null = null;
+
+  // Method to set the current therapist ID
+  static setTherapistId(therapistId: string | null) {
+    this.currentTherapistId = therapistId;
+  }
+
+  // Get therapist ID with fallback for backwards compatibility
   private static get therapistId(): string {
-    // Use the demo therapist ID for live data
+    if (this.currentTherapistId) {
+      return this.currentTherapistId;
+    }
+
+    // Try to get from localStorage as fallback
+    const storedAuth = localStorage.getItem('auth');
+    if (storedAuth) {
+      try {
+        const auth = JSON.parse(storedAuth);
+        if (auth.therapistId) {
+          return auth.therapistId;
+        }
+      } catch (e) {
+        console.warn('Failed to parse stored auth');
+      }
+    }
+
+    // Ultimate fallback for demo purposes - remove in production
+    console.warn('Using fallback therapist ID - this should not happen in production');
     return 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
   }
 
+  // Auth methods
+  static async login(email: string, password: string): Promise<any> {
+    const response = await apiRequest('POST', '/api/auth/login', { email, password });
+    const data = await response.json();
+
+    // Set the therapist ID after successful login
+    if (data.therapistId) {
+      this.setTherapistId(data.therapistId);
+    }
+
+    return data;
+  }
+
+  static async logout(): Promise<void> {
+    await apiRequest('POST', '/api/auth/logout');
+    this.setTherapistId(null);
+  }
+
+  static async verifyAuth(): Promise<boolean> {
+    try {
+      const response = await apiRequest('GET', '/api/auth/verify');
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  static async refreshToken(): Promise<any> {
+    const response = await apiRequest('POST', '/api/auth/refresh');
+    return response.json();
+  }
+
+  // Dashboard methods
   static async getDashboardStats(): Promise<DashboardStats> {
     const response = await apiRequest('GET', `/api/dashboard/stats/${this.therapistId}`);
     return response.json();
@@ -151,10 +213,10 @@ export class ApiClient {
     }
   }
 
+  // Session Notes methods
   static async getSessionNotes(): Promise<SessionNote[]> {
     try {
-      const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'; // Use the demo therapist ID
-      const response = await fetch(`/api/session-notes/therapist/${therapistId}`);
+      const response = await fetch(`/api/session-notes/therapist/${this.therapistId}`);
       if (response.ok) {
         return response.json();
       }
@@ -184,9 +246,9 @@ export class ApiClient {
     return response.json();
   }
 
+  // Client methods
   static async getClients(): Promise<Client[]> {
-    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-    const response = await apiRequest('GET', `/api/clients/${FALLBACK_THERAPIST_ID}`);
+    const response = await apiRequest('GET', `/api/clients/${this.therapistId}`);
     return response.json();
   }
 
@@ -196,10 +258,9 @@ export class ApiClient {
   }
 
   static async createClient(client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Promise<Client> {
-    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
     const response = await apiRequest('POST', '/api/clients', {
       ...client,
-      therapistId: FALLBACK_THERAPIST_ID
+      therapistId: this.therapistId
     });
     return response.json();
   }
@@ -213,17 +274,15 @@ export class ApiClient {
     await apiRequest('DELETE', `/api/clients/${id}`);
   }
 
+  // Appointment methods
   static async getTodaysAppointments(): Promise<Appointment[]> {
-    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-
     try {
-      // Get both database appointments and calendar events to ensure complete coverage
       let dbAppointments: Appointment[] = [];
       let calendarEvents: any[] = [];
 
       // Fetch database appointments
       try {
-        const dbResponse = await apiRequest('GET', `/api/appointments/today/${FALLBACK_THERAPIST_ID}`);
+        const dbResponse = await apiRequest('GET', `/api/appointments/today/${this.therapistId}`);
         dbAppointments = await dbResponse.json();
       } catch (dbError) {
         console.warn('Database appointments fetch failed:', dbError);
@@ -234,98 +293,16 @@ export class ApiClient {
         const today = new Date();
         const timeMin = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
         const timeMax = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
-        
+
         const calendarResponse = await apiRequest('GET', `/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}`);
         calendarEvents = await calendarResponse.json();
       } catch (calendarError) {
         console.warn('Calendar events fetch failed:', calendarError);
       }
 
-      // Convert calendar events to appointment format, filtering out non-appointment events
-      const calendarAppointments: Appointment[] = calendarEvents
-        .filter((event: any) => {
-          // Include events that look like appointments, meetings, or professional sessions
-          const summary = event.summary || '';
-          const lowerSummary = summary.toLowerCase();
-          
-          // Include if it contains appointment/session/therapy keywords
-          const isAppointment = lowerSummary.includes('appointment') || 
-                               lowerSummary.includes('session') || 
-                               lowerSummary.includes('therapy');
-          
-          // Include professional meetings/calls with specific people (Blake, Nora, etc.)
-          const isProfessionalMeeting = lowerSummary.includes('meeting with') ||
-                                       lowerSummary.includes('call with') ||
-                                       lowerSummary.includes('coffee with') ||
-                                       (lowerSummary.includes('with') && 
-                                        (lowerSummary.includes('blake') || 
-                                         lowerSummary.includes('nora')));
-          
-          // Exclude non-professional events
-          const isExcluded = lowerSummary.includes('birthday') ||
-                            lowerSummary.includes('holiday') ||
-                            lowerSummary.includes('vacation') ||
-                            lowerSummary.includes('flight');
-          
-          return (isAppointment || isProfessionalMeeting) && !isExcluded;
-        })
-        .map((event: any) => {
-          // Extract client name from event summary
-          const summary = event.summary || '';
-          let clientName = summary;
-          
-          // Handle different formats:
-          // "Chris Balabanick Appointment" -> "Chris Balabanick"
-          // "Coffee with Nora" -> "Nora"
-          // "Call with Blake" -> "Blake"
-          // "Meeting with John Doe" -> "John Doe"
-          if (summary.toLowerCase().includes('appointment')) {
-            clientName = summary.replace(/\s+appointment$/i, '').trim();
-          } else if (summary.toLowerCase().match(/(coffee|call|meeting)\s+with\s+(.+)/i)) {
-            const match = summary.match(/(coffee|call|meeting)\s+with\s+(.+)/i);
-            clientName = match ? match[2].trim() : summary;
-          }
-
-          return {
-            id: event.id || `calendar-${event.summary}-${event.start?.dateTime}`,
-            clientId: `calendar-${clientName.replace(/\s+/g, '-').toLowerCase()}`,
-            clientName: clientName,
-            therapistId: FALLBACK_THERAPIST_ID,
-            startTime: new Date(event.start?.dateTime || event.start?.date),
-            endTime: new Date(event.end?.dateTime || event.end?.date),
-            type: 'therapy',
-            status: 'confirmed' as const,
-            notes: event.description || '',
-            location: event.location || '',
-            isCalendarEvent: true, // Flag to distinguish from database appointments
-            googleEventId: event.id
-          };
-        });
-
-      // Combine appointments, avoiding duplicates
-      // Database appointments take priority over calendar events for the same time/client
-      const combinedAppointments = [...dbAppointments];
-      
-      for (const calendarAppt of calendarAppointments) {
-        // Check if there's already a database appointment for the same time and client
-        const isDuplicate = dbAppointments.some(dbAppt => {
-          const dbTime = new Date(dbAppt.startTime).getTime();
-          const calTime = new Date(calendarAppt.startTime).getTime();
-          const timeDiff = Math.abs(dbTime - calTime);
-          return timeDiff < 60000 && // Within 1 minute
-                 (dbAppt.clientName?.toLowerCase() === calendarAppt.clientName?.toLowerCase() ||
-                  dbAppt.googleEventId === calendarAppt.googleEventId);
-        });
-
-        if (!isDuplicate) {
-          combinedAppointments.push(calendarAppt);
-        }
-      }
-
-      // Sort by start time
-      return combinedAppointments.sort((a, b) => 
-        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-      );
+      // Convert and combine appointments
+      const calendarAppointments = this.processCalendarEvents(calendarEvents);
+      return this.combineAppointments(dbAppointments, calendarAppointments);
 
     } catch (error) {
       console.error('Error fetching appointments:', error);
@@ -333,34 +310,98 @@ export class ApiClient {
     }
   }
 
-  static async getGoogleCalendarEvents(): Promise<any[]> {
-    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-    const response = await apiRequest('GET', `/api/appointments/today/${FALLBACK_THERAPIST_ID}`);
-    return response.json();
+  private static processCalendarEvents(events: any[]): Appointment[] {
+    return events
+      .filter((event: any) => {
+        const summary = event.summary || '';
+        const lowerSummary = summary.toLowerCase();
+
+        const isAppointment = lowerSummary.includes('appointment') || 
+                             lowerSummary.includes('session') || 
+                             lowerSummary.includes('therapy');
+
+        const isProfessionalMeeting = lowerSummary.includes('meeting with') ||
+                                     lowerSummary.includes('call with') ||
+                                     lowerSummary.includes('coffee with');
+
+        const isExcluded = lowerSummary.includes('birthday') ||
+                          lowerSummary.includes('holiday') ||
+                          lowerSummary.includes('vacation') ||
+                          lowerSummary.includes('flight');
+
+        return (isAppointment || isProfessionalMeeting) && !isExcluded;
+      })
+      .map((event: any) => {
+        const summary = event.summary || '';
+        let clientName = summary;
+
+        if (summary.toLowerCase().includes('appointment')) {
+          clientName = summary.replace(/\s+appointment$/i, '').trim();
+        } else if (summary.toLowerCase().match(/(coffee|call|meeting)\s+with\s+(.+)/i)) {
+          const match = summary.match(/(coffee|call|meeting)\s+with\s+(.+)/i);
+          clientName = match ? match[2].trim() : summary;
+        }
+
+        return {
+          id: event.id || `calendar-${event.summary}-${event.start?.dateTime}`,
+          clientId: `calendar-${clientName.replace(/\s+/g, '-').toLowerCase()}`,
+          clientName: clientName,
+          therapistId: this.therapistId,
+          startTime: new Date(event.start?.dateTime || event.start?.date),
+          endTime: new Date(event.end?.dateTime || event.end?.date),
+          type: 'therapy',
+          status: 'confirmed' as const,
+          notes: event.description || '',
+          location: event.location || '',
+          isCalendarEvent: true,
+          googleEventId: event.id
+        };
+      });
+  }
+
+  private static combineAppointments(
+    dbAppointments: Appointment[], 
+    calendarAppointments: Appointment[]
+  ): Appointment[] {
+    const combinedAppointments = [...dbAppointments];
+
+    for (const calendarAppt of calendarAppointments) {
+      const isDuplicate = dbAppointments.some(dbAppt => {
+        const dbTime = new Date(dbAppt.startTime).getTime();
+        const calTime = new Date(calendarAppt.startTime).getTime();
+        const timeDiff = Math.abs(dbTime - calTime);
+        return timeDiff < 60000 && 
+               (dbAppt.clientName?.toLowerCase() === calendarAppt.clientName?.toLowerCase() ||
+                dbAppt.googleEventId === calendarAppt.googleEventId);
+      });
+
+      if (!isDuplicate) {
+        combinedAppointments.push(calendarAppt);
+      }
+    }
+
+    return combinedAppointments.sort((a, b) => 
+      new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+    );
   }
 
   static async getAppointments(date?: string): Promise<Appointment[]> {
-    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-
-    // If asking for today's date, use the combined approach
     const today = new Date().toISOString().split('T')[0];
     if (date === today) {
       return this.getTodaysAppointments();
     }
 
     const url = date 
-      ? `/api/appointments/${FALLBACK_THERAPIST_ID}?date=${date}`
-      : `/api/appointments/${FALLBACK_THERAPIST_ID}`;
+      ? `/api/appointments/${this.therapistId}?date=${date}`
+      : `/api/appointments/${this.therapistId}`;
     const response = await apiRequest('GET', url);
     return response.json();
   }
 
   static async createAppointment(appointment: Omit<Appointment, 'id'>): Promise<Appointment> {
-    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-
     const response = await apiRequest('POST', '/api/appointments', {
       ...appointment,
-      therapistId: FALLBACK_THERAPIST_ID
+      therapistId: this.therapistId
     });
     return response.json();
   }
@@ -370,45 +411,26 @@ export class ApiClient {
     return response.json();
   }
 
-  static async updateAppointmentStatus(id: string, status: string, reason?: string): Promise<Appointment> {
-    const response = await apiRequest('PATCH', `/api/appointments/${id}/status`, { status, reason });
-    return response.json();
-  }
-
   static async cancelAppointment(id: string, reason?: string): Promise<Appointment> {
     const response = await apiRequest('DELETE', `/api/appointments/${id}`, { reason });
     return response.json();
   }
 
-  static async deleteCalendarEvent(eventId: string, calendarId: string = 'primary'): Promise<void> {
-    const response = await apiRequest('DELETE', `/api/calendar/events/${eventId}?calendarId=${calendarId}`);
-    if (!response.ok) {
-      throw new Error('Failed to delete calendar event');
-    }
-  }
-
-  static async getAppointment(id: string): Promise<Appointment> {
-    const response = await apiRequest('GET', `/api/appointments/detail/${id}`);
-    return response.json();
-  }
-
+  // Action Items methods
   static async getActionItems(): Promise<ActionItem[]> {
-    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-    const response = await apiRequest('GET', `/api/action-items/${FALLBACK_THERAPIST_ID}`);
+    const response = await apiRequest('GET', `/api/action-items/${this.therapistId}`);
     return response.json();
   }
 
   static async getUrgentActionItems(): Promise<ActionItem[]> {
-    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-    const response = await apiRequest('GET', `/api/action-items/urgent/${FALLBACK_THERAPIST_ID}`);
+    const response = await apiRequest('GET', `/api/action-items/urgent/${this.therapistId}`);
     return response.json();
   }
 
   static async createActionItem(item: Omit<ActionItem, 'id'>): Promise<ActionItem> {
-    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
     const response = await apiRequest('POST', '/api/action-items', {
       ...item,
-      therapistId: FALLBACK_THERAPIST_ID
+      therapistId: this.therapistId
     });
     return response.json();
   }
@@ -418,45 +440,50 @@ export class ApiClient {
     return response.json();
   }
 
+  // AI Insights methods
   static async getAiInsights(): Promise<AiInsight[]> {
-    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-    const response = await apiRequest('GET', `/api/ai-insights/${FALLBACK_THERAPIST_ID}`);
+    const response = await apiRequest('GET', `/api/ai-insights/${this.therapistId}`);
     return response.json();
   }
 
   static async generateAiInsights(): Promise<AiInsight[]> {
-    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-    const response = await apiRequest('POST', `/api/ai/generate-insights/${FALLBACK_THERAPIST_ID}`);
+    const response = await apiRequest('POST', `/api/ai/generate-insights/${this.therapistId}`);
     return response.json();
   }
 
+  // Session methods
   static async createSessionNote(note: {
     appointmentId: string;
     clientId: string;
     content: string;
     transcript?: string;
   }): Promise<any> {
-    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
     const response = await apiRequest('POST', '/api/session-notes', {
       ...note,
-      therapistId: FALLBACK_THERAPIST_ID
+      therapistId: this.therapistId
     });
     return response.json();
   }
 
+  static async getTodaysSessionNotes(): Promise<SessionNote[]> {
+    const response = await apiRequest('GET', `/api/session-notes/today/${this.therapistId}`);
+    return response.json();
+  }
+
+  // Service Status methods
   static async getApiStatuses(): Promise<ApiStatus[]> {
     const response = await apiRequest('GET', '/api/health/ai-services');
     return response.json();
   }
 
-  static async getTodaysSessionNotes(): Promise<SessionNote[]> {
-    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-    const response = await apiRequest('GET', `/api/session-notes/today/${FALLBACK_THERAPIST_ID}`);
+  static async getCalendarConnectionStatus(): Promise<{ connected: boolean }> {
+    const response = await apiRequest('GET', '/api/oauth/is-connected');
     return response.json();
   }
 
-  static async getCalendarConnectionStatus(): Promise<{ connected: boolean }> {
-    const response = await apiRequest('GET', '/api/oauth/is-connected');
+  // Activity methods
+  static async getRecentActivity(): Promise<Activity[]> {
+    const response = await apiRequest('GET', `/api/recent-activity/${this.therapistId}`);
     return response.json();
   }
 
@@ -468,13 +495,6 @@ export class ApiClient {
 
   static async updateUser(userId: string, userData: any): Promise<any> {
     const response = await apiRequest('PATCH', `/api/users/${userId}`, userData);
-    return response.json();
-  }
-
-  // Recent Activity
-  static async getRecentActivity(): Promise<Activity[]> {
-    const FALLBACK_THERAPIST_ID = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-    const response = await apiRequest('GET', `/api/recent-activity/${FALLBACK_THERAPIST_ID}`);
     return response.json();
   }
 }
