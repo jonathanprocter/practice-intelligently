@@ -240,7 +240,7 @@ export function Compass({ className = '' }) {
   const [currentAudio, setCurrentAudio] = useState(null);
   const [continuousMode, setContinuousMode] = useState(false);
   const [voiceActivation, setVoiceActivation] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState('josh');
+  const [selectedVoice, setSelectedVoice] = useState('rachel');
   const [speechRate, setSpeechRate] = useState(1.0);
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const [compassState, setCompassState] = useState('normal');
@@ -481,7 +481,7 @@ export function Compass({ className = '' }) {
     }
   };
 
-  // Text to speech
+  // Text to speech using ElevenLabs
   const speakText = async (text) => {
     try {
       if (currentAudio) {
@@ -491,26 +491,7 @@ export function Compass({ className = '' }) {
 
       setIsSpeaking(true);
 
-      // Try Web Speech API first
-      if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = speechRate;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-
-        utterance.onend = () => {
-          setIsSpeaking(false);
-        };
-
-        utterance.onerror = () => {
-          setIsSpeaking(false);
-        };
-
-        window.speechSynthesis.speak(utterance);
-        return;
-      }
-
-      // Fallback to API
+      // Use ElevenLabs API for high-quality voice synthesis
       const response = await fetch('/api/compass/speak', {
         method: 'POST',
         headers: {
@@ -834,14 +815,15 @@ export function Compass({ className = '' }) {
             <div className="p-3 border-b border-gray-200 bg-gray-50 flex-shrink-0">
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Voice</label>
+                  <label className="text-sm font-medium text-gray-700">ElevenLabs Voice</label>
                   <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-                    <SelectItem value="josh">Josh (Male)</SelectItem>
-                    <SelectItem value="breeze">Breeze (Female)</SelectItem>
-                    <SelectItem value="ember">Ember (Female)</SelectItem>
-                    <SelectItem value="juniper">Juniper (Female)</SelectItem>
-                    <SelectItem value="sky">Sky (Female)</SelectItem>
-                    <SelectItem value="cove">Cove (Male)</SelectItem>
+                    <SelectItem value="rachel">Rachel (Professional Female)</SelectItem>
+                    <SelectItem value="adam">Adam (Warm Male)</SelectItem>
+                    <SelectItem value="bella">Bella (Young Female)</SelectItem>
+                    <SelectItem value="josh">Josh (Deep Male)</SelectItem>
+                    <SelectItem value="sam">Sam (Raspy Male)</SelectItem>
+                    <SelectItem value="nicole">Nicole (Warm Professional)</SelectItem>
+                    <SelectItem value="natasha">Natasha (Calm Therapeutic)</SelectItem>
                   </Select>
                 </div>
                 <div>

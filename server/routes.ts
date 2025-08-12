@@ -3482,6 +3482,37 @@ Suggested preparation:
     }
   });
 
+  // Helper function to convert markdown to rich text for speech
+  const convertMarkdownToSpeech = (text: string): string => {
+    // Remove markdown formatting and convert to natural speech
+    return text
+      // Remove markdown headers
+      .replace(/#{1,6}\s*/g, '')
+      // Remove bold and italic formatting
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/__([^_]+)__/g, '$1')
+      .replace(/_([^_]+)_/g, '$1')
+      // Remove strikethrough
+      .replace(/~~([^~]+)~~/g, '$1')
+      // Convert bullet points to natural speech
+      .replace(/^\s*[\-\*\+]\s+/gm, '')
+      // Convert numbered lists to natural speech
+      .replace(/^\s*\d+\.\s+/gm, '')
+      // Remove code blocks
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/`([^`]+)`/g, '$1')
+      // Remove links but keep text
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      // Remove HTML tags
+      .replace(/<[^>]*>/g, '')
+      // Clean up extra whitespace
+      .replace(/\n{2,}/g, '. ')
+      .replace(/\n/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  };
+
   // ElevenLabs text-to-speech endpoint
   app.post("/api/compass/speak", async (req, res) => {
     try {
@@ -3491,13 +3522,18 @@ Suggested preparation:
         return res.status(400).json({ error: "Text is required" });
       }
 
-      // Voice ID mapping for ElevenLabs
+      // Convert markdown to clean text for speech synthesis
+      const cleanText = convertMarkdownToSpeech(text);
+
+      // Voice ID mapping for ElevenLabs (using high-quality voices)
       const voiceMap = {
         'rachel': '21m00Tcm4TlvDq8ikWAM', // Rachel - professional female
-        'adam': 'pNInz6obpgDQGcFmaJgB',   // Adam - warm male
+        'adam': 'pNInz6obpgDQGcFmaJgB',   // Adam - warm male  
         'bella': 'EXAVITQu4vr4xnSDxMaL',  // Bella - young female
         'josh': 'TxGEqnHWrfWFTfGW9XjX',   // Josh - deep male
-        'sam': 'yoZ06aMxZJJ28mfd3POQ'     // Sam - raspy male
+        'sam': 'yoZ06aMxZJJ28mfd3POQ',    // Sam - raspy male
+        'nicole': 'piTKgcLEGmPE4e6mEKli', // Nicole - warm professional
+        'natasha': 'Xb7hH8MSUJpSbSDYk0k2' // Natasha - calm therapeutic
       };
 
       const selectedVoiceId = voiceMap[voice as keyof typeof voiceMap] || voiceMap.rachel;
@@ -3510,19 +3546,21 @@ Suggested preparation:
           "xi-api-key": process.env.ELEVENLABS_API_KEY || ""
         },
         body: JSON.stringify({
-          text: text,
-          model_id: "eleven_monolingual_v1",
+          text: cleanText,
+          model_id: "eleven_turbo_v2", // Updated to newer, faster model
           voice_settings: {
-            stability: 0.5,
+            stability: 0.6,
             similarity_boost: 0.8,
-            style: 0.0,
+            style: 0.2, // Slightly more expressive for therapeutic context
             use_speaker_boost: true,
-            speaking_rate: Math.max(0.25, Math.min(4.0, speed)) // Clamp speed between 0.25x and 4x
+            speaking_rate: Math.max(0.25, Math.min(4.0, speed))
           }
         })
       });
 
       if (!elevenLabsResponse.ok) {
+        const errorText = await elevenLabsResponse.text();
+        console.error(`ElevenLabs API error: ${elevenLabsResponse.status} - ${errorText}`);
         throw new Error(`ElevenLabs API error: ${elevenLabsResponse.status}`);
       }
 

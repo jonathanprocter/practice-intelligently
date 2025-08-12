@@ -15,6 +15,7 @@ This is a comprehensive full-stack web application designed to streamline therap
 - **Enhanced Query Client**: Added intelligent retry logic with exponential backoff for network connectivity issues while avoiding retries on HTTP errors
 - **Robust Error Handling**: Implemented comprehensive error boundaries and enhanced global error handling for improved application stability
 - **Session Management**: Stabilized authentication flow with proper therapist ID caching and session persistence
+- **ElevenLabs Voice Integration**: Enhanced Compass AI assistant with high-quality ElevenLabs voice synthesis, intelligent markdown-to-speech conversion, and 7 professional voice options including therapeutic-quality voices (Rachel, Adam, Bella, Josh, Sam, Nicole, Natasha)
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
