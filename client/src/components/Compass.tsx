@@ -245,6 +245,7 @@ export function Compass({ className = '' }) {
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const [voiceModulation, setVoiceModulation] = useState('auto');
   const [compassState, setCompassState] = useState('normal');
+  const [wakeWordMode, setWakeWordMode] = useState(true); // true for wake words, false for push-to-talk
   const [isLoading, setIsLoading] = useState(false);
 
   const messagesEndRef = useRef(null);
@@ -414,37 +415,16 @@ export function Compass({ className = '' }) {
       recognition.onend = () => {
         setIsListening(false);
         setCompassState('normal');
-
-        if (voiceActivation && isOpen) {
-          setTimeout(() => {
-            if (speechRecognition && voiceActivation && isOpen) {
-              try {
-                speechRecognition.start();
-                setIsListening(true);
-                setCompassState('listening');
-              } catch (error) {
-                console.log('Failed to restart speech recognition:', error);
-              }
-            }
-          }, 1000);
-        }
+        // Removed automatic restart to prevent endless error loops
       };
 
       setSpeechRecognition(recognition);
     }
   }, [voiceActivation, continuousMode, isOpen]);
 
-  // Voice activation
+  // Voice activation control (manual only to prevent loops)
   useEffect(() => {
-    if (voiceActivation && isOpen && speechRecognition && !isListening) {
-      try {
-        speechRecognition.start();
-        setIsListening(true);
-        setCompassState('listening');
-      } catch (error) {
-        console.log('Voice activation start failed:', error);
-      }
-    } else if (!voiceActivation && speechRecognition && isListening) {
+    if (!voiceActivation && speechRecognition && isListening) {
       try {
         speechRecognition.stop();
         setIsListening(false);
@@ -453,7 +433,7 @@ export function Compass({ className = '' }) {
         console.log('Voice activation stop failed:', error);
       }
     }
-  }, [voiceActivation, isOpen, speechRecognition, isListening]);
+  }, [voiceActivation, speechRecognition, isListening]);
 
   // Voice input controls
   const startListening = () => {
@@ -778,21 +758,37 @@ export function Compass({ className = '' }) {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setVoiceActivation(!voiceActivation);
-                  if (!voiceActivation && speechRecognition && isListening) {
-                    try {
-                      speechRecognition.stop();
-                      setIsListening(false);
-                      setCompassState('normal');
-                    } catch (error) {
-                      console.log('Failed to stop speech recognition:', error);
+                  const newVoiceActivation = !voiceActivation;
+                  setVoiceActivation(newVoiceActivation);
+                  
+                  if (newVoiceActivation) {
+                    // Enable voice activation
+                    if (speechRecognition && !isListening && wakeWordMode) {
+                      try {
+                        speechRecognition.start();
+                        setIsListening(true);
+                        setCompassState('listening');
+                      } catch (error) {
+                        console.log('Failed to start speech recognition:', error);
+                      }
+                    }
+                  } else {
+                    // Disable voice activation
+                    if (speechRecognition && isListening) {
+                      try {
+                        speechRecognition.stop();
+                        setIsListening(false);
+                        setCompassState('normal');
+                      } catch (error) {
+                        console.log('Failed to stop speech recognition:', error);
+                      }
                     }
                   }
                 }}
-                className={`w-7 h-7 p-0 ${voiceActivation ? 'bg-gray-200' : ''}`}
-                title={voiceActivation ? "Disable Hey Compass" : "Enable Hey Compass"}
+                className={`w-7 h-7 p-0 ${voiceActivation ? 'bg-green-100 text-green-600' : 'bg-gray-100'}`}
+                title={voiceActivation ? "Disable Voice Activation" : "Enable Voice Activation"}
               >
-                {voiceActivation ? <Square className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                {voiceActivation ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
               </Button>
               <Button
                 variant="ghost"
@@ -857,6 +853,19 @@ export function Compass({ className = '' }) {
                     {voiceModulation === 'auto' 
                       ? 'AI analyzes content for optimal voice characteristics'
                       : 'Uses consistent voice settings for all content'
+                    }
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Voice Activation Mode</label>
+                  <Select value={wakeWordMode ? 'wake' : 'push'} onValueChange={(value) => setWakeWordMode(value === 'wake')}>
+                    <SelectItem value="wake">Wake Words ("Hey Compass")</SelectItem>
+                    <SelectItem value="push">Push to Talk</SelectItem>
+                  </Select>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {wakeWordMode 
+                      ? 'Say "Hey Compass" to activate voice commands'
+                      : 'Hold the microphone button to speak'
                     }
                   </div>
                 </div>
