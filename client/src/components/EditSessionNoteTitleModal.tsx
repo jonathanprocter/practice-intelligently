@@ -31,17 +31,17 @@ export function EditSessionNoteTitleModal({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Don't render if no note is provided or modal is not open
-  if (!note || !isOpen) {
-    return null;
-  }
-
   // Reset title when note changes
   React.useEffect(() => {
     if (note?.title !== undefined) {
       setTitle(note.title || '');
     }
   }, [note?.title]);
+
+  // Don't render if no note is provided or modal is not open
+  if (!note || !isOpen) {
+    return null;
+  }
 
   const updateTitleMutation = useMutation({
     mutationFn: async (newTitle: string) => {
