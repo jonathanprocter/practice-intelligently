@@ -299,6 +299,11 @@ export default function ClientChart() {
     return [...apptItems, ...noteItems].sort((a, b) => b.date.getTime() - a.date.getTime());
   }, [appointments, sessionNotes, hasNoteFor]);
 
+  const upcomingCount = React.useMemo(() => {
+    const now = Date.now();
+    return appointments.filter(apt => new Date(apt.startTime).getTime() > now).length;
+  }, [appointments]);
+
   // Mutation: delete session note with optimistic update + undo
   const deleteSessionNoteMutation = useMutation({
     mutationFn: async (noteId: string) => {
@@ -370,11 +375,6 @@ export default function ClientChart() {
 
   const clientName = `${client.firstName} ${client.lastName}`;
   const dob = safeDate(client.dateOfBirth);
-
-  const upcomingCount = React.useMemo(() => {
-    const now = Date.now();
-    return appointments.filter(apt => new Date(apt.startTime).getTime() > now).length;
-  }, [appointments]);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
