@@ -323,8 +323,13 @@ function useRealtimeUpdates(clientId: string, queryClient: any) {
       return;
     }
 
+    // Only attempt WebSocket if URL is properly configured
+    if (!import.meta.env.VITE_WS_URL) {
+      return;
+    }
+
     // WebSocket connection for real-time updates
-    const wsUrl = `${import.meta.env.VITE_WS_URL || 'wss://api.yourdomain.com'}/clients/${clientId}/updates`;
+    const wsUrl = `${import.meta.env.VITE_WS_URL}/clients/${clientId}/updates`;
     
     try {
       const ws = new WebSocket(wsUrl);
@@ -359,15 +364,23 @@ function useRealtimeUpdates(clientId: string, queryClient: any) {
         }
       };
 
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+      ws.onerror = () => {
+        // Silent fail for WebSocket errors in development
+      };
+
+      ws.onclose = () => {
+        // Silent cleanup
       };
 
       return () => {
-        ws.close();
+        try {
+          ws.close();
+        } catch {
+          // Silent cleanup
+        }
       };
     } catch (error) {
-      console.error('Failed to create WebSocket connection:', error);
+      // Silent fail for WebSocket creation errors
     }
   }, [clientId, queryClient, toast]);
 }
@@ -399,7 +412,7 @@ function calculateClientStats(
   // Calculate average sessions per month
   const sessionDates = sessionNotes
     .map(n => safeDate(n.createdAt))
-    .filter(d => d !== undefined) as Date[];
+    .filter(d => d !== undefined && !isNaN(d.getTime())) as Date[];
   
   const oldestSession = sessionDates.length > 0 
     ? Math.min(...sessionDates.map(d => d.getTime())) 
@@ -410,7 +423,7 @@ function calculateClientStats(
   // Calculate days since last contact
   const appointmentDates = appointments
     .map(a => safeDate(a.startTime))
-    .filter(d => d !== undefined) as Date[];
+    .filter(d => d !== undefined && !isNaN(d.getTime())) as Date[];
   
   const allDates = [...sessionDates, ...appointmentDates];
   const lastContact = allDates.length > 0 
@@ -448,11 +461,15 @@ function generateSessionFrequencyData(sessionNotes: SessionNote[]) {
   sessionNotes.forEach(note => {
     try {
       const noteDate = safeDate(note.createdAt);
-      if (!noteDate) return;
+      if (!noteDate || isNaN(noteDate.getTime())) return;
       
-      const monthData = last6Months.find(m => 
-        isWithinInterval(noteDate, { start: m.start, end: m.end })
-      );
+      const monthData = last6Months.find(m => {
+        try {
+          return isWithinInterval(noteDate, { start: m.start, end: m.end });
+        } catch {
+          return false;
+        }
+      });
       if (monthData) {
         monthData.count++;
       }
@@ -910,9 +927,10 @@ function ClientChartInner() {
 
     const apptItems = appointments.data.map(apt => {
       const startDate = safeDate(apt.startTime);
+      const validDate = startDate && !isNaN(startDate.getTime()) ? startDate : new Date();
       return {
         type: 'appointment' as const,
-        date: startDate || new Date(),
+        date: validDate,
         title: apt.title || 'Appointment',
         data: apt,
         hasNote: hasNoteFor(apt),
@@ -921,11 +939,12 @@ function ClientChartInner() {
 
     const noteItems = sessionNotes.data.map(note => {
       const createdDate = safeDate(note.createdAt);
+      const validDate = createdDate && !isNaN(createdDate.getTime()) ? createdDate : new Date();
       const firstLine = note.content?.split('\n')[0] ?? 'Session Note';
       const title = firstLine.slice(0, 100) + (firstLine.length > 100 ? '…' : '');
       return {
         type: 'session-note' as const,
-        date: createdDate || new Date(),
+        date: validDate,
         title,
         data: note,
         hasNote: true,
@@ -951,6 +970,7 @@ function ClientChartInner() {
     if (dateFilter) {
       allItems = allItems.filter(item => {
         try {
+          if (!item.date || isNaN(item.date.getTime())) return false;
           return isWithinInterval(item.date, { start: dateFilter.start, end: dateFilter.end });
         } catch (error) {
           console.error('Error filtering by date:', error);
@@ -984,6 +1004,7 @@ function ClientChartInner() {
 
     timelineData.forEach(item => {
       try {
+        if (!item.date || isNaN(item.date.getTime())) return;
         const monthKey = format(item.date, 'MMMM yyyy');
         if (!groups.has(monthKey)) {
           groups.set(monthKey, []);
@@ -998,6 +1019,7 @@ function ClientChartInner() {
       month,
       items: items.sort((a, b) => {
         try {
+          if (!a.date || !b.date || isNaN(a.date.getTime()) || isNaN(b.date.getTime())) return 0;
           return b.date.getTime() - a.date.getTime();
         } catch (error) {
           console.error('Error sorting grouped items:', error);
