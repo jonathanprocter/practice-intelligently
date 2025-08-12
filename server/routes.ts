@@ -77,6 +77,101 @@ async function detectMultiSessionDocument(content: string): Promise<boolean> {
 }
 
 // Function to parse multi-session document
+// Helper function to detect if content is already a processed progress note
+function detectProcessedProgressNote(content: string): boolean {
+  const contentLower = content.toLowerCase();
+  
+  // Check for SOAP note structure indicators
+  const soapIndicators = [
+    'subjective:',
+    'objective:',
+    'assessment:',
+    'plan:'
+  ];
+  
+  // Check for clinical progress note formatting
+  const clinicalIndicators = [
+    'progress note',
+    'clinical note',
+    'therapy session',
+    'treatment plan',
+    'session type:',
+    'duration:',
+    'interventions:',
+    'therapeutic approach:',
+    'goals addressed:',
+    'homework assigned:'
+  ];
+  
+  // Check for transcript indicators (raw conversation)
+  const transcriptIndicators = [
+    'therapist:',
+    'client:',
+    'dr.',
+    'patient:',
+    'interviewer:',
+    'speaker 1:',
+    'speaker 2:',
+    '[inaudible]',
+    'um,',
+    'uh,',
+    '- - -', // Common transcript formatting
+    'transcript',
+    'recording',
+    'audio'
+  ];
+  
+  // Count indicators
+  let soapCount = soapIndicators.filter(indicator => contentLower.includes(indicator)).length;
+  let clinicalCount = clinicalIndicators.filter(indicator => contentLower.includes(indicator)).length;
+  let transcriptCount = transcriptIndicators.filter(indicator => contentLower.includes(indicator)).length;
+  
+  // Additional structural checks for processed notes
+  const hasStructuredSections = /\n\s*(subjective|objective|assessment|plan)\s*:?/i.test(content);
+  const hasClinicalLanguage = /\b(client|patient)\s+(presented|reports|demonstrated|exhibited)\b/i.test(content);
+  const hasProfessionalFormat = /\b(session type|duration|interventions|therapeutic)\b/i.test(content);
+  
+  // Additional checks for raw transcripts
+  const hasConversationalMarkers = /\b(therapist|client|dr\.|patient):\s/i.test(content);
+  const hasFillerWords = /\b(um|uh|you know|like,|so,)\b/gi.test(content) && (content.match(/\b(um|uh|you know|like,|so,)\b/gi) || []).length > 3;
+  const hasTranscriptFormatting = /\[.*?\]|--|\d{2}:\d{2}|\(inaudible\)/i.test(content);
+  
+  console.log(`📊 Content analysis:
+  - SOAP indicators: ${soapCount}/4
+  - Clinical indicators: ${clinicalCount}/${clinicalIndicators.length}
+  - Transcript indicators: ${transcriptCount}/${transcriptIndicators.length}
+  - Structured sections: ${hasStructuredSections}
+  - Clinical language: ${hasClinicalLanguage}
+  - Professional format: ${hasProfessionalFormat}
+  - Conversational markers: ${hasConversationalMarkers}
+  - Filler words: ${hasFillerWords}
+  - Transcript formatting: ${hasTranscriptFormatting}`);
+  
+  // Decision logic: Content is considered already processed if:
+  // 1. Has strong SOAP structure (3+ SOAP sections) AND clinical language
+  // 2. Has professional clinical formatting AND minimal transcript markers
+  // 3. Clinical indicators outweigh transcript indicators significantly
+  
+  if (soapCount >= 3 && hasClinicalLanguage && hasStructuredSections) {
+    return true; // Strong SOAP note structure
+  }
+  
+  if (hasProfessionalFormat && clinicalCount >= 3 && transcriptCount <= 2) {
+    return true; // Professional clinical format with minimal transcript markers
+  }
+  
+  if (clinicalCount >= 5 && transcriptCount <= clinicalCount / 2) {
+    return true; // Clinical indicators significantly outweigh transcript indicators
+  }
+  
+  if (hasConversationalMarkers || hasFillerWords || hasTranscriptFormatting) {
+    return false; // Clear transcript indicators
+  }
+  
+  // Default to requiring processing if unclear
+  return false;
+}
+
 async function parseMultiSessionDocument(content: string, clientId: string, clientName: string, fileName: string) {
   try {
     console.log('🔍 Parsing multi-session document...');
@@ -123,15 +218,15 @@ Only include sessions where you can clearly identify a date and substantial cont
     
     for (const session of parseResult.sessions) {
       try {
-        // Generate a comprehensive progress note for this session if it's not already formatted
-        const isAlreadyFormatted = session.content.includes('Subjective') && 
-                                  session.content.includes('Objective') && 
-                                  session.content.includes('Assessment') && 
-                                  session.content.includes('Plan');
-
-        let finalContent = session.content;
+        // Intelligently detect if this session content is already a processed progress note
+        const isAlreadyProcessed = detectProcessedProgressNote(session.content);
         
-        if (!isAlreadyFormatted) {
+        let finalContent;
+        if (isAlreadyProcessed) {
+          console.log(`📄 Session ${session.date}: Already processed progress note detected`);
+          finalContent = session.content;
+        } else {
+          console.log(`🔄 Session ${session.date}: Raw transcript detected, processing with AI...`);
           // Generate structured progress note using AI
           const progressNotePrompt = `${ZMANUS_PROMPT}
 
@@ -4737,10 +4832,54 @@ You are Compass, an AI assistant for therapy practice management. You have acces
                 console.log(`✅ Found matching Google Calendar event: ${matchingEvent.summary} (${appointmentId})`);
               } else {
                 console.log(`❌ No matching Google Calendar event found for ${actualClientName} on ${finalSessionDate}`);
+                
+                // Create a new appointment in the database for this session
+                if (finalClientId !== 'unknown') {
+                  console.log(`📅 Creating new appointment for ${actualClientName} on ${finalSessionDate}`);
+                  try {
+                    const newAppointment = await storage.createAppointment({
+                      clientId: finalClientId,
+                      therapistId: finalTherapistId,
+                      scheduledTime: new Date(finalSessionDate + 'T10:00:00'), // Default to 10 AM
+                      duration: 60, // Default 60 minutes
+                      status: 'completed', // Mark as completed since this is historical
+                      type: 'therapy',
+                      notes: 'Appointment created from document processing',
+                      source: 'document-upload'
+                    });
+                    
+                    appointmentId = newAppointment.id;
+                    console.log(`✅ Created new appointment: ${appointmentId} for ${actualClientName}`);
+                  } catch (createError) {
+                    console.error('Error creating appointment:', createError);
+                  }
+                }
               }
             }
           } catch (error) {
             console.error('Error searching Google Calendar events:', error);
+          }
+        }
+        
+        // If no appointment found after all checks, create one for therapeutic participation tracking
+        if (!appointmentId && finalClientId !== 'unknown') {
+          console.log(`📅 Creating new appointment for ${actualClientName} on ${finalSessionDate} (no existing appointment found)`);
+          try {
+            const newAppointment = await storage.createAppointment({
+              clientId: finalClientId,
+              therapistId: finalTherapistId,
+              scheduledTime: new Date(finalSessionDate + 'T10:00:00'),
+              duration: 60,
+              status: 'completed',
+              type: 'therapy',
+              notes: 'Appointment created from document processing',
+              source: 'document-upload'
+            });
+            
+            appointmentId = newAppointment.id;
+            console.log(`✅ Created new appointment: ${appointmentId} for ${actualClientName}`);
+          } catch (createError) {
+            console.error('Error creating appointment:', createError);
           }
         }
       }
@@ -4769,8 +4908,12 @@ You are Compass, an AI assistant for therapy practice management. You have acces
         const sessionNoteData = {
           clientId: finalClientId,
           eventId: appointmentId,
-          content: `${comprehensiveNote.title}\n\n${comprehensiveNote.subjective}\n\n${comprehensiveNote.objective}\n\n${comprehensiveNote.assessment}\n\n${comprehensiveNote.plan}`,
-          aiAnalysis: comprehensiveNote.narrativeSummary,
+          content: preformatted 
+            ? content // Use raw content for preformatted multi-session documents
+            : `${comprehensiveNote.title}\n\n${comprehensiveNote.subjective}\n\n${comprehensiveNote.objective}\n\n${comprehensiveNote.assessment}\n\n${comprehensiveNote.plan}`,
+          aiAnalysis: preformatted 
+            ? `Multi-session document processed on ${new Date().toLocaleDateString()}` 
+            : comprehensiveNote.narrativeSummary,
           createdAt: new Date(finalSessionDate)
         };
         savedNote = await storage.createSessionNote(sessionNoteData);
