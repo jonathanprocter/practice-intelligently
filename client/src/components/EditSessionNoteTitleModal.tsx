@@ -38,11 +38,6 @@ export function EditSessionNoteTitleModal({
     }
   }, [note?.title]);
 
-  // Don't render if no note is provided or modal is not open
-  if (!note || !isOpen) {
-    return null;
-  }
-
   const updateTitleMutation = useMutation({
     mutationFn: async (newTitle: string) => {
       return apiRequest('PATCH', `/api/session-notes/${note.id}`, {
@@ -66,6 +61,11 @@ export function EditSessionNoteTitleModal({
       });
     }
   });
+
+  // Don't render if no note is provided or modal is not open
+  if (!note || !isOpen) {
+    return null;
+  }
 
   const handleSave = () => {
     if (title.trim()) {
