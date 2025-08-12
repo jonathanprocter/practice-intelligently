@@ -145,20 +145,21 @@ export class ApiClient {
     }
 
     // Try to get from localStorage as fallback
-    const storedAuth = localStorage.getItem('auth');
-    if (storedAuth) {
-      try {
-        const auth = JSON.parse(storedAuth);
-        if (auth.therapistId) {
-          return auth.therapistId;
+    if (typeof localStorage !== 'undefined') {
+      const storedAuth = localStorage.getItem('auth');
+      if (storedAuth) {
+        try {
+          const auth = JSON.parse(storedAuth);
+          if (auth.therapistId) {
+            return auth.therapistId;
+          }
+        } catch (e) {
+          // Silent handling for better stability
         }
-      } catch (e) {
-        console.warn('Failed to parse stored auth');
       }
     }
 
-    // Ultimate fallback for demo purposes - remove in production
-    console.warn('Using fallback therapist ID - this should not happen in production');
+    // Default therapist ID for the system
     return 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
   }
 

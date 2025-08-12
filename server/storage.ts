@@ -628,11 +628,34 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateSessionNote(id: string, note: Partial<SessionNote>): Promise<SessionNote> {
-    // Ensure dates are properly converted
-    const updateData = { ...note, updatedAt: new Date() };
+    // Ensure dates are properly converted and handle sessionDate
+    const updateData: any = { ...note, updatedAt: new Date() };
+    
+    // Handle all date fields properly
     if (updateData.createdAt && typeof updateData.createdAt === 'string') {
       updateData.createdAt = new Date(updateData.createdAt);
     }
+    
+    if (updateData.sessionDate !== undefined) {
+      if (typeof updateData.sessionDate === 'string') {
+        // Handle date-only strings by appending time to avoid timezone issues
+        const dateStr = updateData.sessionDate.includes('T') 
+          ? updateData.sessionDate 
+          : updateData.sessionDate + 'T12:00:00.000Z';
+        updateData.sessionDate = new Date(dateStr);
+      }
+      // Ensure it's a valid date, otherwise remove it
+      if (!updateData.sessionDate || isNaN(updateData.sessionDate.getTime())) {
+        delete updateData.sessionDate;
+      }
+    }
+
+    // Remove any undefined values that could cause issues
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === undefined) {
+        delete updateData[key];
+      }
+    });
 
     const [updatedNote] = await db
       .update(sessionNotes)
