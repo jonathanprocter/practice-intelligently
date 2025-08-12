@@ -112,7 +112,7 @@ export default function ClientChart() {
 
   const generateConceptualizationMutation = useMutation({
     mutationFn: async (clientId: string): Promise<CaseConceptualization> => {
-      return await apiRequest(`/api/ai/case-conceptualization/${clientId}`, 'POST');
+      return await apiRequest('POST', `/api/ai/case-conceptualization/${clientId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/ai/case-conceptualization', clientId] });
@@ -126,7 +126,7 @@ export default function ClientChart() {
 
   const generateTreatmentGuideMutation = useMutation({
     mutationFn: async (clientId: string): Promise<TreatmentGuide> => {
-      return await apiRequest(`/api/ai/treatment-guide/${clientId}`, 'POST');
+      return await apiRequest('POST', `/api/ai/treatment-guide/${clientId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/ai/treatment-guide', clientId] });

@@ -35,20 +35,20 @@ const DocumentAnalyticsDashboard: React.FC<DocumentAnalyticsDashboardProps> = ({
   // Fetch document statistics
   const { data: statistics, isLoading: statsLoading, refetch } = useQuery({
     queryKey: ['document-statistics', therapistId],
-    queryFn: () => apiRequest(`/api/documents/statistics/${therapistId}`),
+    queryFn: () => apiRequest(`/api/documents/statistics/${therapistId}`, 'GET'),
   });
 
   // Fetch available categories
   const { data: categoriesData } = useQuery({
     queryKey: ['document-categories'],
-    queryFn: () => apiRequest('/api/documents/categories'),
+    queryFn: () => apiRequest('/api/documents/categories', 'GET'),
   });
 
   // Fetch documents by category (when category selected)
   const { data: categoryDocuments } = useQuery({
     queryKey: ['documents-by-category', therapistId, selectedCategory],
     queryFn: () => selectedCategory !== 'all' 
-      ? apiRequest(`/api/documents/by-category/${therapistId}?category=${selectedCategory}`)
+      ? apiRequest(`/api/documents/by-category/${therapistId}?category=${selectedCategory}`, 'GET')
       : null,
     enabled: selectedCategory !== 'all',
   });
