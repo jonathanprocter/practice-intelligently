@@ -11,28 +11,37 @@ import { apiRequest } from '@/lib/queryClient';
 interface EditSessionNoteTitleModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onTitleUpdated?: () => void;
   note: {
     id: string;
     title?: string;
     content: string;
     createdAt: string;
     clientName?: string;
-  };
+  } | null;
 }
 
 export function EditSessionNoteTitleModal({
   isOpen,
   onClose,
-  note
+  note,
+  onTitleUpdated
 }: EditSessionNoteTitleModalProps) {
   const [title, setTitle] = useState(note?.title || '');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Don't render if no note is provided
-  if (!note) {
+  // Don't render if no note is provided or modal is not open
+  if (!note || !isOpen) {
     return null;
   }
+
+  // Reset title when note changes
+  React.useEffect(() => {
+    if (note?.title !== undefined) {
+      setTitle(note.title || '');
+    }
+  }, [note?.title]);
 
   const updateTitleMutation = useMutation({
     mutationFn: async (newTitle: string) => {
@@ -46,6 +55,7 @@ export function EditSessionNoteTitleModal({
         description: "Session note title has been updated successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/session-notes'] });
+      onTitleUpdated?.();
       onClose();
     },
     onError: () => {
