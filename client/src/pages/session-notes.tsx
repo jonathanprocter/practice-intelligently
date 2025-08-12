@@ -1,10 +1,10 @@
-import { FileText, Plus, Search, Filter, Mic, Bot, Eye, Edit, Trash2, X, Save, Brain, Upload, CheckCircle, AlertCircle } from "lucide-react";
+import { FileText, Plus, Search, Filter, Mic, Bot, Eye, Edit, Trash2, X, Save, Brain, Upload, CheckCircle, AlertCircle, BarChart3, Tag, TrendingUp, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ApiClient, SessionNote } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -30,14 +30,147 @@ export default function SessionNotes() {
     errors: any[];
   }>({ processed: 0, successful: 0, failed: 0, total: 0, errors: [] });
   
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
+  // Tag visualization state
+  const [showTagAnalytics, setShowTagAnalytics] = useState(false);
 
   // Fetch session notes from database
   const { data: sessionNotes = [], isLoading } = useQuery({
     queryKey: ['session-notes'],
     queryFn: ApiClient.getSessionNotes,
   });
+
+  // Categorize tags semantically
+  const categorizeTag = (tag: string): string => {
+    const emotionalTags = ['anxiety', 'depression', 'anger', 'joy', 'sadness', 'fear', 'stress', 'worry', 'happiness', 'grief', 'trauma'];
+    const behavioralTags = ['avoidance', 'coping', 'self-harm', 'substance', 'sleep', 'eating', 'exercise', 'social', 'work', 'relationships'];
+    const therapeuticTags = ['cbt', 'dbt', 'act', 'mindfulness', 'exposure', 'homework', 'goals', 'progress', 'breakthrough', 'resistance'];
+    const cognitiveTag = ['thinking', 'beliefs', 'thoughts', 'cognitive', 'rumination', 'catastrophizing', 'self-talk', 'awareness'];
+    
+    if (emotionalTags.some(keyword => tag.includes(keyword))) return 'Emotional';
+    if (behavioralTags.some(keyword => tag.includes(keyword))) return 'Behavioral';  
+    if (therapeuticTags.some(keyword => tag.includes(keyword))) return 'Therapeutic';
+    if (cognitiveTag.some(keyword => tag.includes(keyword))) return 'Cognitive';
+    return 'Other';
+  };
+
+  // Calculate tag trends over time
+  const calculateTagTrends = (tagsByDate: { [key: string]: string[] }) => {
+    const dates = Object.keys(tagsByDate).filter(d => d !== 'undated').sort();
+    const recentDates = dates.slice(-30); // Last 30 days
+    
+    if (recentDates.length < 2) return { trending: [], declining: [], stable: [] };
+    
+    const midpoint = Math.floor(recentDates.length / 2);
+    const firstHalf = recentDates.slice(0, midpoint);
+    const secondHalf = recentDates.slice(midpoint);
+    
+    const firstHalfTags: { [key: string]: number } = {};
+    const secondHalfTags: { [key: string]: number } = {};
+    
+    firstHalf.forEach(date => {
+      tagsByDate[date].forEach(tag => {
+        firstHalfTags[tag] = (firstHalfTags[tag] || 0) + 1;
+      });
+    });
+    
+    secondHalf.forEach(date => {
+      tagsByDate[date].forEach(tag => {
+        secondHalfTags[tag] = (secondHalfTags[tag] || 0) + 1;
+      });
+    });
+    
+    const trending: string[] = [];
+    const declining: string[] = [];
+    const stable: string[] = [];
+    
+    const allTagsSet = new Set([...Object.keys(firstHalfTags), ...Object.keys(secondHalfTags)]);
+    
+    allTagsSet.forEach(tag => {
+      const firstCount = firstHalfTags[tag] || 0;
+      const secondCount = secondHalfTags[tag] || 0;
+      const change = secondCount - firstCount;
+      
+      if (change > 0) trending.push(tag);
+      else if (change < 0) declining.push(tag);
+      else stable.push(tag);
+    });
+    
+    return {
+      trending: trending.slice(0, 10),
+      declining: declining.slice(0, 10),
+      stable: stable.slice(0, 10)
+    };
+  };
+
+  // Calculate tag analytics with useMemo for performance
+  const tagAnalytics = useMemo(() => {
+    const tagFrequency: { [key: string]: number } = {};
+    const tagsByClient: { [key: string]: string[] } = {};
+    const tagsByDate: { [key: string]: string[] } = {};
+    const semanticGroups: { [key: string]: string[] } = {};
+    
+    sessionNotes.forEach(note => {
+      // Process AI tags
+      const allTags = [
+        ...(note.tags || []),
+        ...(note.aiTags || [])
+      ];
+      
+      allTags.forEach(tag => {
+        const normalizedTag = tag.toLowerCase().trim();
+        if (normalizedTag) {
+          // Count frequency
+          tagFrequency[normalizedTag] = (tagFrequency[normalizedTag] || 0) + 1;
+          
+          // Group by client
+          if (!tagsByClient[note.clientId]) tagsByClient[note.clientId] = [];
+          if (!tagsByClient[note.clientId].includes(normalizedTag)) {
+            tagsByClient[note.clientId].push(normalizedTag);
+          }
+          
+          // Group by date
+          const dateKey = note.sessionDate ? new Date(note.sessionDate).toISOString().split('T')[0] : 'undated';
+          if (!tagsByDate[dateKey]) tagsByDate[dateKey] = [];
+          if (!tagsByDate[dateKey].includes(normalizedTag)) {
+            tagsByDate[dateKey].push(normalizedTag);
+          }
+          
+          // Semantic grouping (basic categorization)
+          const category = categorizeTag(normalizedTag);
+          if (!semanticGroups[category]) semanticGroups[category] = [];
+          if (!semanticGroups[category].includes(normalizedTag)) {
+            semanticGroups[category].push(normalizedTag);
+          }
+        }
+      });
+    });
+
+    // Get top tags
+    const sortedTags = Object.entries(tagFrequency)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 20);
+
+    // Calculate insights
+    const totalUniqueTags = Object.keys(tagFrequency).length;
+    const averageTagsPerNote = sessionNotes.length > 0 ? 
+      Object.values(tagFrequency).reduce((a, b) => a + b, 0) / sessionNotes.length : 0;
+    
+    const tagTrends = calculateTagTrends(tagsByDate);
+    
+    return {
+      tagFrequency,
+      sortedTags,
+      tagsByClient,
+      tagsByDate,
+      semanticGroups,
+      totalUniqueTags,
+      averageTagsPerNote: Math.round(averageTagsPerNote * 10) / 10,
+      tagTrends
+    };
+  }, [sessionNotes]);
+  
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Filter session notes based on search term - include SOAP fields
   const filteredNotes = sessionNotes.filter(note => 
@@ -335,6 +468,14 @@ export default function SessionNotes() {
         >
           <Upload className="w-4 h-4 mr-2" />
           Bulk Processing
+        </Button>
+        <Button 
+          variant="outline" 
+          className="bg-therapy-primary/10 border-therapy-primary text-therapy-primary hover:bg-therapy-primary hover:text-white"
+          onClick={() => setShowTagAnalytics(!showTagAnalytics)}
+        >
+          <BarChart3 className="w-4 h-4 mr-2" />
+          Tag Analytics
         </Button>
       </div>
 
@@ -973,6 +1114,219 @@ export default function SessionNotes() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Tag Analytics Modal */}
+      <Dialog open={showTagAnalytics} onOpenChange={setShowTagAnalytics}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-therapy-primary" />
+              Intelligent Document Tagging Visualization
+            </DialogTitle>
+            <DialogDescription>
+              Comprehensive analysis of AI-generated tags and patterns across your clinical documents
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Overview Stats */}
+            <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-3">
+                  <Tag className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                  <div>
+                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{tagAnalytics.totalUniqueTags}</p>
+                    <p className="text-sm text-blue-600 dark:text-blue-400">Unique Tags</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-3">
+                  <Activity className="w-8 h-8 text-green-600 dark:text-green-400" />
+                  <div>
+                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">{tagAnalytics.averageTagsPerNote}</p>
+                    <p className="text-sm text-green-600 dark:text-green-400">Avg Tags/Note</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                  <div>
+                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{tagAnalytics.tagTrends.trending.length}</p>
+                    <p className="text-sm text-purple-600 dark:text-purple-400">Trending Tags</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 p-4 rounded-lg border border-orange-200 dark:border-orange-800">
+                <div className="flex items-center gap-3">
+                  <Brain className="w-8 h-8 text-orange-600 dark:text-orange-400" />
+                  <div>
+                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">{Object.keys(tagAnalytics.semanticGroups).length}</p>
+                    <p className="text-sm text-orange-600 dark:text-orange-400">Categories</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Top Tags */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border p-4">
+              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-therapy-primary" />
+                Most Frequent Tags
+              </h3>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {tagAnalytics.sortedTags.length > 0 ? (
+                  tagAnalytics.sortedTags.slice(0, 15).map(([tag, count]) => (
+                    <div key={tag} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                      <Badge variant="outline" className="text-xs">{tag}</Badge>
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{count}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Tag className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No tags found yet</p>
+                    <p className="text-sm">Process some documents to see tag analytics</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Semantic Categories */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border p-4">
+              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <Brain className="w-5 h-5 text-therapy-secondary" />
+                Semantic Categories
+              </h3>
+              <div className="space-y-3">
+                {Object.entries(tagAnalytics.semanticGroups).length > 0 ? (
+                  Object.entries(tagAnalytics.semanticGroups).map(([category, tags]) => (
+                    <div key={category} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-sm">{category}</h4>
+                        <Badge variant="secondary" className="text-xs">{tags.length}</Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {tags.slice(0, 8).map(tag => (
+                          <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                        ))}
+                        {tags.length > 8 && (
+                          <Badge variant="outline" className="text-xs">+{tags.length - 8} more</Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Brain className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No categories found yet</p>
+                    <p className="text-sm">AI will categorize tags as documents are processed</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Trending Analysis */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border p-4">
+              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-therapy-accent" />
+                Tag Trends
+              </h3>
+              
+              {tagAnalytics.tagTrends.trending.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="font-medium text-sm text-green-600 dark:text-green-400 mb-2">📈 Trending Up</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {tagAnalytics.tagTrends.trending.slice(0, 6).map(tag => (
+                      <Badge key={tag} className="bg-green-100 text-green-800 border-green-200 text-xs">{tag}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {tagAnalytics.tagTrends.declining.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="font-medium text-sm text-red-600 dark:text-red-400 mb-2">📉 Declining</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {tagAnalytics.tagTrends.declining.slice(0, 6).map(tag => (
+                      <Badge key={tag} className="bg-red-100 text-red-800 border-red-200 text-xs">{tag}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {tagAnalytics.tagTrends.stable.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-sm text-gray-600 dark:text-gray-400 mb-2">📊 Stable</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {tagAnalytics.tagTrends.stable.slice(0, 6).map(tag => (
+                      <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Tag Frequency Visualization */}
+            <div className="lg:col-span-3 bg-white dark:bg-gray-800 rounded-lg border p-4">
+              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-therapy-primary" />
+                Tag Distribution Analysis
+              </h3>
+              <div className="space-y-3">
+                {tagAnalytics.sortedTags.slice(0, 10).map(([tag, count]) => {
+                  const maxCount = Math.max(...tagAnalytics.sortedTags.map(([, c]) => c));
+                  const percentage = (count / maxCount) * 100;
+                  return (
+                    <div key={tag} className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <Badge variant="outline" className="text-sm">{tag}</Badge>
+                        <span className="text-sm font-medium">{count} ({Math.round((count / sessionNotes.length) * 100)}% of notes)</span>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div 
+                          className="bg-therapy-primary rounded-full h-2 transition-all duration-300"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Client Tag Distribution */}
+            <div className="lg:col-span-3 bg-white dark:bg-gray-800 rounded-lg border p-4">
+              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <Tag className="w-5 h-5 text-therapy-secondary" />
+                AI Tagging Insights & Patterns
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Object.entries(tagAnalytics.tagsByClient).slice(0, 9).map(([clientId, tags]) => (
+                  <div key={clientId} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium text-sm truncate" title={clientId}>{clientId.substring(0, 12)}...</h4>
+                      <Badge variant="secondary" className="text-xs">{tags.length} tags</Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {tags.slice(0, 5).map(tag => (
+                        <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+                      ))}
+                      {tags.length > 5 && (
+                        <Badge variant="outline" className="text-xs">+{tags.length - 5}</Badge>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
