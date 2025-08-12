@@ -133,8 +133,17 @@ export function SessionPrepCard({
         const contentType = insightsResponse.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
           const data = await insightsResponse.json();
-          console.log('Received contextual AI insights:', data.insights.contextual ? 'with client context' : 'basic insights');
-          setAiInsights(data.insights);
+          console.log('Received AI insights data:', data);
+          // Handle the actual response structure from the API
+          if (data.insights) {
+            setAiInsights(data.insights);
+          } else if (data.appointmentType) {
+            // Handle different response format
+            setAiInsights(data);
+          } else {
+            console.log('Unexpected response format:', data);
+            setAiInsights(data);
+          }
         } else {
           console.error('Expected JSON response but received HTML');
           throw new Error('Server returned HTML instead of JSON');
