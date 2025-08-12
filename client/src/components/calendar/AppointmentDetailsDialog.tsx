@@ -488,7 +488,7 @@ export const AppointmentDetailsDialog = ({
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {aiInsights.keyFocusAreas && aiInsights.keyFocusAreas.length > 0 && (
+                      {aiInsights.keyFocusAreas && Array.isArray(aiInsights.keyFocusAreas) && aiInsights.keyFocusAreas.length > 0 ? (
                         <div>
                           <h4 className="font-medium text-sm mb-2">Key Focus Areas</h4>
                           <ul className="space-y-1">
@@ -497,6 +497,8 @@ export const AppointmentDetailsDialog = ({
                             ))}
                           </ul>
                         </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">No focus areas identified yet</p>
                       )}
                     </CardContent>
                   </Card>
@@ -510,12 +512,16 @@ export const AppointmentDetailsDialog = ({
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {aiInsights.progressIndicators.map((indicator, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            <span className="text-sm">{indicator}</span>
-                          </div>
-                        ))}
+                        {aiInsights.progressIndicators && Array.isArray(aiInsights.progressIndicators) && aiInsights.progressIndicators.length > 0 ? (
+                          aiInsights.progressIndicators.map((indicator, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <span className="text-sm">{indicator}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">No progress indicators identified yet</p>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -529,11 +535,15 @@ export const AppointmentDetailsDialog = ({
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {aiInsights.suggestedInterventions.map((intervention, index) => (
-                          <div key={index} className="text-sm p-2 bg-yellow-50 rounded">
-                            {intervention}
-                          </div>
-                        ))}
+                        {aiInsights.suggestedInterventions && Array.isArray(aiInsights.suggestedInterventions) && aiInsights.suggestedInterventions.length > 0 ? (
+                          aiInsights.suggestedInterventions.map((intervention, index) => (
+                            <div key={index} className="text-sm p-2 bg-yellow-50 rounded">
+                              {intervention}
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">No interventions suggested yet</p>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -547,7 +557,7 @@ export const AppointmentDetailsDialog = ({
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {aiInsights.riskFactors.length > 0 ? (
+                        {aiInsights.riskFactors && Array.isArray(aiInsights.riskFactors) && aiInsights.riskFactors.length > 0 ? (
                           aiInsights.riskFactors.map((risk, index) => (
                             <div key={index} className="flex items-center gap-2">
                               <AlertTriangle className="w-3 h-3 text-red-500" />
@@ -562,7 +572,7 @@ export const AppointmentDetailsDialog = ({
                   </Card>
                 </div>
 
-                {aiInsights.sessionPrep && (
+                {aiInsights.sessionPrep && Array.isArray(aiInsights.sessionPrep) && aiInsights.sessionPrep.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
