@@ -47,11 +47,25 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
-      retry: false,
+      staleTime: 30 * 1000, // 30 seconds - allow some freshness for better UX
+      retry: (failureCount, error) => {
+        // Only retry on network errors, not on 4xx/5xx HTTP errors
+        if (error?.message?.includes('fetch')) {
+          return failureCount < 2; // Retry twice for network issues
+        }
+        return false; // Don't retry HTTP errors
+      },
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
     mutations: {
-      retry: false,
+      retry: (failureCount, error) => {
+        // Retry mutations only on network connectivity issues
+        if (error?.message?.includes('fetch') || error?.message?.includes('NetworkError')) {
+          return failureCount < 1; // Single retry for mutations
+        }
+        return false;
+      },
+      retryDelay: 1000, // 1 second delay for mutation retries
     },
   },
 });

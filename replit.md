@@ -3,6 +3,12 @@
 ## Overview
 This is a comprehensive full-stack web application designed to streamline therapy practice operations. Its main purpose is to empower therapists in managing clients, appointments, session notes, and action items efficiently. The system integrates advanced AI capabilities for clinical insights, including predictive clinical modeling, advanced pattern recognition, personalized therapeutic recommendations, and practice management intelligence. The business vision is to enhance client care through data-driven insights and improve overall practice efficiency and clinical outcomes.
 
+## Recent Enhancements (August 12, 2025)
+- **Application Stability Improvements**: Eliminated repetitive "Using fallback therapist ID" warnings through proper session management and therapist ID initialization
+- **Enhanced Query Client**: Added intelligent retry logic with exponential backoff for network connectivity issues while avoiding retries on HTTP errors
+- **Robust Error Handling**: Implemented comprehensive error boundaries and enhanced global error handling for improved application stability
+- **Session Management**: Stabilized authentication flow with proper therapist ID caching and session persistence
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 AI Service Priority Order: OpenAI API (primary) → Claude/Anthropic (secondary) → Gemini (tertiary) → Perplexity (fallback)

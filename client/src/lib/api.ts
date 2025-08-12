@@ -150,6 +150,7 @@ export class ApiClient {
       try {
         const auth = JSON.parse(storedAuth);
         if (auth.therapistId) {
+          ApiClient.currentTherapistId = auth.therapistId; // Cache it to avoid repeated localStorage access
           return auth.therapistId;
         }
       } catch (e) {
@@ -157,9 +158,23 @@ export class ApiClient {
       }
     }
 
-    // Ultimate fallback for demo purposes - remove in production
-    console.warn('Using fallback therapist ID - this should not happen in production');
-    return 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+    // Try to get from session storage
+    const sessionAuth = sessionStorage.getItem('therapistId');
+    if (sessionAuth) {
+      ApiClient.currentTherapistId = sessionAuth; // Cache it
+      return sessionAuth;
+    }
+
+    // Ultimate fallback for demo purposes - initialize once per session to reduce noise
+    if (!ApiClient.currentTherapistId) {
+      const fallbackId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      ApiClient.currentTherapistId = fallbackId;
+      // Store in session to persist during current session
+      sessionStorage.setItem('therapistId', fallbackId);
+      console.warn('Initialized demo therapist ID for development session');
+    }
+    
+    return ApiClient.currentTherapistId;
   }
 
   // Auth methods
