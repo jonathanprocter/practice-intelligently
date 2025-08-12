@@ -183,45 +183,27 @@
   justify-content: flex-start;
 }
 
-/* Appointment Type Styling - SimplePractice */
-.appointment.simplepractice {
+/* Appointment Type Styling - All appointments use SimplePractice blue box styling */
+.appointment.simplepractice,
+.appointment.google-calendar,
+.appointment.personal,
+.appointment {
   background: white;
   border: 2px solid #6495ED;
   border-left: 4px solid #6495ED;
 }
 
-.appointment.simplepractice:hover {
+.appointment.simplepractice:hover,
+.appointment.google-calendar:hover,
+.appointment.personal:hover,
+.appointment:hover {
   border-color: #4169E1;
   transform: scale(1.02);
   box-shadow: 0 2px 8px rgba(100, 149, 237, 0.3);
   z-index: 15;
 }
 
-/* Appointment Type Styling - Google Calendar */
-.appointment.google-calendar {
-  background: white;
-  border: 2px dashed #10B981;
-}
 
-.appointment.google-calendar:hover {
-  border-color: #059669;
-  transform: scale(1.02);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-  z-index: 15;
-}
-
-/* Appointment Type Styling - Personal */
-.appointment.personal {
-  background: white;
-  border: 2px solid #F59E0B;
-}
-
-.appointment.personal:hover {
-  border-color: #D97706;
-  transform: scale(1.02);
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-  z-index: 15;
-}
 
 /* Status-based styling */
 .appointment.status-cancelled {
@@ -434,19 +416,12 @@
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
+  .appointment.simplepractice,
+  .appointment.google-calendar,
+  .appointment.personal,
   .appointment {
-    border-width: 2px;
-  }
-  
-  .appointment.simplepractice {
+    border-width: 3px;
     border-color: #000080;
-  }
-  
-  .appointment.google-calendar {
-    border-color: #006400;
-  }
-  
-  .appointment.personal {
-    border-color: #cc6600;
+    border-left-width: 5px;
   }
 }
