@@ -193,6 +193,15 @@ const compassStyles = `
     animation: listeningPulse 1.5s ease-in-out infinite;
     pointer-events: none;
   }
+
+  @media (max-width: 640px) {
+    .compass-chat-window {
+      right: 12px !important;
+      left: 12px !important;
+      width: auto !important;
+      max-width: calc(100vw - 24px) !important;
+    }
+  }
 `;
 
 // Format rich text helper
@@ -726,18 +735,25 @@ export function Compass({ className = '' }) {
       {isOpen && (
         <div
           ref={compassRef}
-          className={`fixed right-6 top-1/2 transform -translate-y-1/2 z-50 bg-white rounded-lg shadow-2xl border border-gray-200 transition-all duration-300 overflow-hidden ${
-            isMinimized ? 'w-80 h-16' : 'w-96 h-[600px] max-w-[calc(100vw-3rem)]'
+          className={`compass-chat-window fixed z-50 bg-white rounded-lg shadow-2xl border border-gray-200 transition-all duration-300 overflow-hidden ${
+            isMinimized ? 'w-80' : 'w-full sm:w-96 flex flex-col'
           } ${className}`}
+          style={{
+            bottom: '24px',
+            right: '24px',
+            height: isMinimized ? '52px' : 'min(600px, calc(100vh - 48px))',
+            maxHeight: 'calc(100vh - 48px)',
+            maxWidth: 'calc(100vw - 48px)'
+          }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
+          <div className="flex items-center justify-between p-3 border-b border-gray-200 flex-shrink-0">
+            <div className="flex items-center space-x-2">
               {/* Mini compass avatar */}
-              <div className="relative w-8 h-8">
+              <div className="relative w-7 h-7">
                 <div className="absolute w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-purple-400">
-                  <div className="absolute top-1 left-1 right-1 bottom-1 rounded-full bg-white flex justify-center items-center">
-                    <svg className="w-4 h-4" viewBox="0 0 100 100">
+                  <div className="absolute top-0.5 left-0.5 right-0.5 bottom-0.5 rounded-full bg-white flex justify-center items-center">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 100 100">
                       <path 
                         d="M50,20 L55,40 L70,40 L58,50 L63,70 L50,58 L37,70 L42,50 L30,40 L45,40 Z" 
                         fill="#7c3aed"
@@ -747,27 +763,27 @@ export function Compass({ className = '' }) {
                 </div>
               </div>
               <div>
-                <h3 className="font-semibold text-sm">Compass</h3>
-                <div className="flex items-center space-x-2">
+                <h3 className="font-semibold text-xs">Compass</h3>
+                <div className="flex items-center space-x-1">
                   <p className="text-xs text-gray-500">AI Assistant</p>
                   {voiceActivation && (
-                    <div className="flex items-center space-x-1">
-                      <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
-                      <span className="text-xs text-red-600">Listening</span>
-                    </div>
+                    <>
+                      <div className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-red-600">Live</span>
+                    </>
                   )}
                 </div>
               </div>
             </div>
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-0.5">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowVoiceSettings(!showVoiceSettings)}
-                className="w-8 h-8 p-0"
+                className="w-7 h-7 p-0"
                 title="Voice Settings"
               >
-                <Settings className="w-4 h-4" />
+                <Settings className="w-3.5 h-3.5" />
               </Button>
               <Button
                 variant="ghost"
@@ -784,39 +800,39 @@ export function Compass({ className = '' }) {
                     }
                   }
                 }}
-                className={`w-8 h-8 p-0 ${voiceActivation ? 'bg-gray-200' : ''}`}
+                className={`w-7 h-7 p-0 ${voiceActivation ? 'bg-gray-200' : ''}`}
                 title={voiceActivation ? "Disable Hey Compass" : "Enable Hey Compass"}
               >
-                {voiceActivation ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                {voiceActivation ? <Square className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsMinimized(!isMinimized)}
-                className="w-8 h-8 p-0 hover:bg-gray-200"
+                className="w-7 h-7 p-0 hover:bg-gray-200"
                 title={isMinimized ? "Maximize" : "Minimize"}
               >
                 {isMinimized ? (
-                  <Maximize2 className="w-5 h-5 text-gray-700" />
+                  <Maximize2 className="w-4 h-4 text-gray-700" />
                 ) : (
-                  <Minimize2 className="w-5 h-5 text-gray-700" />
+                  <Minimize2 className="w-4 h-4 text-gray-700" />
                 )}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsOpen(false)}
-                className="w-8 h-8 p-0"
+                className="w-7 h-7 p-0"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </Button>
             </div>
           </div>
 
           {/* Voice Settings Panel */}
           {showVoiceSettings && !isMinimized && (
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <div className="space-y-4">
+            <div className="p-3 border-b border-gray-200 bg-gray-50 flex-shrink-0">
+              <div className="space-y-3">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Voice</label>
                   <Select value={selectedVoice} onValueChange={setSelectedVoice}>
@@ -858,8 +874,8 @@ export function Compass({ className = '' }) {
 
           {/* Messages Area */}
           {!isMinimized && (
-            <>
-              <div className="flex-1 p-4 h-[400px] overflow-y-auto">
+            <div className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 p-4 overflow-y-auto min-h-0">
                 <div className="space-y-4">
                   {messages.map((message) => (
                     <div
@@ -957,7 +973,7 @@ export function Compass({ className = '' }) {
               )}
 
               {/* Input Area */}
-              <div className="p-4 border-t border-gray-200">
+              <div className="p-4 border-t border-gray-200 mt-auto">
                 <div className="flex gap-2">
                   <div className="flex-1 relative">
                     <Input
@@ -1001,7 +1017,7 @@ export function Compass({ className = '' }) {
                   </Button>
                 </div>
               </div>
-            </>
+            </div>
           )}
         </div>
       )}

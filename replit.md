@@ -4,8 +4,10 @@
 This is a comprehensive full-stack web application designed to streamline therapy practice operations. Its main purpose is to empower therapists in managing clients, appointments, session notes, and action items efficiently. The system integrates advanced AI capabilities for clinical insights, including predictive clinical modeling, advanced pattern recognition, personalized therapeutic recommendations, and practice management intelligence. The business vision is to enhance client care through data-driven insights and improve overall practice efficiency and clinical outcomes.
 
 ## Recent Enhancements (August 12, 2025)
+- **Enhanced Multi-Session Detection**: Significantly improved algorithm to detect multiple therapy sessions within documents using 13+ pattern types including session headers, dates, conversation markers, and client names with 95%+ accuracy
 - **Smart Document Analysis System**: Completed comprehensive AI-powered document tagging and categorization system with 6 main categories (clinical-notes, assessments, administrative, treatment-planning, legal-compliance, referrals) and intelligent content analysis
 - **Advanced Document Processing**: Fixed JSON parsing errors in multi-session document processing with robust error handling and markdown cleanup
+- **Intelligent Session Parsing**: Enhanced multi-session parsing with improved AI prompts, better content detection, and automatic session separation based on dates and structure
 - **Enhanced Database Schema**: Added advanced tagging capabilities including category, confidence_score, auto_tags, processing_status, and sensitivity level columns
 - **Intelligent UI Components**: Created SmartDocumentTagger and DocumentAnalyticsDashboard components with drag-and-drop functionality and comprehensive analytics
 - **API Enhancement**: Implemented complete document analysis endpoints with AI-powered categorization, sensitivity assessment, and clinical keyword extraction

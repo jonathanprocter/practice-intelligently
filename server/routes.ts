@@ -51,30 +51,91 @@ const sessionDocProcessor = new SessionDocumentProcessor(storage);
 // Function to detect multi-session documents
 async function detectMultiSessionDocument(content: string): Promise<boolean> {
   try {
-    // Look for patterns that indicate multiple sessions
+    // Enhanced patterns to catch more session indicators
     const sessionPatterns = [
+      // Session headers with numbers and dates
+      /session\s*\d+\s*[-–—]\s*\w+\s*\d{1,2},?\s*\d{4}/gi,
+      /session\s*\d+\s*[-–—]?\s*\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/gi,
+      
+      // Traditional patterns
       /therapy session on \w+ \d{1,2},? \d{4}/gi,
       /session.*\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/gi,
       /progress note.*\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/gi,
       /clinical progress note for.*session on/gi,
-      /comprehensive clinical progress note/gi
+      /comprehensive clinical progress note/gi,
+      
+      // Additional session identifiers
+      /session \d+/gi,
+      /appointment \d+/gi,
+      /visit \d+/gi,
+      /meeting \d+/gi,
+      
+      // Date-based session markers
+      /\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}.*session/gi,
+      /\w+\s+\d{1,2},?\s+\d{4}.*session/gi,
+      
+      // Multiple progress notes indicators
+      /progress note #\d+/gi,
+      /note \d+/gi,
+      /session note \d+/gi
     ];
 
     let sessionCount = 0;
+    let allMatches = [];
+    
     for (const pattern of sessionPatterns) {
       const matches = content.match(pattern);
       if (matches) {
         sessionCount += matches.length;
+        allMatches.push(...matches);
       }
     }
 
-    // Also check for table of contents pattern
+    // Look for multiple distinct date patterns
+    const datePatterns = [
+      /\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/g,
+      /\w+ \d{1,2},? \d{4}/g,
+      /\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/g
+    ];
+    
+    let uniqueDates = new Set();
+    for (const pattern of datePatterns) {
+      const dateMatches = content.match(pattern);
+      if (dateMatches) {
+        dateMatches.forEach(date => uniqueDates.add(date.trim()));
+      }
+    }
+
+    // Check for transcript-style conversations (multiple speaker indicators)
+    const conversationPatterns = [
+      /therapist:/gi,
+      /patient:/gi,
+      /client:/gi,
+      /dr\./gi
+    ];
+    
+    let conversationIndicators = 0;
+    conversationPatterns.forEach(pattern => {
+      const matches = content.match(pattern);
+      if (matches) {
+        conversationIndicators += matches.length;
+      }
+    });
+
+    // Check for table of contents pattern
     const tocPattern = /table of contents/gi;
     const hasTOC = tocPattern.test(content);
 
-    // Consider it multi-session if we find multiple session indicators or a table of contents
-    const isMulti = sessionCount >= 3 || hasTOC;
-    console.log(`📊 Session detection: ${sessionCount} patterns found, TOC: ${hasTOC}, Multi-session: ${isMulti}`);
+    // Enhanced logic for multi-session detection
+    const hasMultipleSessions = sessionCount >= 2;
+    const hasMultipleDates = uniqueDates.size >= 2;
+    const hasConversationFlow = conversationIndicators >= 6; // Multiple back-and-forth exchanges
+    const hasSessionStructure = /session\s*\d+/gi.test(content);
+    
+    const isMulti = hasMultipleSessions || hasTOC || hasMultipleDates || hasConversationFlow || hasSessionStructure;
+    
+    console.log(`📊 Enhanced session detection: ${sessionCount} session patterns, ${uniqueDates.size} unique dates, ${conversationIndicators} conversation indicators, Multi-session: ${isMulti}`);
+    console.log(`🔍 Sample matches: ${allMatches.slice(0, 3).join(', ')}`);
     
     return isMulti;
   } catch (error) {
@@ -183,38 +244,38 @@ async function parseMultiSessionDocument(content: string, clientId: string, clie
   try {
     console.log('🔍 Parsing multi-session document...');
 
-    // Use AI to extract individual sessions
-    const parsePrompt = `This document contains multiple therapy sessions for a client. Please analyze the content and extract individual sessions.
+    // Enhanced multi-session parsing with better prompt
+    const parsePrompt = `You are a clinical document parser. Analyze this document and extract individual therapy sessions.
 
-Document content (first 3000 chars):
-${content.substring(0, 3000)}
+DOCUMENT CONTENT:
+${content}
 
-For each therapy session you can identify, extract:
-1. Session date (format: YYYY-MM-DD)
-2. Session content (the full progress note or session content)
-3. Client name (if mentioned)
+INSTRUCTIONS:
+1. Identify distinct therapy sessions based on dates, headers, client names, or session markers
+2. For each session extract: date, client name, full content, and create a brief title
+3. Include sessions that are either completed progress notes OR therapy transcripts
+4. Extract dates in YYYY-MM-DD format when possible
 
-Return a JSON array with this structure:
+RESPONSE FORMAT (JSON only):
 {
   "sessions": [
     {
       "date": "YYYY-MM-DD",
-      "content": "full session content here",
-      "clientName": "client name",
-      "title": "brief session title"
+      "content": "complete session content",
+      "clientName": "extracted or inferred client name",
+      "title": "Session summary or type"
     }
   ],
   "totalSessions": number,
   "documentType": "progress_notes" | "session_transcripts" | "mixed"
-}
-
-Only include sessions where you can clearly identify a date and substantial content.`;
+}`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [{ role: 'user', content: parsePrompt }],
-      max_tokens: 2000,
-      temperature: 0.1
+      max_tokens: 3000,
+      temperature: 0.1,
+      response_format: { type: "json_object" }
     });
 
     let rawResponse = response.choices[0].message.content || '{"sessions": [], "totalSessions": 0}';
