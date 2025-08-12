@@ -591,19 +591,16 @@ export function Compass({ className }: CompassProps) {
 
       setMessages(prev => [...prev, userMessage]);
 
-      const response = await apiRequest('/api/compass/chat', {
-        method: 'POST',
-        body: JSON.stringify({
-          message: query,
-          sessionId,
-          conversationHistory: messages.map(m => ({
-            role: m.role,
-            content: m.content
-          }))
-        })
+      const response = await apiRequest('POST', '/api/compass/chat', {
+        message: query,
+        sessionId,
+        conversationHistory: messages.map(m => ({
+          role: m.role,
+          content: m.content
+        }))
       });
 
-      return response;
+      return await response.json();
     },
     onSuccess: (data) => {
       setCompassState('normal');
@@ -611,15 +608,15 @@ export function Compass({ className }: CompassProps) {
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
-        content: data.response,
+        content: data.content,
         timestamp: new Date(),
-        aiProvider: data.provider
+        aiProvider: data.aiProvider
       };
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      if (voiceActivation && data.response) {
-        speakText(data.response);
+      if (voiceActivation && data.content) {
+        speakText(data.content);
       }
     },
     onError: (error) => {
