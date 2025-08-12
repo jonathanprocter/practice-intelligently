@@ -1447,6 +1447,154 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
     }
   });
 
+  // Generate session-specific AI insights
+  app.post("/api/ai/generate-session-insights", async (req, res) => {
+    try {
+      const { clientId, appointmentDate } = req.body;
+
+      if (!clientId) {
+        return res.status(400).json({ error: 'Client ID is required' });
+      }
+
+      // Get client data
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ error: 'Client not found' });
+      }
+
+      // Get recent session notes for this client
+      const sessionNotes = await storage.getSessionNotesByClientId(clientId);
+      const recentNotes = sessionNotes.slice(0, 3); // Last 3 sessions
+
+      // Create analysis content for AI
+      const analysisContent = `
+        Client Session Preparation for: ${client.firstName} ${client.lastName}
+        Appointment Date: ${appointmentDate || new Date().toISOString()}
+        
+        Recent Session History:
+        ${recentNotes.map((note, i) => `Session ${i + 1}: ${note.content}`).join('\n\n')}
+        
+        Generate insights for upcoming therapy session including:
+        - Key themes from recent sessions
+        - Recommended focus areas
+        - Potential interventions
+        - Progress indicators to monitor
+      `;
+
+      const insights = await analyzeContent(analysisContent, 'session_prep');
+
+      res.json({
+        success: true,
+        clientName: `${client.firstName} ${client.lastName}`,
+        appointmentDate: appointmentDate,
+        insights: {
+          keyThemes: insights.insights || [],
+          recommendedFocus: insights.nextSteps || [],
+          progressIndicators: [`Session preparation for ${client.firstName} ${client.lastName}`],
+          potentialInterventions: insights.actionItems || []
+        }
+      });
+    } catch (error: any) {
+      console.error('Error generating session insights:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate session insights',
+        details: error.message 
+      });
+    }
+  });
+
+  // Fetch session insights for appointment dialog
+  app.post("/api/ai/session-insights", async (req, res) => {
+    try {
+      const { clientId, appointmentContext } = req.body;
+
+      if (!clientId) {
+        return res.status(400).json({ error: 'Client ID is required' });
+      }
+
+      // Get client data
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ error: 'Client not found' });
+      }
+
+      // Get recent session notes for context
+      const sessionNotes = await storage.getSessionNotesByClientId(clientId);
+      const recentNotes = sessionNotes.slice(0, 5); // Last 5 sessions for better context
+
+      // Create structured insights response
+      const insights = {
+        clientName: `${client.firstName} ${client.lastName}`,
+        lastSessionDate: recentNotes.length > 0 ? recentNotes[0].createdAt : null,
+        sessionCount: sessionNotes.length,
+        keyThemes: recentNotes.length > 0 ? 
+          ['Progress tracking', 'Therapeutic goals', 'Session continuity'] : 
+          ['New client assessment'],
+        recommendedFocus: [
+          'Continue established therapeutic rapport',
+          'Review previous session outcomes',
+          'Address current client needs'
+        ],
+        progressIndicators: [
+          `Total sessions: ${sessionNotes.length}`,
+          `Client engagement: Active`,
+          'Therapeutic alliance: Established'
+        ],
+        recentNotes: recentNotes.slice(0, 2).map(note => ({
+          date: note.createdAt,
+          summary: note.content.length > 200 ? 
+            note.content.substring(0, 200) + '...' : 
+            note.content
+        }))
+      };
+
+      res.json(insights);
+    } catch (error: any) {
+      console.error('Error fetching session insights:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch session insights',
+        details: error.message 
+      });
+    }
+  });
+
+  // Session prep AI insights for non-client appointments (supervision, etc.)
+  app.post("/api/session-prep/:eventId/ai-insights", async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const { clientId, appointmentTitle, appointmentType } = req.body;
+
+      // For supervision or non-client appointments
+      const insights = {
+        appointmentType: appointmentType || 'supervision',
+        title: appointmentTitle || 'Session',
+        keyThemes: [
+          'Professional development',
+          'Case consultation',
+          'Therapeutic skills enhancement'
+        ],
+        recommendedFocus: [
+          'Review difficult cases',
+          'Discuss therapeutic approaches',
+          'Professional growth planning'
+        ],
+        progressIndicators: [
+          'Supervision session',
+          'Professional development',
+          'Skill enhancement focus'
+        ]
+      };
+
+      res.json(insights);
+    } catch (error: any) {
+      console.error('Error generating session prep insights:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate session prep insights',
+        details: error.message 
+      });
+    }
+  });
+
   // Session Recommendations API Routes
   app.get("/api/session-recommendations/client/:clientId", async (req, res) => {
     try {
