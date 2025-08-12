@@ -9,6 +9,7 @@ import { WeeklyCalendarGrid } from '../components/calendar/WeeklyCalendarGrid';
 import { CalendarHeader } from '../components/calendar/CalendarHeader';
 import { Link } from 'wouter';
 import { DailyView } from '../components/calendar/DailyView';
+import { DailyViewGrid } from '../components/calendar/DailyViewGrid';
 import { AppointmentStatusView } from '../components/calendar/AppointmentStatusView';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -940,7 +941,7 @@ export default function Calendar() {
           </TabsList>
 
           <TabsContent value="day" className="h-full">
-            <DailyView
+            <DailyViewGrid
               date={selectedDate}
               events={calendarEvents}
               onEventClick={handleEventClick}
@@ -954,6 +955,9 @@ export default function Calendar() {
                 const newDate = new Date(selectedDate);
                 newDate.setDate(newDate.getDate() + 1);
                 setSelectedDate(newDate);
+              }}
+              onBackToWeek={() => {
+                setActiveTab('week');
               }}
               onNewAppointment={handleNewAppointment}
               onSessionNotes={handleSessionNotes}

@@ -97,3 +97,48 @@ export function getTimeSlotPosition(eventTime: Date): { hour: number; minute: nu
 export function matchEventsToTimeSlots(events: CalendarEvent[], timeSlots: TimeSlot[]): TimeSlot[] {
   return timeSlots;
 }
+
+// Enhanced utilities for daily view grid layout
+export function getTimeSlotIndex(time: string): number {
+  const timeSlots = generateTimeSlots();
+  return timeSlots.findIndex(slot => slot.display === time);
+}
+
+export function calculateSlotPosition(startTime: Date, endTime: Date): { startSlot: number; endSlot: number } {
+  const startHour = startTime.getHours();
+  const startMinute = startTime.getMinutes();
+  const endHour = endTime.getHours();
+  const endMinute = endTime.getMinutes();
+
+  // Calculate slot positions (each hour has 2 slots: :00 and :30)
+  const startSlot = ((startHour - 6) * 2) + (startMinute >= 30 ? 1 : 0);
+  const endSlot = ((endHour - 6) * 2) + (endMinute >= 30 ? 1 : 0);
+
+  return { startSlot, endSlot };
+}
+
+export function formatTimeRange(startTime: Date, endTime: Date): string {
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  };
+
+  return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+}
+
+export function getEventsForTimeSlot(events: any[], date: Date, timeSlot: TimeSlot): any[] {
+  return events.filter(event => {
+    const eventDate = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+    
+    // Check if event is on the same day
+    if (eventDate.toDateString() !== date.toDateString()) {
+      return false;
+    }
+    
+    // Check if event overlaps with this time slot
+    return isEventInTimeSlot(event, timeSlot);
+  });
+}
