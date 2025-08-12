@@ -139,6 +139,7 @@ export function CreateSessionNoteModal({
           startTime: startDateTime.toISOString(),
           endTime: endDateTime.toISOString(),
           title: newAppointmentTitle || 'Session',
+          type: 'individual_therapy', // Required field
           status: 'completed',
           source: 'manual'
         };
