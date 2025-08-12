@@ -1,0 +1,23 @@
+Clinical Progress Note
+
+Date: August 12, 2025
+Client: John Smith  
+Therapist: Dr. Jonathan Procter
+
+SUBJECTIVE:
+Client reports feeling more anxious than usual this week. Sleep patterns have been disrupted (approximately 5 hours per night). Client mentions work stress is increasing due to upcoming deadlines. Has been practicing breathing exercises taught in previous sessions.
+
+OBJECTIVE:
+Client appeared somewhat fatigued during session but remained engaged throughout. Speech was slightly rapid at times, indicative of anxiety. Maintained appropriate eye contact. Demonstrated proper use of deep breathing technique when prompted.
+
+ASSESSMENT:
+Client continues to experience generalized anxiety symptoms that appear to be exacerbated by work-related stressors. Response to previous CBT interventions has been positive, with client demonstrating good retention of coping strategies.
+
+PLAN:
+1. Continue weekly therapy sessions
+2. Practice daily breathing exercises 
+3. Implement stress management techniques for work environment
+4. Consider discussing sleep hygiene strategies next session
+5. Review progress in two weeks
+
+Next appointment: August 19, 2025

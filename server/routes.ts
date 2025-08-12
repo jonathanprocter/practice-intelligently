@@ -20,6 +20,7 @@ import { z } from "zod";
 import { randomUUID } from 'crypto';
 import multer from 'multer';
 import fs from 'fs';
+import path from 'path';
 import { uploadSingle, uploadMultiple } from './upload';
 
 // Configure multer for in-memory storage
@@ -216,7 +217,28 @@ Only include sessions where you can clearly identify a date and substantial cont
       temperature: 0.1
     });
 
-    const parseResult = JSON.parse(response.choices[0].message.content || '{"sessions": [], "totalSessions": 0}');
+    let rawResponse = response.choices[0].message.content || '{"sessions": [], "totalSessions": 0}';
+    
+    // Clean up potential markdown formatting
+    if (rawResponse.includes('```json')) {
+      rawResponse = rawResponse.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
+    }
+    if (rawResponse.includes('```')) {
+      rawResponse = rawResponse.replace(/```/g, '');
+    }
+    
+    let parseResult;
+    try {
+      parseResult = JSON.parse(rawResponse);
+    } catch (parseError) {
+      console.error('Failed to parse multi-session AI response:', rawResponse.substring(0, 200));
+      // Fallback with empty sessions
+      parseResult = {
+        sessions: [],
+        totalSessions: 0,
+        documentType: "unknown"
+      };
+    }
     console.log(`📈 Extracted ${parseResult.totalSessions} sessions from document`);
 
     // If we found sessions, let's create session notes for each
@@ -270,7 +292,15 @@ Return only a JSON array of strings: ["tag1", "tag2", "tag3", "tag4", "tag5"]`;
 
         let aiTags = [];
         try {
-          aiTags = JSON.parse(tagsResponse.choices[0].message.content || '[]');
+          let tagsResponseContent = tagsResponse.choices[0].message.content || '[]';
+          // Clean up potential markdown formatting
+          if (tagsResponseContent.includes('```json')) {
+            tagsResponseContent = tagsResponseContent.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
+          }
+          if (tagsResponseContent.includes('```')) {
+            tagsResponseContent = tagsResponseContent.replace(/```/g, '');
+          }
+          aiTags = JSON.parse(tagsResponseContent);
         } catch {
           aiTags = ['therapy', 'progress-note', 'clinical', 'assessment', 'treatment'];
         }
@@ -395,12 +425,28 @@ Respond with JSON in this exact format:
 
       let extractionResponse = response.choices[0]?.message?.content?.trim() || '{}';
       
-      // Clean up markdown formatting
-      if (extractionResponse.includes('```json')) {
-        extractionResponse = extractionResponse.replace(/```json\n?/g, '').replace(/```/g, '').trim();
+      // Clean up potential markdown formatting from AI response
+      let cleanedResponse = extractionResponse;
+      if (cleanedResponse?.includes('```json')) {
+        cleanedResponse = cleanedResponse.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
       }
-
-      const metadata = JSON.parse(extractionResponse);
+      if (cleanedResponse?.includes('```')) {
+        cleanedResponse = cleanedResponse.replace(/```/g, '');
+      }
+      
+      let metadata;
+      try {
+        metadata = JSON.parse(cleanedResponse);
+      } catch (parseError) {
+        console.error('Failed to parse AI response:', cleanedResponse.substring(0, 200));
+        // Fallback with default values
+        metadata = {
+          clientName: "Unknown Client",
+          sessionDate: null,
+          isFormatted: true,
+          tags: ["therapy", "progress-note", "clinical"]
+        };
+      }
       
       extractedData = {
         clientName: metadata.clientName,
@@ -6850,8 +6896,10 @@ Follow-up areas for next session:
 
       // Write file to temporary location for processing
       const tempFilePath = path.join(process.cwd(), 'temp_uploads', req.file.originalname);
-      await fs.ensureDir(path.dirname(tempFilePath));
-      await fs.writeFile(tempFilePath, req.file.buffer);
+      if (!fs.existsSync(path.dirname(tempFilePath))) {
+        fs.mkdirSync(path.dirname(tempFilePath), { recursive: true });
+      }
+      fs.writeFileSync(tempFilePath, req.file.buffer);
 
       // Extract text content
       let documentContent: string;
@@ -6860,7 +6908,9 @@ Follow-up areas for next session:
         documentContent = await extractTextFromFile(tempFilePath);
         console.log(`📄 Extracted ${documentContent.length} characters for analysis`);
       } catch (extractError) {
-        await fs.remove(tempFilePath);
+        if (fs.existsSync(tempFilePath)) {
+          fs.unlinkSync(tempFilePath);
+        }
         return res.status(400).json({ 
           error: "Failed to extract text from document",
           details: (extractError as Error)?.message
@@ -6904,7 +6954,9 @@ Follow-up areas for next session:
       console.log(`✅ Document analyzed and stored with ID: ${documentRecord.id}`);
 
       // Clean up temp file
-      await fs.remove(tempFilePath);
+      if (fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+      }
 
       res.json({
         success: true,
