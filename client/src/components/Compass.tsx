@@ -11,11 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import compassAvatar from '@assets/compass-avatar.svg';
 
 // Function to format rich text content
 const formatRichText = (content: string) => {
-  // Split content into lines and process each line
   const lines = content.split('\n');
   const elements: JSX.Element[] = [];
   
@@ -25,7 +23,6 @@ const formatRichText = (content: string) => {
       return;
     }
     
-    // Process the line for formatting
     const processedLine = processFormattedText(line);
     elements.push(
       <div key={`line-${lineIndex}`} className="mb-1">
@@ -47,12 +44,10 @@ const processFormattedText = (text: string) => {
   let match;
   
   while ((match = boldRegex.exec(text)) !== null) {
-    // Add text before the match
     if (match.index > currentIndex) {
       elements.push(text.slice(currentIndex, match.index));
     }
     
-    // Add bold text
     elements.push(
       <strong key={`bold-${match.index}`} className="font-semibold">
         {match[1]}
@@ -62,11 +57,9 @@ const processFormattedText = (text: string) => {
     currentIndex = match.index + match[0].length;
   }
   
-  // Add remaining text
   if (currentIndex < text.length) {
     let remainingText = text.slice(currentIndex);
     
-    // Process *italic* text in remaining content
     const italicRegex = /\*(.*?)\*/g;
     const italicElements: (string | JSX.Element)[] = [];
     let italicIndex = 0;
@@ -89,7 +82,6 @@ const processFormattedText = (text: string) => {
       italicElements.push(remainingText.slice(italicIndex));
     }
     
-    // Process bullet points
     if (remainingText.includes('•')) {
       const bulletText = remainingText.replace('•', '').trim();
       elements.push(
@@ -118,6 +110,135 @@ interface CompassProps {
   className?: string;
 }
 
+// Compass CSS styles
+const compassStyles = `
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  @keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  @keyframes blink {
+    0%, 90%, 100% { transform: scaleY(1); }
+    95% { transform: scaleY(0.1); }
+  }
+
+  @keyframes statusPulse {
+    0%, 100% { 
+      box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
+      transform: scale(1);
+    }
+    50% { 
+      box-shadow: 0 0 16px rgba(139, 92, 246, 0.6);
+      transform: scale(1.1);
+    }
+  }
+
+  @keyframes listeningPulse {
+    0%, 100% { 
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    50% { 
+      transform: scale(1.2);
+      opacity: 1;
+    }
+  }
+
+  @keyframes listeningDot {
+    0%, 100% { 
+      transform: scale(1);
+      box-shadow: 0 0 8px rgba(167, 139, 250, 0.5);
+    }
+    50% { 
+      transform: scale(1.3);
+      box-shadow: 0 0 20px rgba(167, 139, 250, 0.9);
+    }
+  }
+
+  @keyframes tickGlow {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+  }
+
+  @keyframes thinkingDot {
+    0%, 100% { 
+      transform: scale(1) rotate(0deg);
+      box-shadow: 0 0 8px rgba(147, 51, 234, 0.5);
+    }
+    50% { 
+      transform: scale(1.2) rotate(180deg);
+      box-shadow: 0 0 16px rgba(147, 51, 234, 0.9);
+    }
+  }
+
+  .compass-float {
+    animation: float 6s ease-in-out infinite;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+
+  .compass-float:hover {
+    transform: scale(1.05);
+  }
+
+  .compass-star {
+    animation: rotate 20s linear infinite;
+  }
+
+  .compass-pulse {
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .compass-eye {
+    animation: blink 4s infinite;
+  }
+
+  .compass-status {
+    animation: statusPulse 2s ease-in-out infinite;
+  }
+
+  .compass-listening .compass-status {
+    background: #a78bfa;
+    animation: listeningDot 0.5s ease-in-out infinite;
+  }
+
+  .compass-thinking .compass-star {
+    animation: rotate 1s linear infinite;
+  }
+
+  .compass-thinking .compass-tick {
+    animation: tickGlow 2s ease-in-out infinite;
+  }
+
+  .compass-thinking .compass-status {
+    background: #9333ea;
+    animation: thinkingDot 0.3s ease-in-out infinite;
+  }
+
+  .compass-listening::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    right: -20px;
+    bottom: -20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, transparent 40%, rgba(139, 92, 246, 0.3) 70%, transparent 100%);
+    animation: listeningPulse 1.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+`;
+
 export function Compass({ className }: CompassProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -133,6 +254,7 @@ export function Compass({ className }: CompassProps) {
   const [selectedVoice, setSelectedVoice] = useState('josh');
   const [speechRate, setSpeechRate] = useState(1.0);
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+  const [compassState, setCompassState] = useState<'normal' | 'listening' | 'thinking'>('normal');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const compassRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -157,7 +279,6 @@ export function Compass({ className }: CompassProps) {
       recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript.trim();
 
-        // Check for voice activation phrase
         if (voiceActivation && transcript.toLowerCase().includes('hey compass')) {
           const query = transcript.toLowerCase().replace('hey compass', '').trim();
           if (query) {
@@ -169,7 +290,6 @@ export function Compass({ className }: CompassProps) {
 
         setInputMessage(transcript);
 
-        // In continuous mode, automatically send the message
         if (continuousMode && transcript) {
           chatMutation.mutate(transcript);
           setInputMessage('');
@@ -192,14 +312,15 @@ export function Compass({ className }: CompassProps) {
 
       recognition.onend = () => {
         setIsListening(false);
+        setCompassState('normal');
 
-        // In voice activation mode, keep listening
         if (voiceActivation && isOpen) {
           setTimeout(() => {
             if (speechRecognition && voiceActivation && isOpen) {
               try {
                 speechRecognition.start();
                 setIsListening(true);
+                setCompassState('listening');
               } catch (error) {
                 console.log('Failed to restart speech recognition:', error);
               }
@@ -230,6 +351,7 @@ export function Compass({ className }: CompassProps) {
       try {
         speechRecognition.start();
         setIsListening(true);
+        setCompassState('listening');
       } catch (error) {
         console.log('Voice activation start failed:', error);
       }
@@ -237,6 +359,7 @@ export function Compass({ className }: CompassProps) {
       try {
         speechRecognition.stop();
         setIsListening(false);
+        setCompassState('normal');
       } catch (error) {
         console.log('Voice activation stop failed:', error);
       }
@@ -272,7 +395,6 @@ export function Compass({ className }: CompassProps) {
     const userMessages = messages.filter(m => m.role === 'user').map(m => m.content.toLowerCase());
     const hasAskedAbout = (topic: string) => userMessages.some(msg => msg.includes(topic));
 
-    // Default quick actions for new conversations
     if (messages.length === 0) {
       return [
         { label: "Today's Focus", query: "What should I focus on today?" },
@@ -282,7 +404,6 @@ export function Compass({ className }: CompassProps) {
       ];
     }
 
-    // Adaptive quick actions based on conversation context
     const actions: Array<{ label: string; query: string }> = [];
 
     if (!hasAskedAbout('appointment') && !hasAskedAbout('session')) {
@@ -309,7 +430,6 @@ export function Compass({ className }: CompassProps) {
       actions.push({ label: "Schedule Review", query: "Review my upcoming appointments and suggest optimizations" });
     }
 
-    // Ensure we always have at least 3 actions
     if (actions.length < 3) {
       const defaultActions = [
         { label: "Practice Overview", query: "Give me an overview of my practice status" },
@@ -324,7 +444,7 @@ export function Compass({ className }: CompassProps) {
       });
     }
 
-    return actions.slice(0, 4); // Limit to 4 actions
+    return actions.slice(0, 4);
   };
 
   // Voice input functions
@@ -332,10 +452,12 @@ export function Compass({ className }: CompassProps) {
     if (speechRecognition && !isListening) {
       try {
         setIsListening(true);
+        setCompassState('listening');
         speechRecognition.start();
       } catch (error) {
         console.log('Failed to start speech recognition:', error);
         setIsListening(false);
+        setCompassState('normal');
         toast({
           title: "Voice input error",
           description: "Please try again or use text input.",
@@ -356,9 +478,11 @@ export function Compass({ className }: CompassProps) {
       try {
         speechRecognition.stop();
         setIsListening(false);
+        setCompassState('normal');
       } catch (error) {
         console.log('Failed to stop speech recognition:', error);
         setIsListening(false);
+        setCompassState('normal');
       }
     }
   };
@@ -392,7 +516,6 @@ export function Compass({ className }: CompassProps) {
 
       const audioBlob = await response.blob();
 
-      // Check if blob has content
       if (audioBlob.size === 0) {
         throw new Error('Received empty audio response');
       }
@@ -411,7 +534,6 @@ export function Compass({ className }: CompassProps) {
         setIsSpeaking(false);
         setCurrentAudio(null);
         URL.revokeObjectURL(audioUrl);
-        // Don't show toast for auto-play errors, just log them
       };
 
       audio.oncanplaythrough = () => {
@@ -420,7 +542,6 @@ export function Compass({ className }: CompassProps) {
 
       setCurrentAudio(audio);
 
-      // Use a promise to handle play() which returns a promise
       try {
         const playPromise = audio.play();
         if (playPromise !== undefined) {
@@ -429,18 +550,15 @@ export function Compass({ className }: CompassProps) {
         }
       } catch (playError) {
         console.log('Auto-play blocked by browser (expected behavior)');
-        // Don't throw error - just log it and continue
-        // User can still manually click speaker buttons
         setIsSpeaking(false);
         setCurrentAudio(null);
         URL.revokeObjectURL(audioUrl);
-        return; // Exit early on auto-play failure
+        return;
       }
 
     } catch (error) {
       console.log('Voice generation failed:', error);
       setIsSpeaking(false);
-      // Only show toast for actual generation errors, not browser auto-play blocks
       if (!(error instanceof Error) || !error.toString().includes('play')) {
         toast({
           title: "Voice generation failed",
@@ -459,120 +577,82 @@ export function Compass({ className }: CompassProps) {
     }
   };
 
-  // Function to activate the compass animation when excited/successful
-  const activateCompass = () => {
-    // Find the compass avatar element and activate it
-    const avatarImages = document.querySelectorAll('img[src*="compass-avatar"]');
-    avatarImages.forEach(img => {
-      // Add activation class to trigger the excited animation
-      if (img.parentElement) {
-        img.parentElement.classList.add('compass-activated');
-
-        // Remove the activation class after animation completes
-        setTimeout(() => {
-          img.parentElement?.classList.remove('compass-activated');
-        }, 2000);
-      }
-    });
-
-    // Also activate any SVG elements directly
-    const compassElements = document.querySelectorAll('.excited-needle, #compass-sparkles');
-    compassElements.forEach(element => {
-      if (element.classList.contains('excited-needle')) {
-        element.classList.add('activated');
-        setTimeout(() => {
-          element.classList.remove('activated');
-        }, 2000);
-      }
-      if (element.id === 'compass-sparkles') {
-        (element as HTMLElement).style.opacity = '1';
-        setTimeout(() => {
-          (element as HTMLElement).style.opacity = '0';
-        }, 2000);
-      }
-    });
-  };
-
+  // Chat mutation
   const chatMutation = useMutation({
-    mutationFn: async (message: string) => {
-      const response = await apiRequest('POST', '/api/compass/chat', { 
-        message, 
-        sessionId: sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return response.json();
-    },
-    onSuccess: (response) => {
-      // Update session ID if returned from server
-      if (response.sessionId && response.sessionId !== sessionId) {
-        setSessionId(response.sessionId);
-      }
-
-      const assistantMessage: Message = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: response.content || 'I received your message but had trouble generating a response.',
-        timestamp: new Date(),
-        aiProvider: response.aiProvider
+    mutationFn: async (query: string) => {
+      setCompassState('thinking');
+      
+      const userMessage: Message = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        content: query,
+        timestamp: new Date()
       };
+
+      setMessages(prev => [...prev, userMessage]);
+
+      const response = await apiRequest('/api/compass/chat', {
+        method: 'POST',
+        body: JSON.stringify({
+          message: query,
+          sessionId,
+          conversationHistory: messages.map(m => ({
+            role: m.role,
+            content: m.content
+          }))
+        })
+      });
+
+      return response;
+    },
+    onSuccess: (data) => {
+      setCompassState('normal');
+      
+      const assistantMessage: Message = {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: data.response,
+        timestamp: new Date(),
+        aiProvider: data.provider
+      };
+
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Activate compass animation when successfully finding information
-      activateCompass();
-
-      // Automatically speak the response (but don't block on errors)
-      if (response.content) {
-        try {
-          speakText(response.content);
-        } catch (error) {
-          console.log('Auto-speak failed, voice will be available via speaker button:', error);
-        }
+      if (voiceActivation && data.response) {
+        speakText(data.response);
       }
     },
     onError: (error) => {
-      console.error('Chat mutation error:', error);
+      setCompassState('normal');
+      console.error('Chat error:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to get response from Compass. Please try again.',
-        variant: 'destructive'
+        title: "Connection Error",
+        description: "Unable to reach Compass AI. Please try again.",
+        variant: "destructive",
       });
     }
   });
 
-  const handleSendMessage = () => {
-    if (!inputMessage.trim() || chatMutation.isPending) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: inputMessage,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    chatMutation.mutate(inputMessage);
-    setInputMessage('');
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputMessage.trim() && !chatMutation.isPending) {
+      chatMutation.mutate(inputMessage);
+      setInputMessage('');
     }
   };
 
-  const getProviderBadge = (provider?: string) => {
-    const providerColors = {
-      openai: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-      anthropic: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-      gemini: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-      perplexity: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
-    };
+  const quickActions = getContextualQuickActions();
 
+  const providerColors = {
+    openai: 'bg-green-100 text-green-700 border-green-200',
+    anthropic: 'bg-orange-100 text-orange-700 border-orange-200',
+    gemini: 'bg-blue-100 text-blue-700 border-blue-200',
+    perplexity: 'bg-purple-100 text-purple-700 border-purple-200'
+  };
+
+  const renderProviderBadge = (provider?: string) => {
     if (!provider) return null;
-
+    
     return (
       <Badge className={cn('text-xs', providerColors[provider as keyof typeof providerColors])}>
         {provider.toUpperCase()}
@@ -583,10 +663,9 @@ export function Compass({ className }: CompassProps) {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (isOpen && compassRef.current && !compassRef.current.contains(event.target as Node)) {
-        // Check if the click is on the floating action button
         const fabButton = document.querySelector('[data-compass-fab]');
         if (fabButton && fabButton.contains(event.target as Node)) {
-          return; // Don't close if clicking the FAB
+          return;
         }
 
         setIsOpen(false);
@@ -597,7 +676,6 @@ export function Compass({ className }: CompassProps) {
     };
 
     if (isOpen) {
-      // Add slight delay to prevent immediate closing when opening
       const timer = setTimeout(() => {
         document.addEventListener('mousedown', handleClickOutside);
         document.addEventListener('touchstart', handleClickOutside);
@@ -611,27 +689,91 @@ export function Compass({ className }: CompassProps) {
     }
   }, [isOpen]);
 
+  // Generate tick marks for compass
+  const tickMarks = [];
+  for (let i = 0; i < 60; i++) {
+    tickMarks.push(
+      <div
+        key={i}
+        className={cn(
+          'compass-tick absolute bg-therapy-primary opacity-40',
+          i % 5 === 0 ? 'w-1 h-3 opacity-80' : 'w-0.5 h-1.5'
+        )}
+        style={{
+          transform: `rotate(${i * 6}deg)`,
+          transformOrigin: 'center 47px',
+          left: '50%',
+          top: '3px'
+        }}
+      />
+    );
+  }
+
   return (
     <>
-      {/* Floating Action Button */}
+      {/* Inject compass styles */}
+      <style dangerouslySetInnerHTML={{ __html: compassStyles }} />
+      
+      {/* Floating Animated Compass */}
       {!isOpen && (
         <div className={cn(
-          'fixed right-6 top-1/2 transform -translate-y-1/2 z-50',
+          'fixed bottom-6 right-6 z-50',
           className
         )}>
-          <Button
+          <div
+            className={cn(
+              'compass-float relative w-30 h-30',
+              compassState === 'listening' && 'compass-listening',
+              compassState === 'thinking' && 'compass-thinking'
+            )}
             onClick={() => setIsOpen(true)}
-            className="w-24 h-24 rounded-full bg-therapy-primary hover:bg-therapy-primary/90 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-            size="lg"
             data-compass-fab
           >
-            <Avatar className="w-20 h-20">
-              <AvatarImage src={compassAvatar} alt="Compass AI Assistant" />
-              <AvatarFallback className="bg-therapy-primary/10 text-therapy-primary">
-                <MessageCircle className="w-10 h-10" />
-              </AvatarFallback>
-            </Avatar>
-          </Button>
+            {/* Outer ring */}
+            <div className="absolute w-full h-full rounded-full bg-gradient-to-br from-gray-100 to-gray-200 shadow-lg">
+              {/* Inner compass */}
+              <div className="absolute top-2.5 left-2.5 right-2.5 bottom-2.5 rounded-full bg-gradient-to-br from-therapy-primary to-purple-400 shadow-inner overflow-hidden">
+                {/* Compass face */}
+                <div className="absolute top-2.5 left-2.5 right-2.5 bottom-2.5 rounded-full bg-gradient-to-br from-white to-gray-50 flex justify-center items-center">
+                  {/* Tick marks */}
+                  <div className="absolute w-full h-full">
+                    {tickMarks}
+                  </div>
+                  
+                  {/* Star container */}
+                  <div className="compass-pulse relative w-16 h-16">
+                    <svg className="compass-star absolute w-full h-full" viewBox="0 0 100 100">
+                      <defs>
+                        <linearGradient id="starGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" style={{stopColor: '#7c3aed', stopOpacity: 1}} />
+                          <stop offset="100%" style={{stopColor: '#8b5cf6', stopOpacity: 1}} />
+                        </linearGradient>
+                      </defs>
+                      <path 
+                        d="M50,15 L58,35 L80,35 L62,48 L70,68 L50,53 L30,68 L38,48 L20,35 L42,35 Z" 
+                        fill="url(#starGradient)" 
+                        stroke="#6b21a8" 
+                        strokeWidth="1"
+                        style={{filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))'}}
+                      />
+                    </svg>
+                  </div>
+                  
+                  {/* Face */}
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-7 h-7 bg-gradient-to-br from-white to-gray-50 rounded-full shadow-sm z-10">
+                    <div className="absolute top-2 w-full flex justify-around px-2">
+                      <div className="compass-eye w-1 h-1 bg-gray-600 rounded-full"></div>
+                      <div className="compass-eye w-1 h-1 bg-gray-600 rounded-full"></div>
+                    </div>
+                    <div className="absolute bottom-1.5 left-1/2 transform -translate-x-1/2 w-3 h-1.5 border-b-2 border-gray-600 rounded-b-full"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Status indicator */}
+            <div className="compass-status absolute top-1 right-1 w-2.5 h-2.5 bg-purple-400 rounded-full shadow-sm"></div>
+          </div>
         </div>
       )}
 
@@ -647,12 +789,19 @@ export function Compass({ className }: CompassProps) {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={compassAvatar} alt="Compass AI Assistant" />
-                <AvatarFallback className="bg-therapy-primary/10 text-therapy-primary">
-                  C
-                </AvatarFallback>
-              </Avatar>
+              {/* Mini compass avatar */}
+              <div className="relative w-8 h-8">
+                <div className="absolute w-full h-full rounded-full bg-gradient-to-br from-therapy-primary to-purple-400">
+                  <div className="absolute top-1 left-1 right-1 bottom-1 rounded-full bg-white flex justify-center items-center">
+                    <svg className="w-4 h-4" viewBox="0 0 100 100">
+                      <path 
+                        d="M50,20 L55,40 L70,40 L58,50 L63,70 L50,58 L37,70 L42,50 L30,40 L45,40 Z" 
+                        fill="#7c3aed"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
               <div>
                 <h3 className="font-semibold text-sm">Compass</h3>
                 <div className="flex items-center space-x-2">
@@ -686,6 +835,7 @@ export function Compass({ className }: CompassProps) {
                     try {
                       speechRecognition.stop();
                       setIsListening(false);
+                      setCompassState('normal');
                     } catch (error) {
                       console.log('Failed to stop speech recognition:', error);
                     }
@@ -725,85 +875,67 @@ export function Compass({ className }: CompassProps) {
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Voice Selection</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Voice</label>
                   <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full mt-1">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="rachel">Rachel (Professional Female)</SelectItem>
-                      <SelectItem value="adam">Adam (Warm Male)</SelectItem>
-                      <SelectItem value="bella">Bella (Young Female)</SelectItem>
-                      <SelectItem value="josh">Josh (Deep Male)</SelectItem>
-                      <SelectItem value="sam">Sam (Raspy Male)</SelectItem>
+                      <SelectItem value="josh">Josh (Male)</SelectItem>
+                      <SelectItem value="breeze">Breeze (Female)</SelectItem>
+                      <SelectItem value="ember">Ember (Female)</SelectItem>
+                      <SelectItem value="juniper">Juniper (Female)</SelectItem>
+                      <SelectItem value="sky">Sky (Female)</SelectItem>
+                      <SelectItem value="cove">Cove (Male)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Speech Speed: {speechRate}x</label>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Speech Rate: {speechRate.toFixed(1)}x
+                  </label>
                   <Slider
                     value={[speechRate]}
                     onValueChange={(value) => setSpeechRate(value[0])}
                     min={0.5}
                     max={2.0}
                     step={0.1}
-                    className="w-full"
+                    className="mt-2"
                   />
                 </div>
-
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Continuous Mode</label>
                   <Button
-                    variant={continuousMode ? "default" : "outline"}
+                    variant="outline"
                     size="sm"
                     onClick={() => setContinuousMode(!continuousMode)}
-                    className="flex-1"
+                    className={cn(continuousMode && "bg-therapy-primary text-white")}
                   >
-                    {continuousMode ? "Continuous ON" : "Continuous OFF"}
+                    {continuousMode ? "ON" : "OFF"}
                   </Button>
-                  <Button
-                    variant={voiceActivation ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setVoiceActivation(!voiceActivation)}
-                    className="flex-1"
-                  >
-                    {voiceActivation ? "Hey Compass ON" : "Hey Compass OFF"}
-                  </Button>
-                </div>
-
-                <div className="text-xs text-gray-600 dark:text-gray-400">
-                  {voiceActivation && "Say 'Hey Compass' followed by your question"}
-                  {continuousMode && "Voice input automatically sends messages"}
                 </div>
               </div>
             </div>
           )}
 
-          {/* Messages */}
+          {/* Messages Area */}
           {!isMinimized && (
             <>
-              <ScrollArea className="flex-1 p-4" style={{ height: 'calc(600px - 200px)' }}>
+              <ScrollArea className="flex-1 p-4 h-[400px]">
                 <div className="space-y-4">
-                  {/* Welcome message when no messages */}
-                  {messages.length === 0 && !chatMutation.isPending && (
-                    <div className="text-center py-8">
-                      <p className="text-gray-600 dark:text-gray-400">
-                        Hi! I'm Compass, your AI assistant. I have access to all your practice data and can help with clients, appointments, insights, and more.
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-                        Try the quick suggestions below or ask me anything!
-                      </p>
-                    </div>
-                  )}
-
                   {messages.map((message) => (
                     <div
                       key={message.id}
                       className={cn(
-                        'flex',
+                        'flex gap-3',
                         message.role === 'user' ? 'justify-end' : 'justify-start'
                       )}
                     >
+                      {message.role === 'assistant' && (
+                        <div className="w-8 h-8 rounded-full bg-therapy-primary/10 flex items-center justify-center flex-shrink-0">
+                          <MessageCircle className="w-4 h-4 text-therapy-primary" />
+                        </div>
+                      )}
                       <div
                         className={cn(
                           'max-w-[80%] rounded-lg px-3 py-2 text-sm',
@@ -812,18 +944,21 @@ export function Compass({ className }: CompassProps) {
                             : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                         )}
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 rich-text-content">
-                            {formatRichText(message.content)}
-                          </div>
-                          <div className="flex items-center gap-1 flex-shrink-0">
+                        <div className="whitespace-pre-wrap">
+                          {message.role === 'assistant' ? formatRichText(message.content) : message.content}
+                        </div>
+                        <div className="flex items-center justify-between mt-2 text-xs opacity-70">
+                          <span>{message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          <div className="flex items-center space-x-2">
+                            {message.role === 'assistant' && renderProviderBadge(message.aiProvider)}
                             {message.role === 'assistant' && (
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => speakText(message.content)}
                                 disabled={isSpeaking}
-                                className="w-6 h-6 p-0 opacity-70 hover:opacity-100"
+                                className="w-6 h-6 p-0 hover:bg-white/20"
+                                title="Speak message"
                               >
                                 {isSpeaking ? (
                                   <VolumeX className="w-3 h-3" />
@@ -832,100 +967,95 @@ export function Compass({ className }: CompassProps) {
                                 )}
                               </Button>
                             )}
-                            {message.role === 'assistant' && getProviderBadge(message.aiProvider)}
                           </div>
                         </div>
-                        <div className="flex items-center justify-between mt-1">
-                          <p className="text-xs opacity-70">
-                            {message.timestamp.toLocaleTimeString([], { 
-                              hour: '2-digit', 
-                              minute: '2-digit' 
-                            })}
-                          </p>
-                          {message.role === 'assistant' && isSpeaking && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={stopSpeaking}
-                              className="text-xs h-auto p-0 opacity-70 hover:opacity-100"
-                            >
-                              Stop
-                            </Button>
-                          )}
-                        </div>
                       </div>
+                      {message.role === 'user' && (
+                        <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-medium text-gray-700 dark:text-gray-200">U</span>
+                        </div>
+                      )}
                     </div>
                   ))}
+                  
                   {chatMutation.isPending && (
-                    <div className="flex justify-start">
-                      <div className="bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2 text-sm">
+                    <div className="flex gap-3 justify-start">
+                      <div className="w-8 h-8 rounded-full bg-therapy-primary/10 flex items-center justify-center flex-shrink-0">
+                        <MessageCircle className="w-4 h-4 text-therapy-primary" />
+                      </div>
+                      <div className="bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2">
                         <div className="flex items-center space-x-2">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Compass is thinking...</span>
+                          <Loader2 className="w-4 h-4 animate-spin text-therapy-primary" />
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Thinking...</span>
                         </div>
                       </div>
                     </div>
                   )}
+                  
                   <div ref={messagesEndRef} />
                 </div>
               </ScrollArea>
 
-              {/* Input */}
-              <div className="border-t border-gray-200 dark:border-gray-700">
-                {/* Quick Action Buttons */}
-                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                  <div className="flex flex-wrap gap-2 max-w-full overflow-hidden">
-                    {getContextualQuickActions().map((action, index) => (
+              {/* Quick Actions */}
+              {quickActions.length > 0 && messages.length <= 2 && (
+                <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                  <div className="grid grid-cols-2 gap-2">
+                    {quickActions.map((action, index) => (
                       <Button
                         key={index}
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className="text-xs h-8 px-3 py-1 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 flex-shrink-0"
-                        onClick={() => {
-                          chatMutation.mutate(action.query);
-                        }}
+                        onClick={() => chatMutation.mutate(action.query)}
                         disabled={chatMutation.isPending}
+                        className="text-xs h-8 justify-start text-left"
                       >
                         {action.label}
                       </Button>
                     ))}
                   </div>
                 </div>
+              )}
 
-                <div className="p-4 max-w-full">
-                  <div className="flex gap-2 items-center max-w-full">
-                    <div className="flex-1 min-w-0 overflow-hidden">
-                      <Input
-                        value={inputMessage}
-                        onChange={(e) => setInputMessage(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        placeholder={isListening ? "Listening..." : "Ask Compass anything or use voice input"}
-                        className="w-full min-w-0 max-w-full"
-                        disabled={chatMutation.isPending || isListening}
-                        ref={inputRef}
-                      />
-                    </div>
-                    <div className="flex gap-1 flex-shrink-0">
-                      <Button
-                        onClick={isListening ? stopListening : startListening}
-                        size="sm"
-                        variant={isListening ? "destructive" : "outline"}
-                        disabled={chatMutation.isPending}
-                        className="w-9 h-9 p-0"
-                      >
-                        {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                      </Button>
-                      <Button
-                        onClick={handleSendMessage}
-                        disabled={!inputMessage.trim() || chatMutation.isPending}
-                        size="sm"
-                        className="w-9 h-9 p-0"
-                      >
-                        <Send className="w-4 h-4" />
-                      </Button>
-                    </div>
+              {/* Input Area */}
+              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                <form onSubmit={handleSendMessage} className="flex gap-2">
+                  <div className="flex-1 relative">
+                    <Input
+                      ref={inputRef}
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      placeholder="Ask Compass anything..."
+                      disabled={chatMutation.isPending}
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 w-8 h-8 p-0"
+                      onClick={isListening ? stopListening : startListening}
+                      disabled={chatMutation.isPending}
+                      title={isListening ? "Stop listening" : "Start voice input"}
+                    >
+                      {isListening ? (
+                        <MicOff className="w-4 h-4 text-red-500" />
+                      ) : (
+                        <Mic className="w-4 h-4" />
+                      )}
+                    </Button>
                   </div>
-                </div>
+                  <Button
+                    type="submit"
+                    disabled={!inputMessage.trim() || chatMutation.isPending}
+                    className="bg-therapy-primary hover:bg-therapy-primary/90"
+                  >
+                    {chatMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                  </Button>
+                </form>
               </div>
             </>
           )}
