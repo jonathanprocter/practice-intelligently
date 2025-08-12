@@ -229,7 +229,9 @@ export const AppointmentDetailsDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden p-0">
+        <ScrollArea className="max-h-[85vh] overflow-y-auto">
+          <div className="p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
@@ -654,6 +656,8 @@ export const AppointmentDetailsDialog = ({
             </Card>
           </TabsContent>
         </Tabs>
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
