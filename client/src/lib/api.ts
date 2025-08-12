@@ -65,10 +65,13 @@ export interface ActionItem {
 
 export interface AiInsight {
   id: string;
+  clientId?: string;
+  therapistId: string;
   type: string;
   title: string;
   content: string;
-  confidence?: number;
+  confidence?: string;
+  metadata?: any;
   isRead: boolean;
   createdAt: string;
 }
