@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
+import { createServer } from 'http';
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { setupWebSocketServer } from './websocket/websocket.server';
 
 // Set server timezone to Eastern Time
 process.env.TZ = 'America/New_York';
@@ -40,7 +42,13 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  const server = createServer(app);
+  const wsManager = setupWebSocketServer(server);
+
+  // Make wsManager available to routes
+  app.set('wsManager', wsManager);
+
+  await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -64,7 +72,7 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  
+
   server.on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {
       console.error(`Port ${port} is already in use. Trying to kill existing process...`);
