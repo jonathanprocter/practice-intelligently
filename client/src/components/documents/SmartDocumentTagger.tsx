@@ -71,27 +71,33 @@ const SmartDocumentTagger: React.FC<SmartDocumentTaggerProps> = ({
         }
 
         try {
-          const response = await apiRequest('/api/documents/analyze-and-tag', {
+          const response = await fetch('/api/documents/analyze-and-tag', {
             method: 'POST',
             body: formData,
           });
 
-          if (response.success) {
+          if (!response.ok) {
+            throw new Error(`${response.status}: ${response.statusText}`);
+          }
+
+          const result = await response.json();
+
+          if (result.success) {
             const analyzedDoc: AnalyzedDocument = {
-              id: response.document.id,
-              fileName: response.document.fileName,
-              fileType: response.document.fileType,
-              fileSize: response.document.fileSize,
-              analysis: response.analysis
+              id: result.document.id,
+              fileName: result.document.fileName,
+              fileType: result.document.fileType,
+              fileSize: result.document.fileSize,
+              analysis: result.analysis
             };
 
             results.push(analyzedDoc);
-            console.log(`✅ Document analyzed: ${response.analysis.category}/${response.analysis.subcategory}`);
+            console.log(`✅ Document analyzed: ${result.analysis.category}/${result.analysis.subcategory}`);
 
             // Show success toast
             toast({
               title: "Document Analyzed",
-              description: `${file.name} categorized as ${response.analysis.category}`,
+              description: `${file.name} categorized as ${result.analysis.category}`,
             });
 
             // Call callback if provided
@@ -100,10 +106,10 @@ const SmartDocumentTagger: React.FC<SmartDocumentTaggerProps> = ({
             }
 
           } else {
-            console.error(`❌ Failed to analyze ${file.name}:`, response.error);
+            console.error(`❌ Failed to analyze ${file.name}:`, result.error);
             toast({
               title: "Analysis Failed",
-              description: `Failed to analyze ${file.name}: ${response.error}`,
+              description: `Failed to analyze ${file.name}: ${result.error}`,
               variant: "destructive"
             });
           }
