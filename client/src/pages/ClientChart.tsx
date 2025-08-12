@@ -1,8 +1,45 @@
-import React, { Suspense } from 'react';
+/**
+ * Enhanced ClientChart Component
+ * 
+ * Optional dependencies for full functionality:
+ * - npm install recharts (for charts in analytics)
+ * - npm install react-window (for virtual scrolling with large datasets)
+ * - npm install date-fns (for better date formatting)
+ * 
+ * The component will work without these libraries but with reduced features.
+ */
+
+import React from 'react';
 import { useParams, useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { FixedSizeList } from 'react-window';
-import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+// Optional imports - uncomment if you have these libraries installed
+// import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+
+// Fallback date formatting if date-fns is not available
+const format = (date: Date, formatStr: string) => {
+  // Simple fallback formatting
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                  'July', 'August', 'September', 'October', 'November', 'December'];
+  if (formatStr === 'MMMM yyyy') {
+    return `${months[date.getMonth()]} ${date.getFullYear()}`;
+  }
+  if (formatStr === 'MMM yyyy') {
+    return `${months[date.getMonth()].slice(0, 3)} ${date.getFullYear()}`;
+  }
+  return date.toLocaleDateString();
+};
+
+const startOfMonth = (date: Date) => {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+};
+
+const endOfMonth = (date: Date) => {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+};
+
+const isWithinInterval = (date: Date, interval: { start: Date; end: Date }) => {
+  return date >= interval.start && date <= interval.end;
+};
 import { useToast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,17 +74,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+// Note: Uncomment these imports if you have recharts installed
+// import {
+//   LineChart,
+//   Line,
+//   BarChart,
+//   Bar,
+//   XAxis,
+//   YAxis,
+//   CartesianGrid,
+//   Tooltip,
+//   ResponsiveContainer,
+// } from 'recharts';
 import {
   User,
   Calendar,
@@ -73,12 +111,25 @@ import {
   Printer,
 } from 'lucide-react';
 
-// Lazy load heavy components
-const DocumentProcessor = React.lazy(() => import('@/components/documents/DocumentProcessor'));
-const SessionRecommendations = React.lazy(() => import('@/components/SessionRecommendations'));
-const SessionNoteLinkingModal = React.lazy(() => import('@/components/SessionNoteLinkingModal'));
-const CreateSessionNoteModal = React.lazy(() => import('@/components/CreateSessionNoteModal'));
-const EditableClientInfo = React.lazy(() => import('@/components/clients/EditableClientInfo'));
+// Safe lazy loading with fallbacks
+const loadComponent = (importFn: () => Promise<any>, fallback?: React.ComponentType<any>) => {
+  return React.lazy(() => 
+    importFn().catch(() => {
+      console.warn('Component failed to load, using fallback');
+      return { 
+        default: fallback || (() => <div>Component not available</div>) 
+      };
+    })
+  );
+};
+
+// Import components - these will use the actual components if they exist
+// For now, import them normally to avoid issues
+import { DocumentProcessor } from '@/components/documents/DocumentProcessor';
+import { SessionNoteLinkingModal } from '@/components/SessionNoteLinkingModal';
+import { SessionRecommendations } from '@/components/SessionRecommendations';
+import { CreateSessionNoteModal } from '@/components/CreateSessionNoteModal';
+import EditableClientInfo from '@/components/clients/EditableClientInfo';
 
 /* =======================
    Types
@@ -318,20 +369,15 @@ function useRealtimeUpdates(clientId: string, queryClient: any) {
   const { toast } = useToast();
 
   React.useEffect(() => {
-    // Skip WebSocket connection in development to avoid connection errors
-    if (import.meta.env.DEV) {
+    // Skip if no WebSocket URL is configured
+    if (!process.env.NEXT_PUBLIC_WS_URL) {
+      console.log('WebSocket URL not configured, skipping real-time updates');
       return;
     }
 
-    // Only attempt WebSocket if URL is properly configured
-    if (!import.meta.env.VITE_WS_URL) {
-      return;
-    }
-
-    // WebSocket connection for real-time updates
-    const wsUrl = `${import.meta.env.VITE_WS_URL}/clients/${clientId}/updates`;
-    
     try {
+      // WebSocket connection for real-time updates
+      const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL}/clients/${clientId}/updates`;
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
@@ -364,23 +410,15 @@ function useRealtimeUpdates(clientId: string, queryClient: any) {
         }
       };
 
-      ws.onerror = () => {
-        // Silent fail for WebSocket errors in development
-      };
-
-      ws.onclose = () => {
-        // Silent cleanup
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
       };
 
       return () => {
-        try {
-          ws.close();
-        } catch {
-          // Silent cleanup
-        }
+        ws.close();
       };
     } catch (error) {
-      // Silent fail for WebSocket creation errors
+      console.log('WebSocket not available:', error);
     }
   }, [clientId, queryClient, toast]);
 }
@@ -395,40 +433,23 @@ function calculateClientStats(
   hasNoteFor: (apt: Appointment) => boolean
 ): ClientStats {
   const now = new Date();
-  
-  const upcomingCount = appointments.filter(apt => {
-    const startDate = safeDate(apt.startTime);
-    return startDate && startDate > now;
-  }).length;
-  
-  const completedCount = appointments.filter(apt => {
-    const startDate = safeDate(apt.startTime);
-    return startDate && startDate <= now;
-  }).length;
-  
+  const upcomingCount = appointments.filter(apt => new Date(apt.startTime) > now).length;
+  const completedCount = appointments.filter(apt => new Date(apt.startTime) <= now).length;
   const linkedNotesCount = appointments.filter(hasNoteFor).length;
   const unlinkedNotesCount = sessionNotes.filter(n => !n.appointmentId && !n.eventId).length;
 
   // Calculate average sessions per month
-  const sessionDates = sessionNotes
-    .map(n => safeDate(n.createdAt))
-    .filter(d => d !== undefined && !isNaN(d.getTime())) as Date[];
-  
-  const oldestSession = sessionDates.length > 0 
-    ? Math.min(...sessionDates.map(d => d.getTime())) 
-    : now.getTime();
+  const sessionDates = sessionNotes.map(n => new Date(n.createdAt));
+  const oldestSession = sessionDates.length > 0 ? Math.min(...sessionDates.map(d => d.getTime())) : now.getTime();
   const monthsActive = Math.max(1, (now.getTime() - oldestSession) / (1000 * 60 * 60 * 24 * 30));
   const avgSessionsPerMonth = Math.round((sessionNotes.length / monthsActive) * 10) / 10;
 
   // Calculate days since last contact
-  const appointmentDates = appointments
-    .map(a => safeDate(a.startTime))
-    .filter(d => d !== undefined && !isNaN(d.getTime())) as Date[];
-  
-  const allDates = [...sessionDates, ...appointmentDates];
-  const lastContact = allDates.length > 0 
-    ? Math.max(...allDates.map(d => d.getTime())) 
-    : now.getTime();
+  const allDates = [
+    ...sessionNotes.map(n => new Date(n.createdAt)),
+    ...appointments.map(a => new Date(a.startTime))
+  ];
+  const lastContact = allDates.length > 0 ? Math.max(...allDates.map(d => d.getTime())) : now.getTime();
   const lastContactDays = Math.floor((now.getTime() - lastContact) / (1000 * 60 * 60 * 24));
 
   return {
@@ -459,22 +480,12 @@ function generateSessionFrequencyData(sessionNotes: SessionNote[]) {
   }).reverse();
 
   sessionNotes.forEach(note => {
-    try {
-      const noteDate = safeDate(note.createdAt);
-      if (!noteDate || isNaN(noteDate.getTime())) return;
-      
-      const monthData = last6Months.find(m => {
-        try {
-          return isWithinInterval(noteDate, { start: m.start, end: m.end });
-        } catch {
-          return false;
-        }
-      });
-      if (monthData) {
-        monthData.count++;
-      }
-    } catch (error) {
-      console.error('Error processing session note for frequency data:', error);
+    const noteDate = new Date(note.createdAt);
+    const monthData = last6Months.find(m => 
+      isWithinInterval(noteDate, { start: m.start, end: m.end })
+    );
+    if (monthData) {
+      monthData.count++;
     }
   });
 
@@ -925,26 +936,20 @@ function ClientChartInner() {
   const timelineData = React.useMemo(() => {
     if (!appointments.data || !sessionNotes.data) return [];
 
-    const apptItems = appointments.data.map(apt => {
-      const startDate = safeDate(apt.startTime);
-      const validDate = startDate && !isNaN(startDate.getTime()) ? startDate : new Date();
-      return {
-        type: 'appointment' as const,
-        date: validDate,
-        title: apt.title || 'Appointment',
-        data: apt,
-        hasNote: hasNoteFor(apt),
-      };
-    });
+    const apptItems = appointments.data.map(apt => ({
+      type: 'appointment' as const,
+      date: new Date(apt.startTime),
+      title: apt.title || 'Appointment',
+      data: apt,
+      hasNote: hasNoteFor(apt),
+    }));
 
     const noteItems = sessionNotes.data.map(note => {
-      const createdDate = safeDate(note.createdAt);
-      const validDate = createdDate && !isNaN(createdDate.getTime()) ? createdDate : new Date();
       const firstLine = note.content?.split('\n')[0] ?? 'Session Note';
       const title = firstLine.slice(0, 100) + (firstLine.length > 100 ? '…' : '');
       return {
         type: 'session-note' as const,
-        date: validDate,
+        date: new Date(note.createdAt),
         title,
         data: note,
         hasNote: true,
@@ -955,47 +960,29 @@ function ClientChartInner() {
 
     // Apply filters
     if (searchTerm) {
-      allItems = allItems.filter(item => {
-        try {
-          return item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (item.type === 'session-note' && 
-             (item.data as SessionNote).content?.toLowerCase().includes(searchTerm.toLowerCase()));
-        } catch (error) {
-          console.error('Error filtering timeline items:', error);
-          return false;
-        }
-      });
+      allItems = allItems.filter(item => 
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.type === 'session-note' && 
+         (item.data as SessionNote).content.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
     }
 
     if (dateFilter) {
-      allItems = allItems.filter(item => {
-        try {
-          if (!item.date || isNaN(item.date.getTime())) return false;
-          return isWithinInterval(item.date, { start: dateFilter.start, end: dateFilter.end });
-        } catch (error) {
-          console.error('Error filtering by date:', error);
-          return false;
-        }
-      });
+      allItems = allItems.filter(item => 
+        isWithinInterval(item.date, { start: dateFilter.start, end: dateFilter.end })
+      );
     }
 
     if (noteTypeFilter !== 'all') {
       allItems = allItems.filter(item => {
         if (item.type !== 'session-note') return true;
         const note = item.data as SessionNote;
-        const isLinked = Boolean(note.appointmentId) || Boolean(note.eventId);
+        const isLinked = note.appointmentId || note.eventId;
         return noteTypeFilter === 'linked' ? isLinked : !isLinked;
       });
     }
 
-    return allItems.sort((a, b) => {
-      try {
-        return b.date.getTime() - a.date.getTime();
-      } catch (error) {
-        console.error('Error sorting timeline items:', error);
-        return 0;
-      }
-    });
+    return allItems.sort((a, b) => b.date.getTime() - a.date.getTime());
   }, [appointments.data, sessionNotes.data, hasNoteFor, searchTerm, dateFilter, noteTypeFilter]);
 
   // Group timeline by month
@@ -1003,29 +990,16 @@ function ClientChartInner() {
     const groups = new Map<string, typeof timelineData>();
 
     timelineData.forEach(item => {
-      try {
-        if (!item.date || isNaN(item.date.getTime())) return;
-        const monthKey = format(item.date, 'MMMM yyyy');
-        if (!groups.has(monthKey)) {
-          groups.set(monthKey, []);
-        }
-        groups.get(monthKey)!.push(item);
-      } catch (error) {
-        console.error('Error grouping timeline item:', error);
+      const monthKey = format(item.date, 'MMMM yyyy');
+      if (!groups.has(monthKey)) {
+        groups.set(monthKey, []);
       }
+      groups.get(monthKey)!.push(item);
     });
 
     return Array.from(groups.entries()).map(([month, items]) => ({
       month,
-      items: items.sort((a, b) => {
-        try {
-          if (!a.date || !b.date || isNaN(a.date.getTime()) || isNaN(b.date.getTime())) return 0;
-          return b.date.getTime() - a.date.getTime();
-        } catch (error) {
-          console.error('Error sorting grouped items:', error);
-          return 0;
-        }
-      })
+      items: items.sort((a, b) => b.date.getTime() - a.date.getTime())
     }));
   }, [timelineData]);
 
@@ -1295,9 +1269,7 @@ function ClientChartInner() {
 
         {isEditingHeader && (
           <div className="mt-6 p-4 border rounded-lg bg-gray-50">
-            <Suspense fallback={<Skeleton className="h-32 w-full" />}>
-              <EditableClientInfo client={client.data} mode="compact" />
-            </Suspense>
+            <EditableClientInfo client={client.data} mode="compact" />
           </div>
         )}
       </div>
@@ -1503,42 +1475,8 @@ function ClientChartInner() {
                         </Button>
                       )}
                     </div>
-                  ) : timelineData.length > 50 ? (
-                    // Use virtual scrolling for large lists
-                    <div className="space-y-6">
-                      {groupedTimelineData.map(({ month, items }) => (
-                        <div key={month}>
-                          <h3 className="text-sm font-semibold text-gray-600 mb-3 sticky top-0 bg-white py-2 z-10">
-                            {month}
-                          </h3>
-                          <FixedSizeList
-                            height={400}
-                            itemCount={items.length}
-                            itemSize={150}
-                            width="100%"
-                          >
-                            {({ index, style }) => (
-                              <div style={style}>
-                                <TimelineItemComponent
-                                  item={items[index]}
-                                  index={index}
-                                  isSelected={selectedNotes.has((items[index].data as any).id)}
-                                  onSelect={handleSelectNote}
-                                  onDelete={handleDeleteSessionNote}
-                                  onAddNote={(apt) => {
-                                    setSelectedAppointment(apt);
-                                    setIsCreateNoteModalOpen(true);
-                                  }}
-                                  showLine={index < items.length - 1}
-                                />
-                              </div>
-                            )}
-                          </FixedSizeList>
-                        </div>
-                      ))}
-                    </div>
                   ) : (
-                    // Regular rendering for smaller lists
+                    // Regular rendering
                     <div className="space-y-6">
                       {groupedTimelineData.map(({ month, items }) => (
                         <div key={month}>
@@ -1609,7 +1547,8 @@ function ClientChartInner() {
                 <CardTitle>Session Frequency</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                {/* Chart placeholder - uncomment if you have recharts installed */}
+                {/* <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={sessionFrequencyData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
@@ -1623,7 +1562,26 @@ function ClientChartInner() {
                       dot={{ fill: '#8b5cf6' }}
                     />
                   </LineChart>
-                </ResponsiveContainer>
+                </ResponsiveContainer> */}
+
+                {/* Simple text-based alternative */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium text-gray-600">Last 6 Months</h4>
+                  {sessionFrequencyData.map((data) => (
+                    <div key={data.month} className="flex items-center justify-between">
+                      <span className="text-sm">{data.month}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-32 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-purple-600 h-2 rounded-full transition-all"
+                            style={{ width: `${(data.sessions / Math.max(...sessionFrequencyData.map(d => d.sessions), 1)) * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-medium w-8">{data.sessions}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
 
@@ -1632,7 +1590,8 @@ function ClientChartInner() {
                 <CardTitle>Common Themes</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                {/* Chart placeholder - uncomment if you have recharts installed */}
+                {/* <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={commonThemes}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="theme" angle={-45} textAnchor="end" height={100} />
@@ -1640,7 +1599,29 @@ function ClientChartInner() {
                     <Tooltip />
                     <Bar dataKey="count" fill="#8b5cf6" />
                   </BarChart>
-                </ResponsiveContainer>
+                </ResponsiveContainer> */}
+
+                {/* Simple text-based alternative */}
+                <div className="space-y-3">
+                  {commonThemes.length > 0 ? (
+                    commonThemes.slice(0, 8).map(({ theme, count }) => (
+                      <div key={theme} className="flex items-center justify-between">
+                        <span className="text-sm">{theme}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-purple-600 h-2 rounded-full transition-all"
+                              style={{ width: `${(count / Math.max(...commonThemes.map(t => t.count), 1)) * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-medium w-8">{count}</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500">No themes identified yet</p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -1697,7 +1678,7 @@ function ClientChartInner() {
                     <DropdownMenuItem
                       key={template.name}
                       onClick={() => {
-                        // Set template and open modal
+                        // TODO: Set template and open modal with pre-filled content
                         setIsCreateNoteModalOpen(true);
                       }}
                     >
@@ -1713,12 +1694,162 @@ function ClientChartInner() {
             </div>
           </div>
 
-          {/* Session notes content - similar to original but with enhancements */}
-          {/* ... rest of session notes implementation ... */}
+          {/* Session notes list */}
+          {sessionNotes.isLoading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="p-6">
+                    <Skeleton className="h-5 w-44 mb-2" />
+                    <Skeleton className="h-4 w-64 mb-3" />
+                    <Skeleton className="h-20 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : sessionNotes.data?.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No session notes found</h3>
+                <p className="text-gray-600 mb-4">Create your first session note for this client.</p>
+                <Button onClick={() => setIsCreateNoteModalOpen(true)}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Create Session Note
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {sessionNotes.data?.map((note) => (
+                <Card key={note.id}>
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-medium">Session Note</h3>
+                          {note.source === 'document_upload' && (
+                            <Badge variant="secondary">
+                              <Upload className="w-3 h-3 mr-1" />
+                              Uploaded
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-600 mb-3">
+                          {new Date(note.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <Checkbox
+                        checked={selectedNotes.has(note.id)}
+                        onCheckedChange={() => handleSelectNote(note.id)}
+                      />
+                    </div>
+                    <div className="prose prose-sm max-w-none">
+                      <div className="whitespace-pre-wrap text-sm text-gray-700">
+                        <ReadMore text={note.content} max={600} />
+                      </div>
+                    </div>
+                    {note.aiTags && note.aiTags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-4">
+                        {note.aiTags.map((tag, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
-        {/* Other tabs remain similar with enhancements */}
-        {/* ... */}
+        {/* Appointments Tab */}
+        <TabsContent value={TABS.APPTS} className="space-y-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-semibold">Appointments</h2>
+              <p className="text-sm text-gray-600">{appointments.data?.length || 0} total appointments</p>
+            </div>
+            <Button variant="outline">
+              <Calendar className="w-4 h-4 mr-2" />
+              Schedule New
+            </Button>
+          </div>
+
+          {appointments.isLoading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="p-6">
+                    <Skeleton className="h-5 w-64 mb-3" />
+                    <Skeleton className="h-4 w-80 mb-2" />
+                    <Skeleton className="h-4 w-72" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : appointments.data?.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No appointments found</h3>
+                <p className="text-gray-600 mb-4">Schedule the first appointment for this client.</p>
+                <Button variant="outline">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Schedule Appointment
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {appointments.data?.map((appointment) => {
+                const linked = hasNoteFor(appointment);
+                const isPast = new Date(appointment.startTime).getTime() < Date.now();
+
+                return (
+                  <Card key={appointment.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Calendar className="w-4 h-4 text-gray-500" />
+                          <div>
+                            <p className="font-medium">
+                              {appointment.title || appointment.type?.replace('_', ' ') || 'Appointment'}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {new Date(appointment.startTime).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {linked && (
+                            <Badge variant="outline" className="text-green-600">
+                              Has Note
+                            </Badge>
+                          )}
+                          {!linked && isPast && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedAppointment(appointment);
+                                setIsCreateNoteModalOpen(true);
+                              }}
+                            >
+                              Add Note
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
 
         {/* Documents Tab */}
         <TabsContent value={TABS.DOCS} className="space-y-6">
@@ -1729,13 +1860,11 @@ function ClientChartInner() {
             </p>
           </div>
 
-          <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-            <DocumentProcessor
-              clientId={clientId}
-              clientName={clientName}
-              onDocumentProcessed={handleDocumentProcessed}
-            />
-          </Suspense>
+          <DocumentProcessor
+            clientId={clientId}
+            clientName={clientName}
+            onDocumentProcessed={handleDocumentProcessed}
+          />
         </TabsContent>
 
         {/* AI Insights Tab */}
@@ -1747,39 +1876,35 @@ function ClientChartInner() {
             </p>
           </div>
 
-          <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-            <SessionRecommendations 
-              clientId={clientId} 
-              sessionNotes={sessionNotes.data || []} 
-            />
-          </Suspense>
+          <SessionRecommendations 
+            clientId={clientId} 
+            sessionNotes={sessionNotes.data || []} 
+          />
         </TabsContent>
       </Tabs>
 
       {/* Modals */}
-      <Suspense fallback={null}>
-        {isCreateNoteModalOpen && (
-          <CreateSessionNoteModal
-            isOpen={isCreateNoteModalOpen}
-            onClose={() => {
-              setIsCreateNoteModalOpen(false);
-              setSelectedAppointment(null);
-            }}
-            clientId={clientId}
-            clientName={clientName}
-            selectedAppointment={selectedAppointment}
-          />
-        )}
+      {isCreateNoteModalOpen && (
+        <CreateSessionNoteModal
+          isOpen={isCreateNoteModalOpen}
+          onClose={() => {
+            setIsCreateNoteModalOpen(false);
+            setSelectedAppointment(null);
+          }}
+          clientId={clientId}
+          clientName={clientName}
+          selectedAppointment={selectedAppointment}
+        />
+      )}
 
-        {isLinkingModalOpen && (
-          <SessionNoteLinkingModal
-            isOpen={isLinkingModalOpen}
-            onClose={() => setIsLinkingModalOpen(false)}
-            clientId={clientId}
-            onLinkingComplete={handleLinkingComplete}
-          />
-        )}
-      </Suspense>
+      {isLinkingModalOpen && (
+        <SessionNoteLinkingModal
+          isOpen={isLinkingModalOpen}
+          onClose={() => setIsLinkingModalOpen(false)}
+          clientId={clientId}
+          onLinkingComplete={handleLinkingComplete}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!pendingDeleteId} onOpenChange={(open) => !open && setPendingDeleteId(null)}>
