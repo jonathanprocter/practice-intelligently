@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Brain, TrendingUp, Calendar, FileText, BarChart3, LineChart, Target, AlertTriangle, Lightbulb, Play, Loader2 } from 'lucide-react';
+import { Brain, TrendingUp, Calendar, FileText, BarChart3, Target, AlertTriangle, Lightbulb, Play, Loader2 } from 'lucide-react';
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
          BarChart as RechartsBarChart, Bar, PieChart, Pie, Cell, RadialBarChart, RadialBar, Legend } from 'recharts';
 import { apiRequest, queryClient } from '@/lib/queryClient';
