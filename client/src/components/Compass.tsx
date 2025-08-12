@@ -243,6 +243,7 @@ export function Compass({ className = '' }) {
   const [selectedVoice, setSelectedVoice] = useState('rachel');
   const [speechRate, setSpeechRate] = useState(1.0);
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+  const [voiceModulation, setVoiceModulation] = useState('auto');
   const [compassState, setCompassState] = useState('normal');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -491,7 +492,7 @@ export function Compass({ className = '' }) {
 
       setIsSpeaking(true);
 
-      // Use ElevenLabs API for high-quality voice synthesis
+      // Use ElevenLabs API for high-quality voice synthesis with intelligent modulation
       const response = await fetch('/api/compass/speak', {
         method: 'POST',
         headers: {
@@ -500,7 +501,8 @@ export function Compass({ className = '' }) {
         body: JSON.stringify({ 
           text,
           voice: selectedVoice,
-          speed: speechRate
+          speed: speechRate,
+          modulation: voiceModulation
         }),
       });
 
@@ -514,6 +516,12 @@ export function Compass({ className = '' }) {
           setCurrentAudio(null);
           URL.revokeObjectURL(audioUrl);
         };
+
+        // Log voice context for debugging
+        const voiceContext = response.headers.get('X-Voice-Context');
+        if (voiceContext) {
+          console.log(`🎤 Voice adapted for ${voiceContext} context`);
+        }
 
         setCurrentAudio(audio);
         await audio.play();
@@ -838,6 +846,19 @@ export function Compass({ className = '' }) {
                     step={0.1}
                     className="mt-2"
                   />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Voice Modulation</label>
+                  <Select value={voiceModulation} onValueChange={setVoiceModulation}>
+                    <SelectItem value="auto">Auto (Intelligent)</SelectItem>
+                    <SelectItem value="manual">Manual (Fixed)</SelectItem>
+                  </Select>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {voiceModulation === 'auto' 
+                      ? 'AI analyzes content for optimal voice characteristics'
+                      : 'Uses consistent voice settings for all content'
+                    }
+                  </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-gray-700">Continuous Mode</label>

@@ -3513,10 +3513,77 @@ Suggested preparation:
       .trim();
   };
 
-  // ElevenLabs text-to-speech endpoint
+  // Intelligent voice modulation based on content analysis
+  const analyzeTextForVoiceModulation = (text: string) => {
+    const lowerText = text.toLowerCase();
+    
+    // Detect emotional tone
+    const urgentKeywords = ['urgent', 'emergency', 'crisis', 'immediate', 'critical', 'warning'];
+    const calmKeywords = ['calm', 'peaceful', 'relax', 'gentle', 'soothing', 'mindful'];
+    const supportiveKeywords = ['support', 'help', 'comfort', 'care', 'understand', 'empathy'];
+    const encouragingKeywords = ['progress', 'achievement', 'success', 'improvement', 'growth', 'positive'];
+    const professionalKeywords = ['assessment', 'treatment', 'diagnosis', 'therapy', 'clinical', 'protocol'];
+    
+    let emotionalContext = 'neutral';
+    let stability = 0.6; // Default stability
+    let style = 0.2; // Default style (slightly expressive)
+    let similarity_boost = 0.8; // Default similarity
+    
+    // Analyze content for emotional context
+    if (urgentKeywords.some(keyword => lowerText.includes(keyword))) {
+      emotionalContext = 'urgent';
+      stability = 0.4; // More variable for urgency
+      style = 0.4; // More expressive
+    } else if (calmKeywords.some(keyword => lowerText.includes(keyword))) {
+      emotionalContext = 'calming';
+      stability = 0.8; // Very stable and consistent
+      style = 0.1; // Less expressive, more soothing
+    } else if (supportiveKeywords.some(keyword => lowerText.includes(keyword))) {
+      emotionalContext = 'supportive';
+      stability = 0.7; // Stable but warm
+      style = 0.3; // Moderately expressive
+      similarity_boost = 0.9; // Higher similarity for warmth
+    } else if (encouragingKeywords.some(keyword => lowerText.includes(keyword))) {
+      emotionalContext = 'encouraging';
+      stability = 0.6; // Balanced
+      style = 0.4; // More expressive for positivity
+    } else if (professionalKeywords.some(keyword => lowerText.includes(keyword))) {
+      emotionalContext = 'professional';
+      stability = 0.8; // Very stable and clear
+      style = 0.1; // Minimal expression for clarity
+    }
+    
+    // Adjust based on text length and complexity
+    const wordCount = text.split(' ').length;
+    if (wordCount > 50) {
+      stability += 0.1; // More stable for longer content
+    }
+    
+    // Detect question marks for inquisitive tone
+    if (text.includes('?')) {
+      style += 0.1; // Slightly more expressive for questions
+    }
+    
+    // Clamp values to valid ranges
+    stability = Math.max(0.1, Math.min(1.0, stability));
+    style = Math.max(0.0, Math.min(1.0, style));
+    similarity_boost = Math.max(0.0, Math.min(1.0, similarity_boost));
+    
+    return {
+      emotionalContext,
+      voiceSettings: {
+        stability,
+        similarity_boost,
+        style,
+        use_speaker_boost: true
+      }
+    };
+  };
+
+  // ElevenLabs text-to-speech endpoint with intelligent voice modulation
   app.post("/api/compass/speak", async (req, res) => {
     try {
-      const { text, voice = 'rachel', speed = 1.0 } = req.body;
+      const { text, voice = 'rachel', speed = 1.0, modulation = 'auto' } = req.body;
 
       if (!text) {
         return res.status(400).json({ error: "Text is required" });
@@ -3524,6 +3591,11 @@ Suggested preparation:
 
       // Convert markdown to clean text for speech synthesis
       const cleanText = convertMarkdownToSpeech(text);
+
+      // Analyze text for intelligent voice modulation
+      const analysis = analyzeTextForVoiceModulation(cleanText);
+      
+      console.log(`🎤 Voice modulation analysis: ${analysis.emotionalContext} context detected`);
 
       // Voice ID mapping for ElevenLabs (using high-quality voices)
       const voiceMap = {
@@ -3538,6 +3610,24 @@ Suggested preparation:
 
       const selectedVoiceId = voiceMap[voice as keyof typeof voiceMap] || voiceMap.rachel;
 
+      // Apply intelligent voice settings or use manual override
+      let voiceSettings;
+      if (modulation === 'auto') {
+        voiceSettings = {
+          ...analysis.voiceSettings,
+          speaking_rate: Math.max(0.25, Math.min(4.0, speed))
+        };
+      } else {
+        // Manual/default settings
+        voiceSettings = {
+          stability: 0.6,
+          similarity_boost: 0.8,
+          style: 0.2,
+          use_speaker_boost: true,
+          speaking_rate: Math.max(0.25, Math.min(4.0, speed))
+        };
+      }
+
       const elevenLabsResponse = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}`, {
         method: "POST",
         headers: {
@@ -3548,13 +3638,7 @@ Suggested preparation:
         body: JSON.stringify({
           text: cleanText,
           model_id: "eleven_turbo_v2", // Updated to newer, faster model
-          voice_settings: {
-            stability: 0.6,
-            similarity_boost: 0.8,
-            style: 0.2, // Slightly more expressive for therapeutic context
-            use_speaker_boost: true,
-            speaking_rate: Math.max(0.25, Math.min(4.0, speed))
-          }
+          voice_settings: voiceSettings
         })
       });
 
@@ -3568,6 +3652,7 @@ Suggested preparation:
 
       res.setHeader('Content-Type', 'audio/mpeg');
       res.setHeader('Content-Length', audioBuffer.byteLength);
+      res.setHeader('X-Voice-Context', analysis.emotionalContext);
       res.send(Buffer.from(audioBuffer));
 
     } catch (error) {
