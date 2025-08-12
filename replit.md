@@ -17,6 +17,7 @@ This is a comprehensive full-stack web application designed to streamline therap
 - **Session Management**: Stabilized authentication flow with proper therapist ID caching and session persistence
 - **ElevenLabs Voice Integration**: Enhanced Compass AI assistant with high-quality ElevenLabs voice synthesis, intelligent markdown-to-speech conversion, and 7 professional voice options including therapeutic-quality voices (Rachel, Adam, Bella, Josh, Sam, Nicole, Natasha)
 - **Intelligent Voice Modulation**: Advanced AI-powered voice adaptation system that analyzes text content to automatically adjust voice characteristics (stability, style, similarity_boost) based on emotional context including urgent, calming, supportive, encouraging, and professional tones
+- **Natural Voice Interruption**: Enhanced continuous conversation mode with voice interruption capabilities - users can say "stop", "pause", "wait", or "Hey Compass" to naturally interrupt responses and ask clarifying questions, making conversations more fluid and natural
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

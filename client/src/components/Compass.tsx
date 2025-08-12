@@ -247,6 +247,7 @@ export function Compass({ className = '' }) {
   const [compassState, setCompassState] = useState('normal');
   const [wakeWordMode, setWakeWordMode] = useState(true); // true for wake words, false for push-to-talk
   const [isLoading, setIsLoading] = useState(false);
+  const [allowInterruption, setAllowInterruption] = useState(true);
 
   const messagesEndRef = useRef(null);
   const compassRef = useRef(null);
@@ -386,7 +387,23 @@ export function Compass({ className = '' }) {
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript.trim();
 
+        // Check for interruption keywords when Compass is speaking
+        if (isSpeaking && allowInterruption) {
+          const interruptKeywords = ['stop', 'pause', 'wait', 'hold on', 'interrupt'];
+          if (interruptKeywords.some(keyword => transcript.toLowerCase().includes(keyword))) {
+            interruptSpeech();
+            setIsListening(false);
+            setCompassState('normal');
+            return;
+          }
+        }
+
         if (voiceActivation && transcript.toLowerCase().includes('hey compass')) {
+          // Interrupt current speech if speaking
+          if (isSpeaking && allowInterruption) {
+            interruptSpeech();
+          }
+          
           const query = transcript.toLowerCase().replace('hey compass', '').trim();
           if (query) {
             sendMessage(query);
@@ -398,6 +415,10 @@ export function Compass({ className = '' }) {
         setInputMessage(transcript);
 
         if (continuousMode && transcript) {
+          // Interrupt current speech if speaking
+          if (isSpeaking && allowInterruption) {
+            interruptSpeech();
+          }
           sendMessage(transcript);
           setInputMessage('');
         }
@@ -462,6 +483,16 @@ export function Compass({ className = '' }) {
     }
   };
 
+  // Interrupt current speech
+  const interruptSpeech = () => {
+    if (currentAudio) {
+      currentAudio.pause();
+      setCurrentAudio(null);
+      setIsSpeaking(false);
+      console.log('🎤 Speech interrupted by user');
+    }
+  };
+
   // Text to speech using ElevenLabs
   const speakText = async (text) => {
     try {
@@ -492,6 +523,13 @@ export function Compass({ className = '' }) {
         const audio = new Audio(audioUrl);
 
         audio.onended = () => {
+          setIsSpeaking(false);
+          setCurrentAudio(null);
+          URL.revokeObjectURL(audioUrl);
+        };
+
+        // Add interruption capability during speech
+        audio.onpause = () => {
           setIsSpeaking(false);
           setCurrentAudio(null);
           URL.revokeObjectURL(audioUrl);
@@ -880,6 +918,21 @@ export function Compass({ className = '' }) {
                     {continuousMode ? "ON" : "OFF"}
                   </Button>
                 </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700">Voice Interruption</label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setAllowInterruption(!allowInterruption)}
+                    className={allowInterruption ? 'bg-blue-600 text-white' : ''}
+                    title={allowInterruption ? 'You can interrupt Compass while speaking' : 'Voice interruption disabled'}
+                  >
+                    {allowInterruption ? "ON" : "OFF"}
+                  </Button>
+                </div>
+                <div className="text-xs text-gray-500 mt-2 p-2 bg-blue-50 rounded">
+                  <strong>Voice Interruption:</strong> Say "stop", "pause", "wait", or "Hey Compass" to interrupt and ask questions during continuous conversations.
+                </div>
               </div>
             </div>
           )}
@@ -923,10 +976,15 @@ export function Compass({ className = '' }) {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => speakText(message.content)}
-                                disabled={isSpeaking}
+                                onClick={() => {
+                                  if (isSpeaking) {
+                                    interruptSpeech();
+                                  } else {
+                                    speakText(message.content);
+                                  }
+                                }}
                                 className="w-6 h-6 p-0 hover:bg-white/20"
-                                title="Speak message"
+                                title={isSpeaking ? "Stop speaking" : "Speak message"}
                               >
                                 {isSpeaking ? (
                                   <VolumeX className="w-3 h-3" />
