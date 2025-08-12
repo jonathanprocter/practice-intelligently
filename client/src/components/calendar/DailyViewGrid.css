@@ -1,4 +1,4 @@
-/* Daily View Grid Specific Styles */
+/* Daily View Grid Layout - Based on provided specifications */
 
 .daily-view {
   display: flex;
@@ -6,31 +6,30 @@
   height: 100vh;
   background: white;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  overflow: hidden;
+  position: relative;
 }
 
-/* Header Styles */
+/* Header Section */
 .daily-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 16px 24px;
   border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
+  background: #f8f9fa;
   flex-shrink: 0;
 }
 
 .daily-title {
   font-size: 24px;
   font-weight: 600;
-  color: #111827;
+  color: #1f2937;
   margin: 0;
 }
 
 .daily-stats {
   display: flex;
   align-items: center;
-  gap: 16px;
 }
 
 .appointments-count {
@@ -42,100 +41,124 @@
   font-weight: 500;
 }
 
-/* Daily Notes Styles */
-.daily-notes {
-  margin: 16px 20px;
-  flex-shrink: 0;
+/* Main Content Area */
+.daily-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px 24px 0;
 }
 
-/* Grid Container */
-.daily-grid {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-  margin: 0 20px;
+/* Daily Notes Section */
+.daily-notes-section {
+  flex-shrink: 0;
+  margin-bottom: 16px;
+}
+
+.daily-notes-card {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: white;
 }
 
-/* Time Column */
-.time-column {
-  width: 80px;
-  border-right: 1px solid #e5e7eb;
-  background: #f9fafb;
-  flex-shrink: 0;
+/* Time Grid Container */
+.time-grid-container {
+  flex: 1;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
 }
 
-.time-header {
+.time-grid {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Time Column Header */
+.time-column-header {
+  grid-column: 1;
   height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e5e7eb;
+  border-right: 1px solid #e5e7eb;
   font-weight: 600;
   font-size: 12px;
   color: #374151;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f3f4f6;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 
-.time-slot-label {
+/* Events Column Header */
+.events-column-header {
+  grid-column: 2;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 600;
+  font-size: 14px;
+  color: #374151;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+/* Time Grid Rows */
+.time-grid-row {
+  display: contents;
+}
+
+/* Time Label Cell */
+.time-label-cell {
+  grid-column: 1;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #f9fafb;
+  border-bottom: 1px solid #f3f4f6;
+  border-right: 1px solid #e5e7eb;
+}
+
+.time-text {
   font-size: 11px;
   color: #6b7280;
-  border-bottom: 1px solid #f3f4f6;
   font-weight: 500;
 }
 
-.time-slot-label:nth-child(even) {
-  background: #f9fafb;
-}
-
-/* Appointments Column */
-.appointments-column {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  position: relative;
-}
-
-.appointments-header {
-  height: 50px;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  font-weight: 600;
-  font-size: 14px;
-  color: #374151;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f3f4f6;
-  flex-shrink: 0;
-}
-
-/* Time Slots Grid */
-.time-slot {
+/* Events Cell */
+.events-cell {
+  grid-column: 2;
   height: 40px;
   border-bottom: 1px solid #f3f4f6;
   position: relative;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  background: white;
 }
 
-.time-slot:hover {
-  background-color: #f9fafb;
-}
-
-.time-slot:nth-child(even) {
+.events-cell:nth-child(even) {
   background: #fdfdfd;
 }
 
-.time-slot.has-events {
+.events-cell:hover:not(.has-events) {
+  background: #f9fafb;
+}
+
+.events-cell.has-events {
   background: transparent;
 }
 
@@ -155,7 +178,6 @@
   box-sizing: border-box;
   z-index: 10;
   min-height: 36px;
-  max-height: calc(40px * var(--grid-span, 1) - 2px);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -172,6 +194,7 @@
   border-color: #4169E1;
   transform: scale(1.02);
   box-shadow: 0 2px 8px rgba(100, 149, 237, 0.3);
+  z-index: 15;
 }
 
 /* Appointment Type Styling - Google Calendar */
@@ -184,6 +207,7 @@
   border-color: #059669;
   transform: scale(1.02);
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  z-index: 15;
 }
 
 /* Appointment Type Styling - Personal */
@@ -196,6 +220,7 @@
   border-color: #D97706;
   transform: scale(1.02);
   box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+  z-index: 15;
 }
 
 /* Status-based styling */
@@ -267,7 +292,7 @@
   border: 2px solid #e5e7eb;
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 20;
+  z-index: 30;
   margin-top: 4px;
   max-width: 320px;
 }
@@ -304,9 +329,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 16px 24px;
   border-top: 1px solid #e5e7eb;
-  background: #f9fafb;
+  background: #f8f9fa;
   flex-shrink: 0;
   gap: 12px;
 }
@@ -327,6 +352,24 @@
   flex: 0 0 auto;
 }
 
+/* Scrollbar Styling */
+.time-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.time-grid::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.time-grid::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.time-grid::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .daily-view {
@@ -344,16 +387,16 @@
     font-size: 20px;
   }
   
-  .daily-grid {
-    margin: 0 16px;
+  .daily-content {
+    padding: 12px 16px 0;
   }
   
-  .time-column {
-    width: 60px;
+  .time-grid {
+    grid-template-columns: 60px 1fr;
   }
   
-  .time-header,
-  .appointments-header {
+  .time-column-header,
+  .events-column-header {
     font-size: 12px;
     padding: 0 8px;
   }
@@ -378,42 +421,15 @@
   }
 }
 
-/* Scrollbar Styling */
-.appointments-column::-webkit-scrollbar {
-  width: 6px;
-}
-
-.appointments-column::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-
-.appointments-column::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-}
-
-.appointments-column::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* Accessibility improvements */
+/* Focus and accessibility improvements */
 .appointment:focus {
   outline: 2px solid #3b82f6;
   outline-offset: 1px;
 }
 
-.time-slot:focus {
+.events-cell:focus {
   outline: 1px solid #3b82f6;
   outline-offset: -1px;
-}
-
-/* Animation for smooth transitions */
-.appointment {
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.appointment:hover {
-  z-index: 15;
 }
 
 /* High contrast mode support */

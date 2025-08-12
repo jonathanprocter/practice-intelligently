@@ -3,15 +3,13 @@ import { CalendarEvent } from '../../types/calendar';
 import { generateTimeSlots, getEventsForTimeSlot, calculateSlotPosition, formatTimeRange, TimeSlot } from '../../utils/timeSlots';
 import { cleanEventTitle, formatClientName } from '../../utils/textCleaner';
 import { cn } from '@/lib/utils';
-import './DailyViewGrid.css';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, User, Clock, MessageSquare, Trash2, Edit, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import './DailyViewGrid.css';
 
 interface DailyViewGridProps {
   date: Date;
@@ -75,13 +73,11 @@ export const DailyViewGrid = ({
   onSessionNotes,
   onDeleteEvent
 }: DailyViewGridProps) => {
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [dailyNotes, setDailyNotes] = useState('');
-  const [isEditingNotes, setIsEditingNotes] = useState(false);
   const { toast } = useToast();
 
-  // Generate time slots from 6:00 AM to 11:30 PM
+  // Generate time slots from 6:00 AM to 11:30 PM in 30-minute intervals
   const timeSlots = useMemo(() => generateTimeSlots(), []);
 
   // Filter and sort events for the selected date
@@ -151,18 +147,8 @@ export const DailyViewGrid = ({
   }, []);
 
   const handleEventClick = (event: CalendarEvent) => {
-    setSelectedEvent(event);
     setExpandedEventId(expandedEventId === event.id ? null : event.id);
     onEventClick(event);
-  };
-
-  const handleTimeSlotClick = (timeSlot: TimeSlot) => {
-    if (onTimeSlotClick) {
-      // Create a new date with the specific time slot
-      const slotDate = new Date(date);
-      slotDate.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
-      onTimeSlotClick(slotDate, timeSlot.display);
-    }
   };
 
   const handleDeleteEvent = async (event: CalendarEvent) => {
@@ -207,20 +193,128 @@ export const DailyViewGrid = ({
     return baseClass;
   };
 
-  const getEventPositionStyle = (event: CalendarEvent, timeSlot: TimeSlot) => {
+  const renderEventInTimeSlot = (event: CalendarEvent, timeSlot: TimeSlot, eventIndex: number) => {
     const startTime = parseEventDate(event.startTime);
     const endTime = parseEventDate(event.endTime);
     
-    if (!startTime || !endTime) return {};
+    if (!startTime || !endTime) return null;
 
-    const slotPosition = calculateSlotPosition(startTime, endTime);
-    const duration = Math.max(1, slotPosition.endSlot - slotPosition.startSlot);
+    // Calculate the duration in 30-minute slots
+    const durationMs = endTime.getTime() - startTime.getTime();
+    const durationSlots = Math.ceil(durationMs / (30 * 60 * 1000));
     
-    return {
-      '--grid-span': duration,
-      height: `calc(${duration * 40}px - 2px)`,
-      minHeight: '36px'
-    };
+    // Only render the event in its starting time slot
+    const eventStartSlot = timeSlots.find(slot => {
+      const slotDate = new Date(date);
+      slotDate.setHours(slot.hour, slot.minute, 0, 0);
+      return Math.abs(slotDate.getTime() - startTime.getTime()) < 30 * 60 * 1000;
+    });
+    
+    if (eventStartSlot?.hour !== timeSlot.hour || eventStartSlot?.minute !== timeSlot.minute) {
+      return null;
+    }
+
+    return (
+      <div
+        key={event.id}
+        className={getAppointmentClassName(event)}
+        style={{
+          '--grid-span': durationSlots,
+          height: `calc(${durationSlots * 40}px - 2px)`,
+          minHeight: '36px',
+          zIndex: 10 + eventIndex
+        } as React.CSSProperties}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleEventClick(event);
+        }}
+        data-testid={`appointment-${event.id}`}
+      >
+        <div className="appointment-content">
+          <div className="appointment-title">
+            {cleanEventTitle(event.title)}
+          </div>
+          <div className="appointment-time">
+            {startTime && endTime && (
+              <span className="time-range">
+                {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                {' - '}
+                {endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+              </span>
+            )}
+          </div>
+          {event.clientName && (
+            <div className="appointment-client">
+              {formatClientName(event.clientName)}
+            </div>
+          )}
+          {event.location && (
+            <div className="appointment-location">
+              <MapPin className="h-3 w-3" />
+              {event.location}
+            </div>
+          )}
+        </div>
+
+        {/* Expanded Event Details */}
+        {expandedEventId === event.id && (
+          <div className="appointment-expanded" data-testid={`expanded-details-${event.id}`}>
+            <div className="expanded-content">
+              {event.notes && (
+                <div className="expanded-section">
+                  <h4>Notes</h4>
+                  <p>{event.notes}</p>
+                </div>
+              )}
+              
+              <div className="expanded-actions">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onSessionNotes) onSessionNotes(event);
+                  }}
+                  className="text-xs"
+                  data-testid={`button-session-notes-${event.id}`}
+                >
+                  <MessageSquare className="h-3 w-3 mr-1" />
+                  Session Notes
+                </Button>
+                {onDeleteEvent && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteEvent(event);
+                    }}
+                    className="text-xs"
+                    data-testid={`button-delete-${event.id}`}
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Delete
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpandedEventId(null);
+                  }}
+                  className="text-xs"
+                  data-testid={`button-close-${event.id}`}
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -242,202 +336,84 @@ export const DailyViewGrid = ({
         </div>
       </div>
 
-      {/* Daily Notes Section */}
-      <Card className="daily-notes mb-4">
-        <CardContent className="p-4">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-sm font-medium">Daily Notes</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsEditingNotes(!isEditingNotes)}
-              data-testid="button-edit-daily-notes"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-          </div>
-          {isEditingNotes ? (
-            <div className="space-y-2">
+      {/* Main Content - Time Grid Layout */}
+      <div className="daily-content">
+        {/* Daily Notes Section */}
+        <div className="daily-notes-section">
+          <Card className="daily-notes-card">
+            <CardContent className="p-3">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-sm font-medium text-gray-700">Daily Notes</h3>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                  <Edit className="h-3 w-3" />
+                </Button>
+              </div>
               <Textarea
                 value={dailyNotes}
                 onChange={(e) => setDailyNotes(e.target.value)}
                 placeholder="Add notes for this day..."
-                className="min-h-[80px]"
+                className="min-h-[60px] text-xs resize-none"
                 data-testid="input-daily-notes"
               />
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setIsEditingNotes(false);
-                    toast({ title: "Notes Saved", description: "Daily notes have been saved." });
-                  }}
-                  data-testid="button-save-notes"
-                >
-                  Save
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditingNotes(false)}
-                  data-testid="button-cancel-notes"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {dailyNotes || 'Click edit to add daily notes...'}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Time Grid */}
-      <div className="daily-grid">
-        {/* Time Column */}
-        <div className="time-column">
-          <div className="time-header">Time</div>
-          {timeSlots.map((slot) => (
-            <div
-              key={`${slot.hour}-${slot.minute}`}
-              className="time-slot-label"
-              data-testid={`time-slot-${slot.display}`}
-            >
-              {slot.display}
-            </div>
-          ))}
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Appointments Column */}
-        <div className="appointments-column">
-          <div className="appointments-header">
-            Appointments
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onNewAppointment}
-              className="ml-auto"
-              data-testid="button-add-appointment"
-            >
-              + Add
-            </Button>
-          </div>
-
-          {/* Time slots with appointments */}
-          {timeSlots.map((slot, slotIndex) => {
-            const slotEvents = getEventsForTimeSlot(dayEvents, date, slot);
+        {/* Time Grid */}
+        <div className="time-grid-container">
+          <div className="time-grid">
+            {/* Time Column Header */}
+            <div className="time-column-header">
+              <span className="time-label">Time</span>
+            </div>
             
-            return (
-              <div
-                key={`slot-${slot.hour}-${slot.minute}`}
-                className={cn("time-slot", slotEvents.length > 0 && "has-events")}
-                onClick={() => handleTimeSlotClick(slot)}
-                data-testid={`time-slot-grid-${slot.display}`}
+            {/* Events Column Header */}
+            <div className="events-column-header">
+              <span>Schedule</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onNewAppointment}
+                className="ml-auto text-xs"
+                data-testid="button-add-appointment"
               >
-                {slotEvents.map((event, eventIndex) => {
-                  const startTime = parseEventDate(event.startTime);
-                  const endTime = parseEventDate(event.endTime);
-                  
-                  return (
-                    <div
-                      key={event.id}
-                      className={getAppointmentClassName(event)}
-                      style={getEventPositionStyle(event, slot) as React.CSSProperties}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEventClick(event);
-                      }}
-                      data-testid={`appointment-${event.id}`}
-                    >
-                      <div className="appointment-content">
-                        <div className="appointment-title">
-                          {cleanEventTitle(event.title)}
-                        </div>
-                        <div className="appointment-time">
-                          {startTime && endTime && (
-                            <span className="time-range">
-                              {formatTimeRange(startTime, endTime)}
-                            </span>
-                          )}
-                        </div>
-                        {event.clientName && (
-                          <div className="appointment-client">
-                            {formatClientName(event.clientName)}
-                          </div>
-                        )}
-                        {event.location && (
-                          <div className="appointment-location">
-                            <MapPin className="h-3 w-3" />
-                            {event.location}
-                          </div>
-                        )}
-                      </div>
+                + Add
+              </Button>
+            </div>
 
-                      {/* Expanded Event Details */}
-                      {expandedEventId === event.id && (
-                        <div className="appointment-expanded" data-testid={`expanded-details-${event.id}`}>
-                          <div className="expanded-content">
-                            {event.notes && (
-                              <div className="expanded-section">
-                                <h4>Notes</h4>
-                                <p>{event.notes}</p>
-                              </div>
-                            )}
-                            
-                            <div className="expanded-actions">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (onSessionNotes) onSessionNotes(event);
-                                }}
-                                className="text-xs"
-                                data-testid={`button-session-notes-${event.id}`}
-                              >
-                                <MessageSquare className="h-3 w-3 mr-1" />
-                                Session Notes
-                              </Button>
-                              {onDeleteEvent && (
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteEvent(event);
-                                  }}
-                                  className="text-xs"
-                                  data-testid={`button-delete-${event.id}`}
-                                >
-                                  <Trash2 className="h-3 w-3 mr-1" />
-                                  Delete
-                                </Button>
-                              )}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setExpandedEventId(null);
-                                }}
-                                className="text-xs"
-                                data-testid={`button-close-${event.id}`}
-                              >
-                                <X className="h-3 w-3 mr-1" />
-                                Close
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
+            {/* Time Slots with Events */}
+            {timeSlots.map((timeSlot, index) => {
+              const slotEvents = getEventsForTimeSlot(dayEvents, date, timeSlot);
+              
+              return (
+                <div key={`slot-${timeSlot.hour}-${timeSlot.minute}`} className="time-grid-row">
+                  {/* Time Label */}
+                  <div className="time-label-cell">
+                    <span className="time-text" data-testid={`time-slot-${timeSlot.display}`}>
+                      {timeSlot.display}
+                    </span>
+                  </div>
+                  
+                  {/* Events Cell */}
+                  <div 
+                    className={cn("events-cell", slotEvents.length > 0 && "has-events")}
+                    onClick={() => {
+                      if (onTimeSlotClick) {
+                        const slotDate = new Date(date);
+                        slotDate.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
+                        onTimeSlotClick(slotDate, timeSlot.display);
+                      }
+                    }}
+                    data-testid={`time-slot-grid-${timeSlot.display}`}
+                  >
+                    {slotEvents.map((event, eventIndex) => 
+                      renderEventInTimeSlot(event, timeSlot, eventIndex)
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
