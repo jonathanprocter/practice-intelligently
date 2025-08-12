@@ -113,8 +113,61 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
         
         const processedData = await processResponse.json();
         
-        // Step 2: Generate and save progress note from processed content
-        if (processedData.analysis?.extractedText) {
+        // Check if it's a multi-session document
+        if (processedData.isMultiSession && processedData.processedSessions) {
+          console.log(`📚 Multi-session document detected: ${processedData.totalSessions} sessions`);
+          
+          // Process each session as a separate progress note
+          for (const session of processedData.processedSessions) {
+            try {
+              const sessionNoteResponse = await fetch('/api/documents/generate-progress-note', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  content: session.content,
+                  clientId: clientId,
+                  sessionDate: session.date,
+                  detectedClientName: session.clientName,
+                  therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+                  aiTags: session.aiTags,
+                  preformatted: true // Indicate this is already a formatted progress note
+                })
+              });
+
+              if (sessionNoteResponse.ok) {
+                const sessionNoteData = await sessionNoteResponse.json();
+                console.log(`✅ Session note created for ${session.date}:`, sessionNoteData);
+              } else {
+                console.warn(`⚠️ Failed to save session note for ${session.date}`);
+              }
+            } catch (sessionError) {
+              console.error(`❌ Error creating session note for ${session.date}:`, sessionError);
+            }
+          }
+
+          // Update processing status
+          setProcessingDocuments(prev => 
+            prev.map(doc => 
+              doc.id === documentId 
+                ? {
+                    ...doc,
+                    status: 'completed',
+                    content: `Multi-session document processed: ${processedData.totalSessions} sessions created`,
+                    aiTags: ['multi-session', 'bulk-processed', 'progress-notes']
+                  }
+                : doc
+            )
+          );
+
+          toast({
+            title: "Multi-session document processed",
+            description: `Successfully created ${processedData.processedSessions.length} individual session notes from ${file.name}`
+          });
+        } 
+        // Single session processing (existing logic)
+        else if (processedData.analysis?.extractedText) {
           try {
             // Add timeout to prevent hanging with improved error handling
             const controller = new AbortController();

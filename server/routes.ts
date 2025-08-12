@@ -41,6 +41,174 @@ const docProcessor = new DocumentProcessor();
 // Initialize session document processor
 const sessionDocProcessor = new SessionDocumentProcessor(storage);
 
+// Function to detect multi-session documents
+async function detectMultiSessionDocument(content: string): Promise<boolean> {
+  try {
+    // Look for patterns that indicate multiple sessions
+    const sessionPatterns = [
+      /therapy session on \w+ \d{1,2},? \d{4}/gi,
+      /session.*\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/gi,
+      /progress note.*\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/gi,
+      /clinical progress note for.*session on/gi,
+      /comprehensive clinical progress note/gi
+    ];
+
+    let sessionCount = 0;
+    for (const pattern of sessionPatterns) {
+      const matches = content.match(pattern);
+      if (matches) {
+        sessionCount += matches.length;
+      }
+    }
+
+    // Also check for table of contents pattern
+    const tocPattern = /table of contents/gi;
+    const hasTOC = tocPattern.test(content);
+
+    // Consider it multi-session if we find multiple session indicators or a table of contents
+    const isMulti = sessionCount >= 3 || hasTOC;
+    console.log(`📊 Session detection: ${sessionCount} patterns found, TOC: ${hasTOC}, Multi-session: ${isMulti}`);
+    
+    return isMulti;
+  } catch (error) {
+    console.error('Error detecting multi-session document:', error);
+    return false;
+  }
+}
+
+// Function to parse multi-session document
+async function parseMultiSessionDocument(content: string, clientId: string, clientName: string, fileName: string) {
+  try {
+    console.log('🔍 Parsing multi-session document...');
+
+    // Use AI to extract individual sessions
+    const parsePrompt = `This document contains multiple therapy sessions for a client. Please analyze the content and extract individual sessions.
+
+Document content (first 3000 chars):
+${content.substring(0, 3000)}
+
+For each therapy session you can identify, extract:
+1. Session date (format: YYYY-MM-DD)
+2. Session content (the full progress note or session content)
+3. Client name (if mentioned)
+
+Return a JSON array with this structure:
+{
+  "sessions": [
+    {
+      "date": "YYYY-MM-DD",
+      "content": "full session content here",
+      "clientName": "client name",
+      "title": "brief session title"
+    }
+  ],
+  "totalSessions": number,
+  "documentType": "progress_notes" | "session_transcripts" | "mixed"
+}
+
+Only include sessions where you can clearly identify a date and substantial content.`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: parsePrompt }],
+      max_tokens: 2000,
+      temperature: 0.1
+    });
+
+    const parseResult = JSON.parse(response.choices[0].message.content || '{"sessions": [], "totalSessions": 0}');
+    console.log(`📈 Extracted ${parseResult.totalSessions} sessions from document`);
+
+    // If we found sessions, let's create session notes for each
+    const processedSessions = [];
+    
+    for (const session of parseResult.sessions) {
+      try {
+        // Generate a comprehensive progress note for this session if it's not already formatted
+        const isAlreadyFormatted = session.content.includes('Subjective') && 
+                                  session.content.includes('Objective') && 
+                                  session.content.includes('Assessment') && 
+                                  session.content.includes('Plan');
+
+        let finalContent = session.content;
+        
+        if (!isAlreadyFormatted) {
+          // Generate structured progress note using AI
+          const progressNotePrompt = `${ZMANUS_PROMPT}
+
+Session content to analyze:
+${session.content}
+
+Client: ${session.clientName || clientName}
+Session Date: ${session.date}
+
+Please create a comprehensive clinical progress note following the exact structure outlined above.`;
+
+          const progressResponse = await openai.chat.completions.create({
+            model: 'gpt-4o',
+            messages: [{ role: 'user', content: progressNotePrompt }],
+            max_tokens: 3000,
+            temperature: 0.3
+          });
+
+          finalContent = progressResponse.choices[0].message.content || session.content;
+        }
+
+        // Generate AI tags for this session
+        const tagsPrompt = `Based on this therapy session content, generate 5 relevant clinical tags:
+
+${session.content.substring(0, 500)}...
+
+Return only a JSON array of strings: ["tag1", "tag2", "tag3", "tag4", "tag5"]`;
+
+        const tagsResponse = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [{ role: 'user', content: tagsPrompt }],
+          max_tokens: 100,
+          temperature: 0.1
+        });
+
+        let aiTags = [];
+        try {
+          aiTags = JSON.parse(tagsResponse.choices[0].message.content || '[]');
+        } catch {
+          aiTags = ['therapy', 'progress-note', 'clinical', 'assessment', 'treatment'];
+        }
+
+        processedSessions.push({
+          date: session.date,
+          content: finalContent,
+          clientName: session.clientName || clientName,
+          title: session.title,
+          aiTags: aiTags,
+          sessionId: randomUUID()
+        });
+
+      } catch (sessionError) {
+        console.error(`Error processing session ${session.date}:`, sessionError);
+      }
+    }
+
+    return {
+      isMultiSession: true,
+      totalSessions: parseResult.totalSessions,
+      processedSessions: processedSessions,
+      documentType: parseResult.documentType,
+      fileName: fileName,
+      requiresConfirmation: true,
+      analysis: {
+        extractedText: content,
+        detectedClientName: clientName,
+        detectedSessionDate: processedSessions[0]?.date || new Date().toISOString().split('T')[0],
+        multiSession: true
+      }
+    };
+
+  } catch (error) {
+    console.error('Error parsing multi-session document:', error);
+    throw error;
+  }
+}
+
 // Comprehensive Clinical Progress Note Generation Prompt (zmanus)
 const ZMANUS_PROMPT = `Comprehensive Clinical Progress Note Generation Prompt
 
@@ -4227,29 +4395,47 @@ You are Compass, an AI assistant for therapy practice management. You have acces
   });
   // ========== DOCUMENT PROCESSING ROUTES (Auto-generated) ==========
 
-  // File upload endpoint that handles actual file uploads
+  // File upload endpoint that handles actual file uploads with multi-session support
   app.post('/api/documents/upload-and-process', uploadSingle, async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
+      const { clientId, clientName } = req.body;
+
       // Process the uploaded file
       const processed = await documentProcessor.processDocument(req.file.path, req.file.originalname);
+
+      // Check if document contains multiple sessions
+      const extractedText = processed.extractedText || '';
+      const isMultiSession = await detectMultiSessionDocument(extractedText);
+
+      let result;
+
+      if (isMultiSession) {
+        console.log('🔄 Multi-session document detected, parsing individual sessions...');
+        // Parse individual sessions from the document
+        result = await parseMultiSessionDocument(extractedText, clientId, clientName, req.file.originalname);
+      } else {
+        // Single session processing (existing logic)
+        result = {
+          analysis: processed,
+          extractedText: processed.extractedText,
+          detectedClientName: processed.detectedClientName,
+          detectedSessionDate: processed.detectedSessionDate,
+          fullContent: processed.extractedText,
+          fileName: req.file.originalname,
+          requiresConfirmation: true,
+          model: 'document-processor',
+          isMultiSession: false
+        };
+      }
 
       // Clean up uploaded file
       fs.unlinkSync(req.file.path);
 
-      res.json({ 
-        analysis: processed,
-        extractedText: processed.extractedText,
-        detectedClientName: processed.detectedClientName,
-        detectedSessionDate: processed.detectedSessionDate,
-        fullContent: processed.extractedText,
-        fileName: req.file.originalname,
-        requiresConfirmation: true,
-        model: 'document-processor' 
-      });
+      res.json(result);
     } catch (error: any) {
       // Clean up file on error
       if (req.file && fs.existsSync(req.file.path)) {
@@ -4443,7 +4629,7 @@ You are Compass, an AI assistant for therapy practice management. You have acces
 
   app.post('/api/documents/generate-progress-note', async (req, res) => {
     try {
-      const { content, clientId, sessionDate, detectedClientName, detectedSessionDate, therapistId } = req.body;
+      const { content, clientId, sessionDate, detectedClientName, detectedSessionDate, therapistId, aiTags, preformatted } = req.body;
 
       if (!content) {
         return res.status(400).json({ error: 'Document content is required' });
@@ -4454,13 +4640,20 @@ You are Compass, an AI assistant for therapy practice management. You have acces
       const finalSessionDate = sessionDate || detectedSessionDate || new Date().toISOString().split('T')[0];
       const finalClientName = detectedClientName || clientId || 'Client';
 
-      // Use the full document processor for comprehensive analysis
-      console.log('Using comprehensive document processor for full analysis...');
-      const comprehensiveNote = await documentProcessor.generateProgressNote(
-        content, 
-        finalClientName, 
-        finalSessionDate
-      );
+      // For preformatted content (multi-session), use content as-is
+      let comprehensiveNote;
+      if (preformatted) {
+        console.log('📄 Using preformatted content from multi-session document...');
+        comprehensiveNote = content;
+      } else {
+        // Use the full document processor for comprehensive analysis
+        console.log('🔄 Using comprehensive document processor for full analysis...');
+        comprehensiveNote = await documentProcessor.generateProgressNote(
+          content, 
+          finalClientName, 
+          finalSessionDate
+        );
+      }
 
       // Find client by name if provided
       let finalClientId = clientId || 'unknown';
@@ -4561,10 +4754,11 @@ You are Compass, an AI assistant for therapy practice management. You have acces
         sessionDate: new Date(finalSessionDate),
         // Enhance AI tags with linking information
         aiTags: [
-          ...(comprehensiveNote.aiTags || []),
+          ...(aiTags || comprehensiveNote.aiTags || []), // Use provided aiTags for multi-session
           'document-processed',
           finalClientId !== 'unknown' ? 'client-identified' : 'client-unknown',
-          appointmentId ? 'appointment-linked' : 'appointment-unlinked'
+          appointmentId ? 'appointment-linked' : 'appointment-unlinked',
+          ...(preformatted ? ['multi-session-parsed'] : [])
         ]
       };
 
