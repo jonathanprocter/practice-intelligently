@@ -41,11 +41,68 @@ const docProcessor = new DocumentProcessor();
 // Initialize session document processor
 const sessionDocProcessor = new SessionDocumentProcessor(storage);
 
+// Comprehensive Clinical Progress Note Generation Prompt (zmanus)
+const ZMANUS_PROMPT = `Comprehensive Clinical Progress Note Generation Prompt
+
+Overview
+You are an expert clinical therapist with extensive training in psychotherapy, clinical documentation, and therapeutic modalities including ACT, DBT, Narrative Therapy, and Existentialism. Your task is to create a comprehensive clinical progress note from the provided therapy session transcript that demonstrates the depth, clinical sophistication, and analytical rigor of an experienced mental health professional.
+
+Create a progress note with the following precise structure:
+
+1. Title: "Comprehensive Clinical Progress Note for [Client's Full Name]'s Therapy Session on [Date]"
+
+2. Subjective Section: Client's reported experiences, feelings, and perspectives in their own words, including direct quotes and emotional expressions. This should capture the client's internal world and how they describe their experiences.
+
+3. Objective Section: Observable behaviors, mental status, clinical observations including appearance, affect, speech patterns, thought processes, and any notable behavioral changes or patterns observed during the session.
+
+4. Assessment Section: Clinical formulation, diagnostic considerations, therapeutic analysis including progress toward treatment goals, identification of patterns, risk assessment, and clinical interpretation of presenting concerns within theoretical frameworks.
+
+5. Plan Section: Treatment interventions, therapeutic goals, specific techniques to be employed, homework assignments, follow-up plans, and next steps in the therapeutic process including any referrals or coordination of care.
+
+6. Supplemental Analyses:
+   - Tonal Analysis: Document specific tonal shifts during the session, noting triggers, emotional transitions, and what these shifts reveal about the client's internal experience
+   - Pattern Recognition: Identify recurring themes, defense mechanisms, or behavioral patterns
+   - Therapeutic Process Notes: Observations about the therapeutic relationship and process
+
+7. Key Points: Critical therapeutic insights, breakthrough moments, resistance patterns, treatment progress indicators, and significant clinical observations that inform ongoing treatment planning
+
+8. Significant Quotes: Important client statements with clinical context and interpretation, focusing on quotes that reveal core beliefs, emotional states, or therapeutic breakthroughs
+
+9. Comprehensive Narrative Summary: An integrated clinical narrative that synthesizes all observations, connects current session content to overall treatment trajectory, and provides sophisticated clinical reasoning about the client's psychological functioning and treatment needs
+
+Clinical Approach Requirements:
+Your analysis must demonstrate:
+- Depth of Clinical Thinking: Multi-layered analysis that goes beyond surface observations
+- Therapeutic Perspective: Integration of multiple therapeutic modalities and frameworks
+- Integration of Therapeutic Frameworks: Seamless weaving of ACT, DBT, Narrative Therapy, and Existential approaches
+- Clinical Sophistication: Professional-level clinical reasoning and conceptualization
+
+Writing Style Requirements:
+- Professional Clinical Voice: Authoritative yet compassionate professional tone
+- Structural Integrity: Clear organization with logical flow between sections
+- Depth and Detail: Rich, detailed observations with clinical significance
+- Narrative Cohesion: Unified document that tells a complete clinical story
+
+Final Formatting Requirements:
+• The final progress note must be delivered with NO visible markdown syntax
+• All formatting should be clean and professional
+• The final product should meet the highest standards of professional documentation in a mental health setting
+• It should demonstrate both clinical expertise and therapeutic wisdom while providing actionable insights for ongoing treatment`;
+
 // Intelligent document analysis for bulk processing
 async function analyzeDocumentForProcessing(content: string, therapistId: string, clients: any[], appointments: any[]) {
   try {
-    // Use AI to extract structured data from the document
-    const extractionPrompt = `Analyze this clinical document and extract structured information in JSON format. Identify client name, session date, and SOAP note components.
+    // First, detect if the document is already formatted as a progress note
+    const isProgressNote = content.includes('Subjective') && 
+                          content.includes('Objective') && 
+                          content.includes('Assessment') && 
+                          content.includes('Plan');
+
+    let extractedData;
+
+    if (isProgressNote) {
+      // Document is already formatted - just extract metadata and tags
+      const metadataPrompt = `This document is already a formatted clinical progress note. Extract only the client name, session date, and generate appropriate tags.
 
 Document content:
 ${content}
@@ -56,30 +113,80 @@ Respond with JSON in this exact format:
 {
   "clientName": "extracted client name",
   "sessionDate": "YYYY-MM-DD or null",
-  "title": "session title",
-  "content": "main content if not SOAP format",
-  "subjective": "subjective section",
-  "objective": "objective section", 
-  "assessment": "assessment section",
-  "plan": "plan section",
-  "tags": ["tag1", "tag2", "tag3"]
+  "isFormatted": true,
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
 }`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [{ role: 'user', content: extractionPrompt }],
-      max_tokens: 1000,
-      temperature: 0.1
-    });
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: metadataPrompt }],
+        max_tokens: 200,
+        temperature: 0.1
+      });
 
-    let extractionResponse = response.choices[0]?.message?.content?.trim() || '{}';
-    
-    // Clean up markdown formatting
-    if (extractionResponse.includes('```json')) {
-      extractionResponse = extractionResponse.replace(/```json\n?/g, '').replace(/```/g, '').trim();
+      let extractionResponse = response.choices[0]?.message?.content?.trim() || '{}';
+      
+      // Clean up markdown formatting
+      if (extractionResponse.includes('```json')) {
+        extractionResponse = extractionResponse.replace(/```json\n?/g, '').replace(/```/g, '').trim();
+      }
+
+      const metadata = JSON.parse(extractionResponse);
+      
+      extractedData = {
+        clientName: metadata.clientName,
+        sessionDate: metadata.sessionDate,
+        title: `Clinical Progress Note - ${metadata.clientName}`,
+        content: content, // Use original formatted content
+        subjective: "", // Will be extracted from formatted content
+        objective: "",
+        assessment: "",
+        plan: "",
+        tags: metadata.tags || []
+      };
+
+    } else {
+      // Document needs full processing using zmanus prompt
+      const fullProcessingPrompt = `${ZMANUS_PROMPT}
+
+Process this therapy session content into a comprehensive clinical progress note:
+
+${content}
+
+Available clients: ${clients.map(c => `${c.firstName} ${c.lastName}`).join(', ')}
+
+Respond with JSON in this exact format:
+{
+  "clientName": "extracted client name",
+  "sessionDate": "YYYY-MM-DD or null",
+  "title": "Comprehensive Clinical Progress Note for [Client Name]'s Therapy Session on [Date]",
+  "subjective": "detailed subjective section",
+  "objective": "detailed objective section", 
+  "assessment": "detailed assessment section",
+  "plan": "detailed plan section",
+  "tonalAnalysis": "tonal analysis with shifts",
+  "keyPoints": ["key point 1", "key point 2", "key point 3"],
+  "significantQuotes": ["quote 1 with context", "quote 2 with context"],
+  "narrativeSummary": "comprehensive narrative summary",
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
+}`;
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: fullProcessingPrompt }],
+        max_tokens: 2000,
+        temperature: 0.1
+      });
+
+      let extractionResponse = response.choices[0]?.message?.content?.trim() || '{}';
+      
+      // Clean up markdown formatting
+      if (extractionResponse.includes('```json')) {
+        extractionResponse = extractionResponse.replace(/```json\n?/g, '').replace(/```/g, '').trim();
+      }
+
+      extractedData = JSON.parse(extractionResponse);
     }
-
-    const extractedData = JSON.parse(extractionResponse);
 
     // Match client using fuzzy matching
     let matchedClient = null;

@@ -425,21 +425,28 @@ export default function SessionNotes() {
                   </div>
                 ) : (
                   <div className="space-y-2 text-sm text-therapy-text/60">
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-therapy-success" />
-                      <span>AI will extract client names, session dates, and SOAP notes</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-therapy-success" />
-                      <span>Automatic client matching using fuzzy name search</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-therapy-success" />
-                      <span>Smart appointment linking by date proximity</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-therapy-success" />
-                      <span>Intelligent tag generation for categorization</span>
+                    <div className="space-y-3">
+                      <div className="font-medium text-therapy-text">Zmanus Processing Pipeline:</div>
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-therapy-success" />
+                        <span>Detects if documents are already formatted as progress notes</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-therapy-success" />
+                        <span>Raw documents: Full zmanus clinical analysis & SOAP formatting</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-therapy-success" />
+                        <span>Formatted documents: AI tagging & client/appointment matching only</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-therapy-success" />
+                        <span>Automatic client matching via fuzzy name search</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-therapy-success" />
+                        <span>Smart appointment linking by date proximity (±1 day)</span>
+                      </div>
                     </div>
                   </div>
                 )}
