@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, MapPin, User, Clock, MessageSquare, Trash2, Edit, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { AppointmentDetailsDialog } from './AppointmentDetailsDialog';
 import './DailyViewGrid.css';
 
 interface DailyViewGridProps {
@@ -73,8 +74,9 @@ export const DailyViewGrid = ({
   onSessionNotes,
   onDeleteEvent
 }: DailyViewGridProps) => {
-  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [dailyNotes, setDailyNotes] = useState('');
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
   // Generate time slots from 6:00 AM to 11:30 PM in 30-minute intervals
@@ -147,7 +149,8 @@ export const DailyViewGrid = ({
   }, []);
 
   const handleEventClick = (event: CalendarEvent) => {
-    setExpandedEventId(expandedEventId === event.id ? null : event.id);
+    setSelectedEvent(event);
+    setIsDialogOpen(true);
     onEventClick(event);
   };
 
@@ -255,64 +258,6 @@ export const DailyViewGrid = ({
             </div>
           )}
         </div>
-
-        {/* Expanded Event Details */}
-        {expandedEventId === event.id && (
-          <div className="appointment-expanded" data-testid={`expanded-details-${event.id}`}>
-            <div className="expanded-content">
-              {event.notes && (
-                <div className="expanded-section">
-                  <h4>Notes</h4>
-                  <p>{event.notes}</p>
-                </div>
-              )}
-              
-              <div className="expanded-actions">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onSessionNotes) onSessionNotes(event);
-                  }}
-                  className="text-xs"
-                  data-testid={`button-session-notes-${event.id}`}
-                >
-                  <MessageSquare className="h-3 w-3 mr-1" />
-                  Session Notes
-                </Button>
-                {onDeleteEvent && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteEvent(event);
-                    }}
-                    className="text-xs"
-                    data-testid={`button-delete-${event.id}`}
-                  >
-                    <Trash2 className="h-3 w-3 mr-1" />
-                    Delete
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setExpandedEventId(null);
-                  }}
-                  className="text-xs"
-                  data-testid={`button-close-${event.id}`}
-                >
-                  <X className="h-3 w-3 mr-1" />
-                  Close
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     );
   };
@@ -454,6 +399,14 @@ export const DailyViewGrid = ({
           {getDayNavigationName(getNextDay())} →
         </Button>
       </div>
+
+      <AppointmentDetailsDialog
+        event={selectedEvent}
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onSessionNotes={onSessionNotes}
+        onDeleteEvent={onDeleteEvent}
+      />
     </div>
   );
 };
