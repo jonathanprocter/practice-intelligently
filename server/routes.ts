@@ -1082,6 +1082,76 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
     }
   });
 
+  // Generate AI tags for session note
+  app.post("/api/session-notes/:id/generate-tags", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Get the session note
+      const sessionNote = await storage.getSessionNote(id);
+      if (!sessionNote) {
+        return res.status(404).json({ error: "Session note not found" });
+      }
+
+      // Prepare content for AI analysis (handle both traditional and SOAP format)
+      let contentForAnalysis = sessionNote.content;
+      if (sessionNote.title && (sessionNote.subjective || sessionNote.objective || sessionNote.assessment || sessionNote.plan)) {
+        // SOAP format - combine all sections
+        const soapSections = [
+          sessionNote.subjective && `Subjective: ${sessionNote.subjective}`,
+          sessionNote.objective && `Objective: ${sessionNote.objective}`,
+          sessionNote.assessment && `Assessment: ${sessionNote.assessment}`,
+          sessionNote.plan && `Plan: ${sessionNote.plan}`
+        ].filter(Boolean).join('\n\n');
+        contentForAnalysis = soapSections;
+      }
+
+      // Generate AI tags using OpenAI
+      const prompt = `Analyze this therapy session note and generate 3-5 relevant clinical tags. Focus on therapeutic approaches, client concerns, interventions, and progress indicators.
+
+Session content:
+${contentForAnalysis}
+
+Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework assigned", "progress noted"]`;
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 100,
+        temperature: 0.3
+      });
+
+      const tagsResponse = response.choices[0]?.message?.content?.trim();
+      let aiTags: string[] = [];
+
+      try {
+        aiTags = JSON.parse(tagsResponse || '[]');
+        if (!Array.isArray(aiTags)) {
+          aiTags = [];
+        }
+      } catch (parseError) {
+        console.error('Error parsing AI tags response:', parseError);
+        // Fallback: extract tags from text response
+        const tagMatches = tagsResponse?.match(/"([^"]+)"/g);
+        if (tagMatches) {
+          aiTags = tagMatches.map(match => match.replace(/"/g, ''));
+        } else {
+          aiTags = ['therapy session', 'clinical notes'];
+        }
+      }
+
+      // Update the session note with the generated tags
+      const updatedNote = await storage.updateSessionNote(id, { 
+        tags: aiTags
+      });
+
+      res.json(updatedNote);
+    } catch (error) {
+      console.error("Error generating AI tags:", error);
+      res.status(500).json({ error: "Failed to generate AI tags" });
+    }
+  });
+
   // AI Session Prep Generation
   app.post("/api/ai/session-prep-from-note", async (req, res) => {
     try {
