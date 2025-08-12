@@ -1481,7 +1481,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
         - Progress indicators to monitor
       `;
 
-      const insights = await analyzeContent(analysisContent, 'session_prep');
+      const insights = await analyzeContent(analysisContent, 'session');
 
       res.json({
         success: true,
@@ -1491,7 +1491,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
           keyThemes: insights.insights || [],
           recommendedFocus: insights.nextSteps || [],
           progressIndicators: [`Session preparation for ${client.firstName} ${client.lastName}`],
-          potentialInterventions: insights.actionItems || []
+          potentialInterventions: insights.recommendations || []
         }
       });
     } catch (error: any) {
