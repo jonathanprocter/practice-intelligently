@@ -343,7 +343,7 @@ export function Compass({ className }: CompassProps) {
         sendWelcomeMessage();
       }
     }
-  }, [isOpen]);
+  }, [isOpen, sessionId, messages.length, chatMutation.isPending]);
 
   // Start voice activation listening when enabled
   useEffect(() => {
@@ -364,7 +364,14 @@ export function Compass({ className }: CompassProps) {
         console.log('Voice activation stop failed:', error);
       }
     }
-  }, [voiceActivation, isOpen]);
+  }, [voiceActivation, isOpen, speechRecognition, isListening]);
+
+  // Send welcome message when first opened
+  const sendWelcomeMessage = () => {
+    if (messages.length === 0) {
+      chatMutation.mutate('Hello! Please give me a warm welcome and tell me what you can help with based on my current practice data.');
+    }
+  };
 
   // Clean up when component unmounts or window closes
   useEffect(() => {
@@ -381,14 +388,7 @@ export function Compass({ className }: CompassProps) {
         setCurrentAudio(null);
       }
     };
-  }, []);
-
-  // Send welcome message when first opened
-  const sendWelcomeMessage = () => {
-    if (messages.length === 0) {
-      chatMutation.mutate('Hello! Please give me a warm welcome and tell me what you can help with based on my current practice data.');
-    }
-  };
+  }, [speechRecognition, currentAudio]);
 
   // Generate contextual quick actions based on conversation history
   const getContextualQuickActions = () => {
