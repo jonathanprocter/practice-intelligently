@@ -83,13 +83,7 @@ export default function SessionSummariesPage() {
   // Generate session summary mutation
   const generateSummaryMutation = useMutation({
     mutationFn: async (data: { sessionNoteIds: string[], clientId: string, therapistId: string, timeframe: string }) =>
-      await apiRequest('/api/session-summaries/generate', {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }),
+      await apiRequest('POST', '/api/session-summaries/generate', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/session-summaries/client', selectedClientId] });
       setIsGenerating(false);
