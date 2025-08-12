@@ -8,24 +8,30 @@ const getInsightIcon = (type: string) => {
     case 'pattern': return Lightbulb;
     case 'progress': return TrendingUp;
     case 'suggestion': return FileText;
+    case 'general': return Bot;
+    case 'urgent': return TrendingUp;
     default: return Bot;
   }
 };
 
 const getInsightColor = (type: string) => {
   switch (type) {
-    case 'pattern': return 'bg-therapy-primary/20 text-therapy-primary';
-    case 'progress': return 'bg-therapy-success/20 text-therapy-success';
-    case 'suggestion': return 'bg-therapy-warning/20 text-therapy-warning';
-    default: return 'bg-therapy-primary/20 text-therapy-primary';
+    case 'pattern': return 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300';
+    case 'progress': return 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300';
+    case 'suggestion': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300';
+    case 'urgent': return 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300';
+    case 'general': return 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300';
+    default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
   }
 };
 
 export default function AiInsightsPanel() {
-  const { data: insights, isLoading } = useQuery({
+  const { data: insights, isLoading, error } = useQuery({
     queryKey: ['ai-insights'],
     queryFn: ApiClient.getAiInsights,
   });
+
+
 
   if (isLoading) {
     return (
@@ -66,23 +72,24 @@ export default function AiInsightsPanel() {
         {insights && insights.length > 0 ? (
           insights.slice(0, 3).map((insight) => {
             const IconComponent = getInsightIcon(insight.type);
+
             return (
-              <div key={insight.id} className="ai-insight p-4 rounded-lg">
+              <div key={insight.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-lg shadow-sm">
                 <div className="flex items-start space-x-3">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center mt-1 ${getInsightColor(insight.type)}`}>
                     <IconComponent className="h-4 w-4" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-therapy-text text-sm mb-1">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">
                       {insight.title}
                     </h4>
-                    <p className="text-therapy-text/70 text-xs">
+                    <p className="text-gray-600 dark:text-gray-300 text-xs leading-relaxed">
                       {insight.content}
                     </p>
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      className="text-therapy-primary text-xs font-medium mt-2 p-0 h-auto hover:underline"
+                      className="text-blue-600 dark:text-blue-400 text-xs font-medium mt-2 p-0 h-auto hover:underline"
                     >
                       View Details
                     </Button>
@@ -93,8 +100,8 @@ export default function AiInsightsPanel() {
           })
         ) : (
           <div className="text-center py-6">
-            <Bot className="h-12 w-12 text-therapy-text/30 mx-auto mb-2" />
-            <p className="text-therapy-text/60 text-sm">No insights available</p>
+            <Bot className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+            <p className="text-gray-500 text-sm">No insights available</p>
             <Button 
               variant="outline" 
               size="sm" 
