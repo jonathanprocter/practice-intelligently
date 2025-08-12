@@ -239,15 +239,47 @@ export class ApiClient {
       // Convert calendar events to appointment format, filtering out non-appointment events
       const calendarAppointments: Appointment[] = calendarEvents
         .filter((event: any) => {
-          // Only include events that look like appointments (not birthdays, etc.)
+          // Include events that look like appointments, meetings, or professional sessions
           const summary = event.summary || '';
-          return summary.toLowerCase().includes('appointment') && 
-                 !summary.toLowerCase().includes('birthday');
+          const lowerSummary = summary.toLowerCase();
+          
+          // Include if it contains appointment/session/therapy keywords
+          const isAppointment = lowerSummary.includes('appointment') || 
+                               lowerSummary.includes('session') || 
+                               lowerSummary.includes('therapy');
+          
+          // Include professional meetings/calls with specific people (Blake, Nora, etc.)
+          const isProfessionalMeeting = lowerSummary.includes('meeting with') ||
+                                       lowerSummary.includes('call with') ||
+                                       lowerSummary.includes('coffee with') ||
+                                       (lowerSummary.includes('with') && 
+                                        (lowerSummary.includes('blake') || 
+                                         lowerSummary.includes('nora')));
+          
+          // Exclude non-professional events
+          const isExcluded = lowerSummary.includes('birthday') ||
+                            lowerSummary.includes('holiday') ||
+                            lowerSummary.includes('vacation') ||
+                            lowerSummary.includes('flight');
+          
+          return (isAppointment || isProfessionalMeeting) && !isExcluded;
         })
         .map((event: any) => {
-          // Extract client name from event summary (e.g., "Chris Balabanick Appointment" -> "Chris Balabanick")
+          // Extract client name from event summary
           const summary = event.summary || '';
-          const clientName = summary.replace(/\s+appointment$/i, '').trim();
+          let clientName = summary;
+          
+          // Handle different formats:
+          // "Chris Balabanick Appointment" -> "Chris Balabanick"
+          // "Coffee with Nora" -> "Nora"
+          // "Call with Blake" -> "Blake"
+          // "Meeting with John Doe" -> "John Doe"
+          if (summary.toLowerCase().includes('appointment')) {
+            clientName = summary.replace(/\s+appointment$/i, '').trim();
+          } else if (summary.toLowerCase().match(/(coffee|call|meeting)\s+with\s+(.+)/i)) {
+            const match = summary.match(/(coffee|call|meeting)\s+with\s+(.+)/i);
+            clientName = match ? match[2].trim() : summary;
+          }
 
           return {
             id: event.id || `calendar-${event.summary}-${event.start?.dateTime}`,
