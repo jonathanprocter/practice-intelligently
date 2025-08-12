@@ -960,7 +960,7 @@ export default function Calendar() {
                 setActiveTab('week');
               }}
               onNewAppointment={handleNewAppointment}
-              onSessionNotes={handleSessionNotes}
+              onProgressNotes={handleSessionNotes}
               onDeleteEvent={handleDeleteEvent}
             />
           </TabsContent>

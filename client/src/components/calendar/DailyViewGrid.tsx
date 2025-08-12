@@ -21,7 +21,7 @@ interface DailyViewGridProps {
   onNextDay: () => void;
   onBackToWeek?: () => void;
   onNewAppointment: () => void;
-  onSessionNotes?: (event: CalendarEvent) => void;
+  onProgressNotes?: (event: CalendarEvent) => void;
   onDeleteEvent?: (event: CalendarEvent) => void;
 }
 
@@ -71,7 +71,7 @@ export const DailyViewGrid = ({
   onNextDay,
   onBackToWeek,
   onNewAppointment,
-  onSessionNotes,
+  onProgressNotes,
   onDeleteEvent
 }: DailyViewGridProps) => {
   const [dailyNotes, setDailyNotes] = useState('');
@@ -404,7 +404,7 @@ export const DailyViewGrid = ({
         event={selectedEvent}
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        onSessionNotes={onSessionNotes}
+        onProgressNotes={onProgressNotes}
         onDeleteEvent={onDeleteEvent}
       />
     </div>

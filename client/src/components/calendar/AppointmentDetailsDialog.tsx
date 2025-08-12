@@ -39,7 +39,7 @@ interface AppointmentDetailsDialogProps {
   event: CalendarEvent | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSessionNotes?: (event: CalendarEvent) => void;
+  onProgressNotes?: (event: CalendarEvent) => void;
   onDeleteEvent?: (event: CalendarEvent) => void;
 }
 
@@ -72,7 +72,7 @@ export const AppointmentDetailsDialog = ({
   event,
   open,
   onOpenChange,
-  onSessionNotes,
+  onProgressNotes,
   onDeleteEvent
 }: AppointmentDetailsDialogProps) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -104,21 +104,35 @@ export const AppointmentDetailsDialog = ({
     enabled: !!event?.clientName && open
   });
 
-  // Fetch AI insights for the client
+  // Fetch AI insights for the client or general appointment insights
   const { data: aiInsights, isLoading: insightsLoading, refetch: refetchInsights } = useQuery({
-    queryKey: ['/api/ai/session-insights', clientData?.id],
+    queryKey: ['/api/ai/session-insights', clientData?.id || event?.id],
     queryFn: async () => {
-      if (!clientData?.id) return null;
-      const response = await apiRequest('POST', '/api/ai/session-insights', {
-        clientId: clientData.id,
-        appointmentContext: {
-          date: event?.startTime,
-          type: 'upcoming_session'
-        }
-      });
-      return response.json();
+      // If we have client data, use client-specific insights
+      if (clientData?.id) {
+        const response = await apiRequest('POST', '/api/ai/session-insights', {
+          clientId: clientData.id,
+          appointmentContext: {
+            date: event?.startTime,
+            type: 'upcoming_session'
+          }
+        });
+        return response.json();
+      }
+      
+      // For non-client appointments (like supervision), generate general insights
+      if (event?.id) {
+        const response = await apiRequest('POST', `/api/session-prep/${event.id}/ai-insights`, {
+          clientId: null, // Indicate this is not a client session
+          appointmentTitle: event.title,
+          appointmentType: 'supervision'
+        });
+        return response.json();
+      }
+      
+      return null;
     },
-    enabled: !!clientData?.id && open && activeTab === 'insights'
+    enabled: (!!clientData?.id || !!event?.id) && open && activeTab === 'insights'
   });
 
   // Fetch session recommendations
@@ -373,14 +387,14 @@ export const AppointmentDetailsDialog = ({
             </Card>
 
             <div className="flex gap-2">
-              {onSessionNotes && (
+              {onProgressNotes && (
                 <Button
                   variant="outline"
-                  onClick={() => onSessionNotes(event)}
+                  onClick={() => onProgressNotes(event)}
                   className="flex items-center gap-2"
                 >
                   <MessageSquare className="h-4 w-4" />
-                  Session Notes
+                  Progress Notes
                 </Button>
               )}
               {onDeleteEvent && (
@@ -398,7 +412,7 @@ export const AppointmentDetailsDialog = ({
 
           <TabsContent value="insights" className="space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">AI Session Insights</h3>
+              <h3 className="text-lg font-semibold">AI Progress Insights</h3>
               <Button
                 variant="outline"
                 size="sm"
@@ -645,12 +659,12 @@ export const AppointmentDetailsDialog = ({
           <TabsContent value="history" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Session History</CardTitle>
+                <CardTitle>Progress History</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8">
                   <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">Session history functionality will be available soon</p>
+                  <p className="text-gray-500">Progress history functionality will be available soon</p>
                 </div>
               </CardContent>
             </Card>

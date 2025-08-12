@@ -1955,45 +1955,87 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
   app.post('/api/session-prep/:eventId/ai-insights', async (req, res) => {
     try {
       const { eventId } = req.params;
-      const { clientId } = req.body;
+      const { clientId, appointmentTitle } = req.body;
       
-      if (!clientId) {
-        return res.status(400).json({ error: 'Client ID is required' });
-      }
+      console.log(`🧠 Generating AI insights for event ${eventId}${clientId ? `, client ${clientId}` : ' (non-client appointment)'}`);
+      
+      let appointmentData;
+      let insights;
+      
+      if (clientId) {
+        // Client appointment - use existing logic
+        const client = await storage.getClient(clientId);
+        if (!client) {
+          return res.status(404).json({ error: 'Client not found' });
+        }
+        
+        // Get client session history and notes for context
+        const sessionNotes = await storage.getSessionNotesByClientId(clientId);
+        const appointments = await storage.getAppointmentsByClient(clientId);
+        
+        // Build appointment data for AI insights
+        appointmentData = {
+          title: `Session with ${client.firstName} ${client.lastName}`,
+          clientName: `${client.firstName} ${client.lastName}` || 'Unknown Client',
+          date: new Date().toISOString(),
+          startTime: new Date().toISOString(),
+          endTime: new Date(Date.now() + 50 * 60 * 1000).toISOString(), // 50 min session
+          location: 'Therapy Office',
+          status: 'scheduled',
+          notes: sessionNotes.slice(0, 3).map(note => note.content).join('\n\n'),
+          sessionNotes: sessionNotes.length > 0 ? sessionNotes[0].content : 'No previous session notes'
+        };
+        
+        // Generate comprehensive session prep insights
+        insights = await generateAppointmentInsights(appointmentData);
+      } else {
+        // Non-client appointment (supervision, admin, etc.)
+        const title = appointmentTitle || 'Professional Appointment';
+        console.log(`🔍 Processing non-client appointment: ${title}`);
+        
+        // Generate general insights for non-client appointments
+        const content = `
+Professional appointment preparation for: ${title}
 
-      console.log(`🧠 Generating AI insights for event ${eventId}, client ${clientId}`);
-      
-      // Verify client exists before generating insights
-      const client = await storage.getClient(clientId);
-      if (!client) {
-        return res.status(404).json({ error: 'Client not found' });
+This is a ${title.toLowerCase().includes('supervision') ? 'supervision session' : 'professional meeting'}.
+${title.toLowerCase().includes('supervision') 
+  ? 'Focus areas for supervision may include case consultation, professional development, and clinical guidance.'
+  : 'Prepare relevant materials and agenda items for this professional meeting.'
+}
+
+Suggested preparation:
+• Review any relevant case materials or agenda items
+• Prepare questions or discussion points
+• Gather necessary documentation
+• Consider professional development goals
+`;
+
+        insights = {
+          summary: `Preparation insights for ${title}`,
+          keyPoints: [
+            'Professional appointment requiring preparation',
+            'Review relevant materials beforehand',
+            'Prepare discussion points and questions'
+          ],
+          recommendations: [
+            'Gather necessary documentation',
+            'Review agenda or meeting objectives',
+            'Prepare any case materials if applicable'
+          ],
+          nextSteps: [
+            'Review appointment details',
+            'Prepare materials and questions',
+            'Confirm meeting logistics'
+          ]
+        };
       }
-      
-      // Get client session history and notes for context
-      const sessionNotes = await storage.getSessionNotesByClientId(clientId);
-      const appointments = await storage.getAppointmentsByClient(clientId);
-      
-      // Build appointment data for AI insights
-      const appointmentData = {
-        title: `Session with ${client.firstName} ${client.lastName}`,
-        clientName: `${client.firstName} ${client.lastName}` || 'Unknown Client',
-        date: new Date().toISOString(),
-        startTime: new Date().toISOString(),
-        endTime: new Date(Date.now() + 50 * 60 * 1000).toISOString(), // 50 min session
-        location: 'Therapy Office',
-        status: 'scheduled',
-        notes: sessionNotes.slice(0, 3).map(note => note.content).join('\n\n'),
-        sessionNotes: sessionNotes.length > 0 ? sessionNotes[0].content : 'No previous session notes'
-      };
-      
-      // Generate comprehensive session prep insights
-      const insights = await generateAppointmentInsights(appointmentData);
       
       res.json({ 
         insights: {
-          contextual: true,
+          contextual: !!clientId,
           content: insights,
-          generatedAt: new Date().toISOString()
+          generatedAt: new Date().toISOString(),
+          appointmentType: clientId ? 'client-session' : 'professional-meeting'
         }
       });
     } catch (error: any) {
