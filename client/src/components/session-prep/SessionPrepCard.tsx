@@ -298,23 +298,50 @@ export function SessionPrepCard({
 
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg p-4">
               <div className="text-sm text-muted-foreground leading-relaxed">
-                {showFullInsights ? (
-                  <>{formatFullContent(aiInsights?.content?.summary || aiInsights?.prep_content || '')}</>
-                ) : (
-                  <p>{formatInsightContent(aiInsights?.content?.summary || aiInsights?.prep_content || '')}</p>
+                {/* Display appointment type and title */}
+                {aiInsights?.appointmentType && (
+                  <div className="mb-3">
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                      {aiInsights.title || 'Session'} ({aiInsights.appointmentType})
+                    </span>
+                  </div>
+                )}
+                
+                {/* Display key themes */}
+                {aiInsights?.keyThemes && aiInsights.keyThemes.length > 0 && (
+                  <div className="mb-3">
+                    <div className="font-medium text-gray-800 dark:text-gray-200 mb-1">Key Themes:</div>
+                    <ul className="list-disc list-inside space-y-1">
+                      {aiInsights.keyThemes.map((theme: string, index: number) => (
+                        <li key={index} className="text-gray-600 dark:text-gray-300">{theme}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {/* Display recommended focus */}
+                {aiInsights?.recommendedFocus && aiInsights.recommendedFocus.length > 0 && (
+                  <div className="mb-3">
+                    <div className="font-medium text-gray-800 dark:text-gray-200 mb-1">Recommended Focus:</div>
+                    <ul className="list-disc list-inside space-y-1">
+                      {aiInsights.recommendedFocus.map((focus: string, index: number) => (
+                        <li key={index} className="text-gray-600 dark:text-gray-300">{focus}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {/* Fallback to old format if available */}
+                {!aiInsights?.keyThemes && (aiInsights?.content?.summary || aiInsights?.prep_content) && (
+                  <div>
+                    {showFullInsights ? (
+                      <>{formatFullContent(aiInsights?.content?.summary || aiInsights?.prep_content || '')}</>
+                    ) : (
+                      <p>{formatInsightContent(aiInsights?.content?.summary || aiInsights?.prep_content || '')}</p>
+                    )}
+                  </div>
                 )}
               </div>
-              {(aiInsights?.content?.summary || aiInsights?.prep_content) && 
-               (aiInsights?.content?.summary || aiInsights?.prep_content)?.length > 200 && (
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="mt-2 p-0 h-auto text-xs"
-                  onClick={() => setShowFullInsights(!showFullInsights)}
-                >
-                  {showFullInsights ? 'Show less' : 'Read more'}
-                </Button>
-              )}
             </div>
 
             {/* Key Points */}
