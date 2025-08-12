@@ -6878,8 +6878,22 @@ Follow-up areas for next session:
       try {
         const recentSessionNotes = await storage.getRecentSessionNotes(therapistId, 7);
         for (const note of recentSessionNotes.slice(0, 5)) {
-          const client = await storage.getClient(note.clientId || '');
-          const clientName = client ? `${client.firstName} ${client.lastName}` : 'Unknown Client';
+          let clientName = 'Unknown Client';
+          
+          // Handle valid UUID client IDs vs calendar-generated IDs
+          if (note.clientId && !note.clientId.startsWith('calendar-')) {
+            try {
+              const client = await storage.getClient(note.clientId);
+              clientName = client ? `${client.firstName} ${client.lastName}` : 'Unknown Client';
+            } catch (error) {
+              console.log('Error getting client for session note:', error);
+            }
+          } else if (note.clientId?.startsWith('calendar-')) {
+            // Extract name from calendar client ID like "calendar-nora" -> "Nora"
+            const extractedName = note.clientId.replace('calendar-', '');
+            clientName = extractedName.charAt(0).toUpperCase() + extractedName.slice(1);
+          }
+          
           activities.push({
             id: `session-${note.id}`,
             type: 'session',

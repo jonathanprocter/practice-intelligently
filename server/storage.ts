@@ -322,6 +322,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getClient(id: string): Promise<Client | undefined> {
+    // Handle calendar-generated client IDs that aren't UUIDs
+    if (id.startsWith('calendar-') || !id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
+      return undefined;
+    }
+    
     const [client] = await db.select().from(clients).where(eq(clients.id, id));
     return client || undefined;
   }
