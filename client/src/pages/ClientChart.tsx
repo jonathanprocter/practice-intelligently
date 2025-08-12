@@ -230,12 +230,13 @@ export default function ClientChart() {
 
       {/* Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="client-info">Client Info</TabsTrigger>
           <TabsTrigger value="sessions">Session Notes</TabsTrigger>
           <TabsTrigger value="appointments">Appointments</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="assessments">Assessments</TabsTrigger>
           <TabsTrigger value="recommendations">AI Recommendations</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
@@ -645,6 +646,144 @@ export default function ClientChart() {
             clientName={clientName}
             onDocumentProcessed={handleDocumentProcessed}
           />
+        </TabsContent>
+
+        {/* Assessments Tab */}
+        <TabsContent value="assessments" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="w-5 h-5" />
+                Assessment Tools & Resources
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* 4x4x4 Breathing Tool */}
+                <Card className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">4x4x4 Breathing Exercise</h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        A guided breathing exercise to help manage anxiety and stress. Follow the visual cues 
+                        for a 4-second inhale, 4-second hold, and 4-second exhale pattern.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="aspect-video bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center">
+                      <iframe
+                        src="https://enchanting-magenta-bobolink.intern.rabbitos.app/final/index.html"
+                        width="100%"
+                        height="400"
+                        frameBorder="0"
+                        className="rounded-lg"
+                        title="4x4x4 Breathing Exercise"
+                        data-testid="iframe-breathing-tool"
+                      />
+                    </div>
+                    
+                    <div className="flex justify-between items-center pt-4 border-t">
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Clock className="w-4 h-4" />
+                        <span>5-10 minutes recommended</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const url = 'https://enchanting-magenta-bobolink.intern.rabbitos.app/final/index.html';
+                            navigator.clipboard.writeText(url);
+                            toast({
+                              title: "Link copied!",
+                              description: "Share this breathing exercise with your client."
+                            });
+                          }}
+                          data-testid="button-copy-breathing-link"
+                        >
+                          <Link className="w-4 h-4 mr-2" />
+                          Copy Link
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            window.open('https://enchanting-magenta-bobolink.intern.rabbitos.app/final/index.html', '_blank');
+                          }}
+                          data-testid="button-open-breathing-tool"
+                        >
+                          Open Full Screen
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Assessment History */}
+                <Card className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Assessment History</h3>
+                    <Button variant="outline" size="sm">
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      New Assessment
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="text-center py-8 text-gray-500">
+                      <AlertCircle className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm">No assessments completed yet</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Share tools like the breathing exercise to help your client with self-care
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Usage Instructions */}
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle className="text-base">How to Use Assessment Tools</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-blue-600 text-sm font-medium">1</span>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-sm">Share with Client</h4>
+                        <p className="text-xs text-gray-600">Copy the link and send it to your client for homework or in-session use</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-blue-600 text-sm font-medium">2</span>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-sm">Guide Practice</h4>
+                        <p className="text-xs text-gray-600">Use during sessions to teach coping skills and relaxation techniques</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-blue-600 text-sm font-medium">3</span>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-sm">Track Progress</h4>
+                        <p className="text-xs text-gray-600">Note improvements in session notes and discuss outcomes</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* AI Recommendations Tab */}

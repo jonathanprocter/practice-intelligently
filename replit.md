@@ -45,10 +45,11 @@ The system utilizes a comprehensive PostgreSQL database with tables for core cli
 - **Complete Eastern Daylight Time (EDT) Synchronization**: Comprehensive timezone alignment across all system components for accurate scheduling and data consistency.
 - **Compass AI Assistant**: Floating AI assistant connected to all practice data with a minimizable chat interface and comprehensive practice context awareness.
 - **Google Drive & Notion Integration**: Content viewer with OAuth authentication for Google Calendar, Drive, and Notion workspace integration.
-- **Assessment Management System**: Integration of clinical assessments and therapeutic tools.
+- **Assessment Management System**: Integration of clinical assessments and therapeutic tools including 4x4x4 breathing exercise application for client sharing.
 - **Client Chart Review System**: Dedicated interface for comprehensive clinical overview including progress notes, session prep history, AI-powered case conceptualization, and AI treatment guide generation.
 - **Session Notes Integration**: Robust session notes system with proper Google Calendar event ID linking, error-resilient loading, and seamless UI integration for appointment-based documentation.
 - **Intelligent Session Recommendation Engine**: AI-powered therapeutic recommendations based on client history, session patterns, and clinical data.
+- **Therapeutic Tool Integration**: Embedded 4x4x4 breathing application within client assessments tab for direct sharing and in-session guidance.
 
 ### Data Flow
 Client requests from the React frontend are processed by the Express backend, interacting with PostgreSQL via Drizzle ORM. External AI services process therapeutic content, and TanStack Query manages real-time UI updates.
