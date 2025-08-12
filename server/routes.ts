@@ -1745,6 +1745,38 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
     }
   });
 
+  // Get recent calendar events for session note linking
+  app.get("/api/calendar/events/recent", async (req, res) => {
+    try {
+      const { days = 30 } = req.query;
+      const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      
+      // Calculate date range
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - parseInt(days as string));
+      
+      const events = await googleCalendarService.getEventsFromDatabase(
+        therapistId,
+        startDate.toISOString(),
+        endDate.toISOString()
+      );
+      
+      // Filter out events that already have session notes
+      const existingNotes = await storage.getAllSessionNotesByTherapist(therapistId);
+      const eventsWithNotes = new Set(existingNotes.map(note => note.eventId).filter(Boolean));
+      
+      const eventsWithoutNotes = events.filter(event => 
+        !eventsWithNotes.has(event.google_event_id)
+      );
+      
+      res.json(eventsWithoutNotes);
+    } catch (error) {
+      console.error("Error fetching recent calendar events:", error);
+      res.status(500).json({ error: "Failed to fetch recent events" });
+    }
+  });
+
   // AI Session Prep Generation
   app.post("/api/ai/session-prep-from-note", async (req, res) => {
     try {

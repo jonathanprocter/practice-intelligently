@@ -123,6 +123,16 @@ export const sessionNotes = pgTable("session_notes", {
   aiTags: jsonb("ai_tags"),
   sessionDate: timestamp("session_date"),
   
+  // Enhanced fields for manual note entry and meeting management
+  manualEntry: boolean("manual_entry").default(false), // Indicates if this was manually entered vs AI processed
+  meetingType: text("meeting_type"), // 'therapy_session', 'consultation', 'supervision', 'team_meeting', 'planning', 'other'
+  participants: jsonb("participants"), // Array of participant names/roles for multi-person meetings
+  location: text("location"), // Meeting location (office, virtual, phone, etc.)
+  duration: integer("duration"), // Duration in minutes
+  followUpRequired: boolean("follow_up_required").default(false),
+  followUpNotes: text("follow_up_notes"),
+  confidentialityLevel: text("confidentiality_level").default("standard"), // 'standard', 'high', 'restricted'
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
