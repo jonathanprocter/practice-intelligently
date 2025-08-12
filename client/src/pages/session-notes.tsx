@@ -18,6 +18,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ApiClient, SessionNote } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { ClientLink } from "@/components/common/ClientLink";
+import { EditSessionNoteTitleModal } from "@/components/EditSessionNoteTitleModal";
 import { cn } from "@/lib/utils";
 
 // Debounce utility function
@@ -160,6 +161,7 @@ export default function SessionNotes() {
   const [selectedNote, setSelectedNote] = useState<SessionNote | null>(null);
   const [isDetailView, setIsDetailView] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<SessionTemplate | null>(null);
 
   // Enhanced Search Filters
@@ -1341,11 +1343,14 @@ export default function SessionNotes() {
                 <div className="flex-1">
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h3 className="font-semibold text-therapy-text mb-1">
-                        {note.title || (
-                          <span className="flex items-center gap-2">
+                      <h3 className="font-semibold text-therapy-text mb-1" data-testid={`text-note-title-${note.id}`}>
+                        {note.title ? (
+                          <span className="text-lg">{note.title}</span>
+                        ) : (
+                          <span className="flex items-center gap-2 text-gray-600">
                             <ClientLink clientId={note.clientId} fallback={`Client ${note.clientId.substring(0, 8)}`} />
                             <span>- Session Note</span>
+                            <Badge variant="outline" className="text-xs">No Title</Badge>
                           </span>
                         )}
                       </h3>
@@ -1418,13 +1423,28 @@ export default function SessionNotes() {
                         variant="ghost" 
                         size="sm"
                         onClick={() => handleViewDetails(note)}
+                        data-testid={`button-view-${note.id}`}
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
                       <Button 
                         variant="ghost" 
                         size="sm"
+                        onClick={() => {
+                          setSelectedNote(note);
+                          setIsEditingTitle(true);
+                        }}
+                        aria-label={`Edit title for session note of ${note.clientId}`}
+                        data-testid={`button-edit-title-${note.id}`}
+                      >
+                        <Edit className="w-4 h-4 mr-1" />
+                        Title
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
                         onClick={() => handleEdit(note)}
+                        data-testid={`button-edit-${note.id}`}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -1904,6 +1924,23 @@ export default function SessionNotes() {
           </Tabs>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Session Note Title Modal */}
+      {selectedNote && (
+        <EditSessionNoteTitleModal
+          note={selectedNote}
+          isOpen={isEditingTitle}
+          onClose={() => {
+            setIsEditingTitle(false);
+            setSelectedNote(null);
+          }}
+          onTitleUpdated={() => {
+            // Invalidate relevant queries to refresh the data
+            queryClient.invalidateQueries({ queryKey: ['/api/session-notes'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/session-notes/today'] });
+          }}
+        />
+      )}
     </div>
   );
 }

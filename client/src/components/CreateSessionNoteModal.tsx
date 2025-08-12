@@ -58,6 +58,7 @@ interface CreateSessionNoteModalProps {
 interface SessionNoteData {
   clientId: string;
   therapistId: string;
+  title?: string;  // ADD THIS
   content: string;
   appointmentId: string;
   source: string;
@@ -283,6 +284,7 @@ export function CreateSessionNoteModal({
 }: CreateSessionNoteModalProps) {
   // Core state
   const [content, setContent] = useState('');
+  const [sessionNoteTitle, setSessionNoteTitle] = useState<string>(''); // ADD THIS
   const [appointmentMode, setAppointmentMode] = useState<'existing' | 'new' | 'none'>('existing');
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<string>('');
   const [newAppointmentDate, setNewAppointmentDate] = useState<string>('');
@@ -330,6 +332,42 @@ export function CreateSessionNoteModal({
     },
     enabled: isOpen
   });
+
+  // Title suggestions generator
+  const generateTitleSuggestions = () => {
+    const suggestions = [];
+    
+    // Based on template
+    if (selectedTemplate) {
+      const template = NOTE_TEMPLATES.find(t => t.id === selectedTemplate);
+      suggestions.push(`${template?.name} - ${new Date().toLocaleDateString()}`);
+    }
+    
+    // Based on interventions
+    if (selectedInterventions.length > 0) {
+      suggestions.push(`${selectedInterventions[0]} Session`);
+    }
+    
+    // Based on risk level
+    if (riskLevel === 'high') {
+      suggestions.push('Crisis Intervention Session');
+    } else if (riskLevel === 'moderate') {
+      suggestions.push('Risk Assessment & Safety Planning');
+    }
+    
+    // Based on AI analysis
+    if (aiAnalysis?.sessionType) {
+      suggestions.push(aiAnalysis.sessionType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()));
+    }
+    
+    // Based on session type
+    suggestions.push(`Session Note - ${clientName}`);
+    
+    // Generic fallbacks
+    suggestions.push(`Progress Review - ${new Date().toLocaleDateString()}`);
+    
+    return suggestions.slice(0, 4); // Limit to 4 suggestions
+  };
 
   // Computed values
   const wordCount = useMemo(() => {
@@ -436,6 +474,7 @@ export function CreateSessionNoteModal({
   const handleAutoSave = useCallback(async () => {
     try {
       const draftData = {
+        sessionNoteTitle,  // ADD THIS
         content,
         privateNotes,
         selectedInterventions,
@@ -459,7 +498,7 @@ export function CreateSessionNoteModal({
     } catch (error) {
       console.error('Auto-save failed:', error);
     }
-  }, [content, privateNotes, selectedInterventions, homeworkAssignments, nextSessionGoals, 
+  }, [sessionNoteTitle, content, privateNotes, selectedInterventions, homeworkAssignments, nextSessionGoals, 
       appointmentMode, selectedAppointmentId, newAppointmentDate, newAppointmentTime, newAppointmentTitle, clientId]);
 
   const loadDraft = useCallback(() => {
@@ -467,6 +506,7 @@ export function CreateSessionNoteModal({
       const draftData = localStorage.getItem(`session-note-draft-${clientId}`);
       if (draftData) {
         const draft = JSON.parse(draftData);
+        setSessionNoteTitle(draft.sessionNoteTitle || ''); // ADD THIS
         setContent(draft.content || '');
         setPrivateNotes(draft.privateNotes || '');
         setSelectedInterventions(draft.selectedInterventions || []);
@@ -715,6 +755,7 @@ export function CreateSessionNoteModal({
       const sessionNoteData = {
         clientId,
         therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+        title: sessionNoteTitle || `Session Note - ${new Date().toLocaleDateString()}`, // ADD THIS
         content: content.trim(),
         appointmentId: appointmentIdToUse,
         source: 'manual',
@@ -739,6 +780,7 @@ export function CreateSessionNoteModal({
 
   const resetForm = () => {
     setContent('');
+    setSessionNoteTitle(''); // ADD THIS
     setSelectedAppointmentId('');
     setNewAppointmentDate('');
     setNewAppointmentTime('');
@@ -879,6 +921,40 @@ export function CreateSessionNoteModal({
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Session Note Title */}
+              <div className="space-y-2">
+                <Label htmlFor="session-title">Session Note Title</Label>
+                <Input
+                  id="session-title"
+                  placeholder="e.g., 'Progress Review - Week 12' or 'Crisis Intervention Session'"
+                  value={sessionNoteTitle}
+                  onChange={(e) => setSessionNoteTitle(e.target.value)}
+                  className="text-lg font-medium"
+                  data-testid="input-session-title"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Optional: Give this session a descriptive title for easy reference
+                </p>
+                
+                {/* Title Suggestions */}
+                {sessionNoteTitle === '' && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="text-xs text-muted-foreground">Suggestions:</span>
+                    {generateTitleSuggestions().map((suggestion, idx) => (
+                      <Badge
+                        key={idx}
+                        variant="outline"
+                        className="cursor-pointer text-xs"
+                        onClick={() => setSessionNoteTitle(suggestion)}
+                        data-testid={`suggestion-${idx}`}
+                      >
+                        {suggestion}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Main Content Area */}
