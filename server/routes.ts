@@ -1558,42 +1558,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
     }
   });
 
-  // Session prep AI insights for non-client appointments (supervision, etc.)
-  app.post("/api/session-prep/:eventId/ai-insights", async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const { clientId, appointmentTitle, appointmentType } = req.body;
 
-      // For supervision or non-client appointments
-      const insights = {
-        appointmentType: appointmentType || 'supervision',
-        title: appointmentTitle || 'Session',
-        keyThemes: [
-          'Professional development',
-          'Case consultation',
-          'Therapeutic skills enhancement'
-        ],
-        recommendedFocus: [
-          'Review difficult cases',
-          'Discuss therapeutic approaches',
-          'Professional growth planning'
-        ],
-        progressIndicators: [
-          'Supervision session',
-          'Professional development',
-          'Skill enhancement focus'
-        ]
-      };
-
-      res.json(insights);
-    } catch (error: any) {
-      console.error('Error generating session prep insights:', error);
-      res.status(500).json({ 
-        error: 'Failed to generate session prep insights',
-        details: error.message 
-      });
-    }
-  });
 
   // Session Recommendations API Routes
   app.get("/api/session-recommendations/client/:clientId", async (req, res) => {
