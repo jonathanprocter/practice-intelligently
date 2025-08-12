@@ -8,6 +8,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ApiClient, SessionNote } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { ClientLink } from "@/components/common/ClientLink";
 
 export default function SessionNotes() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -680,7 +681,12 @@ export default function SessionNotes() {
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="font-semibold text-therapy-text mb-1">
-                    {note.title ? note.title : `${note.clientId} - Session Note`}
+                    {note.title ? note.title : 
+                      <span className="flex items-center gap-2">
+                        <ClientLink clientId={note.clientId} fallback={`Client ${note.clientId.substring(0, 8)}`} />
+                        <span>- Session Note</span>
+                      </span>
+                    }
                   </h3>
                   <p className="text-sm text-therapy-text/60">
                     {note.sessionDate 
@@ -906,7 +912,7 @@ export default function SessionNotes() {
             </DialogTitle>
             {selectedNote && (
               <DialogDescription>
-                Client: {selectedNote.clientId} • {new Date(selectedNote.createdAt).toLocaleDateString('en-US', {
+                Client: <ClientLink clientId={selectedNote.clientId} fallback={`Client ${selectedNote.clientId.substring(0, 8)}`} /> • {new Date(selectedNote.createdAt).toLocaleDateString('en-US', {
                   weekday: 'long',
                   year: 'numeric',
                   month: 'long',

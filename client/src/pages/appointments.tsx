@@ -30,6 +30,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { ClientLink } from "@/components/common/ClientLink";
 
 interface ExtendedAppointment extends Appointment {
   clientName?: string;
@@ -762,7 +763,10 @@ export default function Appointments() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold text-therapy-text truncate">
-                        {appointment.clientName}
+                        <ClientLink 
+                          clientName={appointment.clientName || `Client ${appointment.clientId?.substring(0, 8) || 'Unknown'}`}
+                          className="hover:text-therapy-primary hover:underline transition-colors"
+                        />
                       </h3>
                       <a 
                         href={`tel:${appointment.clientPhone}`} 
@@ -1016,7 +1020,10 @@ export default function Appointments() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Brain className="h-5 w-5 text-therapy-primary" />
-              Session Prep - {selectedAppointment?.clientName}
+              Session Prep - <ClientLink 
+                clientName={selectedAppointment?.clientName || `Client ${selectedAppointment?.clientId?.substring(0, 8) || 'Unknown'}`}
+                className="hover:text-therapy-primary hover:underline transition-colors"
+              />
             </DialogTitle>
             <DialogDescription>
               Review client progress and prepare for upcoming session

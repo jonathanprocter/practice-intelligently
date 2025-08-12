@@ -29,6 +29,7 @@ import { SessionPrepCard } from "@/components/session-prep/SessionPrepCard";
 import { SessionRecommendationPreviewCard } from "@/components/session-prep/SessionRecommendationPreviewCard";
 import ClientInfoModal from "./ClientInfoModal";
 import { getCalendarLocationDisplay } from "@/utils/locationUtils";
+import { ClientLink } from "@/components/common/ClientLink";
 
 export default function TodaysSchedule() {
   const [activeSession, setActiveSession] = useState<string | null>(null);
@@ -377,20 +378,16 @@ export default function TodaysSchedule() {
                   {appointment.clientId === 'calendar-event' ? (
                     <>
                       <Calendar className="h-4 w-4 text-therapy-primary" />
-                      <button 
-                        onClick={() => handleClientNameClick(clientName)}
+                      <ClientLink 
+                        clientName={clientName}
                         className="text-left hover:text-therapy-primary hover:underline transition-colors"
-                      >
-                        {clientName}
-                      </button>
+                      />
                     </>
                   ) : (
-                    <button 
-                      onClick={() => handleClientNameClick(clientName)}
+                    <ClientLink 
+                      clientName={clientName}
                       className="text-left hover:text-therapy-primary hover:underline transition-colors"
-                    >
-                      {clientName}
-                    </button>
+                    />
                   )}
                 </h4>
                 <p className="text-therapy-text/60 text-sm">

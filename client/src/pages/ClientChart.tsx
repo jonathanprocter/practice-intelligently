@@ -68,7 +68,7 @@ interface Appointment {
 export default function ClientChart() {
   const params = useParams<{ clientId: string }>();
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('timeline');
   const [isLinkingModalOpen, setIsLinkingModalOpen] = useState(false);
   const [isCreateNoteModalOpen, setIsCreateNoteModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
@@ -96,9 +96,30 @@ export default function ClientChart() {
     enabled: !!params.clientId
   });
 
+  // Comprehensive timeline data combining appointments and session notes
+  const timelineData = React.useMemo(() => {
+    const combined = [
+      ...appointments.map(apt => ({
+        type: 'appointment' as const,
+        date: new Date(apt.startTime),
+        title: apt.title || 'Appointment',
+        data: apt,
+        hasNote: sessionNotes.some(note => note.appointmentId === apt.id || note.eventId === apt.googleEventId)
+      })),
+      ...sessionNotes.map(note => ({
+        type: 'session-note' as const,
+        date: new Date(note.createdAt),
+        title: note.content?.split('\n')[0]?.substring(0, 100) + '...' || 'Session Note',
+        data: note,
+        hasNote: true
+      }))
+    ];
+    
+    return combined.sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [appointments, sessionNotes]);
+
   const handleDocumentProcessed = (document: any) => {
     // Refresh session notes after document is processed
-    // This will be handled by the DocumentProcessor component
     console.log('Document processed:', document);
   };
 
@@ -213,7 +234,10 @@ export default function ClientChart() {
               <Calendar className="w-4 h-4 mr-2" />
               Schedule Appointment
             </Button>
-            <Button size="sm">
+            <Button 
+              size="sm"
+              onClick={() => setIsCreateNoteModalOpen(true)}
+            >
               <FileText className="w-4 h-4 mr-2" />
               New Session Note
             </Button>
@@ -230,417 +254,503 @@ export default function ClientChart() {
 
       {/* Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-8">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="client-info">Client Info</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="sessions">Session Notes</TabsTrigger>
           <TabsTrigger value="appointments">Appointments</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="assessments">Assessments</TabsTrigger>
-          <TabsTrigger value="recommendations">AI Recommendations</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="recommendations">AI Insights</TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {/* Quick Stats */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
-                <Activity className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{sessionNotes.length}</div>
-                <p className="text-xs text-muted-foreground">
-                  Last session: {sessionNotes[0] ? new Date(sessionNotes[0].createdAt).toLocaleDateString() : 'None'}
-                </p>
-              </CardContent>
-            </Card>
+        {/* Timeline Tab - Comprehensive EHR View */}
+        <TabsContent value="timeline" className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-4">
+            {/* Quick Stats Sidebar */}
+            <div className="lg:col-span-1 space-y-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium">Clinical Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-600">Total Sessions</span>
+                    <span className="font-semibold">{sessionNotes.length}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-600">Appointments</span>
+                    <span className="font-semibold">{appointments.length}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-600">Upcoming</span>
+                    <span className="font-semibold text-blue-600">
+                      {appointments.filter(apt => new Date(apt.startTime) > new Date()).length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-600">Last Contact</span>
+                    <span className="font-semibold text-xs">
+                      {timelineData[0] ? timelineData[0].date.toLocaleDateString() : 'N/A'}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Upcoming Appointments</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {appointments.filter((apt: Appointment) => new Date(apt.startTime) > new Date()).length}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Next: {appointments.find((apt: Appointment) => new Date(apt.startTime) > new Date())?.startTime ? 
-                    new Date(appointments.find((apt: Appointment) => new Date(apt.startTime) > new Date())!.startTime).toLocaleDateString() : 
-                    'Not scheduled'
-                  }
-                </p>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button 
+                    size="sm" 
+                    className="w-full justify-start"
+                    onClick={() => setIsCreateNoteModalOpen(true)}
+                    data-testid="button-create-session-note"
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    New Session Note
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    data-testid="button-schedule-appointment"
+                  >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Schedule Appointment
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setActiveTab('documents')}
+                    data-testid="button-upload-document"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Document
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Progress Notes</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{progressNotes.length}</div>
-                <p className="text-xs text-muted-foreground">
-                  Most recent therapeutic progress
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Recent Activity */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {sessionNotes.slice(0, 5).map((note: SessionNote) => {
-                  // Find the linked appointment to show its date instead of processing date
-                  const linkedAppointment = appointments.find(apt => 
-                    apt.id === note.appointmentId || 
-                    (apt.googleEventId && note.eventId && apt.googleEventId === note.eventId)
-                  );
-                  
-                  const displayDate = linkedAppointment 
-                    ? new Date(linkedAppointment.startTime).toLocaleDateString()
-                    : new Date(note.createdAt).toLocaleDateString();
-                    
-                  const dateLabel = linkedAppointment ? 'Session Date' : 'Processing Date';
-                  
-                  return (
-                    <div key={note.id} className="flex items-start gap-3">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">Session Note</span>
-                            <span className="text-xs text-gray-500" title={dateLabel}>
-                              {displayDate}
-                            </span>
-                          {note.source === 'document_upload' && (
-                            <Badge variant="secondary" className="text-xs">
-                              Uploaded Document
-                            </Badge>
-                          )}
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteSessionNote(note.id, note.source)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 h-auto p-1"
-                          disabled={deleteSessionNoteMutation.isPending}
-                          data-testid={`button-delete-recent-note-${note.id}`}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                      <p className="text-sm text-gray-600 line-clamp-2">
-                        {note.content.substring(0, 100)}...
-                      </p>
-                      {note.aiTags && note.aiTags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {note.aiTags.slice(0, 3).map((tag, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
+            {/* Main Timeline */}
+            <div className="lg:col-span-3">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Clinical Timeline</CardTitle>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Clock className="w-4 h-4" />
+                      Complete appointment and session history
                     </div>
                   </div>
-                  );
-                })}
-                {sessionNotes.length === 0 && (
-                  <p className="text-gray-500 text-center py-4">No session notes yet</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                </CardHeader>
+                <CardContent>
+                  {timelineData.length === 0 ? (
+                    <div className="text-center py-8">
+                      <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No clinical history found</h3>
+                      <p className="text-gray-600 mb-4">Start by creating a session note or scheduling an appointment.</p>
+                      <Button onClick={() => setIsCreateNoteModalOpen(true)}>
+                        <FileText className="w-4 h-4 mr-2" />
+                        Create First Session Note
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {timelineData.map((item, index) => (
+                        <div key={`${item.type}-${item.data.id}`} className="relative">
+                          {/* Timeline line */}
+                          {index < timelineData.length - 1 && (
+                            <div className="absolute left-6 top-12 w-0.5 h-16 bg-gray-200"></div>
+                          )}
+                          
+                          <div className="flex items-start gap-4">
+                            {/* Timeline dot */}
+                            <div className={`
+                              w-12 h-12 rounded-full flex items-center justify-center text-white
+                              ${item.type === 'appointment' 
+                                ? (item.hasNote ? 'bg-green-600' : 'bg-blue-600')
+                                : 'bg-purple-600'
+                              }
+                            `}>
+                              {item.type === 'appointment' ? (
+                                item.hasNote ? <CheckCircle2 className="w-6 h-6" /> : <Calendar className="w-6 h-6" />
+                              ) : (
+                                <FileText className="w-6 h-6" />
+                              )}
+                            </div>
 
-        {/* Client Information Tab */}
-        <TabsContent value="client-info" className="space-y-6">
-          <EditableClientInfo client={client} mode="full" />
+                            {/* Timeline content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h4 className="font-medium text-gray-900">
+                                        {item.type === 'appointment' ? (
+                                          item.data.title || 'Therapy Appointment'
+                                        ) : (
+                                          'Session Note'
+                                        )}
+                                      </h4>
+                                      <Badge variant={item.type === 'appointment' ? 'default' : 'secondary'}>
+                                        {item.type === 'appointment' ? 'Appointment' : 'Note'}
+                                      </Badge>
+                                      {item.type === 'appointment' && item.hasNote && (
+                                        <Badge variant="outline" className="text-green-600 border-green-600">
+                                          Has Note
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="text-sm text-gray-600 mb-2">
+                                      {item.date.toLocaleDateString('en-US', {
+                                        weekday: 'long',
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                      })}
+                                      {item.type === 'appointment' && (
+                                        <span className="ml-2">
+                                          {new Date(item.data.startTime).toLocaleTimeString('en-US', {
+                                            hour: 'numeric',
+                                            minute: '2-digit',
+                                            hour12: true
+                                          })}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-2">
+                                    {item.type === 'session-note' && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleDeleteSessionNote(item.data.id, item.data.source)}
+                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        disabled={deleteSessionNoteMutation.isPending}
+                                        data-testid={`button-delete-timeline-note-${item.data.id}`}
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Content preview */}
+                                {item.type === 'session-note' && (
+                                  <div className="space-y-2">
+                                    <p className="text-sm text-gray-700 line-clamp-3">
+                                      {item.data.content.substring(0, 200)}...
+                                    </p>
+                                    {item.data.aiTags && item.data.aiTags.length > 0 && (
+                                      <div className="flex flex-wrap gap-1">
+                                        {item.data.aiTags.slice(0, 4).map((tag, tagIndex) => (
+                                          <Badge key={tagIndex} variant="outline" className="text-xs">
+                                            {tag}
+                                          </Badge>
+                                        ))}
+                                        {item.data.aiTags.length > 4 && (
+                                          <Badge variant="outline" className="text-xs">
+                                            +{item.data.aiTags.length - 4} more
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    )}
+                                    {item.data.source === 'document_upload' && (
+                                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                                        <Upload className="w-3 h-3" />
+                                        Uploaded Document
+                                        {item.data.originalFilename && (
+                                          <span>: {item.data.originalFilename}</span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                {item.type === 'appointment' && (
+                                  <div className="space-y-2">
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                      <div>
+                                        <span className="text-gray-600">Type:</span>
+                                        <span className="ml-1 font-medium">{item.data.type || 'Therapy'}</span>
+                                      </div>
+                                      <div>
+                                        <span className="text-gray-600">Status:</span>
+                                        <span className="ml-1 font-medium">{item.data.status || 'Scheduled'}</span>
+                                      </div>
+                                      {item.data.location && (
+                                        <div className="col-span-2">
+                                          <span className="text-gray-600">Location:</span>
+                                          <span className="ml-1">{item.data.location}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    {!item.hasNote && new Date(item.data.startTime) < new Date() && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                          setSelectedAppointment(item.data);
+                                          setIsCreateNoteModalOpen(true);
+                                        }}
+                                        className="mt-2"
+                                        data-testid={`button-add-note-to-appointment-${item.data.id}`}
+                                      >
+                                        <FileText className="w-4 h-4 mr-2" />
+                                        Add Session Note
+                                      </Button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Session Notes Tab */}
         <TabsContent value="sessions" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Session Notes History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {sessionNotes.map((note: SessionNote) => (
-                  <div key={note.id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-gray-500" />
-                        <span className="font-medium">
-                          {new Date(note.createdAt).toLocaleDateString()}
-                        </span>
-                        {note.source === 'document_upload' && (
-                          <Badge variant="secondary">
-                            From: {note.originalFilename}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-500">
-                          {new Date(note.createdAt).toLocaleTimeString()}
-                        </span>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-semibold">Session Notes</h2>
+              <p className="text-sm text-gray-600">{sessionNotes.length} total session notes</p>
+            </div>
+            <Button onClick={() => setIsCreateNoteModalOpen(true)}>
+              <FileText className="w-4 h-4 mr-2" />
+              New Session Note
+            </Button>
+          </div>
+          
+          {notesLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : sessionNotes.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No session notes found</h3>
+                <p className="text-gray-600 mb-4">Create your first session note for this client.</p>
+                <Button onClick={() => setIsCreateNoteModalOpen(true)}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Create Session Note
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {sessionNotes.map((note) => {
+                const linkedAppointment = appointments.find(apt => 
+                  apt.id === note.appointmentId || 
+                  (apt.googleEventId && note.eventId && apt.googleEventId === note.eventId)
+                );
+                
+                return (
+                  <Card key={note.id}>
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-medium">Session Note</h3>
+                            {note.source === 'document_upload' && (
+                              <Badge variant="secondary">
+                                <Upload className="w-3 h-3 mr-1" />
+                                Uploaded Document
+                              </Badge>
+                            )}
+                            {linkedAppointment && (
+                              <Badge variant="outline">
+                                <Calendar className="w-3 h-3 mr-1" />
+                                Linked to Appointment
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-sm text-gray-600 mb-3">
+                            {linkedAppointment ? (
+                              <span>Session Date: {new Date(linkedAppointment.startTime).toLocaleDateString()}</span>
+                            ) : (
+                              <span>Created: {new Date(note.createdAt).toLocaleDateString()}</span>
+                            )}
+                            {note.originalFilename && (
+                              <span className="ml-3">File: {note.originalFilename}</span>
+                            )}
+                          </div>
+                        </div>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteSessionNote(note.id, note.source)}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           disabled={deleteSessionNoteMutation.isPending}
-                          data-testid={`button-delete-note-${note.id}`}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                    </div>
-                    
-                    {note.aiTags && note.aiTags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {note.aiTags.map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
+                      
+                      <div className="prose prose-sm max-w-none">
+                        <div className="whitespace-pre-wrap text-sm text-gray-700">
+                          {note.content.length > 500 ? (
+                            <>
+                              {note.content.substring(0, 500)}...
+                              <Button variant="link" className="h-auto p-0 ml-2">
+                                Read more
+                              </Button>
+                            </>
+                          ) : (
+                            note.content
+                          )}
+                        </div>
                       </div>
-                    )}
-                    
-                    <div className="prose prose-sm max-w-none">
-                      <pre className="whitespace-pre-wrap text-sm text-gray-700 bg-gray-50 p-3 rounded">
-                        {note.content}
-                      </pre>
-                    </div>
-                  </div>
-                ))}
-                {sessionNotes.length === 0 && (
-                  <p className="text-gray-500 text-center py-8">No session notes found</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                      
+                      {note.aiTags && note.aiTags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-4">
+                          {note.aiTags.map((tag, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </TabsContent>
 
         {/* Appointments Tab */}
         <TabsContent value="appointments" className="space-y-6">
-          {/* Appointment Summary Stats */}
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Appointments</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{appointments.length}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Linked Notes</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  {appointments.filter(apt => 
-                    sessionNotes.some(note => 
-                      note.appointmentId === apt.id || 
-                      (note.eventId && apt.googleEventId && note.eventId === apt.googleEventId)
-                    )
-                  ).length}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  appointments with notes
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Session Notes</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
-                  {sessionNotes.length}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {sessionNotes.filter(note => !note.appointmentId && !note.eventId).length} unlinked to appointments
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Coverage Rate</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-purple-600">
-                  {appointments.length > 0 ? Math.round((sessionNotes.length / appointments.length) * 100) : 0}%
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  notes per appointment
-                </p>
-              </CardContent>
-            </Card>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-semibold">Appointments</h2>
+              <p className="text-sm text-gray-600">{appointments.length} total appointments</p>
+            </div>
+            <Button variant="outline">
+              <Calendar className="w-4 h-4 mr-2" />
+              Schedule New
+            </Button>
           </div>
-
-          {/* Information Alert about Unlinked Notes */}
-          {sessionNotes.filter(note => !note.appointmentId && !note.eventId).length > 0 ? (
-            <Card className="border-orange-200 bg-orange-50">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-orange-800">Session Notes Not Linked to Appointments</h4>
-                    <p className="text-sm text-orange-700 mt-1">
-                      {sessionNotes.filter(note => !note.appointmentId && !note.eventId).length} of {sessionNotes.length} session notes 
-                      are not connected to specific appointments. These notes exist in the system but don't appear 
-                      with their corresponding appointments below.
-                    </p>
-                    <div className="flex gap-2 mt-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setActiveTab('sessions')}
-                        className="text-orange-700 border-orange-300 hover:bg-orange-100"
-                      >
-                        View All Session Notes
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsLinkingModalOpen(true)}
-                        className="text-orange-700 border-orange-300 hover:bg-orange-100"
-                        data-testid="button-manage-linking"
-                      >
-                        <Link className="w-4 h-4 mr-2" />
-                        Manage Linking
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+          
+          {appointmentsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : appointments.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No appointments found</h3>
+                <p className="text-gray-600 mb-4">Schedule the first appointment for this client.</p>
+                <Button variant="outline">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Schedule Appointment
+                </Button>
               </CardContent>
             </Card>
-          ) : sessionNotes.length > 0 && (
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600" />
-                  <div className="flex-1">
-                    <h4 className="font-medium text-green-800">All Notes Properly Linked</h4>
-                    <p className="text-sm text-green-700">
-                      Excellent! All {sessionNotes.length} session notes are properly linked to their corresponding appointments.
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsLinkingModalOpen(true)}
-                    className="text-green-700 border-green-300 hover:bg-green-100"
-                    data-testid="button-manage-linking"
-                  >
-                    <Link className="w-4 h-4 mr-2" />
-                    Manage Linking
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Appointment History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {appointments.map((appointment: Appointment) => {
-                  // Check if there's a session note linked to this appointment
-                  const linkedSessionNote = sessionNotes.find(note => 
-                    note.appointmentId === appointment.id || 
-                    (note.eventId && appointment.googleEventId && note.eventId === appointment.googleEventId)
-                  );
-                  
-                  return (
-                    <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Calendar className="w-4 h-4 text-gray-500" />
+          ) : (
+            <div className="space-y-4">
+              {appointments.map((appointment) => {
+                const hasNote = sessionNotes.some(note => 
+                  note.appointmentId === appointment.id || 
+                  (appointment.googleEventId && note.eventId && appointment.googleEventId === note.eventId)
+                );
+                const isPast = new Date(appointment.startTime) < new Date();
+                
+                return (
+                  <Card key={appointment.id}>
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium">{appointment.title || appointment.type?.replace('_', ' ') || 'Appointment'}</p>
-                            {linkedSessionNote && (
-                              <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                                <FileText className="w-3 h-3 mr-1" />
-                                Note
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-medium">{appointment.title || 'Therapy Appointment'}</h3>
+                            <Badge variant={isPast ? 'secondary' : 'default'}>
+                              {isPast ? 'Completed' : 'Upcoming'}
+                            </Badge>
+                            {hasNote && (
+                              <Badge variant="outline" className="text-green-600 border-green-600">
+                                <CheckCircle2 className="w-3 h-3 mr-1" />
+                                Has Note
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-gray-500">
-                            {new Date(appointment.startTime).toLocaleString()}
-                          </p>
-                          {appointment.location && (
-                            <p className="text-xs text-gray-400">{appointment.location}</p>
+                          <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                            <div>
+                              <span className="font-medium">Date:</span> {new Date(appointment.startTime).toLocaleDateString()}
+                            </div>
+                            <div>
+                              <span className="font-medium">Time:</span> {new Date(appointment.startTime).toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                              })}
+                            </div>
+                            <div>
+                              <span className="font-medium">Type:</span> {appointment.type || 'Therapy'}
+                            </div>
+                            <div>
+                              <span className="font-medium">Status:</span> {appointment.status || 'Scheduled'}
+                            </div>
+                            {appointment.location && (
+                              <div className="col-span-2">
+                                <span className="font-medium">Location:</span> {appointment.location}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {!hasNote && isPast && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedAppointment(appointment);
+                                setIsCreateNoteModalOpen(true);
+                              }}
+                            >
+                              <FileText className="w-4 h-4 mr-2" />
+                              Add Note
+                            </Button>
                           )}
-                          {linkedSessionNote && (
-                            <p className="text-xs text-blue-600 mt-1">
-                              Session note: {linkedSessionNote.content.substring(0, 80)}...
-                            </p>
+                          {hasNote && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedAppointment(appointment);
+                                setIsLinkingModalOpen(true);
+                              }}
+                            >
+                              <Link className="w-4 h-4 mr-2" />
+                              View Note
+                            </Button>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {linkedSessionNote ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setActiveTab('sessions')}
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                            data-testid={`button-view-note-${appointment.id}`}
-                          >
-                            <FileText className="w-4 h-4" />
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedAppointment(appointment);
-                              setIsCreateNoteModalOpen(true);
-                            }}
-                            className="text-gray-400 hover:text-gray-600 hover:bg-gray-50"
-                            data-testid={`button-add-note-${appointment.id}`}
-                          >
-                            <FileText className="w-4 h-4" />
-                          </Button>
-                        )}
-                        <Badge variant={appointment.status === 'completed' ? 'default' : 'secondary'}>
-                          {appointment.status || 'scheduled'}
-                        </Badge>
-                      </div>
-                    </div>
-                  );
-                })}
-                {appointments.length === 0 && (
-                  <p className="text-gray-500 text-center py-8">No appointments found</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </TabsContent>
 
         {/* Documents Tab */}
         <TabsContent value="documents" className="space-y-6">
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-2">Document Upload & Processing</h2>
+            <p className="text-sm text-gray-600">Upload clinical documents for AI processing and automatic session note generation.</p>
+          </div>
+          
           <DocumentProcessor
             clientId={params.clientId!}
             clientName={clientName}
@@ -648,207 +758,22 @@ export default function ClientChart() {
           />
         </TabsContent>
 
-        {/* Assessments Tab */}
-        <TabsContent value="assessments" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="w-5 h-5" />
-                Assessment Tools & Resources
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-6 md:grid-cols-2">
-                {/* 4x4x4 Breathing Tool */}
-                <Card className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">4x4x4 Breathing Exercise</h3>
-                      <p className="text-sm text-gray-600 mb-4">
-                        A guided breathing exercise to help manage anxiety and stress. Follow the visual cues 
-                        for a 4-second inhale, 4-second hold, and 4-second exhale pattern.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="aspect-video bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center">
-                      <iframe
-                        src="https://enchanting-magenta-bobolink.intern.rabbitos.app/final/index.html"
-                        width="100%"
-                        height="400"
-                        frameBorder="0"
-                        className="rounded-lg"
-                        title="4x4x4 Breathing Exercise"
-                        data-testid="iframe-breathing-tool"
-                      />
-                    </div>
-                    
-                    <div className="flex justify-between items-center pt-4 border-t">
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Clock className="w-4 h-4" />
-                        <span>5-10 minutes recommended</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const url = 'https://enchanting-magenta-bobolink.intern.rabbitos.app/final/index.html';
-                            navigator.clipboard.writeText(url);
-                            toast({
-                              title: "Link copied!",
-                              description: "Share this breathing exercise with your client."
-                            });
-                          }}
-                          data-testid="button-copy-breathing-link"
-                        >
-                          <Link className="w-4 h-4 mr-2" />
-                          Copy Link
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            window.open('https://enchanting-magenta-bobolink.intern.rabbitos.app/final/index.html', '_blank');
-                          }}
-                          data-testid="button-open-breathing-tool"
-                        >
-                          Open Full Screen
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Assessment History */}
-                <Card className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Assessment History</h3>
-                    <Button variant="outline" size="sm">
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
-                      New Assessment
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="text-center py-8 text-gray-500">
-                      <AlertCircle className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm">No assessments completed yet</p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        Share tools like the breathing exercise to help your client with self-care
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-
-              {/* Usage Instructions */}
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle className="text-base">How to Use Assessment Tools</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="flex gap-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-blue-600 text-sm font-medium">1</span>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-sm">Share with Client</h4>
-                        <p className="text-xs text-gray-600">Copy the link and send it to your client for homework or in-session use</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-blue-600 text-sm font-medium">2</span>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-sm">Guide Practice</h4>
-                        <p className="text-xs text-gray-600">Use during sessions to teach coping skills and relaxation techniques</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-blue-600 text-sm font-medium">3</span>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-sm">Track Progress</h4>
-                        <p className="text-xs text-gray-600">Note improvements in session notes and discuss outcomes</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* AI Recommendations Tab */}
+        {/* AI Insights Tab */}
         <TabsContent value="recommendations" className="space-y-6">
-          <SessionRecommendations
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-2">AI Insights & Recommendations</h2>
+            <p className="text-sm text-gray-600">AI-powered therapeutic insights based on session history.</p>
+          </div>
+          
+          <SessionRecommendations 
             clientId={params.clientId!}
-            therapistId="e66b8b8e-e7a2-40b9-ae74-00c93ffe503c"
+            sessionNotes={sessionNotes}
           />
-        </TabsContent>
-
-        {/* Analytics Tab */}
-        <TabsContent value="analytics" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="w-5 h-5" />
-                AI-Powered Insights
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div>
-                  <h4 className="font-medium mb-2">Therapeutic Progress</h4>
-                  <p className="text-sm text-gray-600">
-                    Based on session notes analysis, this client shows consistent engagement 
-                    and progress indicators. Recent sessions focus on anxiety management and 
-                    coping strategies.
-                  </p>
-                </div>
-                
-                <div>
-                  <h4 className="font-medium mb-2">Common Themes</h4>
-                  <div className="flex flex-wrap gap-1">
-                    <Badge variant="outline">anxiety</Badge>
-                    <Badge variant="outline">coping-strategies</Badge>
-                    <Badge variant="outline">CBT</Badge>
-                    <Badge variant="outline">progress</Badge>
-                  </div>
-                </div>
-                
-                <div>
-                  <h4 className="font-medium mb-2">Session Frequency</h4>
-                  <p className="text-sm text-gray-600">
-                    Maintains regular weekly sessions with strong attendance. 
-                    Recommended to continue current schedule.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
 
-      {/* Session Note Linking Modal */}
-      <SessionNoteLinkingModal
-        isOpen={isLinkingModalOpen}
-        onClose={() => setIsLinkingModalOpen(false)}
-        clientId={params.clientId!}
-        sessionNotes={sessionNotes}
-        appointments={appointments}
-        onLinkingComplete={handleLinkingComplete}
-      />
-
-      {/* Create Session Note Modal */}
-      {selectedAppointment && (
+      {/* Modals */}
+      {isCreateNoteModalOpen && (
         <CreateSessionNoteModal
           isOpen={isCreateNoteModalOpen}
           onClose={() => {
@@ -857,8 +782,16 @@ export default function ClientChart() {
           }}
           clientId={params.clientId!}
           clientName={clientName}
-          appointmentId={selectedAppointment.id}
-          appointmentDate={selectedAppointment.startTime}
+          selectedAppointment={selectedAppointment}
+        />
+      )}
+
+      {isLinkingModalOpen && (
+        <SessionNoteLinkingModal
+          isOpen={isLinkingModalOpen}
+          onClose={() => setIsLinkingModalOpen(false)}
+          clientId={params.clientId!}
+          onLinkingComplete={handleLinkingComplete}
         />
       )}
     </div>

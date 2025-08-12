@@ -7,6 +7,7 @@ import { DocumentUploadZone } from "@/components/forms/DocumentUploadZone";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { ClientLink } from "@/components/common/ClientLink";
 
 interface SessionStats {
   todaysSessions?: number;
@@ -134,7 +135,11 @@ export default function TodaysSessions() {
                   )}
                   <div className="flex items-center space-x-1 text-xs text-therapy-text/50">
                     <User className="h-3 w-3" />
-                    <span>Client ID: {note.clientId.substring(0, 8)}...</span>
+                    <ClientLink 
+                      clientId={note.clientId} 
+                      fallback={`Client ${note.clientId.substring(0, 8)}`}
+                      className="hover:text-therapy-primary hover:underline transition-colors"
+                    />
                   </div>
                 </div>
               </div>
