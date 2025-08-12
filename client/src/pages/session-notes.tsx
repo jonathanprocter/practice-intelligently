@@ -4,8 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { SessionNoteEntry } from '@/components/SessionNoteEntry';
-import { Calendar, Plus, Search, FileText, Clock, MapPin, Users } from 'lucide-react';
+import { EditSessionNoteTitleModal } from '@/components/EditSessionNoteTitleModal';
+import { Calendar, Plus, Search, FileText, Clock, MapPin, Users, Edit2, Eye, MoreVertical } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface SessionNote {
   id: string;
@@ -35,6 +42,8 @@ export default function SessionNotesPage() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
+  const [editingNote, setEditingNote] = useState<SessionNote | null>(null);
+  const [selectedNote, setSelectedNote] = useState<SessionNote | null>(null);
 
   // Fetch session notes
   const { data: sessionNotes = [], refetch: refetchNotes } = useQuery({
@@ -76,6 +85,22 @@ export default function SessionNotesPage() {
     setShowNoteEntry(false);
     setSelectedEvent(null);
     refetchNotes();
+  };
+
+  const handleEditNote = (note: SessionNote) => {
+    setEditingNote(note);
+  };
+
+  const handleViewNote = (note: SessionNote) => {
+    setSelectedNote(note);
+  };
+
+  const closeEditModal = () => {
+    setEditingNote(null);
+  };
+
+  const closeViewModal = () => {
+    setSelectedNote(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -199,7 +224,12 @@ export default function SessionNotesPage() {
           </Card>
         ) : (
           filteredNotes.map((note: SessionNote) => (
-            <Card key={note.id} className="hover:shadow-md transition-shadow">
+            <Card 
+              key={note.id} 
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => handleViewNote(note)}
+              data-testid={`card-session-note-${note.id}`}
+            >
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -239,6 +269,29 @@ export default function SessionNotesPage() {
                     {note.followUpRequired && (
                       <Badge variant="destructive">Follow-up</Badge>
                     )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" data-testid={`button-actions-${note.id}`}>
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem 
+                          onClick={() => handleViewNote(note)}
+                          data-testid={`menu-view-${note.id}`}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleEditNote(note)}
+                          data-testid={`menu-edit-${note.id}`}
+                        >
+                          <Edit2 className="w-4 h-4 mr-2" />
+                          Edit Title
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </CardHeader>
@@ -263,6 +316,99 @@ export default function SessionNotesPage() {
           ))
         )}
       </div>
+
+      {/* Edit Title Modal */}
+      <EditSessionNoteTitleModal
+        isOpen={!!editingNote}
+        onClose={closeEditModal}
+        note={editingNote}
+        onTitleUpdated={() => {
+          refetchNotes();
+          closeEditModal();
+        }}
+      />
+
+      {/* View Note Modal */}
+      {selectedNote && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg max-w-4xl max-h-[80vh] overflow-auto p-6 m-4 w-full">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold mb-2" data-testid="view-note-title">
+                  {selectedNote.title || 'Untitled Session'}
+                </h2>
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {formatDate(selectedNote.sessionDate || selectedNote.createdAt)}
+                  </div>
+                  {selectedNote.location && (
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {selectedNote.location}
+                    </div>
+                  )}
+                  {selectedNote.duration && (
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {selectedNote.duration} min
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => handleEditNote(selectedNote)}
+                  data-testid="button-edit-from-view"
+                >
+                  <Edit2 className="w-4 h-4 mr-2" />
+                  Edit Title
+                </Button>
+                <Button variant="outline" onClick={closeViewModal} data-testid="button-close-view">
+                  ✕
+                </Button>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex gap-2 mb-4">
+                <Badge className={getMeetingTypeColor(selectedNote.meetingType)}>
+                  {selectedNote.meetingType?.replace('_', ' ') || 'Session'}
+                </Badge>
+                {selectedNote.manualEntry && (
+                  <Badge variant="outline">Manual</Badge>
+                )}
+                {selectedNote.followUpRequired && (
+                  <Badge variant="destructive">Follow-up</Badge>
+                )}
+              </div>
+              
+              <div className="prose max-w-none">
+                <div 
+                  className="whitespace-pre-wrap text-gray-800 leading-relaxed"
+                  data-testid="view-note-content"
+                >
+                  {selectedNote.content || 'No content available.'}
+                </div>
+              </div>
+              
+              {selectedNote.tags && selectedNote.tags.length > 0 && (
+                <div className="border-t pt-4">
+                  <h4 className="font-medium mb-2">Tags</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedNote.tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
