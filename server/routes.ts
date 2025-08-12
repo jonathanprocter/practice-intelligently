@@ -41,6 +41,98 @@ const docProcessor = new DocumentProcessor();
 // Initialize session document processor
 const sessionDocProcessor = new SessionDocumentProcessor(storage);
 
+// Intelligent document analysis for bulk processing
+async function analyzeDocumentForProcessing(content: string, therapistId: string, clients: any[], appointments: any[]) {
+  try {
+    // Use AI to extract structured data from the document
+    const extractionPrompt = `Analyze this clinical document and extract structured information in JSON format. Identify client name, session date, and SOAP note components.
+
+Document content:
+${content}
+
+Available clients: ${clients.map(c => `${c.firstName} ${c.lastName}`).join(', ')}
+
+Respond with JSON in this exact format:
+{
+  "clientName": "extracted client name",
+  "sessionDate": "YYYY-MM-DD or null",
+  "title": "session title",
+  "content": "main content if not SOAP format",
+  "subjective": "subjective section",
+  "objective": "objective section", 
+  "assessment": "assessment section",
+  "plan": "plan section",
+  "tags": ["tag1", "tag2", "tag3"]
+}`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: extractionPrompt }],
+      max_tokens: 1000,
+      temperature: 0.1
+    });
+
+    let extractionResponse = response.choices[0]?.message?.content?.trim() || '{}';
+    
+    // Clean up markdown formatting
+    if (extractionResponse.includes('```json')) {
+      extractionResponse = extractionResponse.replace(/```json\n?/g, '').replace(/```/g, '').trim();
+    }
+
+    const extractedData = JSON.parse(extractionResponse);
+
+    // Match client using fuzzy matching
+    let matchedClient = null;
+    if (extractedData.clientName) {
+      const clientName = extractedData.clientName.toLowerCase();
+      matchedClient = clients.find(client => {
+        const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
+        const firstName = client.firstName.toLowerCase();
+        const lastName = client.lastName.toLowerCase();
+        return fullName.includes(clientName) || clientName.includes(fullName) ||
+               clientName.includes(firstName) || clientName.includes(lastName);
+      });
+    }
+
+    if (!matchedClient) {
+      return {
+        success: false,
+        error: 'Could not match client name from document',
+        suggestions: [`Extracted client name: "${extractedData.clientName}"`, 'Available clients: ' + clients.map(c => `${c.firstName} ${c.lastName}`).join(', ')]
+      };
+    }
+
+    // Match appointment by date if session date is available
+    let matchedAppointment = null;
+    if (extractedData.sessionDate) {
+      const sessionDate = new Date(extractedData.sessionDate);
+      matchedAppointment = appointments.find(apt => {
+        if (apt.clientId !== matchedClient.id) return false;
+        const aptDate = new Date(apt.startTime);
+        const daysDiff = Math.abs((aptDate.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24));
+        return daysDiff <= 1; // Within 1 day
+      });
+    }
+
+    return {
+      success: true,
+      clientId: matchedClient.id,
+      clientName: `${matchedClient.firstName} ${matchedClient.lastName}`,
+      appointmentId: matchedAppointment?.id || null,
+      appointmentDate: matchedAppointment ? new Date(matchedAppointment.startTime).toISOString() : null,
+      extractedData
+    };
+
+  } catch (error) {
+    console.error('Document analysis error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Document analysis failed',
+      suggestions: ['Check document format', 'Ensure client name is clearly mentioned', 'Verify document contains therapy session content']
+    };
+  }
+}
+
 // Helper functions for recent activity
 function formatTimeAgo(dateString: string): string {
   const date = new Date(dateString);
@@ -1121,11 +1213,16 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
         temperature: 0.3
       });
 
-      const tagsResponse = response.choices[0]?.message?.content?.trim();
+      let tagsResponse = response.choices[0]?.message?.content?.trim() || '[]';
       let aiTags: string[] = [];
 
+      // Clean up markdown formatting if present
+      if (tagsResponse.includes('```json')) {
+        tagsResponse = tagsResponse.replace(/```json\n?/g, '').replace(/```/g, '').trim();
+      }
+
       try {
-        aiTags = JSON.parse(tagsResponse || '[]');
+        aiTags = JSON.parse(tagsResponse);
         if (!Array.isArray(aiTags)) {
           aiTags = [];
         }
@@ -1270,6 +1367,135 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
     } catch (error) {
       console.error("Error generating session prep:", error);
       res.status(500).json({ error: "Failed to generate session prep" });
+    }
+  });
+
+  // Bulk document processing endpoint for large-scale uploads
+  app.post("/api/documents/process-bulk", async (req, res) => {
+    try {
+      const { documents, therapistId, chunkSize = 10 } = req.body;
+
+      if (!documents || !Array.isArray(documents) || !therapistId) {
+        return res.status(400).json({ 
+          error: "Missing required fields: documents (array) and therapistId" 
+        });
+      }
+
+      console.log(`🔄 Starting bulk processing of ${documents.length} documents in chunks of ${chunkSize}...`);
+
+      // Initialize processing state
+      const processingResults = {
+        totalDocuments: documents.length,
+        processed: 0,
+        successful: 0,
+        failed: 0,
+        errors: [] as any[],
+        sessions: [] as any[],
+        clientMatches: new Map(),
+        appointmentMatches: new Map()
+      };
+
+      // Get all clients and appointments for matching
+      const allClients = await storage.getClients(therapistId);
+      const allAppointments = await storage.getAppointments(therapistId);
+
+      console.log(`📊 Reference data loaded: ${allClients.length} clients, ${allAppointments.length} appointments`);
+
+      // Process documents in chunks to avoid overwhelming the system
+      for (let i = 0; i < documents.length; i += chunkSize) {
+        const chunk = documents.slice(i, i + chunkSize);
+        console.log(`📦 Processing chunk ${Math.floor(i/chunkSize) + 1}/${Math.ceil(documents.length/chunkSize)} (${chunk.length} documents)`);
+
+        // Process chunk in parallel
+        const chunkPromises = chunk.map(async (document, index) => {
+          try {
+            const globalIndex = i + index;
+            console.log(`🔍 Processing document ${globalIndex + 1}/${documents.length}: ${document.title || 'Untitled'}`);
+
+            // Extract and analyze document content
+            const analysisResult = await analyzeDocumentForProcessing(document.content, therapistId, allClients, allAppointments);
+            
+            if (analysisResult.success) {
+              // Create session note with intelligent matching
+              const sessionNote = await storage.createSessionNote({
+                clientId: analysisResult.clientId,
+                therapistId,
+                title: analysisResult.extractedData.title || document.title || `Document ${globalIndex + 1}`,
+                content: analysisResult.extractedData.content || '',
+                subjective: analysisResult.extractedData.subjective || '',
+                objective: analysisResult.extractedData.objective || '',
+                assessment: analysisResult.extractedData.assessment || '',
+                plan: analysisResult.extractedData.plan || '',
+                tags: analysisResult.extractedData.tags || [],
+                appointmentId: analysisResult.appointmentId || null,
+                source: 'bulk_upload',
+                sessionDate: analysisResult.extractedData.sessionDate || new Date(),
+                createdAt: new Date()
+              });
+
+              processingResults.sessions.push({
+                documentIndex: globalIndex,
+                sessionNoteId: sessionNote.id,
+                clientName: analysisResult.clientName,
+                appointmentDate: analysisResult.appointmentDate,
+                tags: analysisResult.extractedData.tags
+              });
+
+              processingResults.successful++;
+              console.log(`✅ Document ${globalIndex + 1} processed successfully - Session ${sessionNote.id}`);
+            } else {
+              processingResults.errors.push({
+                documentIndex: globalIndex,
+                title: document.title,
+                error: analysisResult.error,
+                suggestions: analysisResult.suggestions
+              });
+              processingResults.failed++;
+              console.log(`❌ Document ${globalIndex + 1} failed: ${analysisResult.error}`);
+            }
+          } catch (error) {
+            processingResults.errors.push({
+              documentIndex: globalIndex,
+              title: document.title,
+              error: error instanceof Error ? error.message : 'Unknown processing error'
+            });
+            processingResults.failed++;
+            console.error(`💥 Document ${globalIndex + 1} processing error:`, error);
+          }
+
+          processingResults.processed++;
+        });
+
+        // Wait for chunk to complete
+        await Promise.all(chunkPromises);
+
+        // Small delay between chunks to prevent overwhelming the system
+        if (i + chunkSize < documents.length) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+
+      console.log(`🏁 Bulk processing complete: ${processingResults.successful}/${processingResults.totalDocuments} successful`);
+
+      res.json({
+        success: true,
+        summary: {
+          totalDocuments: processingResults.totalDocuments,
+          successful: processingResults.successful,
+          failed: processingResults.failed,
+          processed: processingResults.processed
+        },
+        sessions: processingResults.sessions,
+        errors: processingResults.errors,
+        message: `Successfully processed ${processingResults.successful} out of ${processingResults.totalDocuments} documents`
+      });
+
+    } catch (error: any) {
+      console.error("Error in bulk document processing:", error);
+      res.status(500).json({ 
+        error: "Failed to process documents in bulk",
+        details: error?.message || 'Unknown error'
+      });
     }
   });
 

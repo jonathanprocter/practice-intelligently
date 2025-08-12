@@ -1,4 +1,4 @@
-import { FileText, Plus, Search, Filter, Mic, Bot, Eye, Edit, Trash2, X, Save, Brain } from "lucide-react";
+import { FileText, Plus, Search, Filter, Mic, Bot, Eye, Edit, Trash2, X, Save, Brain, Upload, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,17 @@ export default function SessionNotes() {
   const [editContent, setEditContent] = useState("");
   const [editTags, setEditTags] = useState("");
   const [editDate, setEditDate] = useState("");
+  
+  // Bulk processing state
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [bulkFiles, setBulkFiles] = useState<File[]>([]);
+  const [bulkProgress, setBulkProgress] = useState<{
+    processed: number;
+    successful: number;
+    failed: number;
+    total: number;
+    errors: any[];
+  }>({ processed: 0, successful: 0, failed: 0, total: 0, errors: [] });
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -93,6 +104,81 @@ export default function SessionNotes() {
       });
     },
   });
+
+  // Bulk document processing mutation
+  const bulkProcessMutation = useMutation({
+    mutationFn: async (documents: { title: string; content: string }[]) => {
+      const response = await fetch('/api/documents/process-bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          documents,
+          therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+          chunkSize: 5 // Process in smaller chunks for better UX
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Bulk processing failed: ${response.statusText}`);
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['session-notes'] });
+      toast({ 
+        title: "Bulk processing completed!", 
+        description: `${data.summary.successful}/${data.summary.totalDocuments} documents processed successfully`
+      });
+      setBulkFiles([]);
+      setIsBulkProcessing(false);
+      setBulkProgress({ processed: 0, successful: 0, failed: 0, total: 0, errors: [] });
+    },
+    onError: (error) => {
+      console.error('Bulk processing error:', error);
+      toast({ 
+        title: "Bulk processing failed", 
+        description: error.message,
+        variant: "destructive" 
+      });
+      setIsBulkProcessing(false);
+    },
+  });
+
+  // Handle file upload for bulk processing
+  const handleBulkFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setBulkFiles(prev => [...prev, ...files]);
+  };
+
+  // Process bulk files
+  const processBulkFiles = async () => {
+    if (bulkFiles.length === 0) return;
+
+    setIsBulkProcessing(true);
+    setBulkProgress({ processed: 0, successful: 0, failed: 0, total: bulkFiles.length, errors: [] });
+
+    try {
+      const documents = await Promise.all(
+        bulkFiles.map(async (file) => {
+          const content = await file.text();
+          return {
+            title: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
+            content
+          };
+        })
+      );
+
+      await bulkProcessMutation.mutateAsync(documents);
+    } catch (error) {
+      console.error('Error processing bulk files:', error);
+    }
+  };
+
+  // Remove file from bulk upload
+  const removeBulkFile = (index: number) => {
+    setBulkFiles(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleViewDetails = (note: SessionNote) => {
     setSelectedNote(note);
@@ -242,7 +328,173 @@ export default function SessionNotes() {
           <Filter className="w-4 h-4 mr-2" />
           Filter
         </Button>
+        <Button 
+          variant="outline" 
+          className="bg-therapy-warning/10 border-therapy-warning text-therapy-warning hover:bg-therapy-warning hover:text-white"
+          onClick={() => setIsBulkProcessing(!isBulkProcessing)}
+        >
+          <Upload className="w-4 h-4 mr-2" />
+          Bulk Processing
+        </Button>
       </div>
+
+      {/* Bulk Document Processing Section */}
+      {isBulkProcessing && (
+        <div className="therapy-card p-6 space-y-4 border-l-4 border-therapy-warning">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-semibold text-therapy-text">Bulk Document Processing</h3>
+              <p className="text-therapy-text/60 text-sm">Upload multiple therapy documents for AI processing and automatic client/appointment matching</p>
+            </div>
+            <Button variant="ghost" onClick={() => setIsBulkProcessing(false)}>
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* File Upload Section */}
+            <div className="space-y-4">
+              <div className="border-2 border-dashed border-therapy-border rounded-lg p-6 text-center">
+                <Upload className="w-8 h-8 mx-auto mb-2 text-therapy-text/40" />
+                <p className="text-therapy-text/60 mb-3">Drop files here or click to browse</p>
+                <input
+                  type="file"
+                  multiple
+                  accept=".txt,.doc,.docx,.pdf"
+                  onChange={handleBulkFileUpload}
+                  className="hidden"
+                  id="bulk-file-input"
+                  disabled={bulkProcessMutation.isPending}
+                />
+                <label
+                  htmlFor="bulk-file-input"
+                  className="inline-flex items-center px-4 py-2 bg-therapy-primary text-white rounded-lg hover:bg-therapy-primary/90 cursor-pointer"
+                >
+                  Select Files
+                </label>
+              </div>
+
+              {/* Selected Files List */}
+              {bulkFiles.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-medium text-therapy-text">Selected Files ({bulkFiles.length})</h4>
+                  <div className="max-h-40 overflow-y-auto space-y-1">
+                    {bulkFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between bg-therapy-bg border border-therapy-border rounded px-3 py-2">
+                        <div className="flex items-center space-x-2">
+                          <FileText className="w-4 h-4 text-therapy-text/60" />
+                          <span className="text-sm text-therapy-text truncate">{file.name}</span>
+                          <Badge variant="secondary" className="text-xs">
+                            {(file.size / 1024).toFixed(1)}KB
+                          </Badge>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => removeBulkFile(index)}
+                          disabled={bulkProcessMutation.isPending}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Progress and Status Section */}
+            <div className="space-y-4">
+              <div className="bg-therapy-bg border border-therapy-border rounded-lg p-4">
+                <h4 className="font-medium text-therapy-text mb-3">Processing Status</h4>
+                
+                {bulkProcessMutation.isPending ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Processing documents...</span>
+                      <span className="text-therapy-primary font-medium">
+                        {bulkProgress.processed}/{bulkProgress.total}
+                      </span>
+                    </div>
+                    <div className="w-full bg-therapy-border rounded-full h-2">
+                      <div 
+                        className="bg-therapy-primary h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${(bulkProgress.processed / bulkProgress.total) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2 text-sm text-therapy-text/60">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-therapy-success" />
+                      <span>AI will extract client names, session dates, and SOAP notes</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-therapy-success" />
+                      <span>Automatic client matching using fuzzy name search</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-therapy-success" />
+                      <span>Smart appointment linking by date proximity</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle className="w-4 h-4 text-therapy-success" />
+                      <span>Intelligent tag generation for categorization</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Success/Error Summary */}
+                {bulkProgress.total > 0 && (
+                  <div className="mt-4 space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-therapy-success" />
+                        <span>Successful</span>
+                      </span>
+                      <span className="font-medium text-therapy-success">{bulkProgress.successful}</span>
+                    </div>
+                    {bulkProgress.failed > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center space-x-2">
+                          <AlertCircle className="w-4 h-4 text-therapy-danger" />
+                          <span>Failed</span>
+                        </span>
+                        <span className="font-medium text-therapy-danger">{bulkProgress.failed}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex space-x-2">
+                <Button
+                  onClick={processBulkFiles}
+                  disabled={bulkFiles.length === 0 || bulkProcessMutation.isPending}
+                  className="flex-1 bg-therapy-success hover:bg-therapy-success/90"
+                >
+                  {bulkProcessMutation.isPending ? (
+                    <>Processing...</>
+                  ) : (
+                    <>
+                      <Brain className="w-4 h-4 mr-2" />
+                      Process {bulkFiles.length} Files
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setBulkFiles([])}
+                  disabled={bulkProcessMutation.isPending}
+                >
+                  Clear All
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-4">
         {isLoading ? (
