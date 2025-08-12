@@ -33,6 +33,12 @@ interface AIInsights {
   prep_content: string;
   key_focus_areas: string[];
   suggested_techniques: string[];
+  content?: {
+    summary?: string;
+    keyPoints?: string[];
+    suggestedQuestions?: string[];
+  };
+  recommendations?: string[];
 }
 
 interface SessionRecommendation {
@@ -43,6 +49,10 @@ interface SessionRecommendation {
   category: string;
   expectedOutcome: string;
   implementationNotes: string;
+  recommendationType?: string;
+  title?: string;
+  description?: string;
+  expectedOutcomes?: string[];
 }
 
 export function SessionPrepCard({ 
@@ -71,15 +81,15 @@ export function SessionPrepCard({
     try {
       // For calendar events, try to find clientId by name first
       let actualClientId = clientId;
-      
+
       console.log(`🔍 SessionPrepCard: Loading session prep for eventId=${eventId}, clientName="${clientName}", clientId=${clientId}`);
-      
+
       // Check if clientId is a fake/placeholder ID (starts with 'calendar-')
       if (actualClientId && typeof actualClientId === 'string' && actualClientId.startsWith('calendar-')) {
         console.log(`🔍 Detected fake client ID: ${actualClientId}, treating as undefined`);
         actualClientId = undefined;
       }
-      
+
       if (!actualClientId && clientName) {
         try {
           console.log(`🔍 Searching for client by name: "${clientName}"`);
@@ -118,7 +128,7 @@ export function SessionPrepCard({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clientId: actualClientId })
       });
-      
+
       if (insightsResponse.ok) {
         const contentType = insightsResponse.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
@@ -147,7 +157,7 @@ export function SessionPrepCard({
 
   const loadSessionRecommendations = async () => {
     if (!clientId) return;
-    
+
     setIsLoadingRecommendations(true);
     try {
       const response = await fetch(`/api/session-recommendations/client/${clientId}`);
@@ -164,7 +174,7 @@ export function SessionPrepCard({
 
   const generateNewRecommendations = async () => {
     if (!clientId) return;
-    
+
     setIsLoadingRecommendations(true);
     try {
       const response = await fetch('/api/session-recommendations/generate', {
@@ -175,7 +185,7 @@ export function SessionPrepCard({
           therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'
         })
       });
-      
+
       if (response.ok) {
         const newRecommendations = await response.json();
         setSessionRecommendations(newRecommendations.slice(0, 3));
@@ -207,18 +217,18 @@ export function SessionPrepCard({
     if (!content || typeof content !== 'string') {
       return 'No content available';
     }
-    
+
     // Format rich text content, preserving natural line breaks and paragraphs
     // Split content into paragraphs and return first paragraph for preview
     const paragraphs = content.split('\n\n').filter(p => p.trim().length > 0);
     const firstParagraph = paragraphs[0] || content;
-    
+
     // If first paragraph is too long, truncate to about 150 characters
     if (firstParagraph.length > 150) {
       const sentences = firstParagraph.split('.').filter(s => s.trim().length > 0);
       return sentences.slice(0, 2).join('.') + (sentences.length > 2 ? '...' : '.');
     }
-    
+
     return firstParagraph + (paragraphs.length > 1 ? '...' : '');
   };
 
@@ -228,7 +238,7 @@ export function SessionPrepCard({
     if (!content || typeof content !== 'string') {
       return <p className="text-muted-foreground">No content available</p>;
     }
-    
+
     // Preserve natural line breaks and paragraph structure
     return content.split('\n\n').map((paragraph, index) => (
       <p key={index} className="mb-2 last:mb-0">
@@ -276,7 +286,7 @@ export function SessionPrepCard({
               <Brain className="h-4 w-4 text-purple-500" />
               <h3 className="text-sm font-medium">Thoughtful Preparation Notes</h3>
             </div>
-            
+
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg p-4">
               <div className="text-sm text-muted-foreground leading-relaxed">
                 {showFullInsights ? (
@@ -316,7 +326,7 @@ export function SessionPrepCard({
             )}
 
             {/* Focus Areas - fallback for backward compatibility */}
-            {aiInsights?.key_focus_areas && aiInsights.key_focus_areas.length > 0 && (
+            {aiInsights?.key_focus_areas && Array.isArray(aiInsights.key_focus_areas) && aiInsights.key_focus_areas.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Target className="h-4 w-4 text-green-500" />
@@ -363,6 +373,18 @@ export function SessionPrepCard({
                     </Badge>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Backward compatibility for recommendations */}
+            {aiInsights?.recommendations && Array.isArray(aiInsights.recommendations) && aiInsights.recommendations.length > 0 && (
+              <div>
+                <h4 className="font-medium text-sm mb-2">Recommendations</h4>
+                <ul className="space-y-1">
+                  {aiInsights.recommendations.map((rec, index) => (
+                    <li key={index} className="text-sm text-gray-600">• {rec}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
@@ -483,7 +505,7 @@ export function SessionPrepCard({
               </Button>
             )}
           </div>
-          
+
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Sparkles className="h-3 w-3" />
             <span>AI-powered insights</span>

@@ -14,17 +14,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  User, 
-  Phone, 
-  Mail, 
-  MessageSquare, 
-  Brain, 
-  TrendingUp, 
-  Target, 
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  User,
+  Phone,
+  Mail,
+  MessageSquare,
+  Brain,
+  TrendingUp,
+  Target,
   AlertTriangle,
   Edit,
   Save,
@@ -138,7 +138,7 @@ export const AppointmentDetailsDialog = ({
         });
         return response.json();
       }
-      
+
       // For non-client appointments (like supervision), generate general insights
       if (event?.id) {
         const response = await apiRequest('POST', `/api/session-prep/${event.id}/ai-insights`, {
@@ -148,7 +148,7 @@ export const AppointmentDetailsDialog = ({
         });
         return response.json();
       }
-      
+
       return null;
     },
     enabled: (!!clientData?.id || !!event?.id) && open && activeTab === 'insights'
@@ -220,14 +220,14 @@ export const AppointmentDetailsDialog = ({
   const formatDateTime = (dateTime: Date | string) => {
     const date = typeof dateTime === 'string' ? new Date(dateTime) : dateTime;
     return {
-      date: date.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+      date: date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
       }),
-      time: date.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
+      time: date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
         minute: '2-digit',
         hour12: false
       })
@@ -419,7 +419,7 @@ export const AppointmentDetailsDialog = ({
                 <Brain className={cn("h-4 w-4", generateInsightsMutation.isPending && "animate-pulse")} />
                 {generateInsightsMutation.isPending ? 'Generating...' : 'Generate AI Insights'}
               </Button>
-              
+
               {onProgressNotes && (
                 <Button
                   variant="outline"
@@ -431,7 +431,7 @@ export const AppointmentDetailsDialog = ({
                   Progress Notes
                 </Button>
               )}
-              
+
               {onDeleteEvent && (
                 <Button
                   variant="destructive"
@@ -488,13 +488,16 @@ export const AppointmentDetailsDialog = ({
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-2">
-                        {aiInsights.keyFocusAreas.map((area, index) => (
-                          <Badge key={index} variant="outline" className="mr-2 mb-2">
-                            {area}
-                          </Badge>
-                        ))}
-                      </div>
+                      {aiInsights.keyFocusAreas && aiInsights.keyFocusAreas.length > 0 && (
+                        <div>
+                          <h4 className="font-medium text-sm mb-2">Key Focus Areas</h4>
+                          <ul className="space-y-1">
+                            {aiInsights.keyFocusAreas.map((area, index) => (
+                              <li key={index} className="text-sm text-gray-600">• {area}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
 
@@ -651,7 +654,7 @@ export const AppointmentDetailsDialog = ({
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <p className="text-sm text-gray-700">{rec.description}</p>
-                      
+
                       {rec.suggestedInterventions.length > 0 && (
                         <div>
                           <h5 className="text-sm font-medium mb-2">Suggested Interventions:</h5>
