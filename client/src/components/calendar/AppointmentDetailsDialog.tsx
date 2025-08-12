@@ -41,6 +41,8 @@ interface AppointmentDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
   onProgressNotes?: (event: CalendarEvent) => void;
   onDeleteEvent?: (event: CalendarEvent) => void;
+  triggerInsights?: boolean;
+  onInsightsTriggerHandled?: () => void;
 }
 
 interface SessionRecommendation {
@@ -73,7 +75,9 @@ export const AppointmentDetailsDialog = ({
   open,
   onOpenChange,
   onProgressNotes,
-  onDeleteEvent
+  onDeleteEvent,
+  triggerInsights = false,
+  onInsightsTriggerHandled
 }: AppointmentDetailsDialogProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<CalendarEvent>>({});
@@ -92,6 +96,21 @@ export const AppointmentDetailsDialog = ({
       });
     }
   }, [event]);
+
+  // Handle insights trigger from quick button
+  useEffect(() => {
+    if (triggerInsights && open) {
+      setActiveTab('insights');
+      // Trigger insights generation
+      setTimeout(() => {
+        generateInsightsMutation.mutate();
+      }, 300);
+      // Clear the trigger flag
+      if (onInsightsTriggerHandled) {
+        onInsightsTriggerHandled();
+      }
+    }
+  }, [triggerInsights, open, onInsightsTriggerHandled]);
 
   // Fetch client information if available
   const { data: clientData } = useQuery({
@@ -386,22 +405,39 @@ export const AppointmentDetailsDialog = ({
               </CardContent>
             </Card>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="default"
+                onClick={() => {
+                  generateInsightsMutation.mutate();
+                  setActiveTab('insights');
+                }}
+                disabled={generateInsightsMutation.isPending || insightsLoading}
+                className="flex items-center gap-2 bg-therapy-primary hover:bg-therapy-primary/90"
+                data-testid="button-generate-insights"
+              >
+                <Brain className={cn("h-4 w-4", generateInsightsMutation.isPending && "animate-pulse")} />
+                {generateInsightsMutation.isPending ? 'Generating...' : 'Generate AI Insights'}
+              </Button>
+              
               {onProgressNotes && (
                 <Button
                   variant="outline"
                   onClick={() => onProgressNotes(event)}
                   className="flex items-center gap-2"
+                  data-testid="button-progress-notes"
                 >
                   <MessageSquare className="h-4 w-4" />
                   Progress Notes
                 </Button>
               )}
+              
               {onDeleteEvent && (
                 <Button
                   variant="destructive"
                   onClick={() => onDeleteEvent(event)}
                   className="flex items-center gap-2"
+                  data-testid="button-delete-appointment"
                 >
                   <X className="h-4 w-4" />
                   Delete

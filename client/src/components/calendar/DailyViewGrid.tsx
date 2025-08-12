@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, MapPin, User, Clock, MessageSquare, Trash2, Edit, X } from 'lucide-react';
+import { Calendar, MapPin, User, Clock, MessageSquare, Trash2, Edit, X, Brain, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AppointmentDetailsDialog } from './AppointmentDetailsDialog';
 import './DailyViewGrid.css';
@@ -77,6 +77,7 @@ export const DailyViewGrid = ({
   const [dailyNotes, setDailyNotes] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [triggerInsights, setTriggerInsights] = useState(false);
   const { toast } = useToast();
 
   // Generate time slots from 6:00 AM to 11:30 PM in 30-minute intervals
@@ -258,6 +259,25 @@ export const DailyViewGrid = ({
             </div>
           )}
         </div>
+        
+        {/* Quick AI Insights Button */}
+        <div className="appointment-actions">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="quick-insights-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedEvent(event);
+              setTriggerInsights(true);
+              setIsDialogOpen(true);
+            }}
+            data-testid={`quick-insights-${event.id}`}
+            title="Generate AI Insights"
+          >
+            <Zap className="h-3 w-3" />
+          </Button>
+        </div>
       </div>
     );
   };
@@ -405,7 +425,9 @@ export const DailyViewGrid = ({
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         onProgressNotes={onProgressNotes}
-        onDeleteEvent={onDeleteEvent}
+        onDeleteEvent={handleDeleteEvent}
+        triggerInsights={triggerInsights}
+        onInsightsTriggerHandled={() => setTriggerInsights(false)}
       />
     </div>
   );
