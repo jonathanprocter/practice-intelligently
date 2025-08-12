@@ -1748,6 +1748,78 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
     }
   });
 
+  // AI Session Content Analysis Endpoint for smart appointment suggestions
+  app.post('/api/ai/analyze-session-content', async (req, res) => {
+    try {
+      const { content, clientId, clientName } = req.body;
+
+      if (!content) {
+        return res.status(400).json({ error: 'Content is required' });
+      }
+
+      const prompt = `
+You are an expert clinical psychologist analyzing session notes. Please analyze the following session content and extract key information for smart appointment linking.
+
+Client Name: ${clientName}
+Content:
+${content}
+
+Please provide a JSON response with the following structure:
+{
+  "extractedDate": "YYYY-MM-DD format if found, null if not found",
+  "sessionType": "individual therapy | group therapy | intake | assessment | follow-up",
+  "aiTags": ["array of 5-10 relevant clinical tags like anxiety, depression, CBT, behavioral-intervention, etc."],
+  "keyTopics": ["array of 3-5 main topics discussed in session"],
+  "mood": "client's overall mood/emotional state",
+  "progressIndicators": ["array of progress indicators or improvements noted"],
+  "suggestedAppointmentType": "suggested appointment type based on content",
+  "urgencyLevel": "low | medium | high based on content analysis"
+}
+
+Focus on:
+1. Finding any dates mentioned in the content (session dates, appointment dates, etc.)
+2. Identifying the type of therapeutic session
+3. Extracting relevant clinical tags and themes
+4. Noting urgency or follow-up needs
+5. Determining appropriate appointment type
+
+Be precise and clinical in your analysis.
+`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: "You are a clinical psychologist expert at analyzing session notes and extracting structured data. Always respond with valid JSON."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+        max_tokens: 1000
+      });
+
+      const analysisText = response.choices[0]?.message?.content;
+      if (!analysisText) {
+        throw new Error('No analysis received from AI');
+      }
+
+      const analysis = JSON.parse(analysisText);
+      res.json(analysis);
+
+    } catch (error) {
+      console.error('Session content analysis error:', error);
+      res.status(500).json({ 
+        error: 'Analysis failed',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   app.post('/api/ai/analyze-transcript', async (req, res) => {
     try {
       const { transcript, provider = 'openai' } = req.body;

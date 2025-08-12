@@ -44,6 +44,8 @@ export function CreateSessionNoteModal({
   const [newAppointmentDate, setNewAppointmentDate] = useState<string>('');
   const [newAppointmentTime, setNewAppointmentTime] = useState<string>('');
   const [newAppointmentTitle, setNewAppointmentTitle] = useState<string>('');
+  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [showAiSuggestions, setShowAiSuggestions] = useState<boolean>(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -57,7 +59,7 @@ export function CreateSessionNoteModal({
     enabled: isOpen
   });
 
-  // Initialize form with selected appointment
+  // Initialize form with selected appointment and analyze content for AI suggestions
   useEffect(() => {
     if (selectedAppointment) {
       setSelectedAppointmentId(selectedAppointment.id);
@@ -67,6 +69,67 @@ export function CreateSessionNoteModal({
       setSelectedAppointmentId('');
     }
   }, [selectedAppointment]);
+
+  // AI-powered content analysis when content changes
+  useEffect(() => {
+    if (content.trim().length > 100) {
+      // Debounce AI analysis to avoid too many calls
+      const timer = setTimeout(() => {
+        analyzeContentForAppointmentSuggestions();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [content]);
+
+  const analyzeContentForAppointmentSuggestions = async () => {
+    try {
+      const response = await apiRequest('POST', '/api/ai/analyze-session-content', {
+        content: content.trim(),
+        clientId,
+        clientName
+      });
+      const analysis = await response.json();
+      
+      // Store AI analysis for display
+      setAiAnalysis(analysis);
+      setShowAiSuggestions(true);
+      
+      // If AI extracted a date and we're not already linking to an appointment
+      if (analysis.extractedDate && appointmentMode !== 'existing') {
+        const extractedDate = new Date(analysis.extractedDate);
+        const today = new Date();
+        
+        // If the extracted date is recent, suggest creating an appointment
+        if (extractedDate <= today && extractedDate >= new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)) {
+          setNewAppointmentDate(analysis.extractedDate);
+          setNewAppointmentTime('14:00'); // Default to 2 PM
+          setAppointmentMode('new');
+          
+          // Set suggested appointment title based on AI analysis
+          if (analysis.sessionType) {
+            setNewAppointmentTitle(analysis.sessionType.charAt(0).toUpperCase() + analysis.sessionType.slice(1).replace('_', ' '));
+          }
+          
+          toast({
+            title: "AI Insights Available",
+            description: `Detected session date: ${extractedDate.toLocaleDateString()}. AI has analyzed the content and provided suggestions.`,
+          });
+        }
+      } else if (analysis.extractedDate) {
+        toast({
+          title: "AI Analysis Complete",
+          description: `Session content analyzed. ${analysis.aiTags?.length || 0} clinical tags identified.`,
+        });
+      }
+    } catch (error) {
+      console.error('AI content analysis failed:', error);
+      toast({
+        title: "AI Analysis Failed",
+        description: "Could not analyze content. Please check your connection and try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const createAppointmentMutation = useMutation({
     mutationFn: async (appointmentData: any) => {
@@ -149,14 +212,28 @@ export function CreateSessionNoteModal({
         appointmentIdToUse = createdAppointment.id;
       }
 
-      // Create the session note
-      createSessionNoteMutation.mutate({
+      // Create the session note with AI analysis if available
+      const sessionNoteData = {
         clientId,
         therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
         content: content.trim(),
         appointmentId: appointmentIdToUse,
-        source: 'manual'
-      });
+        source: 'manual',
+        // Include AI analysis data if available
+        ...(aiAnalysis && {
+          aiTags: aiAnalysis.aiTags,
+          sessionDate: aiAnalysis.extractedDate ? new Date(aiAnalysis.extractedDate).toISOString() : undefined,
+          tags: {
+            sessionType: aiAnalysis.sessionType,
+            keyTopics: aiAnalysis.keyTopics,
+            mood: aiAnalysis.mood,
+            urgencyLevel: aiAnalysis.urgencyLevel,
+            progressIndicators: aiAnalysis.progressIndicators
+          }
+        })
+      };
+
+      createSessionNoteMutation.mutate(sessionNoteData);
     } catch (error) {
       console.error('Error creating appointment:', error);
       toast({
@@ -174,6 +251,8 @@ export function CreateSessionNoteModal({
       setNewAppointmentDate('');
       setNewAppointmentTime('');
       setNewAppointmentTitle('');
+      setAiAnalysis(null);
+      setShowAiSuggestions(false);
       onClose();
     }
   };
@@ -278,6 +357,71 @@ export function CreateSessionNoteModal({
             </div>
           </div>
 
+          {/* AI Insights Section */}
+          {showAiSuggestions && aiAnalysis && (
+            <div className="space-y-4 border rounded-lg p-4 bg-blue-50">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+                <Label className="text-base font-medium text-blue-900">AI Analysis Results</Label>
+              </div>
+              
+              <div className="space-y-3 text-sm">
+                {aiAnalysis.extractedDate && (
+                  <div>
+                    <span className="font-medium text-blue-800">Detected Date:</span>
+                    <span className="ml-2 text-blue-700">{new Date(aiAnalysis.extractedDate).toLocaleDateString()}</span>
+                  </div>
+                )}
+                
+                {aiAnalysis.sessionType && (
+                  <div>
+                    <span className="font-medium text-blue-800">Session Type:</span>
+                    <span className="ml-2 text-blue-700 capitalize">{aiAnalysis.sessionType.replace('_', ' ')}</span>
+                  </div>
+                )}
+                
+                {aiAnalysis.urgencyLevel && aiAnalysis.urgencyLevel !== 'low' && (
+                  <div>
+                    <span className="font-medium text-blue-800">Urgency Level:</span>
+                    <span className={`ml-2 capitalize ${aiAnalysis.urgencyLevel === 'high' ? 'text-red-600' : 'text-yellow-600'}`}>
+                      {aiAnalysis.urgencyLevel}
+                    </span>
+                  </div>
+                )}
+                
+                {aiAnalysis.aiTags && aiAnalysis.aiTags.length > 0 && (
+                  <div>
+                    <span className="font-medium text-blue-800">Clinical Tags:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {aiAnalysis.aiTags.slice(0, 6).map((tag: string, index: number) => (
+                        <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                          {tag}
+                        </span>
+                      ))}
+                      {aiAnalysis.aiTags.length > 6 && (
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                          +{aiAnalysis.aiTags.length - 6} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {aiAnalysis.keyTopics && aiAnalysis.keyTopics.length > 0 && (
+                  <div>
+                    <span className="font-medium text-blue-800">Key Topics:</span>
+                    <div className="ml-2 text-blue-700">
+                      {aiAnalysis.keyTopics.slice(0, 3).join(', ')}
+                      {aiAnalysis.keyTopics.length > 3 && ` (+${aiAnalysis.keyTopics.length - 3} more)`}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Session Notes Section */}
           <div className="space-y-2">
             <Label htmlFor="session-content">Session Notes</Label>
@@ -293,6 +437,9 @@ export function CreateSessionNoteModal({
             />
             <div className="text-xs text-muted-foreground">
               Session notes will be saved to the client's record and linked to the selected appointment.
+              {content.trim().length > 100 && !showAiSuggestions && (
+                <span className="text-blue-600"> AI analysis will begin automatically...</span>
+              )}
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-import { FileText, Plus, Search, Filter, Mic, Bot, Eye, Edit, Trash2, X, Save, Brain, Upload, CheckCircle, AlertCircle, BarChart3, Tag, TrendingUp, Activity, Download, Undo, Redo, Calendar, Clock, ChevronDown, FileDown, Copy, ArrowUpDown, Users, Sparkles, Template } from "lucide-react";
+import { FileText, Plus, Search, Filter, Mic, Bot, Eye, Edit, Trash2, X, Save, Brain, Upload, CheckCircle, AlertCircle, BarChart3, Tag, TrendingUp, Activity, Download, Undo, Redo, Calendar, Clock, ChevronDown, FileDown, Copy, ArrowUpDown, Users, Sparkles, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,13 +13,32 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { useState, useMemo, useCallback, useEffect, useRef, useReducer } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ApiClient, SessionNote } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { ClientLink } from "@/components/common/ClientLink";
 import { cn } from "@/lib/utils";
-import debounce from "lodash/debounce";
+
+// Debounce utility function
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+
+  return function executedFunction(...args: Parameters<T>) {
+    const later = () => {
+      timeout = null;
+      func(...args);
+    };
+
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(later, wait);
+  };
+}
 
 // Types
 interface SearchFilters {
@@ -865,7 +884,7 @@ export default function SessionNotes() {
                 AI Analysis
               </Button>
               <Button variant="outline" size="sm">
-                <Template className="w-4 h-4 mr-2" />
+                <Layers className="w-4 h-4 mr-2" />
                 Templates
               </Button>
             </div>
