@@ -317,6 +317,13 @@ export function Compass({ className }: CompassProps) {
     }
   });
 
+  // Send welcome message when first opened
+  const sendWelcomeMessage = () => {
+    if (messages.length === 0) {
+      chatMutation.mutate('Hello! Please give me a warm welcome and tell me what you can help with based on my current practice data.');
+    }
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -396,7 +403,7 @@ export function Compass({ className }: CompassProps) {
         sendWelcomeMessage();
       }
     }
-  }, [isOpen, sessionId, messages.length, chatMutation.isPending]);
+  }, [isOpen, sessionId, messages.length]);
 
   // Start voice activation listening when enabled
   useEffect(() => {
@@ -418,13 +425,6 @@ export function Compass({ className }: CompassProps) {
       }
     }
   }, [voiceActivation, isOpen, speechRecognition, isListening]);
-
-  // Send welcome message when first opened
-  const sendWelcomeMessage = () => {
-    if (messages.length === 0) {
-      chatMutation.mutate('Hello! Please give me a warm welcome and tell me what you can help with based on my current practice data.');
-    }
-  };
 
   // Clean up when component unmounts or window closes
   useEffect(() => {
