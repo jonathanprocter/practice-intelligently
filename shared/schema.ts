@@ -109,9 +109,28 @@ export const sessionNotes = pgTable("session_notes", {
   transcript: text("transcript"),
   aiSummary: text("ai_summary"),
   tags: jsonb("tags"),
+  
+  // SOAP note fields (merged from progress notes)
+  title: text("title"),
+  subjective: text("subjective"),
+  objective: text("objective"),
+  assessment: text("assessment"),
+  plan: text("plan"),
+  tonalAnalysis: text("tonal_analysis"),
+  keyPoints: jsonb("key_points"),
+  significantQuotes: jsonb("significant_quotes"),  
+  narrativeSummary: text("narrative_summary"),
+  aiTags: jsonb("ai_tags"),
+  sessionDate: timestamp("session_date"),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  clientIdx: index("session_notes_client_idx").on(table.clientId),
+  appointmentIdx: index("session_notes_appointment_idx").on(table.appointmentId),
+  sessionDateIdx: index("session_notes_session_date_idx").on(table.sessionDate),
+  eventIdIdx: index("session_notes_event_id_idx").on(table.eventId),
+}));
 
 export const sessionPrepNotes = pgTable("session_prep_notes", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -330,30 +349,7 @@ export const assessments = pgTable("assessments", {
   typeIdx: index("assessments_type_idx").on(table.assessmentType),
 }));
 
-export const progressNotes = pgTable("progress_notes", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  clientId: text("client_id").notNull(), // Match existing database structure
-  therapistId: text("therapist_id").notNull(), // Match existing database structure  
-  appointmentId: text("appointment_id"), // Match existing database structure
-  // Core SOAP note fields that exist in the database
-  title: text("title").notNull(),
-  subjective: text("subjective").notNull(),
-  objective: text("objective").notNull(),
-  assessment: text("assessment").notNull(),
-  plan: text("plan").notNull(),
-  tonalAnalysis: text("tonal_analysis"),
-  keyPoints: jsonb("key_points"),
-  significantQuotes: jsonb("significant_quotes"),  
-  narrativeSummary: text("narrative_summary"),
-  aiTags: jsonb("ai_tags"),
-  sessionDate: timestamp("session_date").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => ({
-  clientIdx: index("progress_notes_client_idx").on(table.clientId),
-  appointmentIdx: index("progress_notes_appointment_idx").on(table.appointmentId),
-  sessionDateIdx: index("progress_notes_session_date_idx").on(table.sessionDate),
-}));
+// Progress notes functionality has been merged into sessionNotes table above
 
 export const medications = pgTable("medications", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -656,7 +652,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   sessionRecommendations: many(sessionRecommendations),
   billingRecords: many(billingRecords),
   assessments: many(assessments),
-  progressNotes: many(progressNotes),
   communicationLogs: many(communicationLogs),
   documents: many(documents),
   auditLogs: many(auditLogs),
@@ -676,7 +671,6 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   sessionRecommendations: many(sessionRecommendations),
   billingRecords: many(billingRecords),
   assessments: many(assessments),
-  progressNotes: many(progressNotes),
   medications: many(medications),
   communicationLogs: many(communicationLogs),
   documents: many(documents),
@@ -694,7 +688,6 @@ export const appointmentsRelations = relations(appointments, ({ one, many }) => 
   sessionNotes: many(sessionNotes),
   billingRecords: many(billingRecords),
   assessments: many(assessments),
-  progressNotes: many(progressNotes),
 }));
 
 export const sessionNotesRelations = relations(sessionNotes, ({ one }) => ({
@@ -798,20 +791,7 @@ export const assessmentsRelations = relations(assessments, ({ one }) => ({
   }),
 }));
 
-export const progressNotesRelations = relations(progressNotes, ({ one }) => ({
-  client: one(clients, {
-    fields: [progressNotes.clientId],
-    references: [clients.id],
-  }),
-  therapist: one(users, {
-    fields: [progressNotes.therapistId],
-    references: [users.id],
-  }),
-  appointment: one(appointments, {
-    fields: [progressNotes.appointmentId],
-    references: [appointments.id],
-  }),
-}));
+// Progress notes relations merged into sessionNotesRelations above
 
 export const medicationsRelations = relations(medications, ({ one }) => ({
   client: one(clients, {
@@ -1016,11 +996,7 @@ export const insertAssessmentSchema = createInsertSchema(assessments).omit({
   updatedAt: true,
 });
 
-export const insertProgressNoteSchema = createInsertSchema(progressNotes).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+// Progress note functionality merged into insertSessionNoteSchema above
 
 export const insertMedicationSchema = createInsertSchema(medications).omit({
   id: true,
@@ -1124,8 +1100,7 @@ export type BillingRecord = typeof billingRecords.$inferSelect;
 export type InsertBillingRecord = z.infer<typeof insertBillingRecordSchema>;
 export type Assessment = typeof assessments.$inferSelect;
 export type InsertAssessment = z.infer<typeof insertAssessmentSchema>;
-export type ProgressNote = typeof progressNotes.$inferSelect;
-export type InsertProgressNote = z.infer<typeof insertProgressNoteSchema>;
+// ProgressNote types merged into SessionNote above
 export type Medication = typeof medications.$inferSelect;
 export type InsertMedication = z.infer<typeof insertMedicationSchema>;
 export type CommunicationLog = typeof communicationLogs.$inferSelect;

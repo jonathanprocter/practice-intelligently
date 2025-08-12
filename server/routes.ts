@@ -536,27 +536,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Progress Notes endpoints - by therapist
+  // Progress Notes functionality merged into session notes - redirect to unified endpoints
   app.get("/api/progress-notes/therapist/:therapistId", async (req, res) => {
     try {
       const { therapistId } = req.params;
-      const notes = await storage.getProgressNotesByTherapist(therapistId);
-      res.json(notes);
+      // Get all session notes for this therapist, including those with SOAP fields (former progress notes)
+      const notes = await storage.getAllSessionNotesByTherapist(therapistId);
+      // Filter to include only notes with SOAP structure (title field indicates former progress notes)
+      const progressNotes = notes.filter(note => note.title !== null);
+      res.json(progressNotes);
     } catch (error) {
-      console.error("Error fetching progress notes by therapist:", error);
-      res.status(500).json({ error: "Failed to fetch progress notes" });
+      console.error("Error fetching unified session notes with SOAP structure:", error);
+      res.status(500).json({ error: "Failed to fetch session notes with SOAP structure" });
     }
   });
 
-  // Progress Notes endpoints - by client  
+  // Progress Notes endpoints - by client (now unified with session notes)
   app.get("/api/progress-notes/:clientId", async (req, res) => {
     try {
       const { clientId } = req.params;
-      const notes = await storage.getProgressNotes(clientId);
-      res.json(notes);
+      // Get all session notes for this client, including those with SOAP fields (former progress notes)
+      const notes = await storage.getSessionNotes(clientId);
+      // Filter to include only notes with SOAP structure (title field indicates former progress notes)
+      const progressNotes = notes.filter(note => note.title !== null);
+      res.json(progressNotes);
     } catch (error) {
-      console.error("Error fetching progress notes by client:", error);
-      res.status(500).json({ error: "Failed to fetch progress notes" });
+      console.error("Error fetching unified session notes with SOAP structure:", error);
+      res.status(500).json({ error: "Failed to fetch session notes with SOAP structure" });
     }
   });
 

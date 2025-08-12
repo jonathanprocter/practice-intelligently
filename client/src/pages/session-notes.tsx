@@ -28,11 +28,18 @@ export default function SessionNotes() {
     queryFn: ApiClient.getSessionNotes,
   });
 
-  // Filter session notes based on search term
+  // Filter session notes based on search term - include SOAP fields
   const filteredNotes = sessionNotes.filter(note => 
     note.clientId.toLowerCase().includes(searchTerm.toLowerCase()) ||
     note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (note.tags && note.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
+    (note.tags && note.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+    (note.title && note.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (note.subjective && note.subjective.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (note.objective && note.objective.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (note.assessment && note.assessment.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (note.plan && note.plan.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (note.keyPoints && note.keyPoints.some(point => point.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+    (note.significantQuotes && note.significantQuotes.some(quote => quote.toLowerCase().includes(searchTerm.toLowerCase())))
   );
 
   // Mutation for updating session notes
@@ -273,15 +280,23 @@ export default function SessionNotes() {
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="font-semibold text-therapy-text mb-1">
-                    {note.clientId} - Session Note
+                    {note.title ? note.title : `${note.clientId} - Session Note`}
                   </h3>
                   <p className="text-sm text-therapy-text/60">
-                    {new Date(note.createdAt).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })} at {new Date(note.createdAt).toLocaleTimeString('en-US', {
+                    {note.sessionDate 
+                      ? new Date(note.sessionDate).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })
+                      : new Date(note.createdAt).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })
+                    } at {new Date(note.createdAt).toLocaleTimeString('en-US', {
                       hour: '2-digit',
                       minute: '2-digit',
                       hour12: false
@@ -289,6 +304,12 @@ export default function SessionNotes() {
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
+                  {note.title && (
+                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                      <FileText className="w-3 h-3 mr-1" />
+                      SOAP Note
+                    </Badge>
+                  )}
                   {note.transcript && (
                     <Badge variant="outline" className="text-xs">
                       <Mic className="w-3 h-3 mr-1" />
@@ -304,14 +325,39 @@ export default function SessionNotes() {
                 </div>
               </div>
               
-              <div className="text-therapy-text mb-4 max-h-32 overflow-hidden">
-                <p className="text-sm line-clamp-4">
-                  {note.content.length > 300 
-                    ? `${note.content.substring(0, 300)}...` 
-                    : note.content
-                  }
-                </p>
-              </div>
+              {note.title ? (
+                // Display SOAP-structured note (merged from progress notes)
+                <div className="text-therapy-text mb-4 space-y-3">
+                  {note.subjective && (
+                    <div>
+                      <h4 className="font-medium text-sm text-blue-700 mb-1">Subjective:</h4>
+                      <p className="text-sm line-clamp-2">{note.subjective.substring(0, 200)}{note.subjective.length > 200 ? '...' : ''}</p>
+                    </div>
+                  )}
+                  {note.assessment && (
+                    <div>
+                      <h4 className="font-medium text-sm text-green-700 mb-1">Assessment:</h4>
+                      <p className="text-sm line-clamp-2">{note.assessment.substring(0, 200)}{note.assessment.length > 200 ? '...' : ''}</p>
+                    </div>
+                  )}
+                  {note.plan && (
+                    <div>
+                      <h4 className="font-medium text-sm text-purple-700 mb-1">Plan:</h4>
+                      <p className="text-sm line-clamp-2">{note.plan.substring(0, 200)}{note.plan.length > 200 ? '...' : ''}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Display traditional session note
+                <div className="text-therapy-text mb-4 max-h-32 overflow-hidden">
+                  <p className="text-sm line-clamp-4">
+                    {note.content.length > 300 
+                      ? `${note.content.substring(0, 300)}...` 
+                      : note.content
+                    }
+                  </p>
+                </div>
+              )}
 
               <div className="flex items-center justify-between">
                 <div className="flex space-x-2 flex-wrap">
@@ -476,26 +522,105 @@ export default function SessionNotes() {
 
           {selectedNote && (
             <div className="space-y-6">
-              {/* Session Content */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Session Content
-                </label>
-                {isEditing ? (
-                  <Textarea
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    className="min-h-[300px] font-mono text-sm"
-                    placeholder="Session note content..."
-                  />
-                ) : (
-                  <div className="p-4 border rounded-lg bg-gray-50 max-h-96 overflow-y-auto">
-                    <pre className="whitespace-pre-wrap text-sm font-mono">
-                      {selectedNote.content}
-                    </pre>
+              {selectedNote.title ? (
+                // Display SOAP fields for merged progress notes
+                <>
+                  {/* Title */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Title</label>
+                    <div className="p-3 border rounded-lg bg-gray-50">
+                      <p className="text-sm font-medium">{selectedNote.title}</p>
+                    </div>
                   </div>
-                )}
-              </div>
+
+                  {/* Subjective */}
+                  {selectedNote.subjective && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-blue-700">Subjective</label>
+                      <div className="p-4 border rounded-lg bg-blue-50">
+                        <p className="text-sm whitespace-pre-wrap">{selectedNote.subjective}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Objective */}
+                  {selectedNote.objective && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-orange-700">Objective</label>
+                      <div className="p-4 border rounded-lg bg-orange-50">
+                        <p className="text-sm whitespace-pre-wrap">{selectedNote.objective}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Assessment */}
+                  {selectedNote.assessment && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-green-700">Assessment</label>
+                      <div className="p-4 border rounded-lg bg-green-50">
+                        <p className="text-sm whitespace-pre-wrap">{selectedNote.assessment}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Plan */}
+                  {selectedNote.plan && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-purple-700">Plan</label>
+                      <div className="p-4 border rounded-lg bg-purple-50">
+                        <p className="text-sm whitespace-pre-wrap">{selectedNote.plan}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Key Points */}
+                  {selectedNote.keyPoints && selectedNote.keyPoints.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Key Points</label>
+                      <div className="p-4 border rounded-lg bg-gray-50">
+                        <ul className="list-disc list-inside space-y-1">
+                          {selectedNote.keyPoints.map((point, index) => (
+                            <li key={index} className="text-sm">{point}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Significant Quotes */}
+                  {selectedNote.significantQuotes && selectedNote.significantQuotes.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Significant Quotes</label>
+                      <div className="p-4 border rounded-lg bg-gray-50">
+                        {selectedNote.significantQuotes.map((quote, index) => (
+                          <blockquote key={index} className="italic text-sm mb-2 pl-4 border-l-2 border-gray-300">
+                            "{quote}"
+                          </blockquote>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                // Display traditional session content
+                <div>
+                  <label className="block text-sm font-medium mb-2">Session Content</label>
+                  {isEditing ? (
+                    <Textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="min-h-[300px] font-mono text-sm"
+                      placeholder="Session note content..."
+                    />
+                  ) : (
+                    <div className="p-4 border rounded-lg bg-gray-50 max-h-96 overflow-y-auto">
+                      <pre className="whitespace-pre-wrap text-sm font-mono">
+                        {selectedNote.content}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* AI Summary */}
               {selectedNote.aiSummary && !isEditing && (

@@ -1,6 +1,6 @@
 import {
   users, clients, appointments, sessionNotes, sessionPrepNotes, clientCheckins, actionItems, treatmentPlans, aiInsights,
-  billingRecords, assessments, progressNotes, medications, communicationLogs, documents, auditLogs,
+  billingRecords, assessments, medications, communicationLogs, documents, auditLogs,
   compassConversations, compassMemory, sessionRecommendations, sessionSummaries, calendarEvents,
   assessmentCatalog, clientAssessments, assessmentResponses, assessmentScores, assessmentPackages, assessmentAuditLog,
   type User, type InsertUser, type Client, type InsertClient, type Appointment, type InsertAppointment,
@@ -8,7 +8,7 @@ import {
   type ClientCheckin, type InsertClientCheckin, type ActionItem, type InsertActionItem,
   type TreatmentPlan, type InsertTreatmentPlan, type AiInsight, type InsertAiInsight,
   type BillingRecord, type InsertBillingRecord, type Assessment, type InsertAssessment,
-  type ProgressNote, type InsertProgressNote, type Medication, type InsertMedication,
+  type Medication, type InsertMedication,
   type CommunicationLog, type InsertCommunicationLog, type Document, type InsertDocument,
   type AuditLog, type InsertAuditLog, type CompassConversation, type InsertCompassConversation,
   type CompassMemory, type InsertCompassMemory, type SessionRecommendation, type InsertSessionRecommendation,
@@ -131,13 +131,7 @@ export interface IStorage {
   updateAssessment(id: string, assessment: Partial<Assessment>): Promise<Assessment>;
   completeAssessment(id: string, responses: any, scores?: any): Promise<Assessment>;
 
-  // Progress notes methods
-  getProgressNotes(clientId: string): Promise<ProgressNote[]>;
-  getProgressNotesByAppointmentId(appointmentId: string): Promise<ProgressNote[]>;
-  getRecentProgressNotes(therapistId: string, limit?: number): Promise<ProgressNote[]>;
-  createProgressNote(note: InsertProgressNote): Promise<ProgressNote>;
-  updateProgressNote(id: string, note: Partial<ProgressNote>): Promise<ProgressNote>;
-  linkProgressNoteToAppointment(progressNoteId: string, appointmentId: string): Promise<ProgressNote>;
+  // Progress notes functionality merged into session notes methods above
   findMatchingAppointment(clientId: string, sessionDate: Date): Promise<Appointment | null>;
 
   // Medication methods
@@ -922,76 +916,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Progress notes methods
-  async getProgressNotes(clientId: string): Promise<ProgressNote[]> {
-    return await db
-      .select()
-      .from(progressNotes)
-      .where(eq(progressNotes.clientId, clientId))
-      .orderBy(desc(progressNotes.createdAt));
-  }
+  // Progress note functionality merged into session notes methods above
 
-  async getProgressNotesByAppointmentId(appointmentId: string): Promise<ProgressNote[]> {
-    try {
-      const result = await pool.query(
-        `SELECT * FROM progress_notes WHERE appointment_id = $1 ORDER BY created_at DESC`,
-        [appointmentId]
-      );
-
-      return result.rows.map(row => ({
-        id: row.id,
-        clientId: row.client_id,
-        therapistId: row.therapist_id,
-        title: row.title,
-        subjective: row.subjective,
-        objective: row.objective,
-        assessment: row.assessment,
-        plan: row.plan,
-        tonalAnalysis: row.tonal_analysis,
-        keyPoints: this.safeParseJSON(row.key_points, []),
-        significantQuotes: this.safeParseJSON(row.significant_quotes, []),
-        narrativeSummary: row.narrative_summary,
-        sessionDate: new Date(row.session_date),
-        appointmentId: row.appointment_id,
-        aiTags: this.safeParseJSON(row.ai_tags, []),
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
-      }));
-    } catch (error) {
-      console.error('Error in getProgressNotesByAppointmentId:', error);
-      return [];
-    }
-  }
+  // Merged into getSessionNotes method - now uses session_notes table with SOAP fields
 
 
 
-  async getRecentProgressNotes(therapistId: string, limit: number = 10): Promise<ProgressNote[]> {
-    return await db
-      .select()
-      .from(progressNotes)
-      .where(eq(progressNotes.therapistId, therapistId))
-      .orderBy(desc(progressNotes.createdAt))
-      .limit(limit);
-  }
+  // Merged into session notes - use getSessionNotes or getAllSessionNotes instead
 
 
 
-  async updateProgressNote(id: string, note: Partial<ProgressNote>): Promise<ProgressNote> {
-    const [updatedNote] = await db
-      .update(progressNotes)
-      .set({ ...note, updatedAt: new Date() })
-      .where(eq(progressNotes.id, id))
-      .returning();
-    return updatedNote;
-  }
+  // Progress note updates merged into updateSessionNote method
 
-  async linkProgressNoteToAppointment(progressNoteId: string, appointmentId: string): Promise<ProgressNote> {
-    const [updatedNote] = await db
-      .update(progressNotes)
-      .set({ appointmentId, updatedAt: new Date() })
-      .where(eq(progressNotes.id, progressNoteId))
-      .returning();
-    return updatedNote;
-  }
+  // Appointment linking is now handled within session notes via appointmentId field
 
   async findMatchingAppointment(clientId: string, sessionDate: Date): Promise<Appointment | null> {
     // Find appointments within 3 days of the session date for the client
@@ -1416,6 +1353,18 @@ export class DatabaseStorage implements IStorage {
         transcript: row.transcript || null,
         aiSummary: row.ai_summary || null,
         tags: row.tags || [],
+        // Include SOAP fields from merged progress notes
+        title: row.title || null,
+        subjective: row.subjective || null,
+        objective: row.objective || null,
+        assessment: row.assessment || null,
+        plan: row.plan || null,
+        tonalAnalysis: row.tonal_analysis || null,
+        keyPoints: row.key_points || [],
+        significantQuotes: row.significant_quotes || [],
+        narrativeSummary: row.narrative_summary || null,
+        sessionDate: row.session_date ? new Date(row.session_date) : null,
+        aiTags: row.ai_tags || [],
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at)
       }));
@@ -1791,9 +1740,8 @@ export class DatabaseStorage implements IStorage {
     }>;
   }> {
     try {
-      // Get previous session notes for this client
+      // Get previous session notes for this client (now includes former progress notes)
       const previousNotes = await this.getSessionNotesByClientId(clientId);
-      const progressNotes = await this.getProgressNotes(clientId);
 
       // Get current client information
       const client = await this.getClient(clientId);
@@ -2658,6 +2606,7 @@ Jonathan`,
     return tags.slice(0, 10); // Allow up to 10 fallback tags
   }
 
+  // MERGED FUNCTIONALITY: Progress notes now created directly as unified session notes
   async createProgressNote(data: {
     clientId: string;
     therapistId: string;
@@ -2674,143 +2623,75 @@ Jonathan`,
     appointmentId?: string;
   }): Promise<any> {
     try {
-      // Create the progress note
-      const result = await pool.query(
-        `INSERT INTO progress_notes
-         (client_id, therapist_id, title, subjective, objective, assessment, plan,
-          tonal_analysis, key_points, significant_quotes, narrative_summary, session_date, appointment_id, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
-         RETURNING *`,
-        [
-          data.clientId,
-          data.therapistId,
-          data.title,
-          data.subjective,
-          data.objective,
-          data.assessment,
-          data.plan,
-          data.tonalAnalysis,
-          JSON.stringify(data.keyPoints),
-          JSON.stringify(data.significantQuotes),
-          data.narrativeSummary,
-          data.sessionDate,
-          data.appointmentId || null
-        ]
-      );
+      // Create unified narrative from all sections
+      const unifiedNarrative = this.createUnifiedNarrative({
+        subjective: data.subjective,
+        objective: data.objective,
+        assessment: data.assessment,
+        plan: data.plan,
+        tonalAnalysis: data.tonalAnalysis,
+        narrativeSummary: data.narrativeSummary
+      });
 
-      const progressNote = {
-        id: result.rows[0].id,
-        clientId: result.rows[0].client_id,
-        therapistId: result.rows[0].therapist_id,
-        title: result.rows[0].title,
-        subjective: result.rows[0].subjective,
-        objective: result.rows[0].objective,
-        assessment: result.rows[0].assessment,
-        plan: result.rows[0].plan,
-        tonalAnalysis: result.rows[0].tonal_analysis,
-        keyPoints: this.safeParseJSON(result.rows[0].key_points, []),
-        significantQuotes: this.safeParseJSON(result.rows[0].significant_quotes, []),
-        narrativeSummary: result.rows[0].narrative_summary,
-        sessionDate: new Date(result.rows[0].session_date),
-        appointmentId: result.rows[0].appointment_id,
-        createdAt: new Date(result.rows[0].created_at),
-        updatedAt: new Date(result.rows[0].updated_at)
-      };
+      // Generate AI tags for the unified narrative
+      const aiTags = await this.generateAITags(unifiedNarrative);
 
-      // AUTOMATED WORKFLOW: Create unified narrative and session note
-      try {
-        console.log('🤖 Creating unified narrative from progress note sections...');
-
-        // Create unified narrative from all sections
-        const unifiedNarrative = this.createUnifiedNarrative({
+      // Create unified session note with all SOAP fields (replaces separate progress note)
+      const [sessionNote] = await db
+        .insert(sessionNotes)
+        .values({
+          clientId: data.clientId,
+          therapistId: data.therapistId,
+          appointmentId: data.appointmentId || null,
+          content: unifiedNarrative,
+          aiSummary: `Clinical progress note: ${data.title}`,
+          tags: aiTags,
+          // SOAP note fields (formerly in progress notes table)
+          title: data.title,
           subjective: data.subjective,
           objective: data.objective,
           assessment: data.assessment,
           plan: data.plan,
           tonalAnalysis: data.tonalAnalysis,
-          narrativeSummary: data.narrativeSummary
-        });
+          keyPoints: data.keyPoints,
+          significantQuotes: data.significantQuotes,
+          narrativeSummary: data.narrativeSummary,
+          sessionDate: data.sessionDate,
+          aiTags: aiTags
+        })
+        .returning();
 
-        // Generate AI tags for the unified narrative
-        const aiTags = await this.generateAITags(unifiedNarrative);
+      console.log('✅ Unified session note created with SOAP structure');
+      console.log(`📊 Generated ${aiTags.length} AI tags: ${aiTags.join(', ')}`);
 
-        // Create session note with unified narrative
-        const sessionNoteResult = await pool.query(
-          `INSERT INTO session_notes
-           (client_id, therapist_id, content, ai_summary, tags, appointment_id, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-           RETURNING *`,
-          [
-            data.clientId,
-            data.therapistId,
-            unifiedNarrative,
-            `AI-generated unified narrative from progress note: ${data.title}`,
-            JSON.stringify(aiTags),
-            data.appointmentId || null
-          ]
-        );
-
-        console.log('✅ Unified narrative created and saved to session notes');
-        console.log(`📊 Generated ${aiTags.length} AI tags: ${aiTags.join(', ')}`);
-
-        // Return progress note with session note reference
-        return {
-          ...progressNote,
-          sessionNoteId: sessionNoteResult.rows[0].id,
-          unifiedNarrativeCreated: true,
-          aiTags
-        };
-
-      } catch (sessionError) {
-        console.error('⚠️  Error creating unified narrative session note:', sessionError);
-        // Progress note was created successfully, but session note creation failed
-        return {
-          ...progressNote,
-          unifiedNarrativeCreated: false,
-          sessionNoteError: sessionError.message
-        };
-      }
+      return {
+        id: sessionNote.id,
+        clientId: sessionNote.clientId,
+        therapistId: sessionNote.therapistId,
+        title: sessionNote.title,
+        subjective: sessionNote.subjective,
+        objective: sessionNote.objective,
+        assessment: sessionNote.assessment,
+        plan: sessionNote.plan,
+        tonalAnalysis: sessionNote.tonalAnalysis,
+        keyPoints: sessionNote.keyPoints,
+        significantQuotes: sessionNote.significantQuotes,
+        narrativeSummary: sessionNote.narrativeSummary,
+        sessionDate: sessionNote.sessionDate,
+        appointmentId: sessionNote.appointmentId,
+        createdAt: sessionNote.createdAt,
+        updatedAt: sessionNote.updatedAt,
+        unifiedNoteCreated: true,
+        aiTags
+      };
 
     } catch (error) {
-      console.error('Error creating progress note:', error);
+      console.error('Error creating unified session note:', error);
       throw error;
     }
   }
 
-  async getProgressNotesByTherapist(therapistId: string): Promise<ProgressNote[]> {
-    try {
-      const result = await pool.query(
-        `SELECT pn.*, c.first_name, c.last_name
-         FROM progress_notes pn
-         LEFT JOIN clients c ON pn.client_id::text = c.id::text
-         WHERE pn.therapist_id::text = $1
-         ORDER BY pn.created_at DESC`,
-        [therapistId]
-      );
-
-      return result.rows.map((row: any) => ({
-        id: row.id,
-        clientId: row.client_id,
-        therapistId: row.therapist_id,
-        title: row.title,
-        subjective: row.subjective,
-        objective: row.objective,
-        assessment: row.assessment,
-        plan: row.plan,
-        tonalAnalysis: row.tonal_analysis,
-        keyPoints: this.safeParseJSON(row.key_points, []),
-        significantQuotes: this.safeParseJSON(row.significant_quotes, []),
-        narrativeSummary: row.narrative_summary,
-        sessionDate: new Date(row.session_date),
-        clientName: row.first_name && row.last_name ? `${row.first_name} ${row.last_name}` : 'Unknown Client',
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
-      }));
-    } catch (error) {
-      console.error('Error fetching progress notes:', error);
-      return [];
-    }
-  }
+  // Merged functionality: Use getSessionNotes with therapist filter instead
 
   // Compass AI conversation and memory methods implementation
   async createCompassConversation(conversation: InsertCompassConversation): Promise<CompassConversation> {

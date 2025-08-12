@@ -12,7 +12,6 @@ const getNavigationItems = (clientCount: number, urgentActionItemCount: number) 
   { path: "/calendar", label: "Calendar", icon: Calendar },
   { path: "/session-notes", label: "Session Notes", icon: FileText },
   { path: "/session-summaries", label: "Session Summaries", icon: PieChart },
-  { path: "/progress-notes", label: "Progress Notes", icon: FileText },
   { path: "/assessments", label: "Assessments", icon: ClipboardList },
   { path: "/document-processing", label: "Document Processing", icon: Upload },
   { path: "/processing-results", label: "Processing Results", icon: Activity },

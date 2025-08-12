@@ -94,6 +94,18 @@ export interface SessionNote {
   transcript?: string;
   aiSummary?: string;
   tags?: string[];
+  // SOAP fields from merged progress notes
+  title?: string;
+  subjective?: string;
+  objective?: string;
+  assessment?: string;
+  plan?: string;
+  tonalAnalysis?: string;
+  keyPoints?: string[];
+  significantQuotes?: string[];
+  narrativeSummary?: string;
+  sessionDate?: string;
+  aiTags?: string[];
   createdAt: string;
   updatedAt: string;
 }

@@ -67,7 +67,8 @@ function Router() {
       <Route path="/oauth/debug" component={OAuthDebug} />
       <Route path="/session-notes" component={SessionNotes} />
       <Route path="/session-summaries" component={SessionSummaries} />
-      <Route path="/progress-notes" component={ProgressNotesPage} />
+      {/* Progress Notes merged into Session Notes - redirect for compatibility */}
+      <Route path="/progress-notes" component={SessionNotes} />
       <Route path="/document-processing" component={DocumentProcessing} />
       <Route path="/processing-results" component={ProcessingResults} />
       <Route path="/assessments" component={Assessments} />
