@@ -1140,7 +1140,7 @@ export default function SessionNotes() {
                 <input
                   type="file"
                   multiple
-                  accept=".txt,.doc,.docx,.pdf"
+                  accept=".pdf,.doc,.docx,.txt,.md,.png,.jpg,.jpeg,.gif,.bmp,.xlsx,.xls,.csv"
                   onChange={handleBulkFileUpload}
                   className="hidden"
                   id="bulk-file-input"

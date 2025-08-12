@@ -35,20 +35,51 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
   const { toast } = useToast();
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const pdfFiles = acceptedFiles.filter(file => file.type === 'application/pdf');
+    // Define supported file types matching the backend
+    const supportedTypes = new Set([
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain',
+      'text/markdown',
+      'image/png',
+      'image/jpeg',
+      'image/jpg', 
+      'image/gif',
+      'image/bmp',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'text/csv'
+    ]);
+
+    // Filter files by supported MIME types and extensions
+    const validFiles = acceptedFiles.filter(file => {
+      const extension = file.name.toLowerCase().split('.').pop();
+      const supportedExtensions = ['pdf', 'doc', 'docx', 'txt', 'md', 'png', 'jpg', 'jpeg', 'gif', 'bmp', 'xlsx', 'xls', 'csv'];
+      
+      return supportedTypes.has(file.type) || supportedExtensions.includes(extension || '');
+    });
     
-    if (pdfFiles.length === 0) {
+    if (validFiles.length === 0) {
       toast({
         title: "Invalid file type",
-        description: "Please upload PDF files only.",
+        description: "Please upload supported document types: PDF, Word (DOC/DOCX), Text (TXT/MD), Images (PNG/JPG/GIF/BMP), or Spreadsheets (XLS/XLSX/CSV).",
         variant: "destructive"
       });
       return;
     }
 
+    if (validFiles.length !== acceptedFiles.length) {
+      toast({
+        title: "Some files skipped",
+        description: `${acceptedFiles.length - validFiles.length} unsupported files were skipped. Only processing ${validFiles.length} valid files.`,
+        variant: "default"
+      });
+    }
+
     setIsProcessing(true);
     
-    for (const file of pdfFiles) {
+    for (const file of validFiles) {
       const documentId = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
       // Add document to processing queue
@@ -188,7 +219,18 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'application/pdf': ['.pdf']
+      'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'text/plain': ['.txt'],
+      'text/markdown': ['.md'],
+      'image/png': ['.png'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/gif': ['.gif'],
+      'image/bmp': ['.bmp'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-excel': ['.xls'],
+      'text/csv': ['.csv']
     },
     multiple: true
   });
@@ -260,11 +302,14 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
             <input {...getInputProps()} />
             <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
             {isDragActive ? (
-              <p className="text-blue-600 font-medium">Drop PDF files here...</p>
+              <p className="text-blue-600 font-medium">Drop your documents here...</p>
             ) : (
               <div>
                 <p className="text-gray-600 font-medium mb-2">
-                  Drag & drop PDF session notes here, or click to browse
+                  Drag & drop documents here, or click to browse
+                </p>
+                <p className="text-sm text-gray-500 mb-1">
+                  Supports: PDF, Word (DOC/DOCX), Text (TXT/MD), Images (PNG/JPG/GIF/BMP), Spreadsheets (XLS/XLSX/CSV)
                 </p>
                 <p className="text-sm text-gray-500">
                   AI will extract content, identify dates, and suggest appointment matches
