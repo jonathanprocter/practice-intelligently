@@ -264,6 +264,59 @@ export function Compass({ className }: CompassProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Chat mutation - moved up to be defined before useEffects that depend on it
+  const chatMutation = useMutation({
+    mutationFn: async (query: string) => {
+      setCompassState('thinking');
+      
+      const userMessage: Message = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        content: query,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, userMessage]);
+
+      const response = await apiRequest('POST', '/api/compass/chat', {
+        message: query,
+        sessionId,
+        conversationHistory: messages.map(m => ({
+          role: m.role,
+          content: m.content
+        }))
+      });
+
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      setCompassState('normal');
+      
+      const assistantMessage: Message = {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: data.content,
+        timestamp: new Date(),
+        aiProvider: data.aiProvider
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+
+      if (voiceActivation && data.content) {
+        speakText(data.content);
+      }
+    },
+    onError: (error) => {
+      setCompassState('normal');
+      console.error('Chat error:', error);
+      toast({
+        title: "Connection Error",
+        description: "Unable to reach Compass AI. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -576,59 +629,6 @@ export function Compass({ className }: CompassProps) {
       setIsSpeaking(false);
     }
   };
-
-  // Chat mutation
-  const chatMutation = useMutation({
-    mutationFn: async (query: string) => {
-      setCompassState('thinking');
-      
-      const userMessage: Message = {
-        id: `user-${Date.now()}`,
-        role: 'user',
-        content: query,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, userMessage]);
-
-      const response = await apiRequest('POST', '/api/compass/chat', {
-        message: query,
-        sessionId,
-        conversationHistory: messages.map(m => ({
-          role: m.role,
-          content: m.content
-        }))
-      });
-
-      return await response.json();
-    },
-    onSuccess: (data) => {
-      setCompassState('normal');
-      
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: data.content,
-        timestamp: new Date(),
-        aiProvider: data.aiProvider
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-
-      if (voiceActivation && data.content) {
-        speakText(data.content);
-      }
-    },
-    onError: (error) => {
-      setCompassState('normal');
-      console.error('Chat error:', error);
-      toast({
-        title: "Connection Error",
-        description: "Unable to reach Compass AI. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
