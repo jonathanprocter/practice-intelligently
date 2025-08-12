@@ -11,7 +11,7 @@ import { apiRequest } from '@/lib/queryClient';
 interface EditSessionNoteTitleModalProps {
   isOpen: boolean;
   onClose: () => void;
-  sessionNote: {
+  note: {
     id: string;
     title?: string;
     content: string;
@@ -23,15 +23,20 @@ interface EditSessionNoteTitleModalProps {
 export function EditSessionNoteTitleModal({
   isOpen,
   onClose,
-  sessionNote
+  note
 }: EditSessionNoteTitleModalProps) {
-  const [title, setTitle] = useState(sessionNote.title || '');
+  const [title, setTitle] = useState(note?.title || '');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Don't render if no note is provided
+  if (!note) {
+    return null;
+  }
+
   const updateTitleMutation = useMutation({
     mutationFn: async (newTitle: string) => {
-      return apiRequest('PATCH', `/api/session-notes/${sessionNote.id}`, {
+      return apiRequest('PATCH', `/api/session-notes/${note.id}`, {
         title: newTitle
       });
     },
@@ -86,9 +91,9 @@ export function EditSessionNoteTitleModal({
           </div>
           
           <div className="text-sm text-muted-foreground">
-            <p><strong>Client:</strong> {sessionNote.clientName}</p>
-            <p><strong>Date:</strong> {new Date(sessionNote.createdAt).toLocaleDateString()}</p>
-            <p><strong>Preview:</strong> {sessionNote.content.substring(0, 100)}...</p>
+            <p><strong>Client:</strong> {note.clientName}</p>
+            <p><strong>Date:</strong> {new Date(note.createdAt).toLocaleDateString()}</p>
+            <p><strong>Preview:</strong> {note.content.substring(0, 100)}...</p>
           </div>
         </div>
 
