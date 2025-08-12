@@ -113,20 +113,17 @@ export function SessionPrepCard({
         }
       }
 
-      if (!actualClientId) {
-        console.log('⚠️ No client ID available for AI insights, skipping session prep generation...');
-        setAiInsights(null);
-        setIsLoadingInsights(false);
-        return;
-      }
+      console.log(`🧠 Loading AI insights for ${actualClientId ? `client ${actualClientId}` : 'non-client appointment'}...`);
 
-      console.log(`🧠 Loading AI insights for client ${actualClientId}...`);
+      // Load AI insights for session prep - works for both client and non-client appointments
+      const requestBody = actualClientId 
+        ? { clientId: actualClientId }
+        : { appointmentTitle: title || 'Professional Appointment' };
 
-      // Load AI insights for session prep with comprehensive client context
       const insightsResponse = await fetch(`/api/session-prep/${eventId}/ai-insights`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId: actualClientId })
+        body: JSON.stringify(requestBody)
       });
 
       if (insightsResponse.ok) {
@@ -134,15 +131,35 @@ export function SessionPrepCard({
         if (contentType && contentType.includes('application/json')) {
           const data = await insightsResponse.json();
           console.log('Received AI insights data:', data);
-          // Handle the actual response structure from the API
+          
+          // Handle the response structure from the API
           if (data.insights) {
-            setAiInsights(data.insights);
-          } else if (data.appointmentType) {
-            // Handle different response format
-            setAiInsights(data);
+            // Extract insights from the nested structure
+            const insights = data.insights;
+            
+            // Transform the API response to match frontend expectations
+            const transformedInsights = {
+              appointmentType: insights.appointmentType || 'session',
+              title: title,
+              keyThemes: insights.content?.keyPoints || [],
+              recommendedFocus: insights.content?.recommendations || [],
+              suggestedQuestions: insights.content?.suggestedQuestions || [],
+              nextSteps: insights.content?.nextSteps || [],
+              summary: insights.content?.summary || 'AI insights generated successfully',
+              content: insights.content
+            };
+            
+            setAiInsights(transformedInsights);
           } else {
             console.log('Unexpected response format:', data);
-            setAiInsights(data);
+            // Fallback handling
+            setAiInsights({
+              appointmentType: 'session',
+              title: title,
+              summary: 'Insights generated',
+              keyThemes: [],
+              recommendedFocus: []
+            });
           }
         } else {
           console.error('Expected JSON response but received HTML');
