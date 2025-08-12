@@ -318,47 +318,57 @@ function useRealtimeUpdates(clientId: string, queryClient: any) {
   const { toast } = useToast();
 
   React.useEffect(() => {
+    // Skip WebSocket connection in development to avoid connection errors
+    if (import.meta.env.DEV) {
+      return;
+    }
+
     // WebSocket connection for real-time updates
     const wsUrl = `${import.meta.env.VITE_WS_URL || 'wss://api.yourdomain.com'}/clients/${clientId}/updates`;
-    const ws = new WebSocket(wsUrl);
+    
+    try {
+      const ws = new WebSocket(wsUrl);
 
-    ws.onopen = () => {
-      console.log('Connected to real-time updates');
-    };
+      ws.onopen = () => {
+        console.log('Connected to real-time updates');
+      };
 
-    ws.onmessage = (event) => {
-      try {
-        const update = JSON.parse(event.data);
+      ws.onmessage = (event) => {
+        try {
+          const update = JSON.parse(event.data);
 
-        switch (update.type) {
-          case 'note_added':
-          case 'note_updated':
-            queryClient.invalidateQueries({ queryKey: qKeys.notes(clientId) });
-            toast({
-              title: 'Session note updated',
-              description: `${update.therapistName || 'Another therapist'} modified a session note`,
-            });
-            break;
-          case 'appointment_scheduled':
-            queryClient.invalidateQueries({ queryKey: qKeys.appts(clientId) });
-            toast({
-              title: 'New appointment',
-              description: 'A new appointment has been scheduled',
-            });
-            break;
+          switch (update.type) {
+            case 'note_added':
+            case 'note_updated':
+              queryClient.invalidateQueries({ queryKey: qKeys.notes(clientId) });
+              toast({
+                title: 'Session note updated',
+                description: `${update.therapistName || 'Another therapist'} modified a session note`,
+              });
+              break;
+            case 'appointment_scheduled':
+              queryClient.invalidateQueries({ queryKey: qKeys.appts(clientId) });
+              toast({
+                title: 'New appointment',
+                description: 'A new appointment has been scheduled',
+              });
+              break;
+          }
+        } catch (error) {
+          console.error('Failed to parse WebSocket message:', error);
         }
-      } catch (error) {
-        console.error('Failed to parse WebSocket message:', error);
-      }
-    };
+      };
 
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
 
-    return () => {
-      ws.close();
-    };
+      return () => {
+        ws.close();
+      };
+    } catch (error) {
+      console.error('Failed to create WebSocket connection:', error);
+    }
   }, [clientId, queryClient, toast]);
 }
 
@@ -372,23 +382,40 @@ function calculateClientStats(
   hasNoteFor: (apt: Appointment) => boolean
 ): ClientStats {
   const now = new Date();
-  const upcomingCount = appointments.filter(apt => new Date(apt.startTime) > now).length;
-  const completedCount = appointments.filter(apt => new Date(apt.startTime) <= now).length;
+  
+  const upcomingCount = appointments.filter(apt => {
+    const startDate = safeDate(apt.startTime);
+    return startDate && startDate > now;
+  }).length;
+  
+  const completedCount = appointments.filter(apt => {
+    const startDate = safeDate(apt.startTime);
+    return startDate && startDate <= now;
+  }).length;
+  
   const linkedNotesCount = appointments.filter(hasNoteFor).length;
   const unlinkedNotesCount = sessionNotes.filter(n => !n.appointmentId && !n.eventId).length;
 
   // Calculate average sessions per month
-  const sessionDates = sessionNotes.map(n => new Date(n.createdAt));
-  const oldestSession = sessionDates.length > 0 ? Math.min(...sessionDates.map(d => d.getTime())) : now.getTime();
+  const sessionDates = sessionNotes
+    .map(n => safeDate(n.createdAt))
+    .filter(d => d !== undefined) as Date[];
+  
+  const oldestSession = sessionDates.length > 0 
+    ? Math.min(...sessionDates.map(d => d.getTime())) 
+    : now.getTime();
   const monthsActive = Math.max(1, (now.getTime() - oldestSession) / (1000 * 60 * 60 * 24 * 30));
   const avgSessionsPerMonth = Math.round((sessionNotes.length / monthsActive) * 10) / 10;
 
   // Calculate days since last contact
-  const allDates = [
-    ...sessionNotes.map(n => new Date(n.createdAt)),
-    ...appointments.map(a => new Date(a.startTime))
-  ];
-  const lastContact = allDates.length > 0 ? Math.max(...allDates.map(d => d.getTime())) : now.getTime();
+  const appointmentDates = appointments
+    .map(a => safeDate(a.startTime))
+    .filter(d => d !== undefined) as Date[];
+  
+  const allDates = [...sessionDates, ...appointmentDates];
+  const lastContact = allDates.length > 0 
+    ? Math.max(...allDates.map(d => d.getTime())) 
+    : now.getTime();
   const lastContactDays = Math.floor((now.getTime() - lastContact) / (1000 * 60 * 60 * 24));
 
   return {
@@ -419,12 +446,18 @@ function generateSessionFrequencyData(sessionNotes: SessionNote[]) {
   }).reverse();
 
   sessionNotes.forEach(note => {
-    const noteDate = new Date(note.createdAt);
-    const monthData = last6Months.find(m => 
-      isWithinInterval(noteDate, { start: m.start, end: m.end })
-    );
-    if (monthData) {
-      monthData.count++;
+    try {
+      const noteDate = safeDate(note.createdAt);
+      if (!noteDate) return;
+      
+      const monthData = last6Months.find(m => 
+        isWithinInterval(noteDate, { start: m.start, end: m.end })
+      );
+      if (monthData) {
+        monthData.count++;
+      }
+    } catch (error) {
+      console.error('Error processing session note for frequency data:', error);
     }
   });
 
@@ -875,20 +908,24 @@ function ClientChartInner() {
   const timelineData = React.useMemo(() => {
     if (!appointments.data || !sessionNotes.data) return [];
 
-    const apptItems = appointments.data.map(apt => ({
-      type: 'appointment' as const,
-      date: new Date(apt.startTime),
-      title: apt.title || 'Appointment',
-      data: apt,
-      hasNote: hasNoteFor(apt),
-    }));
+    const apptItems = appointments.data.map(apt => {
+      const startDate = safeDate(apt.startTime);
+      return {
+        type: 'appointment' as const,
+        date: startDate || new Date(),
+        title: apt.title || 'Appointment',
+        data: apt,
+        hasNote: hasNoteFor(apt),
+      };
+    });
 
     const noteItems = sessionNotes.data.map(note => {
+      const createdDate = safeDate(note.createdAt);
       const firstLine = note.content?.split('\n')[0] ?? 'Session Note';
       const title = firstLine.slice(0, 100) + (firstLine.length > 100 ? '…' : '');
       return {
         type: 'session-note' as const,
-        date: new Date(note.createdAt),
+        date: createdDate || new Date(),
         title,
         data: note,
         hasNote: true,
@@ -899,29 +936,46 @@ function ClientChartInner() {
 
     // Apply filters
     if (searchTerm) {
-      allItems = allItems.filter(item => 
-        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.type === 'session-note' && 
-         (item.data as SessionNote).content.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
+      allItems = allItems.filter(item => {
+        try {
+          return item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (item.type === 'session-note' && 
+             (item.data as SessionNote).content?.toLowerCase().includes(searchTerm.toLowerCase()));
+        } catch (error) {
+          console.error('Error filtering timeline items:', error);
+          return false;
+        }
+      });
     }
 
     if (dateFilter) {
-      allItems = allItems.filter(item => 
-        isWithinInterval(item.date, { start: dateFilter.start, end: dateFilter.end })
-      );
+      allItems = allItems.filter(item => {
+        try {
+          return isWithinInterval(item.date, { start: dateFilter.start, end: dateFilter.end });
+        } catch (error) {
+          console.error('Error filtering by date:', error);
+          return false;
+        }
+      });
     }
 
     if (noteTypeFilter !== 'all') {
       allItems = allItems.filter(item => {
         if (item.type !== 'session-note') return true;
         const note = item.data as SessionNote;
-        const isLinked = note.appointmentId || note.eventId;
+        const isLinked = Boolean(note.appointmentId) || Boolean(note.eventId);
         return noteTypeFilter === 'linked' ? isLinked : !isLinked;
       });
     }
 
-    return allItems.sort((a, b) => b.date.getTime() - a.date.getTime());
+    return allItems.sort((a, b) => {
+      try {
+        return b.date.getTime() - a.date.getTime();
+      } catch (error) {
+        console.error('Error sorting timeline items:', error);
+        return 0;
+      }
+    });
   }, [appointments.data, sessionNotes.data, hasNoteFor, searchTerm, dateFilter, noteTypeFilter]);
 
   // Group timeline by month
@@ -929,16 +983,27 @@ function ClientChartInner() {
     const groups = new Map<string, typeof timelineData>();
 
     timelineData.forEach(item => {
-      const monthKey = format(item.date, 'MMMM yyyy');
-      if (!groups.has(monthKey)) {
-        groups.set(monthKey, []);
+      try {
+        const monthKey = format(item.date, 'MMMM yyyy');
+        if (!groups.has(monthKey)) {
+          groups.set(monthKey, []);
+        }
+        groups.get(monthKey)!.push(item);
+      } catch (error) {
+        console.error('Error grouping timeline item:', error);
       }
-      groups.get(monthKey)!.push(item);
     });
 
     return Array.from(groups.entries()).map(([month, items]) => ({
       month,
-      items: items.sort((a, b) => b.date.getTime() - a.date.getTime())
+      items: items.sort((a, b) => {
+        try {
+          return b.date.getTime() - a.date.getTime();
+        } catch (error) {
+          console.error('Error sorting grouped items:', error);
+          return 0;
+        }
+      })
     }));
   }, [timelineData]);
 
