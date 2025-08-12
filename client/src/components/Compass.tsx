@@ -376,72 +376,115 @@ export function Compass({ className = '' }) {
     return "I understand you're asking about '" + query + "'. I'm currently in offline mode but can still help with basic practice management questions. Try asking about appointments, clients, or tasks.";
   };
 
-  // Initialize speech recognition
+  // Initialize speech recognition with improved conversation flow
   useEffect(() => {
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
       const recognition = new window.webkitSpeechRecognition();
-      recognition.continuous = false;
+      recognition.continuous = continuousMode || wakeWordMode; // Enable continuous for natural flow
       recognition.interimResults = false;
       recognition.lang = 'en-US';
 
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript.trim();
+        console.log('🎤 Heard:', transcript);
+
+        // Immediately stop any current speech to prevent overlapping
+        if (isSpeaking) {
+          interruptSpeech();
+        }
 
         // Check for interruption keywords when Compass is speaking
         if (isSpeaking && allowInterruption) {
-          const interruptKeywords = ['stop', 'pause', 'wait', 'hold on', 'interrupt'];
+          const interruptKeywords = ['stop', 'pause', 'wait', 'hold on', 'interrupt', 'hey compass'];
           if (interruptKeywords.some(keyword => transcript.toLowerCase().includes(keyword))) {
+            console.log('🎤 Voice interruption detected');
             interruptSpeech();
-            setIsListening(false);
-            setCompassState('normal');
+            
+            // If it's "hey compass", process the follow-up command
+            if (transcript.toLowerCase().includes('hey compass')) {
+              const query = transcript.toLowerCase().replace('hey compass', '').trim();
+              if (query && query.length > 0) {
+                sendMessage(query);
+              }
+            }
+            
+            // Don't set listening to false if in continuous/wake word mode
+            if (!continuousMode && !wakeWordMode) {
+              setIsListening(false);
+              setCompassState('normal');
+            }
             return;
           }
         }
 
-        if (voiceActivation && transcript.toLowerCase().includes('hey compass')) {
-          // Interrupt current speech if speaking
-          if (isSpeaking && allowInterruption) {
-            interruptSpeech();
-          }
-          
+        // Handle wake word detection
+        if ((voiceActivation || wakeWordMode) && transcript.toLowerCase().includes('hey compass')) {
+          console.log('🎤 Wake word detected');
           const query = transcript.toLowerCase().replace('hey compass', '').trim();
-          if (query) {
+          if (query && query.length > 0) {
             sendMessage(query);
           }
-          setIsListening(false);
+          // Keep listening in continuous mode for natural conversation
+          if (!continuousMode && !wakeWordMode) {
+            setIsListening(false);
+            setCompassState('normal');
+          }
           return;
         }
 
-        setInputMessage(transcript);
-
-        if (continuousMode && transcript) {
-          // Interrupt current speech if speaking
-          if (isSpeaking && allowInterruption) {
-            interruptSpeech();
-          }
+        // Handle continuous mode - process any speech directly
+        if (continuousMode && transcript && transcript.length > 2) {
+          console.log('🎤 Continuous mode processing:', transcript);
           sendMessage(transcript);
           setInputMessage('');
+          // Keep listening for next input
+          return;
         }
 
-        setIsListening(false);
-        setCompassState('normal');
+        // Regular mode - just capture the transcript
+        setInputMessage(transcript);
+        
+        // Don't stop listening in continuous modes
+        if (!continuousMode && !wakeWordMode) {
+          setIsListening(false);
+          setCompassState('normal');
+        }
       };
 
       recognition.onerror = (event) => {
-        console.log('Speech recognition error:', event.error);
-        setIsListening(false);
-        setCompassState('normal');
+        console.log('🎤 Speech recognition error:', event.error);
+        // Don't stop listening on errors in continuous modes, just log them
+        if (event.error !== 'no-speech' && event.error !== 'aborted') {
+          if (!continuousMode && !wakeWordMode) {
+            setIsListening(false);
+            setCompassState('normal');
+          }
+        }
       };
 
       recognition.onend = () => {
-        setIsListening(false);
-        setCompassState('normal');
-        // Removed automatic restart to prevent endless error loops
+        console.log('🎤 Speech recognition ended');
+        // Auto-restart in continuous/wake word modes for natural conversation
+        if ((continuousMode || wakeWordMode) && voiceActivation && !isSpeaking && isOpen) {
+          try {
+            setTimeout(() => {
+              if (speechRecognition && voiceActivation) {
+                console.log('🎤 Auto-restarting for continuous listening');
+                speechRecognition.start();
+              }
+            }, 100); // Small delay to prevent rapid restarts
+          } catch (error) {
+            console.log('🎤 Auto-restart failed:', error);
+          }
+        } else {
+          setIsListening(false);
+          setCompassState('normal');
+        }
       };
 
       setSpeechRecognition(recognition);
     }
-  }, [voiceActivation, continuousMode, isOpen]);
+  }, [voiceActivation, continuousMode, wakeWordMode, isOpen, isSpeaking]);
 
   // Voice activation control (manual only to prevent loops)
   useEffect(() => {
@@ -456,10 +499,16 @@ export function Compass({ className = '' }) {
     }
   }, [voiceActivation, speechRecognition, isListening]);
 
-  // Voice input controls
+  // Enhanced voice input controls with natural conversation flow
   const startListening = () => {
     if (speechRecognition && !isListening) {
       try {
+        // Stop any current speech before starting to listen
+        if (isSpeaking) {
+          interruptSpeech();
+        }
+        
+        console.log('🎤 Starting listening mode');
         setIsListening(true);
         setCompassState('listening');
         speechRecognition.start();
@@ -483,27 +532,36 @@ export function Compass({ className = '' }) {
     }
   };
 
-  // Interrupt current speech
+  // Enhanced speech interruption with immediate response
   const interruptSpeech = () => {
     if (currentAudio) {
       currentAudio.pause();
+      currentAudio.currentTime = 0; // Reset to beginning
       setCurrentAudio(null);
       setIsSpeaking(false);
       console.log('🎤 Speech interrupted by user');
     }
+    
+    // Immediately clear any speech synthesis
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
   };
 
-  // Text to speech using ElevenLabs
+  // Enhanced text to speech with natural conversation flow
   const speakText = async (text) => {
     try {
+      // Always stop any existing audio first to prevent overlapping
       if (currentAudio) {
         currentAudio.pause();
+        currentAudio.currentTime = 0;
         setCurrentAudio(null);
       }
 
       setIsSpeaking(true);
+      console.log('🎤 Speaking:', text.substring(0, 50) + '...');
 
-      // Use ElevenLabs API for high-quality voice synthesis with intelligent modulation
+      // Use ElevenLabs API for high-quality voice synthesis
       const response = await fetch('/api/compass/speak', {
         method: 'POST',
         headers: {
@@ -522,14 +580,41 @@ export function Compass({ className = '' }) {
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
 
+        // Enhanced audio event handling for natural conversation
         audio.onended = () => {
+          console.log('🎤 Speech completed');
+          setIsSpeaking(false);
+          setCurrentAudio(null);
+          URL.revokeObjectURL(audioUrl);
+          
+          // Resume listening in continuous modes for natural conversation
+          if ((continuousMode || wakeWordMode) && voiceActivation && isOpen) {
+            setTimeout(() => {
+              if (!isListening && speechRecognition) {
+                try {
+                  console.log('🎤 Resuming listening after speech');
+                  setIsListening(true);
+                  setCompassState('listening');
+                  speechRecognition.start();
+                } catch (error) {
+                  console.log('🎤 Failed to resume listening:', error);
+                }
+              }
+            }, 500); // Brief pause before resuming listening
+          }
+        };
+
+        // Immediate interruption handling
+        audio.onpause = () => {
+          console.log('🎤 Speech interrupted');
           setIsSpeaking(false);
           setCurrentAudio(null);
           URL.revokeObjectURL(audioUrl);
         };
 
-        // Add interruption capability during speech
-        audio.onpause = () => {
+        // Handle loading and playback errors gracefully
+        audio.onerror = (error) => {
+          console.log('🎤 Audio playback error:', error);
           setIsSpeaking(false);
           setCurrentAudio(null);
           URL.revokeObjectURL(audioUrl);
@@ -543,10 +628,13 @@ export function Compass({ className = '' }) {
 
         setCurrentAudio(audio);
         await audio.play();
+      } else {
+        throw new Error(`Voice API failed: ${response.status}`);
       }
     } catch (error) {
       console.log('Voice generation failed:', error);
       setIsSpeaking(false);
+      setCurrentAudio(null);
     }
   };
 
