@@ -1080,6 +1080,107 @@ export class DatabaseStorage implements IStorage {
     await db.delete(documents).where(eq(documents.id, id));
   }
 
+  // Enhanced document methods for AI tagging
+  async updateDocumentWithTags(id: string, taggingData: {
+    aiTags?: any;
+    category?: string;
+    subcategory?: string;
+    contentSummary?: string;
+    clinicalKeywords?: any;
+    confidenceScore?: number;
+    sensitivityLevel?: string;
+    extractedText?: string;
+  }): Promise<Document> {
+    const [updatedDocument] = await db
+      .update(documents)
+      .set({
+        ...taggingData,
+        updatedAt: new Date()
+      })
+      .where(eq(documents.id, id))
+      .returning();
+    return updatedDocument;
+  }
+
+  async getDocumentsByCategory(therapistId: string, category?: string, subcategory?: string): Promise<Document[]> {
+    let query = db
+      .select()
+      .from(documents)
+      .where(eq(documents.therapistId, therapistId));
+
+    if (category) {
+      query = query.where(eq(documents.category, category));
+    }
+
+    if (subcategory) {
+      query = query.where(eq(documents.subcategory, subcategory));
+    }
+
+    return await query.orderBy(desc(documents.uploadedAt));
+  }
+
+  async getDocumentsBySensitivity(therapistId: string, sensitivityLevel: string): Promise<Document[]> {
+    return await db
+      .select()
+      .from(documents)
+      .where(
+        and(
+          eq(documents.therapistId, therapistId),
+          eq(documents.sensitivityLevel, sensitivityLevel)
+        )
+      )
+      .orderBy(desc(documents.uploadedAt));
+  }
+
+  async searchDocumentsByTags(therapistId: string, searchTags: string[]): Promise<Document[]> {
+    // Note: This is a simplified version. In production, you'd use full-text search or specialized queries
+    return await db
+      .select()
+      .from(documents)
+      .where(eq(documents.therapistId, therapistId))
+      .orderBy(desc(documents.uploadedAt));
+  }
+
+  async getDocumentTagStatistics(therapistId: string): Promise<{
+    categoryCounts: Array<{ category: string; count: number }>;
+    sensitivityCounts: Array<{ level: string; count: number }>;
+    totalDocuments: number;
+  }> {
+    // This would need raw SQL or more complex queries in production
+    const allDocs = await db
+      .select()
+      .from(documents)
+      .where(eq(documents.therapistId, therapistId));
+
+    const categoryCounts = allDocs.reduce((acc, doc) => {
+      const category = doc.category || 'uncategorized';
+      const existing = acc.find(c => c.category === category);
+      if (existing) {
+        existing.count++;
+      } else {
+        acc.push({ category, count: 1 });
+      }
+      return acc;
+    }, [] as Array<{ category: string; count: number }>);
+
+    const sensitivityCounts = allDocs.reduce((acc, doc) => {
+      const level = doc.sensitivityLevel || 'standard';
+      const existing = acc.find(c => c.level === level);
+      if (existing) {
+        existing.count++;
+      } else {
+        acc.push({ level, count: 1 });
+      }
+      return acc;
+    }, [] as Array<{ level: string; count: number }>);
+
+    return {
+      categoryCounts,
+      sensitivityCounts,
+      totalDocuments: allDocs.length
+    };
+  }
+
   // Audit methods
   async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
     const [newLog] = await db

@@ -23,6 +23,7 @@ import DocumentProcessing from "@/pages/DocumentProcessing";
 import ProcessingResults from "@/pages/ProcessingResults";
 import ClientChart from "@/pages/ClientChart";
 import SessionSummaries from "@/pages/session-summaries";
+import SmartDocuments from "@/pages/smart-documents";
 import { lazy, Suspense } from "react";
 
 
@@ -71,6 +72,7 @@ function Router() {
       <Route path="/progress-notes" component={SessionNotes} />
       <Route path="/document-processing" component={DocumentProcessing} />
       <Route path="/processing-results" component={ProcessingResults} />
+      <Route path="/smart-documents" component={SmartDocuments} />
       <Route path="/assessments" component={Assessments} />
       <Route path="/client-checkins" component={ClientCheckins} />
       <Route path="/action-items" component={ActionItems} />

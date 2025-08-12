@@ -404,11 +404,26 @@ export const documents = pgTable("documents", {
   filePath: text("file_path").notNull(),
   isConfidential: boolean("is_confidential").default(true),
   tags: jsonb("tags"),
+  
+  // Enhanced AI tagging and categorization fields
+  aiTags: jsonb("ai_tags"), // AI-generated tags with confidence scores
+  category: text("category"), // Primary document category
+  subcategory: text("subcategory"), // Secondary categorization
+  contentSummary: text("content_summary"), // AI-generated summary
+  clinicalKeywords: jsonb("clinical_keywords"), // Clinical terminology found
+  confidenceScore: decimal("confidence_score", { precision: 3, scale: 2 }), // AI confidence in categorization
+  sensitivityLevel: text("sensitivity_level").default("standard"), // low, standard, high, confidential
+  extractedText: text("extracted_text"), // Full extracted text content
+  
   uploadedAt: timestamp("uploaded_at").defaultNow(),
   lastAccessedAt: timestamp("last_accessed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
   clientIdx: index("documents_client_idx").on(table.clientId),
   typeIdx: index("documents_type_idx").on(table.documentType),
+  categoryIdx: index("documents_category_idx").on(table.category),
+  tagsIdx: index("documents_ai_tags_idx").on(table.aiTags),
 }));
 
 export const auditLogs = pgTable("audit_logs", {

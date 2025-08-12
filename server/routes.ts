@@ -21,6 +21,12 @@ import { randomUUID } from 'crypto';
 import multer from 'multer';
 import fs from 'fs';
 import { uploadSingle, uploadMultiple } from './upload';
+
+// Configure multer for in-memory storage
+const uploadToMemory = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
+});
 import { getAllApiStatuses } from "./health-check";
 import { simpleOAuth } from "./oauth-simple";
 import { googleCalendarService } from "./auth";
@@ -6828,6 +6834,110 @@ Follow-up areas for next session:
     } catch (error: any) {
       console.error('Error updating session summary:', error);
       res.status(500).json({ error: 'Failed to update session summary', details: error.message });
+    }
+  });
+
+  // Smart Document Tagging and Categorization Endpoints
+  app.post("/api/documents/analyze-and-tag", uploadToMemory.single('document'), async (req, res) => {
+    try {
+      const { therapistId, clientId } = req.body;
+
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      console.log(`🏷️ Starting smart document analysis for: ${req.file.originalname}`);
+
+      // Write file to temporary location for processing
+      const tempFilePath = path.join(process.cwd(), 'temp_uploads', req.file.originalname);
+      await fs.ensureDir(path.dirname(tempFilePath));
+      await fs.writeFile(tempFilePath, req.file.buffer);
+
+      // Extract text content
+      let documentContent: string;
+      try {
+        const { extractTextFromFile } = await import('./documentProcessor');
+        documentContent = await extractTextFromFile(tempFilePath);
+        console.log(`📄 Extracted ${documentContent.length} characters for analysis`);
+      } catch (extractError) {
+        await fs.remove(tempFilePath);
+        return res.status(400).json({ 
+          error: "Failed to extract text from document",
+          details: (extractError as Error)?.message
+        });
+      }
+
+      // Import and use the document tagger
+      const { DocumentTagger } = await import('./documentTagger');
+      
+      // Analyze the document with AI
+      const taggingResult = await DocumentTagger.analyzeDocument(
+        documentContent,
+        req.file.originalname,
+        path.extname(req.file.originalname)
+      );
+
+      // Create document record in database
+      const documentRecord = await storage.createDocument({
+        therapistId,
+        clientId: clientId || null,
+        fileName: req.file.originalname,
+        originalName: req.file.originalname,
+        fileType: req.file.mimetype,
+        fileSize: req.file.size,
+        documentType: taggingResult.category,
+        filePath: tempFilePath,
+        isConfidential: taggingResult.sensitivityLevel === 'high' || taggingResult.sensitivityLevel === 'confidential',
+        tags: {},
+        
+        // AI analysis results
+        aiTags: taggingResult.aiTags,
+        category: taggingResult.category,
+        subcategory: taggingResult.subcategory,
+        contentSummary: taggingResult.contentSummary,
+        clinicalKeywords: taggingResult.clinicalKeywords,
+        confidenceScore: taggingResult.confidenceScore,
+        sensitivityLevel: taggingResult.sensitivityLevel,
+        extractedText: documentContent
+      });
+
+      console.log(`✅ Document analyzed and stored with ID: ${documentRecord.id}`);
+
+      // Clean up temp file
+      await fs.remove(tempFilePath);
+
+      res.json({
+        success: true,
+        document: documentRecord,
+        analysis: taggingResult,
+        message: `Document successfully analyzed and categorized as ${taggingResult.category}/${taggingResult.subcategory}`
+      });
+
+    } catch (error: any) {
+      console.error("Error analyzing document:", error);
+      res.status(500).json({ 
+        error: "Failed to analyze document",
+        details: error?.message || 'Unknown error'
+      });
+    }
+  });
+
+  app.get("/api/documents/categories", async (req, res) => {
+    try {
+      const { DocumentTagger } = await import('./documentTagger');
+      const categories = DocumentTagger.getAvailableCategories();
+      
+      res.json({
+        success: true,
+        categories
+      });
+
+    } catch (error: any) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch categories",
+        details: error?.message || 'Unknown error'
+      });
     }
   });
 
