@@ -1493,6 +1493,16 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  async getSessionNoteById(sessionNoteId: string): Promise<SessionNote | null> {
+    try {
+      const [sessionNote] = await db.select().from(sessionNotes).where(eq(sessionNotes.id, sessionNoteId));
+      return sessionNote || null;
+    } catch (error) {
+      console.error('Error in getSessionNoteById:', error);
+      return null;
+    }
+  }
+
   async getSessionNotesByClientId(clientId: string): Promise<SessionNote[]> {
     try {
       const result = await pool.query(
@@ -1511,7 +1521,26 @@ export class DatabaseStorage implements IStorage {
         aiSummary: row.ai_summary || null,
         tags: row.tags || [],
         createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+        updatedAt: new Date(row.updated_at),
+        // Add missing required fields with default values
+        location: row.location || null,
+        title: row.title || 'Session Note',
+        subjective: row.subjective || '',
+        objective: row.objective || '',
+        assessment: row.assessment || '',
+        plan: row.plan || '',
+        sessionType: row.session_type || 'Individual Therapy',
+        duration: row.duration || 50,
+        sessionDate: row.session_date ? new Date(row.session_date) : null,
+        keyPoints: this.safeParseJSON(row.key_points, []),
+        significantQuotes: this.safeParseJSON(row.significant_quotes, []),
+        narrativeSummary: row.narrative_summary || '',
+        tonalAnalysis: row.tonal_analysis || '',
+        manualEntry: row.manual_entry || false,
+        meetingType: row.meeting_type || null,
+        participants: this.safeParseJSON(row.participants, []),
+        followUpNotes: row.follow_up_notes || '',
+        confidentialityLevel: row.confidentiality_level || null
       }));
     } catch (error) {
       console.error('Error in getSessionNotesByClientId:', error);
@@ -1536,20 +1565,27 @@ export class DatabaseStorage implements IStorage {
         transcript: row.transcript || null,
         aiSummary: row.ai_summary || null,
         tags: row.tags || [],
-        // Include SOAP fields from merged progress notes
-        title: row.title || null,
-        subjective: row.subjective || null,
-        objective: row.objective || null,
-        assessment: row.assessment || null,
-        plan: row.plan || null,
-        tonalAnalysis: row.tonal_analysis || null,
-        keyPoints: row.key_points || [],
-        significantQuotes: row.significant_quotes || [],
-        narrativeSummary: row.narrative_summary || null,
-        sessionDate: row.session_date ? new Date(row.session_date) : null,
-        aiTags: row.ai_tags || [],
         createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+        updatedAt: new Date(row.updated_at),
+        // Add missing required fields with default values
+        location: row.location || null,
+        title: row.title || 'Session Note',
+        subjective: row.subjective || '',
+        objective: row.objective || '',
+        assessment: row.assessment || '',
+        plan: row.plan || '',
+        sessionType: row.session_type || 'Individual Therapy',
+        duration: row.duration || 50,
+        sessionDate: row.session_date ? new Date(row.session_date) : null,
+        keyPoints: this.safeParseJSON(row.key_points, []),
+        significantQuotes: this.safeParseJSON(row.significant_quotes, []),
+        narrativeSummary: row.narrative_summary || '',
+        tonalAnalysis: row.tonal_analysis || '',
+        manualEntry: row.manual_entry || false,
+        meetingType: row.meeting_type || null,
+        participants: this.safeParseJSON(row.participants, []),
+        followUpNotes: row.follow_up_notes || '',
+        confidentialityLevel: row.confidentiality_level || null
       }));
     } catch (error) {
       console.error('Error in getAllSessionNotesByTherapist:', error);
@@ -1588,7 +1624,26 @@ export class DatabaseStorage implements IStorage {
         aiSummary: row.ai_summary || null,
         tags: row.tags || [],
         createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+        updatedAt: new Date(row.updated_at),
+        // Add missing required fields with default values
+        location: row.location || null,
+        title: row.title || 'Session Note',
+        subjective: row.subjective || '',
+        objective: row.objective || '',
+        assessment: row.assessment || '',
+        plan: row.plan || '',
+        sessionType: row.session_type || 'Individual Therapy',
+        duration: row.duration || 50,
+        sessionDate: row.session_date ? new Date(row.session_date) : null,
+        keyPoints: this.safeParseJSON(row.key_points, []),
+        significantQuotes: this.safeParseJSON(row.significant_quotes, []),
+        narrativeSummary: row.narrative_summary || '',
+        tonalAnalysis: row.tonal_analysis || '',
+        manualEntry: row.manual_entry || false,
+        meetingType: row.meeting_type || null,
+        participants: this.safeParseJSON(row.participants, []),
+        followUpNotes: row.follow_up_notes || '',
+        confidentialityLevel: row.confidentiality_level || null
       }));
     } catch (error) {
       console.error('Error in getSessionNotesByTherapistTimeframe:', error);
@@ -1620,13 +1675,31 @@ export class DatabaseStorage implements IStorage {
         id: row.id,
         clientId: row.client_id,
         therapistId: row.therapist_id,
-        appointmentDate: new Date(row.start_time),
-        status: row.status,
+        startTime: new Date(row.start_time),
+        endTime: new Date(row.end_time),
         type: row.type,
-        duration: row.duration,
-        notes: row.notes,
+        status: row.status,
+        location: row.location || '',
+        notes: row.notes || '',
         createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+        updatedAt: new Date(row.updated_at),
+        // Add missing required fields with default values
+        appointmentNumber: row.appointment_number || null,
+        recurringId: row.recurring_id || null,
+        recurringType: row.recurring_type || null,
+        recurringEnd: row.recurring_end ? new Date(row.recurring_end) : null,
+        reminderSent: row.reminder_sent || false,
+        reminderTime: row.reminder_time ? new Date(row.reminder_time) : null,
+        meetingType: row.meeting_type || 'in_person',
+        sessionFee: row.session_fee || null,
+        paymentStatus: row.payment_status || 'pending',
+        cancellationReason: row.cancellation_reason || null,
+        noShowFee: row.no_show_fee || null,
+        attendanceStatus: row.attendance_status || 'scheduled',
+        duration: row.duration || 50,
+        googleEventId: row.google_event_id || null,
+        lastSyncAt: row.last_sync_at ? new Date(row.last_sync_at) : null,
+        insuranceClaim: this.safeParseJSON(row.insurance_claim, {})
       }));
     } catch (error) {
       console.error('Error in getAppointmentsByTherapistTimeframe:', error);
