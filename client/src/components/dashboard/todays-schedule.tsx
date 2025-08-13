@@ -65,6 +65,11 @@ export default function TodaysSchedule() {
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
   });
 
+  // Debug: log when appointments data is available
+  if (appointments && appointments.length > 0) {
+    console.log('DEBUG: Ready to render', appointments.length, 'appointments');
+  }
+
   const handleStartSession = (appointmentId: string, clientName: string) => {
     setActiveSession(appointmentId);
     toast({
@@ -360,6 +365,7 @@ export default function TodaysSchedule() {
       <div className="p-6 space-y-4">
         {appointments && appointments.length > 0 ? (
           appointments.map((appointment) => {
+            console.log('Rendering appointment:', appointment.id, appointment.clientName);
             const clientName = appointment.clientId === 'calendar-event' 
               ? appointment.type.replace(' Appointment', '').trim()
               : (appointment as any).clientName || appointment.type;
@@ -367,136 +373,16 @@ export default function TodaysSchedule() {
             const isExpanded = expandedReminders.has(appointment.id);
             const isPrepCardExpanded = expandedPrepCards.has(appointment.id);
             
+            console.log('About to return JSX for appointment:', appointment.id);
             return (
-              <div key={appointment.id} className="bg-therapy-bg rounded-lg overflow-hidden">
-                <div className="flex items-center space-x-4 p-4">
-                  <div className="w-12 h-12 bg-therapy-success text-white rounded-lg flex items-center justify-center font-bold">
-                    <span className="text-sm">{formatTime(appointment.startTime)}</span>
-                  </div>
-                  <div className="flex-1">
-                <h4 className="font-semibold text-therapy-text flex items-center gap-2">
-                  {appointment.clientId === 'calendar-event' ? (
-                    <>
-                      <Calendar className="h-4 w-4 text-therapy-primary" />
-                      <ClientLink 
-                        clientId={appointment.clientId}
-                        clientName={clientName}
-                        className="text-left hover:text-therapy-primary hover:underline transition-colors"
-                      />
-                    </>
-                  ) : (
-                    <ClientLink 
-                      clientId={appointment.clientId}
-                      clientName={clientName}
-                      className="text-left hover:text-therapy-primary hover:underline transition-colors"
-                    />
-                  )}
-                </h4>
-                <p className="text-therapy-text/60 text-sm">
-                  {appointment.clientId === 'calendar-event' 
-                    ? getCalendarLocationDisplay(appointment.startTime)
-                    : appointment.type}
-                </p>
-                <div className="flex items-center space-x-2 mt-1">
-                  <Badge className={getStatusColor(appointment.status)}>
-                    {appointment.status.replace('_', ' ')}
-                  </Badge>
-                  <span className="text-xs text-therapy-text/50">
-                    {(appointment as any).isCalendarEvent ? 'Calendar Event' : calculateDuration(appointment.startTime, appointment.endTime)}
-                  </span>
+              <div key={appointment.id} className="bg-therapy-bg rounded-lg overflow-hidden p-4 border">
+                <div className="text-sm font-bold">
+                  {formatTime(appointment.startTime)} - {clientName}
                 </div>
-                  </div>
-                  <div className="flex space-x-2">
-                {/* Session Prep Button */}
-                <Button 
-                  size="icon" 
-                  variant="ghost"
-                  className="w-8 h-8 bg-blue-50 text-blue-600 hover:bg-blue-100"
-                  onClick={() => openSessionPrep(
-                    (appointment as any).googleEventId || appointment.id, 
-                    clientName, 
-                    formatTime(appointment.startTime)
-                  )}
-                  title="Session Prep Notes"
-                >
-                  <NotebookPen className="h-4 w-4" />
-                </Button>
-
-                {/* AI Insights Button */}
-                <Button 
-                  size="icon" 
-                  variant="ghost"
-                  className="w-8 h-8 bg-purple-50 text-purple-600 hover:bg-purple-100"
-                  onClick={() => generateAIInsights(
-                    (appointment as any).googleEventId || appointment.id, 
-                    clientName
-                  )}
-                  title="AI Insights"
-                >
-                  <Brain className="h-4 w-4" />
-                </Button>
-
-                {/* Start/End Session Button */}
-                {activeSession === appointment.id ? (
-                  <Button 
-                    size="icon" 
-                    variant="ghost"
-                    className="w-8 h-8 bg-therapy-error/10 text-therapy-error hover:bg-therapy-error/20"
-                    onClick={() => handleEndSession(appointment.id)}
-                    title="End Session"
-                  >
-                    <Pause className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button 
-                    size="icon" 
-                    variant="ghost"
-                    className="w-8 h-8 bg-therapy-success/10 text-therapy-success hover:bg-therapy-success/20"
-                    onClick={() => handleStartSession(appointment.id, appointment.type)}
-                    title="Start Session"
-                  >
-                    <Play className="h-4 w-4" />
-                  </Button>
-                )}
-
-                {/* Actions Dropdown Menu */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      size="icon" 
-                      variant="ghost"
-                      className="w-8 h-8 bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      title="More Actions"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        if (!(appointment as any).isCalendarEvent) {
-                          // For database appointments, navigate to edit
-                          navigate(`/appointments`);
-                        } else {
-                          // For calendar events, inform user it's external
-                          toast({
-                            title: "Simple Practice Event",
-                            description: "This appointment is from Simple Practice. Please edit it there.",
-                          });
-                        }
-                      }}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit Appointment
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        // Navigate to session notes for this appointment
-                        navigate('/session-notes');
-                      }}
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      View Session Notes
+                <div className="text-xs text-gray-600">
+                  Status: {appointment.status} | Type: {appointment.type}
+                </div>
+              </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => {
