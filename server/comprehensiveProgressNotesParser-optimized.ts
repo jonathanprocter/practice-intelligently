@@ -228,9 +228,16 @@ Extract therapy sessions for client: "${clientInfo.name}"
 
 CRITICAL REQUIREMENTS:
 1. Use the EXACT client name "${clientInfo.name}" - do not modify, abbreviate, or change it
-2. Extract actual session dates from the content - look for dates in MM/DD/YYYY, MM-DD-YYYY, YYYY-MM-DD format
-3. If no clear date is found, use "UNKNOWN" for sessionDate
-4. Maintain proper case sensitivity for client names
+2. Extract actual session dates from the content - look for these date patterns:
+   - MM/DD/YYYY (e.g., 08/12/2025, 8/12/2025)
+   - MM-DD-YYYY (e.g., 08-12-2025, 8-12-2025) 
+   - YYYY-MM-DD (e.g., 2025-08-12)
+   - Written dates (e.g., "August 12, 2025", "Aug 12 2025")
+   - Session headers (e.g., "Session 1: 08/12/2025")
+3. Look for date patterns in session headers, timestamps, or appointment references
+4. If multiple date formats exist, prioritize the most specific/complete date
+5. If no clear date is found, use "UNKNOWN" for sessionDate
+6. Maintain proper case sensitivity for client names
 
 Parse the sessions and return JSON in this exact format:
 {
@@ -253,7 +260,7 @@ Parse the sessions and return JSON in this exact format:
   ]
 }
 
-Extract ALL sessions for this client. Use YYYY-MM-DD date format.
+Extract ALL sessions for this client. Convert all dates to YYYY-MM-DD format.
 
 Client text:
 ${truncatedSection}
@@ -480,32 +487,77 @@ ${section.substring(0, 15000)}
       
       for (const session of match.extractedClient.sessions) {
         try {
-          const progressNote = {
-            id: `pn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          // Parse session date
+          let sessionDate: Date | null = null;
+          if (session.sessionDate && session.sessionDate !== 'UNKNOWN') {
+            try {
+              sessionDate = new Date(session.sessionDate);
+              if (isNaN(sessionDate.getTime())) {
+                sessionDate = null;
+              }
+            } catch (e) {
+              sessionDate = null;
+            }
+          }
+
+          // Try to find existing appointment for this session
+          let appointmentId: string | null = null;
+          let eventId: string | null = null;
+
+          if (sessionDate) {
+            console.log(`🔍 Looking for existing appointment for ${match.matchedDbClient.firstName} ${match.matchedDbClient.lastName} on ${sessionDate.toISOString()}`);
+            
+            // Get appointments for this client around the session date
+            const clientAppointments = await storage.getAppointmentsByClient(match.matchedDbClient.id);
+            
+            // Find appointment that matches this session date (within 24 hours)
+            const matchingAppointment = clientAppointments.find(appointment => {
+              const appointmentDate = new Date(appointment.startTime);
+              const timeDiff = Math.abs(appointmentDate.getTime() - sessionDate!.getTime());
+              const hoursDiff = timeDiff / (1000 * 60 * 60);
+              return hoursDiff <= 24; // Match if within 24 hours
+            });
+
+            if (matchingAppointment) {
+              appointmentId = matchingAppointment.id;
+              // Use Google Calendar event ID if available
+              eventId = (matchingAppointment as any).googleEventId || matchingAppointment.id;
+              console.log(`✅ Found matching appointment ${appointmentId} for session on ${sessionDate.toISOString()}`);
+            } else {
+              console.log(`⚠️ No existing appointment found for session on ${sessionDate.toISOString()}, will create standalone session note`);
+            }
+          }
+
+          // Create session note using the correct storage method
+          const sessionNote = {
             clientId: match.matchedDbClient.id,
             therapistId,
+            appointmentId,
+            eventId,
             title: `Session ${session.sessionNumber} - ${session.sessionDate}`,
-            sessionDate: new Date(session.sessionDate),
-            sessionType: 'Individual Therapy',
-            duration: 50,
             content: session.content,
             subjective: session.subjective || '',
             objective: session.objective || '',
             assessment: session.assessment || '',
             plan: session.plan || '',
-            tonalAnalysis: 'Comprehensive progress note analysis',
+            sessionType: 'Individual Therapy',
+            duration: session.duration || 50,
+            sessionDate: sessionDate,
             keyPoints: session.keyPoints || [],
             significantQuotes: session.significantQuotes || [],
             narrativeSummary: session.narrativeSummary || '',
-            createdAt: new Date(),
-            updatedAt: new Date()
+            tonalAnalysis: 'Generated from comprehensive progress note upload',
+            tags: [`imported-${Date.now()}`, 'comprehensive-document']
           };
           
-          await storage.createProgressNote(progressNote);
+          // Use createSessionNote which is the correct method
+          await storage.createSessionNote(sessionNote);
           createdCount++;
           
+          console.log(`✅ Created session note for ${match.extractedClient.name} - Session ${session.sessionNumber}${appointmentId ? ' (linked to appointment)' : ' (standalone)'}`);
+          
         } catch (error) {
-          console.error(`Error creating progress note for ${match.extractedClient.name}:`, error);
+          console.error(`Error creating session note for ${match.extractedClient.name}:`, error);
         }
       }
     }
