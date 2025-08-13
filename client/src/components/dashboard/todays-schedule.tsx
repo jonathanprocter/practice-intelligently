@@ -163,7 +163,8 @@ export default function TodaysSchedule() {
           }
         }
       } catch (error) {
-//}
+        console.error('Error finding client:', error);
+      }
 
       if (!actualClientId) {
         toast({

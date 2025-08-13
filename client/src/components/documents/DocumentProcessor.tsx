@@ -136,7 +136,7 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
 
               if (sessionNoteResponse.ok) {
                 const sessionNoteData = await sessionNoteResponse.json();
-//} else {}
+              }
             } catch (sessionError) {
               console.error(`❌ Error creating session note for ${session.date}:`, sessionError);
             }
@@ -196,8 +196,10 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
 
             if (progressNoteResponse.ok) {
               const progressNoteData = await progressNoteResponse.json();
-//} else {}
-          } catch (error: any) {// Continue with document processing even if progress note fails
+            }
+          } catch (error: any) {
+            // Continue with document processing even if progress note fails
+            console.error('Progress note generation failed:', error);
           }
         }
         
