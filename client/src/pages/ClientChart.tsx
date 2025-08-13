@@ -810,7 +810,7 @@ function TimelineItemComponent({
    Error Boundary
 ======================= */
 
-class ClientChartErrorBoundary extends React.Component
+class ClientChartErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean; error: Error | null }
 > {
