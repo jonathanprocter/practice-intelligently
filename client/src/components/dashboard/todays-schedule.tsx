@@ -375,14 +375,68 @@ export default function TodaysSchedule() {
             
             console.log('About to return JSX for appointment:', appointment.id);
             return (
-              <div key={appointment.id} className="bg-therapy-bg rounded-lg overflow-hidden p-4 border">
-                <div className="text-sm font-bold">
-                  {formatTime(appointment.startTime)} - {clientName}
-                </div>
-                <div className="text-xs text-gray-600">
-                  Status: {appointment.status} | Type: {appointment.type}
-                </div>
-              </div>
+              <div key={appointment.id} className="bg-therapy-bg rounded-lg overflow-hidden border">
+                <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex flex-col items-center">
+                      <span className="text-sm font-medium text-therapy-primary">
+                        {formatTime(appointment.startTime)}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {calculateDuration(appointment.startTime, appointment.endTime)}
+                      </span>
+                    </div>
+                    
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <ClientLink 
+                          clientName={clientName}
+                          onClick={() => handleClientNameClick(clientName)}
+                          className="text-lg font-semibold text-therapy-text hover:text-therapy-primary cursor-pointer"
+                        />
+                        <Badge className={getStatusColor(appointment.status)}>
+                          {appointment.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {appointment.type} • {getCalendarLocationDisplay(appointment.location)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    {activeSession === appointment.id ? (
+                      <Button
+                        onClick={() => handleEndSession(appointment.id)}
+                        variant="outline"
+                        size="sm"
+                        className="bg-therapy-warning text-white hover:bg-therapy-warning/80"
+                      >
+                        <Pause className="h-4 w-4 mr-2" />
+                        End Session
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => handleStartSession(appointment.id, clientName)}
+                        variant="outline"
+                        size="sm"
+                        className="bg-therapy-primary text-white hover:bg-therapy-primary/80"
+                      >
+                        <Play className="h-4 w-4 mr-2" />
+                        Start Session
+                      </Button>
+                    )}
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => navigate('/session-notes')}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Session Notes
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => {
