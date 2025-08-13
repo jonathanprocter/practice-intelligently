@@ -83,8 +83,8 @@ export const DailyViewGrid = ({
 
   // Filter and sort events for the selected date
   const dayEvents = useMemo(() => {
-////if (!events || events.length === 0) {
-//return [];
+    if (!events || events.length === 0) {
+      return [];
     }
 
     const filtered = events.filter(event => {
