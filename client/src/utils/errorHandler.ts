@@ -23,9 +23,7 @@ export async function safeJsonParse(response: Response) {
     const text = await response.text();
     if (!text) return null;
     return JSON.parse(text);
-  } catch (error) {
-    console.warn('Failed to parse JSON response:', error);
-    return null;
+  } catch (error) {return null;
   }
 }
 

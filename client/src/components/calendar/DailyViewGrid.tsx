@@ -49,9 +49,7 @@ const parseEventDate = (dateInput: string | Date): Date | null => {
     }
     if (typeof dateInput === 'string') {
       const parsed = new Date(dateInput);
-      if (isNaN(parsed.getTime())) {
-        console.warn('Invalid date string:', dateInput);
-        return null;
+      if (isNaN(parsed.getTime())) {return null;
       }
       return parsed;
     }
@@ -85,35 +83,27 @@ export const DailyViewGrid = ({
 
   // Filter and sort events for the selected date
   const dayEvents = useMemo(() => {
-    console.log('DailyViewGrid: Filtering events for date:', date);
-    console.log('DailyViewGrid: Total events received:', events.length);
-
-    if (!events || events.length === 0) {
-      console.log('DailyViewGrid: No events to filter');
-      return [];
+////if (!events || events.length === 0) {
+//return [];
     }
 
     const filtered = events.filter(event => {
-      if (!event || !event.startTime) {
-        console.warn('DailyViewGrid: Event missing startTime:', event);
-        return false;
+      if (!event || !event.startTime) {return false;
       }
 
       const eventDate = parseEventDate(event.startTime);
-      if (!eventDate) {
-        console.warn('DailyViewGrid: Could not parse event date:', event.startTime);
-        return false;
+      if (!eventDate) {return false;
       }
 
       const matches = isSameDay(eventDate, date);
       if (matches) {
-        console.log(`DailyViewGrid: Event "${event.title}" matches date ${date.toDateString()}`);
+//         console.log(`DailyViewGrid: Event "${event.title}" matches date ${date.toDateString()}`);
       }
 
       return matches;
     });
 
-    console.log(`DailyViewGrid: Found ${filtered.length} events for ${date.toDateString()}`);
+//     console.log(`DailyViewGrid: Found ${filtered.length} events for ${date.toDateString()}`);
     return filtered.sort((a, b) => {
       const timeA = parseEventDate(a.startTime);
       const timeB = parseEventDate(b.startTime);

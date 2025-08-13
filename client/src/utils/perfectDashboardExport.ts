@@ -183,9 +183,7 @@ export function exportPerfectWeeklyView(
   weekStart: Date,
   weekEnd: Date
 ): void {
-  console.log('📊 Exporting perfect weekly view matching screenshot layout');
-  
-  const pdf = new jsPDF({
+//const pdf = new jsPDF({
     orientation: 'landscape',
     unit: 'pt',
     format: [PERFECT_WEEKLY_CONFIG.pageWidth, PERFECT_WEEKLY_CONFIG.pageHeight]
@@ -334,9 +332,7 @@ function getEventsForTimeSlot(events: CalendarEvent[], date: Date, timeSlot: { h
  * Export perfect daily view matching the exact screenshot layout
  */
 export function exportPerfectDailyView(events: CalendarEvent[], date: Date): void {
-  console.log('📊 Exporting perfect daily view matching screenshot layout');
-  
-  const pdf = new jsPDF({
+//const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'pt',
     format: [PERFECT_DAILY_CONFIG.pageWidth, PERFECT_DAILY_CONFIG.pageHeight]

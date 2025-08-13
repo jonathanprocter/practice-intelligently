@@ -115,9 +115,7 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
         
         // Check if it's a multi-session document
         if (processedData.isMultiSession && processedData.processedSessions) {
-          console.log(`📚 Multi-session document detected: ${processedData.totalSessions} sessions`);
-          
-          // Process each session as a separate progress note
+//// Process each session as a separate progress note
           for (const session of processedData.processedSessions) {
             try {
               const sessionNoteResponse = await fetch('/api/documents/generate-progress-note', {
@@ -138,10 +136,7 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
 
               if (sessionNoteResponse.ok) {
                 const sessionNoteData = await sessionNoteResponse.json();
-                console.log(`✅ Session note created for ${session.date}:`, sessionNoteData);
-              } else {
-                console.warn(`⚠️ Failed to save session note for ${session.date}`);
-              }
+//} else {}
             } catch (sessionError) {
               console.error(`❌ Error creating session note for ${session.date}:`, sessionError);
             }
@@ -201,13 +196,8 @@ export function DocumentProcessor({ clientId, clientName, onDocumentProcessed }:
 
             if (progressNoteResponse.ok) {
               const progressNoteData = await progressNoteResponse.json();
-              console.log('Progress note created successfully:', progressNoteData);
-            } else {
-              console.warn('Failed to create progress note, but document processing succeeded');
-            }
-          } catch (error: any) {
-            console.warn('Progress note generation timed out or failed:', error.message);
-            // Continue with document processing even if progress note fails
+//} else {}
+          } catch (error: any) {// Continue with document processing even if progress note fails
           }
         }
         

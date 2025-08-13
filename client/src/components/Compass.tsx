@@ -387,9 +387,7 @@ export function Compass({ className = '' }) {
 
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript.trim();
-        console.log('🎤 Heard:', transcript);
-
-        // Immediately stop any current speech to prevent overlapping
+//// Immediately stop any current speech to prevent overlapping
         if (isSpeaking) {
           interruptSpeech();
         }
@@ -398,8 +396,7 @@ export function Compass({ className = '' }) {
         if (isSpeaking && allowInterruption) {
           const interruptKeywords = ['stop', 'pause', 'wait', 'hold on', 'interrupt', 'hey compass'];
           if (interruptKeywords.some(keyword => transcript.toLowerCase().includes(keyword))) {
-            console.log('🎤 Voice interruption detected');
-            interruptSpeech();
+//interruptSpeech();
             
             // If it's "hey compass", process the follow-up command
             if (transcript.toLowerCase().includes('hey compass')) {
@@ -420,8 +417,7 @@ export function Compass({ className = '' }) {
 
         // Handle wake word detection
         if ((voiceActivation || wakeWordMode) && transcript.toLowerCase().includes('hey compass')) {
-          console.log('🎤 Wake word detected');
-          const query = transcript.toLowerCase().replace('hey compass', '').trim();
+//const query = transcript.toLowerCase().replace('hey compass', '').trim();
           if (query && query.length > 0) {
             sendMessage(query);
           }
@@ -435,8 +431,7 @@ export function Compass({ className = '' }) {
 
         // Handle continuous mode - process any speech directly
         if (continuousMode && transcript && transcript.length > 2) {
-          console.log('🎤 Continuous mode processing:', transcript);
-          sendMessage(transcript);
+//sendMessage(transcript);
           setInputMessage('');
           // Keep listening for next input
           return;
@@ -453,8 +448,7 @@ export function Compass({ className = '' }) {
       };
 
       recognition.onerror = (event) => {
-        console.log('🎤 Speech recognition error:', event.error);
-        // Don't stop listening on errors in continuous modes, just log them
+//// Don't stop listening on errors in continuous modes, just log them
         if (event.error !== 'no-speech' && event.error !== 'aborted') {
           if (!continuousMode && !wakeWordMode) {
             setIsListening(false);
@@ -464,19 +458,16 @@ export function Compass({ className = '' }) {
       };
 
       recognition.onend = () => {
-        console.log('🎤 Speech recognition ended');
-        // Auto-restart in continuous/wake word modes for natural conversation
+//// Auto-restart in continuous/wake word modes for natural conversation
         if ((continuousMode || wakeWordMode) && voiceActivation && !isSpeaking && isOpen) {
           try {
             setTimeout(() => {
               if (speechRecognition && voiceActivation) {
-                console.log('🎤 Auto-restarting for continuous listening');
-                speechRecognition.start();
+//speechRecognition.start();
               }
             }, 100); // Small delay to prevent rapid restarts
           } catch (error) {
-            console.log('🎤 Auto-restart failed:', error);
-          }
+//}
         } else {
           setIsListening(false);
           setCompassState('normal');
@@ -495,8 +486,7 @@ export function Compass({ className = '' }) {
         setIsListening(false);
         setCompassState('normal');
       } catch (error) {
-        console.log('Voice activation stop failed:', error);
-      }
+//}
     }
   }, [voiceActivation, speechRecognition, isListening]);
 
@@ -509,13 +499,11 @@ export function Compass({ className = '' }) {
           interruptSpeech();
         }
         
-        console.log('🎤 Starting listening mode');
-        setIsListening(true);
+//setIsListening(true);
         setCompassState('listening');
         speechRecognition.start();
       } catch (error) {
-        console.log('Failed to start speech recognition:', error);
-        setIsListening(false);
+//setIsListening(false);
         setCompassState('normal');
       }
     }
@@ -528,8 +516,7 @@ export function Compass({ className = '' }) {
         setIsListening(false);
         setCompassState('normal');
       } catch (error) {
-        console.log('Failed to stop speech recognition:', error);
-      }
+//}
     }
   };
 
@@ -540,8 +527,7 @@ export function Compass({ className = '' }) {
       currentAudio.currentTime = 0; // Reset to beginning
       setCurrentAudio(null);
       setIsSpeaking(false);
-      console.log('🎤 Speech interrupted by user');
-    }
+//}
     
     // Immediately clear any speech synthesis
     if ('speechSynthesis' in window) {
@@ -560,7 +546,7 @@ export function Compass({ className = '' }) {
       }
 
       setIsSpeaking(true);
-      console.log('🎤 Speaking:', text.substring(0, 50) + '...');
+//       console.log('🎤 Speaking:', text.substring(0, 50) + '...');
 
       // Use ElevenLabs API for high-quality voice synthesis
       const response = await fetch('/api/compass/speak', {
@@ -583,8 +569,7 @@ export function Compass({ className = '' }) {
 
         // Enhanced audio event handling for natural conversation
         audio.onended = () => {
-          console.log('🎤 Speech completed');
-          setIsSpeaking(false);
+//setIsSpeaking(false);
           setCurrentAudio(null);
           URL.revokeObjectURL(audioUrl);
           
@@ -593,13 +578,11 @@ export function Compass({ className = '' }) {
             setTimeout(() => {
               if (!isListening && speechRecognition) {
                 try {
-                  console.log('🎤 Resuming listening after speech');
-                  setIsListening(true);
+//setIsListening(true);
                   setCompassState('listening');
                   speechRecognition.start();
                 } catch (error) {
-                  console.log('🎤 Failed to resume listening:', error);
-                }
+//}
               }
             }, 500); // Brief pause before resuming listening
           }
@@ -607,16 +590,14 @@ export function Compass({ className = '' }) {
 
         // Immediate interruption handling
         audio.onpause = () => {
-          console.log('🎤 Speech interrupted');
-          setIsSpeaking(false);
+//setIsSpeaking(false);
           setCurrentAudio(null);
           URL.revokeObjectURL(audioUrl);
         };
 
         // Handle loading and playback errors gracefully
         audio.onerror = (error) => {
-          console.log('🎤 Audio playback error:', error);
-          setIsSpeaking(false);
+//setIsSpeaking(false);
           setCurrentAudio(null);
           URL.revokeObjectURL(audioUrl);
         };
@@ -624,8 +605,7 @@ export function Compass({ className = '' }) {
         // Log voice context for debugging
         const voiceContext = response.headers.get('X-Voice-Context');
         if (voiceContext) {
-          console.log(`🎤 Voice adapted for ${voiceContext} context`);
-        }
+//}
 
         setCurrentAudio(audio);
         await audio.play();
@@ -633,8 +613,7 @@ export function Compass({ className = '' }) {
         throw new Error(`Voice API failed: ${response.status}`);
       }
     } catch (error) {
-      console.log('Voice generation failed:', error);
-      setIsSpeaking(false);
+//setIsSpeaking(false);
       setCurrentAudio(null);
     }
   };
@@ -896,8 +875,7 @@ export function Compass({ className = '' }) {
                         setIsListening(true);
                         setCompassState('listening');
                       } catch (error) {
-                        console.log('Failed to start speech recognition:', error);
-                      }
+//}
                     }
                   } else {
                     // Disable voice activation
@@ -907,8 +885,7 @@ export function Compass({ className = '' }) {
                         setIsListening(false);
                         setCompassState('normal');
                       } catch (error) {
-                        console.log('Failed to stop speech recognition:', error);
-                      }
+//}
                     }
                   }
                 }}

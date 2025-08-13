@@ -71,7 +71,7 @@ export default function Calendar() {
 
         if (activeTab === 'day') {
           // For daily view, only fetch current day's events
-          console.log('📅 Frontend: Fetching daily calendar events for:', selectedDate.toDateString());
+//           console.log('📅 Frontend: Fetching daily calendar events for:', selectedDate.toDateString());
           const dayStart = new Date(selectedDate);
           dayStart.setHours(0, 0, 0, 0);
           const dayEnd = new Date(selectedDate);
@@ -81,8 +81,7 @@ export default function Calendar() {
           timeMax = dayEnd.toISOString();
         } else {
           // For week view or appointments view, fetch current week's events
-          console.log('📅 Frontend: Fetching weekly calendar events...');
-          const startOfWeek = new Date(currentWeek);
+//const startOfWeek = new Date(currentWeek);
           startOfWeek.setDate(currentWeek.getDate() - currentWeek.getDay());
           const endOfWeek = new Date(startOfWeek);
           endOfWeek.setDate(startOfWeek.getDate() + 7);
@@ -96,22 +95,14 @@ export default function Calendar() {
 
         if (workingResponse.ok) {
           const workingEvents = await workingResponse.json();
-          console.log(`🎉 Frontend: Successfully loaded ${workingEvents.length} comprehensive events`);
-          console.log('Sample raw event from database:', workingEvents[0]);
-          console.log('First 3 events for debugging:', workingEvents.slice(0, 3));
+//////           console.log('First 3 events for debugging:', workingEvents.slice(0, 3));
 
-          console.log('📝 Raw event sample start:', workingEvents[0]?.start);
-          console.log('📝 Raw event sample summary:', workingEvents[0]?.summary);
-
-          // Transform events to CalendarEvent format - handle database response properly
+////// Transform events to CalendarEvent format - handle database response properly
           const transformedEvents: CalendarEvent[] = workingEvents.map((event: any) => {
             try {
               // Debug the specific event being transformed
               if (event.summary?.includes('Chris Balabanick') || event.summary?.includes('Max Moskowitz') || event.summary?.includes('Sarah Palladino')) {
-                console.log('🔍 Transforming important event:', event);
-                console.log('🔍 Event start:', event.start);
-                console.log('🔍 Event end:', event.end);
-              }
+//////}
 
               // Parse start time from database format
               let startTime: Date;
@@ -120,9 +111,7 @@ export default function Calendar() {
               } else if (event.start?.date) {
                 startTime = new Date(event.start.date + 'T00:00:00');
               } else {
-                // Fallback for any other format
-                console.warn('Event missing start time:', event);
-                startTime = new Date();
+                // Fallback for any other formatstartTime = new Date();
               }
 
               // Parse end time from database format
@@ -166,12 +155,8 @@ export default function Calendar() {
             }
           }).filter((event): event is CalendarEvent => event !== null);
 
-          console.log(`✅ Successfully transformed ${transformedEvents.length} events`);
-          if (transformedEvents.length > 0) {
-            console.log('Sample transformed event:', transformedEvents[0]);
-          } else {
-            console.warn('⚠️ No events were successfully transformed!');
-          }
+//if (transformedEvents.length > 0) {
+//} else {}
 
           return transformedEvents;
         } else {
@@ -232,9 +217,7 @@ export default function Calendar() {
         calendarTypeFilter.includes(eventCalendarName);
 
       return textMatch && locationMatch && calendarMatch;
-    } catch (filterError) {
-      console.warn('Error filtering event:', filterError, event);
-      return false;
+    } catch (filterError) {return false;
     }
   });
 
@@ -244,10 +227,8 @@ export default function Calendar() {
 
   // Create calendar days with events (filtered to current week for display)
   const calendarDays = useMemo(() => {
-    console.log('📅 Computing calendar days for week starting:', currentWeek.toDateString());
-    console.log('📅 Total events available for filtering:', calendarEvents.length);
-
-    const days = [];
+//     console.log('📅 Computing calendar days for week starting:', currentWeek.toDateString());
+//const days = [];
     const startOfWeek = new Date(currentWeek);
     // Ensure startOfWeek is the beginning of the week (Sunday) based on locale
     startOfWeek.setDate(currentWeek.getDate() - currentWeek.getDay());
@@ -263,9 +244,7 @@ export default function Calendar() {
 
         try {
           const eventDate = new Date(event.startTime);
-          if (isNaN(eventDate.getTime())) {
-            console.warn('Invalid event date:', event.startTime);
-            return false;
+          if (isNaN(eventDate.getTime())) {return false;
           }
 
           // Simple date comparison - same year, month, and day
@@ -280,7 +259,7 @@ export default function Calendar() {
           const matches = eventYear === dayYear && eventMonth === dayMonth && eventDay === dayDay;
 
           if (matches) {
-            console.log(`📅 Event "${event.title}" matches ${date.toDateString()}`);
+//             console.log(`📅 Event "${event.title}" matches ${date.toDateString()}`);
           }
 
           return matches;
@@ -290,7 +269,7 @@ export default function Calendar() {
         }
       });
 
-      console.log(`📅 ${date.toDateString()}: Found ${dayEvents.length} events`);
+//       console.log(`📅 ${date.toDateString()}: Found ${dayEvents.length} events`);
 
       days.push({
         date,
@@ -300,29 +279,26 @@ export default function Calendar() {
       });
     }
 
-    console.log('📅 Calendar days computed:', days.map(d => `${d.date.toDateString()}: ${d.events.length} events`));
+//     console.log('📅 Calendar days computed:', days.map(d => `${d.date.toDateString()}: ${d.events.length} events`));
     return days;
   }, [currentWeek, calendarEvents]);
 
 
   // Log statistics for both total events and current week
   const weekEventCount = calendarDays.reduce((total, day) => total + day.events.length, 0);
-  console.log(`Events for current week (${currentWeek.toDateString()} - ${weekEnd.toDateString()}): ${weekEventCount}`);
-  console.log(`Total events loaded in calendar: ${calendarEvents.length}`);
-
-  // Debug: Show sample event dates and week dates for comparison
+//   console.log(`Events for current week (${currentWeek.toDateString()} - ${weekEnd.toDateString()}): ${weekEventCount}`);
+//// Debug: Show sample event dates and week dates for comparison
   if (calendarEvents.length > 0 && weekEventCount === 0) {
-    console.log('DEBUG: Week dates vs Event dates comparison');
-    console.log('Week days:', weekDays.map(d => d.toLocaleDateString('en-CA')));
-    console.log('Sample event dates:', calendarEvents.slice(0, 5).map(e => {
-      const eventDate = e.startTime instanceof Date ? e.startTime : new Date(e.startTime);
-      return {
-        title: e.title,
-        rawDate: eventDate.toISOString(),
-        localDate: eventDate.toLocaleDateString('en-CA'),
-        dateString: eventDate.toDateString()
-      };
-    }));
+    //// console.log('Week days:', weekDays.map(d => d.toLocaleDateString('en-CA')));
+    // console.log('Sample event dates:', calendarEvents.slice(0, 5).map(e => {
+    //   const eventDate = e.startTime instanceof Date ? e.startTime : new Date(e.startTime);
+    //   return {
+    //     title: e.title,
+    //     rawDate: eventDate.toISOString(),
+    //     localDate: eventDate.toLocaleDateString('en-CA'),
+    //     dateString: eventDate.toDateString()
+    //   };
+    // }));
   }
 
   // Navigation handlers
@@ -361,7 +337,7 @@ export default function Calendar() {
       }
       setSelectedDate(date);
       // Could open new appointment dialog here
-      console.log(`Time slot clicked: ${date.toDateString()} at ${time}`);
+//       console.log(`Time slot clicked: ${date.toDateString()} at ${time}`);
     } catch (error) {
       console.error('Error in handleTimeSlotClick:', error);
     }
@@ -391,7 +367,7 @@ export default function Calendar() {
         return;
       }
 
-      console.log(`Moving event ${eventId} to ${newStartTime.toISOString()}`);
+//       console.log(`Moving event ${eventId} to ${newStartTime.toISOString()}`);
 
       // Find the event to get its calendar information
       const event = calendarEvents.find(e => e.id === eventId);
@@ -408,9 +384,7 @@ export default function Calendar() {
         calendarId = 'c2ffec13aa77af8e71cac14a327928e34da57bddaadf18c4e0f669827e1454ff@group.calendar.google.com';
       }
 
-      console.log(`Moving event in calendar: ${calendarId}`);
-
-      // Call the API to update the calendar event
+//// Call the API to update the calendar event
       const response = await fetch(`/api/calendar/events/${eventId}`, {
         method: 'PATCH',
         headers: {
@@ -426,8 +400,7 @@ export default function Calendar() {
       if (response.ok) {
         // Refresh calendar data to show the updated event
         refetch();
-        console.log(`Successfully moved event ${eventId}`);
-      } else {
+//} else {
         const error = await response.text();
         console.error('Failed to move event:', error);
       }
@@ -438,8 +411,7 @@ export default function Calendar() {
 
   const handleNewAppointment = () => {
     // Implement new appointment creation
-    console.log('Creating new appointment');
-  };
+//};
 
   const handleExportCalendar = async (type: 'weekly' | 'daily' | 'appointments') => {
     const { exportToPDF, exportDailyToPDF } = await import('@/utils/pdfExport');
@@ -481,8 +453,7 @@ export default function Calendar() {
 
   const handleSessionNotes = (event: CalendarEvent) => {
     // Navigate to session notes
-    console.log(`Opening session notes for event ${event.id}`);
-  };
+//};
 
   // Helper functions for calendar filtering
   const clearCalendarFilters = () => {
@@ -520,8 +491,7 @@ export default function Calendar() {
     onSuccess: (data) => {
       // Refetch events after sync
       refetch();
-      console.log('✅ Calendar sync successful:', data);
-      alert(`Calendar sync complete! ${data.message || 'Events synchronized successfully'}`);
+//alert(`Calendar sync complete! ${data.message || 'Events synchronized successfully'}`);
     },
     onError: (error) => {
       console.error('Sync error:', error);
@@ -545,8 +515,7 @@ export default function Calendar() {
     onSuccess: (data, variables) => {
       // Refetch events after deletion
       refetch();
-      console.log('✅ Event deleted successfully:', data);
-      alert(`Event deleted successfully!`);
+//alert(`Event deleted successfully!`);
     },
     onError: (error, variables) => {
       console.error('Delete error:', error);

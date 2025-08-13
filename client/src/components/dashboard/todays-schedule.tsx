@@ -163,8 +163,7 @@ export default function TodaysSchedule() {
           }
         }
       } catch (error) {
-        console.log('Could not find client ID for AI insights:', error);
-      }
+//}
 
       if (!actualClientId) {
         toast({

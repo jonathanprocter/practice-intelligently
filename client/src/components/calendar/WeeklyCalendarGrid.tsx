@@ -158,17 +158,13 @@ export const WeeklyCalendarGrid = ({
 
   // Use the week prop directly instead of recalculating
   const calendarDays = useMemo(() => {
-    console.log('📅 Computing calendar days for week starting:', week && week.length > 0 ? format(week[0].date, 'EEE MMM dd yyyy') : 'No week provided');
-    console.log('📅 Total events available for filtering:', events?.length || 0);
-
-    if (!week || week.length === 0) {
-      console.log('⚠️ No week data provided to calendar grid');
-      return [];
+//     console.log('📅 Computing calendar days for week starting:', week && week.length > 0 ? format(week[0].date, 'EEE MMM dd yyyy') : 'No week provided');
+//if (!week || week.length === 0) {
+//return [];
     }
 
     if (!events || events.length === 0) {
-      console.log('⚠️ No events provided to calendar grid');
-      return week.map(day => ({
+//return week.map(day => ({
         ...day,
         events: []
       }));
@@ -188,7 +184,7 @@ export const WeeklyCalendarGrid = ({
           const matches = eventDateEDT === dayDateEDT;
 
           if (matches) {
-            console.log(`📅 Event "${event.title}" matches ${format(day.date, 'EEE MMM dd yyyy')}`);
+//             console.log(`📅 Event "${event.title}" matches ${format(day.date, 'EEE MMM dd yyyy')}`);
           }
 
           return matches;
@@ -198,7 +194,7 @@ export const WeeklyCalendarGrid = ({
         }
       });
 
-      console.log(`📅 ${format(day.date, 'EEE MMM dd yyyy')}: Found ${dayEvents.length} events`);
+//       console.log(`📅 ${format(day.date, 'EEE MMM dd yyyy')}: Found ${dayEvents.length} events`);
 
       return {
         ...day,

@@ -10,8 +10,7 @@ export default function OAuthSimple() {
     try {
       const response = await fetch('/api/auth/google/status');
       const data = await response.json();
-      console.log('Connection status:', data);
-      alert(`Connected: ${data.connected}`);
+//alert(`Connected: ${data.connected}`);
     } catch (error) {
       console.error('Error checking status:', error);
       alert('Error checking connection status');

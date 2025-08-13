@@ -150,16 +150,10 @@ export async function analyzeContent(content: string, type: 'session' | 'appoint
   try {
     // Try OpenAI first (PRIMARY)
     return await analyzeWithOpenAI(content, type);
-  } catch (openaiError) {
-    console.warn('OpenAI failed, falling back to Claude:', openaiError);
-
-    try {
+  } catch (openaiError) {try {
       // Fallback to Claude (SECONDARY)
       return await analyzeWithClaude(content, type);
-    } catch (claudeError) {
-      console.warn('Claude failed, falling back to Gemini:', claudeError);
-
-      try {
+    } catch (claudeError) {try {
         // Further fallback to Gemini (TERTIARY)
         return await analyzeWithGemini(content, type);
       } catch (geminiError) {

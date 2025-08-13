@@ -59,9 +59,7 @@ const parseEventDate = (dateInput: string | Date): Date | null => {
 
           if (typeof dateInput === 'string') {
                   const parsed = new Date(dateInput);
-                  if (isNaN(parsed.getTime())) {
-                            console.warn('Invalid date string:', dateInput);
-                            return null;
+                  if (isNaN(parsed.getTime())) {return null;
                   }
                   return parsed;
           }
@@ -95,36 +93,28 @@ export const DailyView = ({
 
     // Improved event filtering with better date handling and debugging
     const dayEvents = useMemo(() => {
-          console.log('DailyView: Filtering events for date:', date);
-          console.log('DailyView: Total events received:', events.length);
-
-          if (!events || events.length === 0) {
-                  console.log('DailyView: No events to filter');
-                  return [];
+////if (!events || events.length === 0) {
+//return [];
           }
 
           const filtered = events.filter(event => {
-                  if (!event || !event.startTime) {
-                            console.warn('DailyView: Event missing startTime:', event);
-                            return false;
+                  if (!event || !event.startTime) {return false;
                   }
 
                   const eventDate = parseEventDate(event.startTime);
-                  if (!eventDate) {
-                            console.warn('DailyView: Could not parse event date:', event.startTime);
-                            return false;
+                  if (!eventDate) {return false;
                   }
 
                   const matches = isSameDay(eventDate, date);
 
                   if (matches) {
-                            console.log(`DailyView: Event "${event.title}" matches date ${date.toDateString()}`);
+//                             console.log(`DailyView: Event "${event.title}" matches date ${date.toDateString()}`);
                   }
 
                   return matches;
           });
 
-          console.log(`DailyView: Found ${filtered.length} events for ${date.toDateString()}`);
+//           console.log(`DailyView: Found ${filtered.length} events for ${date.toDateString()}`);
           return filtered.sort((a, b) => {
                   const timeA = parseEventDate(a.startTime);
                   const timeB = parseEventDate(b.startTime);
@@ -230,8 +220,7 @@ export const DailyView = ({
     const handleSaveSessionNotes = () => {
         if (!selectedEvent) return;
         // Placeholder for saving session notes
-        console.log(`Saving notes for event ${selectedEvent.title}:`, sessionNotes);
-        toast({
+//toast({
             title: "Notes Saved",
             description: "Your session notes have been saved.",
         });

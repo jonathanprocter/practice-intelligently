@@ -114,9 +114,7 @@ import {
 // Safe lazy loading with fallbacks
 const loadComponent = (importFn: () => Promise<any>, fallback?: React.ComponentType<any>) => {
   return React.lazy(() => 
-    importFn().catch(() => {
-      console.warn('Component failed to load, using fallback');
-      return { 
+    importFn().catch(() => {return { 
         default: fallback || (() => <div>Component not available</div>) 
       };
     })
@@ -371,8 +369,7 @@ function useRealtimeUpdates(clientId: string, queryClient: any) {
   React.useEffect(() => {
     // Skip if no WebSocket URL is configured
     if (!import.meta.env.VITE_WS_URL) {
-      console.log('WebSocket URL not configured, skipping real-time updates');
-      return;
+//return;
     }
 
     try {
@@ -381,8 +378,7 @@ function useRealtimeUpdates(clientId: string, queryClient: any) {
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log('Connected to real-time updates');
-      };
+//};
 
       ws.onmessage = (event) => {
         try {
@@ -418,8 +414,7 @@ function useRealtimeUpdates(clientId: string, queryClient: any) {
         ws.close();
       };
     } catch (error) {
-      console.log('WebSocket not available:', error);
-    }
+//}
   }, [clientId, queryClient, toast]);
 }
 

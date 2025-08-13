@@ -291,9 +291,7 @@ export class ApiClient {
       try {
         const dbResponse = await apiRequest('GET', `/api/appointments/today/${therapistId}`);
         dbAppointments = await dbResponse.json();
-      } catch (dbError) {
-        console.warn('Database appointments fetch failed:', dbError);
-      }
+      } catch (dbError) {}
 
       // Fetch calendar events for today
       try {
@@ -303,9 +301,7 @@ export class ApiClient {
 
         const calendarResponse = await apiRequest('GET', `/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}`);
         calendarEvents = await calendarResponse.json();
-      } catch (calendarError) {
-        console.warn('Calendar events fetch failed:', calendarError);
-      }
+      } catch (calendarError) {}
 
       // Process calendar events inline
       const calendarAppointments: Appointment[] = calendarEvents

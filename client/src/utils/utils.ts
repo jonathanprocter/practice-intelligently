@@ -200,9 +200,7 @@ export class NotificationManager {
   }
 
   show(title: string, options?: NotificationOptions) {
-    if (!('Notification' in window)) {
-      console.warn('Notifications not supported');
-      return;
+    if (!('Notification' in window)) {return;
     }
 
     if (this.permission === 'granted') {

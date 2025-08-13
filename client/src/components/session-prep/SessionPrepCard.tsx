@@ -82,40 +82,28 @@ export function SessionPrepCard({
       // For calendar events, try to find clientId by name first
       let actualClientId = clientId;
 
-      console.log(`🔍 SessionPrepCard: Loading session prep for eventId=${eventId}, clientName="${clientName}", clientId=${clientId}`);
-
-      // Check if clientId is a fake/placeholder ID (starts with 'calendar-')
+//// Check if clientId is a fake/placeholder ID (starts with 'calendar-')
       if (actualClientId && typeof actualClientId === 'string' && actualClientId.startsWith('calendar-')) {
-        console.log(`🔍 Detected fake client ID: ${actualClientId}, treating as undefined`);
-        actualClientId = undefined;
+//actualClientId = undefined;
       }
 
       if (!actualClientId && clientName) {
         try {
-          console.log(`🔍 Searching for client by name: "${clientName}"`);
-          // Try to find client by name for calendar events
+//// Try to find client by name for calendar events
           const clientSearchResponse = await fetch(`/api/clients/search?name=${encodeURIComponent(clientName)}`);
-          console.log(`🔍 Client search response status: ${clientSearchResponse.status}`);
-          if (clientSearchResponse.ok) {
+//if (clientSearchResponse.ok) {
             const clientData = await clientSearchResponse.json();
-            console.log(`🔍 Client search results:`, clientData);
-            if (clientData && clientData.length > 0) {
+//if (clientData && clientData.length > 0) {
               actualClientId = clientData[0].id;
-              console.log(`✅ Found client ID ${actualClientId} for calendar event client name: ${clientName}`);
-            } else {
-              console.log(`❌ No clients found for name: "${clientName}"`);
-            }
+//} else {
+//}
           } else {
-            console.log(`❌ Client search failed with status: ${clientSearchResponse.status}`);
-          }
+//}
         } catch (error) {
-          console.log('❌ Could not find client ID for calendar event:', error);
-        }
+//}
       }
 
-      console.log(`🧠 Loading AI insights for ${actualClientId ? `client ${actualClientId}` : 'non-client appointment'}...`);
-
-      // Load AI insights for session prep - works for both client and non-client appointments
+//// Load AI insights for session prep - works for both client and non-client appointments
       const requestBody = actualClientId 
         ? { clientId: actualClientId }
         : { appointmentTitle: title || 'Professional Appointment' };
@@ -130,9 +118,7 @@ export function SessionPrepCard({
         const contentType = insightsResponse.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
           const data = await insightsResponse.json();
-          console.log('Received AI insights data:', data);
-          
-          // Handle the response structure from the API
+//// Handle the response structure from the API
           if (data.insights) {
             // Extract insights from the nested structure
             const insights = data.insights;
@@ -151,8 +137,7 @@ export function SessionPrepCard({
             
             setAiInsights(transformedInsights);
           } else {
-            console.log('Unexpected response format:', data);
-            // Fallback handling
+//// Fallback handling
             setAiInsights({
               appointmentType: 'session',
               title: title,

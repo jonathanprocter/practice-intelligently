@@ -321,7 +321,7 @@ function drawDailyGrid(pdf: jsPDF, events: CalendarEvent[], date: Date): void {
 }
 
 export function exportWeeklyCalendar(events: CalendarEvent[], weekStart: Date, weekEnd: Date): void {
-  console.log(`📊 Exporting weekly calendar: ${weekStart.toDateString()} to ${weekEnd.toDateString()}`);
+//   console.log(`📊 Exporting weekly calendar: ${weekStart.toDateString()} to ${weekEnd.toDateString()}`);
   
   const pdf = new jsPDF({
     orientation: 'landscape',
@@ -344,7 +344,7 @@ export function exportWeeklyCalendar(events: CalendarEvent[], weekStart: Date, w
 }
 
 export function exportDailyCalendar(events: CalendarEvent[], date: Date): void {
-  console.log(`📊 Exporting daily calendar for: ${date.toDateString()}`);
+//   console.log(`📊 Exporting daily calendar for: ${date.toDateString()}`);
   
   const pdf = new jsPDF({
     orientation: 'portrait',
@@ -367,7 +367,7 @@ export function exportDailyCalendar(events: CalendarEvent[], date: Date): void {
 }
 
 export function exportAppointmentList(events: CalendarEvent[], startDate: Date, endDate: Date): void {
-  console.log(`📊 Exporting appointment list: ${startDate.toDateString()} to ${endDate.toDateString()}`);
+//   console.log(`📊 Exporting appointment list: ${startDate.toDateString()} to ${endDate.toDateString()}`);
   
   const pdf = new jsPDF({
     orientation: 'portrait',

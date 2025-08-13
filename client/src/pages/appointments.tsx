@@ -103,9 +103,7 @@ export default function Appointments() {
               isCalendarEvent: true
             }));
           }
-        } catch (error) {
-          console.warn('Could not fetch calendar events:', error);
-        }
+        } catch (error) {}
       } else if (quickFilterType === 'custom' && dateRange.start && dateRange.end) {
         // For date range queries, fetch appointments for each day and combine
         const start = new Date(dateRange.start);
@@ -116,9 +114,7 @@ export default function Appointments() {
           try {
             const dayAppointments = await ApiClient.getAppointments(dateStr);
             dbAppointments.push(...dayAppointments);
-          } catch (err) {
-            console.warn(`Could not fetch appointments for ${dateStr}`);
-          }
+          } catch (err) {}
         }
       } else {
         dbAppointments = await ApiClient.getAppointments(selectedDate);

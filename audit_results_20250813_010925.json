@@ -1,0 +1,1371 @@
+{
+  "audit_timestamp": "2025-08-13T01:09:25.612436",
+  "total_critical_issues": 0,
+  "total_high_issues": 30,
+  "total_warnings": 121,
+  "critical_issues": [],
+  "high_issues": [
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./shared/schema.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.174701"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./shared/schema.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.174952"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./client/src/lib/api.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.296246"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./client/src/pages/content-viewer.tsx",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.330000"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-insights.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.347705"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/health-check.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.348054"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-predictive-models.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.348618"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-pattern-recognition.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.349126"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-personalized-therapy.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.349608"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-practice-intelligence.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.350298"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-enhanced-insights.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.353816"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/perplexity.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.354984"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-services-backup.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.355533"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/auth.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.357601"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-services.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.360278"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/document-processor.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.361393"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-multi-model.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.365188"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/comprehensiveProgressNotesParser.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.366674"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/steven-deluca-processor.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.367809"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/oauth-simple.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.369677"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/documentProcessor.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.369960"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/comprehensive-progress-parser-july.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.370834"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/historical-appointment-utils.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.372296"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/documentTagger.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.373946"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/routes.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.377324"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/routes.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.389346"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/comprehensiveProgressNotesParser-optimized.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.389790"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/storage.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.391689"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./contexts/AuthContext.tsx",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.432523"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./contexts/AuthContext.tsx",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:09:25.432571"
+    }
+  ],
+  "warnings": [
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./.cache/uv/archive-v0/oHk4WLcIZe5SnIR8Epry2/psycopg2_binary.libs/libcrypto-ea28cefb.so.1.1",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:09:25.476455"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./attached_assets/generated-image (1)_1753977205405.png",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:09:25.477695"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./attached_assets/daily-calendar-truly-fixed-2025-07-25_1753990691703.pdf",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:09:25.477906"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./attached_assets/daily-calendar-truly-fixed-2025-07-24_1753990851637.pdf",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:09:25.477944"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./attached_assets/generated-image (1)_1754094917944.png",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:09:25.478592"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./attached_assets/IMG_1211_1754346501285.png",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:09:25.478998"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./attached_assets/IMG_1210_1754346501285.png",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:09:25.479035"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./attached_assets/image_1754410832108.png",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:09:25.479269"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./attached_assets/Steven_Deluca_Progress_Notes_Compiled_1754546033851.pages",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:09:25.480172"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./.local/state/replit/agent/filesystem/filesystem_state.json",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:09:25.497612"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./uploads/steven-deluca-notes.pages",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:09:25.506665"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./.pythonlibs/bin/python3",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:09:25.510853"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./.pythonlibs/bin/python",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:09:25.510912"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./.pythonlibs/bin/python3.11",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:09:25.511009"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./.pythonlibs/lib/python3.11/site-packages/psycopg2_binary.libs/libcrypto-ea28cefb.so.1.1",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:09:25.538738"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:390",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556363"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:401",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556376"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:423",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556382"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:438",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556388"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:456",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556393"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:467",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556397"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:473",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556401"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:478",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556405"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:498",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556410"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:512",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556414"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:517",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556418"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:531",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556423"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:543",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556428"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:563",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556433"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:586",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556439"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:596",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556443"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:601",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556447"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:610",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556452"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:618",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556456"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:627",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556460"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:636",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556464"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:899",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556495"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/Compass.tsx:910",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.556499"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/dashboard/todays-schedule.tsx:166",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.574716"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/DailyView.tsx:98",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.577216"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/DailyView.tsx:99",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.577226"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/DailyView.tsx:102",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.577230"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/DailyView.tsx:121",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.577235"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/DailyView.tsx:127",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.577238"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/DailyView.tsx:233",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.577250"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/WeeklyCalendarGrid.tsx:161",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.577696"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/WeeklyCalendarGrid.tsx:162",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.577704"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/WeeklyCalendarGrid.tsx:165",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.577708"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/WeeklyCalendarGrid.tsx:170",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.577712"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/WeeklyCalendarGrid.tsx:191",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.577717"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/WeeklyCalendarGrid.tsx:201",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.577722"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/DailyViewGrid.tsx:88",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.578133"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/DailyViewGrid.tsx:89",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.578140"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/DailyViewGrid.tsx:92",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.578144"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/DailyViewGrid.tsx:110",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.578150"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/calendar/DailyViewGrid.tsx:116",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.578154"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/session-prep/session-prep-modal.tsx:175",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.584237"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/session-prep/SessionPrepCard.tsx:85",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.584755"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/session-prep/SessionPrepCard.tsx:89",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.584764"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/session-prep/SessionPrepCard.tsx:95",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.584768"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/session-prep/SessionPrepCard.tsx:98",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.584772"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/session-prep/SessionPrepCard.tsx:101",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.584775"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/session-prep/SessionPrepCard.tsx:104",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.584780"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/session-prep/SessionPrepCard.tsx:106",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.584783"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/session-prep/SessionPrepCard.tsx:109",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.584786"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/session-prep/SessionPrepCard.tsx:112",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.584790"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/session-prep/SessionPrepCard.tsx:116",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.584794"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/session-prep/SessionPrepCard.tsx:133",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.584798"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/session-prep/SessionPrepCard.tsx:154",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.584803"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/documents/DocumentProcessor.tsx:118",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.587198"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/documents/DocumentProcessor.tsx:141",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.587209"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/documents/DocumentProcessor.tsx:204",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.587219"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/documents/SmartDocumentTagger.tsx:61",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.587646"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/components/documents/SmartDocumentTagger.tsx:95",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.587657"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/oauth-debug.tsx:37",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.592073"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/oauth-quick-test.tsx:25",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.592440"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/oauth-quick-test.tsx:33",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.592452"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/oauth-simple.tsx:13",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.594086"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:74",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600520"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:84",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600538"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:99",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600545"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:100",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600548"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:101",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600552"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:103",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600556"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:104",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600560"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:111",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600564"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:112",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600567"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:113",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600571"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:169",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600579"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:171",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600583"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:247",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600593"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:248",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600604"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:283",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600610"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:293",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600615"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:303",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600620"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:310",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600624"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:311",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600627"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:315",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600630"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:316",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600633"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:317",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600635"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:364",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600642"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:394",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600649"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:411",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600653"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:429",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600658"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:441",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600662"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:484",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600670"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:523",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600678"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/calendar.tsx:548",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.600684"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/ClientChart.tsx:374",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.602464"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/ClientChart.tsx:384",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.602474"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/ClientChart.tsx:421",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.602481"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/pages/content-viewer.tsx:418",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.604373"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/utils/currentWeeklyExport.ts:60",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.607662"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/utils/currentWeeklyExport.ts:61",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.607671"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/utils/currentWeeklyExport.ts:83",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.607677"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/utils/calendarExport.ts:324",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.609061"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/utils/calendarExport.ts:347",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.609072"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/utils/calendarExport.ts:370",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.609078"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/utils/perfectDashboardExport.ts:186",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.609613"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/utils/perfectDashboardExport.ts:337",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.609635"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "LOW",
+      "issue": "Console.log found in client/src/utils/timeSlots.ts:63",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Remove or replace with proper logging",
+      "timestamp": "2025-08-13T01:09:25.610302"
+    }
+  ],
+  "audit_score": 0
+}

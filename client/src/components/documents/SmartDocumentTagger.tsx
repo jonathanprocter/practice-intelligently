@@ -58,9 +58,7 @@ const SmartDocumentTagger: React.FC<SmartDocumentTaggerProps> = ({
 
       for (let i = 0; i < acceptedFiles.length; i++) {
         const file = acceptedFiles[i];
-        console.log(`🏷️ Analyzing document ${i + 1}/${acceptedFiles.length}: ${file.name}`);
-
-        // Update progress
+//// Update progress
         setAnalysisProgress(Math.round(((i) / acceptedFiles.length) * 100));
 
         const formData = new FormData();
@@ -92,9 +90,7 @@ const SmartDocumentTagger: React.FC<SmartDocumentTaggerProps> = ({
             };
 
             results.push(analyzedDoc);
-            console.log(`✅ Document analyzed: ${result.analysis.category}/${result.analysis.subcategory}`);
-
-            // Show success toast
+//// Show success toast
             toast({
               title: "Document Analyzed",
               description: `${file.name} categorized as ${result.analysis.category}`,

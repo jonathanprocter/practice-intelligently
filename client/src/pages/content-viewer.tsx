@@ -415,7 +415,6 @@ export default function ContentViewer() {
           window.open(file.webViewLink, '_blank');
         }
       }
-      console.log(`Downloading ${items.length} items`);
     } catch (error) {
       console.error('Download failed:', error);
       alert('An error occurred while downloading files');

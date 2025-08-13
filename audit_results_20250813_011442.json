@@ -1,0 +1,490 @@
+{
+  "audit_timestamp": "2025-08-13T01:14:42.104324",
+  "total_critical_issues": 2,
+  "total_high_issues": 36,
+  "total_warnings": 15,
+  "critical_issues": [
+    {
+      "category": "Server",
+      "severity": "CRITICAL",
+      "issue": "Cannot connect to server: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /api/health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f0a82fe3fd0>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": null,
+      "timestamp": "2025-08-13T01:14:21.496573"
+    },
+    {
+      "category": "Database",
+      "severity": "CRITICAL",
+      "issue": "Database connectivity error: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /api/clients/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f0a82ff20d0>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": null,
+      "timestamp": "2025-08-13T01:14:21.499339"
+    }
+  ],
+  "high_issues": [
+    {
+      "category": "API",
+      "severity": "HIGH",
+      "issue": "Endpoint /api/health error: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /api/health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f0a82ffc1d0>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": null,
+      "timestamp": "2025-08-13T01:14:21.502057"
+    },
+    {
+      "category": "API",
+      "severity": "HIGH",
+      "issue": "Endpoint /api/clients/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c error: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /api/clients/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f0a82ffe1d0>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": null,
+      "timestamp": "2025-08-13T01:14:21.504965"
+    },
+    {
+      "category": "API",
+      "severity": "HIGH",
+      "issue": "Endpoint /api/appointments/today/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c error: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /api/appointments/today/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f0a830003d0>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": null,
+      "timestamp": "2025-08-13T01:14:21.507639"
+    },
+    {
+      "category": "API",
+      "severity": "HIGH",
+      "issue": "Endpoint /api/session-notes/today/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c error: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /api/session-notes/today/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f0a82ffed90>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": null,
+      "timestamp": "2025-08-13T01:14:21.510506"
+    },
+    {
+      "category": "API",
+      "severity": "HIGH",
+      "issue": "Endpoint /api/dashboard/stats/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c error: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /api/dashboard/stats/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f0a82ffe650>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": null,
+      "timestamp": "2025-08-13T01:14:21.513129"
+    },
+    {
+      "category": "API",
+      "severity": "HIGH",
+      "issue": "Endpoint /api/calendar/events error: HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /api/calendar/events (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f0a82ff2b90>: Failed to establish a new connection: [Errno 111] Connection refused'))",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": null,
+      "timestamp": "2025-08-13T01:14:21.515913"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./shared/schema.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.818984"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./shared/schema.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.819512"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./client/src/lib/api.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.905707"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./client/src/pages/content-viewer.tsx",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.938837"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-insights.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.954260"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/health-check.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.954714"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-predictive-models.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.955482"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-pattern-recognition.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.956156"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-personalized-therapy.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.957022"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-practice-intelligence.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.957795"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-enhanced-insights.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.959128"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/perplexity.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.959955"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-services-backup.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.960485"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/auth.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.962537"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-services.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.965498"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/document-processor.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.966673"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/ai-multi-model.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.970221"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/comprehensiveProgressNotesParser.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.971847"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/steven-deluca-processor.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.972935"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/oauth-simple.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.974678"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/documentProcessor.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.975028"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/comprehensive-progress-parser-july.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.975975"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/historical-appointment-utils.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.977468"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/documentTagger.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.978837"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/routes.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.982302"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/routes.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.990619"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/comprehensiveProgressNotesParser-optimized.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.990857"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./server/storage.ts",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:41.991859"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./contexts/AuthContext.tsx",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:42.010967"
+    },
+    {
+      "category": "Security",
+      "severity": "HIGH",
+      "issue": "Potential exposed secret in ./contexts/AuthContext.tsx",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Move secrets to environment variables",
+      "timestamp": "2025-08-13T01:14:42.010993"
+    }
+  ],
+  "warnings": [
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./.cache/uv/archive-v0/oHk4WLcIZe5SnIR8Epry2/psycopg2_binary.libs/libcrypto-ea28cefb.so.1.1",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:14:42.026128"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./attached_assets/generated-image (1)_1753977205405.png",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:14:42.026774"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./attached_assets/daily-calendar-truly-fixed-2025-07-25_1753990691703.pdf",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:14:42.026931"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./attached_assets/daily-calendar-truly-fixed-2025-07-24_1753990851637.pdf",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:14:42.026951"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./attached_assets/generated-image (1)_1754094917944.png",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:14:42.027349"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./attached_assets/IMG_1211_1754346501285.png",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:14:42.027598"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./attached_assets/IMG_1210_1754346501285.png",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:14:42.027618"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./attached_assets/image_1754410832108.png",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:14:42.027730"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./attached_assets/Steven_Deluca_Progress_Notes_Compiled_1754546033851.pages",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:14:42.028158"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./.local/state/replit/agent/filesystem/filesystem_state.json",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:14:42.039444"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./uploads/steven-deluca-notes.pages",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:14:42.047592"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./.pythonlibs/bin/python3",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:14:42.048364"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./.pythonlibs/bin/python",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:14:42.048400"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./.pythonlibs/bin/python3.11",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:14:42.048424"
+    },
+    {
+      "category": "Performance",
+      "severity": "MEDIUM",
+      "issue": "Large file detected: ./.pythonlibs/lib/python3.11/site-packages/psycopg2_binary.libs/libcrypto-ea28cefb.so.1.1",
+      "file_path": null,
+      "line_number": null,
+      "fix_suggestion": "Consider optimizing or splitting large files",
+      "timestamp": "2025-08-13T01:14:42.057493"
+    }
+  ],
+  "audit_score": 0
+}

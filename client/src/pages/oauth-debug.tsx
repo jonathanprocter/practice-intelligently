@@ -34,8 +34,7 @@ export default function OAuthDebug() {
   };
 
   const testGoogleOAuth = () => {
-    console.log('Initiating Google OAuth test...');
-    window.location.href = '/api/auth/google';
+//window.location.href = '/api/auth/google';
   };
 
   const openGoogleCloudConsole = () => {

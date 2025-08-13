@@ -57,10 +57,8 @@ export const exportCurrentWeeklyView = (
   const normalizedWeekEnd = new Date(weekEnd);
   normalizedWeekEnd.setHours(23, 59, 59, 999);
 
-  console.log(`📊 Exporting weekly view: ${normalizedWeekStart.toDateString()} to ${normalizedWeekEnd.toDateString()}`);
-  console.log(`📊 Total events available: ${events.length}`);
-
-  const pdf = new jsPDF({
+//   console.log(`📊 Exporting weekly view: ${normalizedWeekStart.toDateString()} to ${normalizedWeekEnd.toDateString()}`);
+//const pdf = new jsPDF({
     orientation: 'landscape',
     unit: 'pt',
     format: [CURRENT_WEEKLY_CONFIG.pageWidth, CURRENT_WEEKLY_CONFIG.pageHeight]
@@ -80,8 +78,7 @@ export const exportCurrentWeeklyView = (
       eventDate <= normalizedWeekEnd;
   });
 
-  console.log(`🔍 Monday events found: ${mondayEvents.length}`);
-  mondayEvents.forEach(event => {
+//mondayEvents.forEach(event => {
     const eventDate = new Date(event.startTime);
     // Event processed: ${event.title} at ${eventDate.toLocaleString()}
   });

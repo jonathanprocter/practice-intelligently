@@ -22,16 +22,14 @@ export default function OAuthQuickTest() {
   };
 
   const startOAuth = () => {
-    console.log('Starting OAuth flow...');
-    window.location.href = '/api/auth/google';
+//window.location.href = '/api/auth/google';
   };
 
   const testCalendars = async () => {
     try {
       const response = await fetch('/api/calendar/calendars');
       const data = await response.json();
-      console.log('Calendar test result:', data);
-      alert(`Calendar test: ${response.ok ? 'SUCCESS' : 'FAILED'}\n${JSON.stringify(data, null, 2)}`);
+//alert(`Calendar test: ${response.ok ? 'SUCCESS' : 'FAILED'}\n${JSON.stringify(data, null, 2)}`);
     } catch (error) {
       console.error('Calendar test failed:', error);
       alert('Calendar test failed: ' + error);
