@@ -39,6 +39,13 @@ interface AIInsights {
     suggestedQuestions?: string[];
   };
   recommendations?: string[];
+  appointmentType?: string;
+  title?: string;
+  keyThemes?: string[];
+  recommendedFocus?: string[];
+  suggestedQuestions?: string[];
+  nextSteps?: string[];
+  summary?: string;
 }
 
 interface SessionRecommendation {
@@ -89,24 +96,23 @@ export function SessionPrepCard({
 
       if (!actualClientId && clientName) {
         try {
-//// Try to find client by name for calendar events
+          // Try to find client by name for calendar events
           const clientSearchResponse = await fetch(`/api/clients/search?name=${encodeURIComponent(clientName)}`);
-//if (clientSearchResponse.ok) {
+          if (clientSearchResponse.ok) {
             const clientData = await clientSearchResponse.json();
-//if (clientData && clientData.length > 0) {
+            if (clientData && clientData.length > 0) {
               actualClientId = clientData[0].id;
-//} else {
-//}
-          } else {
-//}
+            }
+          }
         } catch (error) {
-//}
+          console.error('Error finding client:', error);
+        }
       }
 
-//// Load AI insights for session prep - works for both client and non-client appointments
+      // Load AI insights for session prep - works for both client and non-client appointments
       const requestBody = actualClientId 
         ? { clientId: actualClientId }
-        : { appointmentTitle: title || 'Professional Appointment' };
+        : { appointmentTitle: clientName || 'Professional Appointment' };
 
       const insightsResponse = await fetch(`/api/session-prep/${eventId}/ai-insights`, {
         method: 'POST',
@@ -125,14 +131,18 @@ export function SessionPrepCard({
             
             // Transform the API response to match frontend expectations
             const transformedInsights = {
+              ...insights,
               appointmentType: insights.appointmentType || 'session',
-              title: title,
+              title: clientName,
               keyThemes: insights.content?.keyPoints || [],
               recommendedFocus: insights.content?.recommendations || [],
               suggestedQuestions: insights.content?.suggestedQuestions || [],
               nextSteps: insights.content?.nextSteps || [],
               summary: insights.content?.summary || 'AI insights generated successfully',
-              content: insights.content
+              content: insights.content,
+              prep_content: insights.prep_content || '',
+              key_focus_areas: insights.key_focus_areas || [],
+              suggested_techniques: insights.suggested_techniques || []
             };
             
             setAiInsights(transformedInsights);
@@ -140,10 +150,13 @@ export function SessionPrepCard({
 //// Fallback handling
             setAiInsights({
               appointmentType: 'session',
-              title: title,
+              title: clientName,
               summary: 'Insights generated',
               keyThemes: [],
-              recommendedFocus: []
+              recommendedFocus: [],
+              prep_content: '',
+              key_focus_areas: [],
+              suggested_techniques: []
             });
           }
         } else {

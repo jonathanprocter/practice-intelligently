@@ -379,12 +379,14 @@ export default function TodaysSchedule() {
                     <>
                       <Calendar className="h-4 w-4 text-therapy-primary" />
                       <ClientLink 
+                        clientId={appointment.clientId}
                         clientName={clientName}
                         className="text-left hover:text-therapy-primary hover:underline transition-colors"
                       />
                     </>
                   ) : (
                     <ClientLink 
+                      clientId={appointment.clientId}
                       clientName={clientName}
                       className="text-left hover:text-therapy-primary hover:underline transition-colors"
                     />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,7 +49,7 @@ export default function SessionPrepModal({
   eventId, 
   clientName, 
   appointmentTime 
-}: SessionPrepModalProps) {
+}: SessionPrepModalProps): React.ReactElement {
   const [prepNote, setPrepNote] = useState<SessionPrepNote | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setSaving] = useState(false);
@@ -172,7 +172,8 @@ export default function SessionPrepModal({
           }
         }
       } catch (error) {
-//}
+        console.error('Error finding client:', error);
+      }
 
       if (!actualClientId) {
         toast({
