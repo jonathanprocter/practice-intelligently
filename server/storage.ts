@@ -388,6 +388,60 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteClient(id: string): Promise<void> {
+    // First, get all appointments for this client
+    const clientAppointments = await db
+      .select({ id: appointments.id })
+      .from(appointments)
+      .where(eq(appointments.clientId, id));
+
+    // Delete session notes that reference these appointments
+    for (const appointment of clientAppointments) {
+      await db
+        .delete(sessionNotes)
+        .where(eq(sessionNotes.appointmentId, appointment.id));
+    }
+
+    // Delete session notes that reference the client directly
+    await db
+      .delete(sessionNotes)
+      .where(eq(sessionNotes.clientId, id));
+
+    // Delete appointments for this client
+    await db
+      .delete(appointments)
+      .where(eq(appointments.clientId, id));
+
+    // Delete any action items for this client
+    await db
+      .delete(actionItems)
+      .where(eq(actionItems.clientId, id));
+
+    // Delete any other related records
+    await db
+      .delete(treatmentPlans)
+      .where(eq(treatmentPlans.clientId, id));
+
+    await db
+      .delete(medications)
+      .where(eq(medications.clientId, id));
+
+    await db
+      .delete(assessments)
+      .where(eq(assessments.clientId, id));
+
+    await db
+      .delete(billingRecords)
+      .where(eq(billingRecords.clientId, id));
+
+    await db
+      .delete(communicationLogs)
+      .where(eq(communicationLogs.clientId, id));
+
+    await db
+      .delete(documents)
+      .where(eq(documents.clientId, id));
+
+    // Finally, delete the client
     await db
       .delete(clients)
       .where(eq(clients.id, id));
