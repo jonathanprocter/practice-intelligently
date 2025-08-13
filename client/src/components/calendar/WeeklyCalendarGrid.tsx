@@ -158,13 +158,12 @@ export const WeeklyCalendarGrid = ({
 
   // Use the week prop directly instead of recalculating
   const calendarDays = useMemo(() => {
-//     console.log('📅 Computing calendar days for week starting:', week && week.length > 0 ? format(week[0].date, 'EEE MMM dd yyyy') : 'No week provided');
-//if (!week || week.length === 0) {
-//return [];
+    if (!week || week.length === 0) {
+      return [];
     }
 
     if (!events || events.length === 0) {
-//return week.map(day => ({
+      return week.map(day => ({
         ...day,
         events: []
       }));
