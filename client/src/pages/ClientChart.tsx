@@ -40,6 +40,7 @@ const endOfMonth = (date: Date) => {
 const isWithinInterval = (date: Date, interval: { start: Date; end: Date }) => {
   return date >= interval.start && date <= interval.end;
 };
+
 import { useToast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -114,7 +115,9 @@ import {
 // Safe lazy loading with fallbacks
 const loadComponent = (importFn: () => Promise<any>, fallback?: React.ComponentType<any>) => {
   return React.lazy(() => 
-    importFn().catch(() => {return { 
+    importFn().catch(() => {
+      console.error('Failed to load component');
+      return { 
         default: fallback || (() => <div>Component not available</div>) 
       };
     })
@@ -369,7 +372,7 @@ function useRealtimeUpdates(clientId: string, queryClient: any) {
   React.useEffect(() => {
     // Skip if no WebSocket URL is configured
     if (!import.meta.env.VITE_WS_URL) {
-//return;
+      return;
     }
 
     try {
@@ -378,7 +381,8 @@ function useRealtimeUpdates(clientId: string, queryClient: any) {
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-//};
+        console.log('WebSocket connected for client updates');
+      };
 
       ws.onmessage = (event) => {
         try {
@@ -414,7 +418,8 @@ function useRealtimeUpdates(clientId: string, queryClient: any) {
         ws.close();
       };
     } catch (error) {
-//}
+      console.error('Failed to setup WebSocket connection:', error);
+    }
   }, [clientId, queryClient, toast]);
 }
 
@@ -805,7 +810,7 @@ function TimelineItemComponent({
    Error Boundary
 ======================= */
 
-class ClientChartErrorBoundary extends React.Component<
+class ClientChartErrorBoundary extends React.Component
   { children: React.ReactNode },
   { hasError: boolean; error: Error | null }
 > {
