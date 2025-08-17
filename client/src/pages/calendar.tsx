@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiClient } from '@/lib/api';
 import { CalendarEvent, CalendarDay } from '../types/calendar';
 import { getOfficeLocationByDay, getCalendarLocationDisplay } from '@/utils/locationUtils';
@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings, Search, Filter, MapPin, User, X, RefreshCw } from 'lucide-react';
+import CalendarSyncStatusIndicator from '@/components/calendar/CalendarSyncStatusIndicator';
 
 // Helper function to check if a date is today
 const isToday = (date: Date): boolean => {
@@ -1007,6 +1008,9 @@ export default function Calendar() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Calendar Sync Status Indicator */}
+      <CalendarSyncStatusIndicator />
     </div>
   );
 }

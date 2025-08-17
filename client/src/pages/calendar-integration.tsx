@@ -15,6 +15,7 @@ import {
   Settings,
   Info
 } from 'lucide-react';
+import CalendarSyncStatusIndicator from '@/components/calendar/CalendarSyncStatusIndicator';
 import { apiRequest } from '@/lib/queryClient';
 
 interface CalendarEvent {
@@ -354,6 +355,9 @@ export default function CalendarIntegration() {
           </Card>
         </>
       )}
+      
+      {/* Calendar Sync Status Indicator */}
+      <CalendarSyncStatusIndicator />
     </div>
   );
 }
