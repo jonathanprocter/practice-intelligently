@@ -93,28 +93,30 @@ export const DailyView = ({
 
     // Improved event filtering with better date handling and debugging
     const dayEvents = useMemo(() => {
-////if (!events || events.length === 0) {
-//return [];
-          }
+        if (!events || events.length === 0) {
+            return [];
+        }
 
           const filtered = events.filter(event => {
-                  if (!event || !event.startTime) {return false;
+                  if (!event || !event.startTime) {
+                      return false;
                   }
 
                   const eventDate = parseEventDate(event.startTime);
-                  if (!eventDate) {return false;
+                  if (!eventDate) {
+                      return false;
                   }
 
                   const matches = isSameDay(eventDate, date);
 
                   if (matches) {
-//                             console.log(`DailyView: Event "${event.title}" matches date ${date.toDateString()}`);
+                      console.log(`DailyView: Event "${event.title}" matches date ${date.toDateString()}`);
                   }
 
                   return matches;
           });
 
-//           console.log(`DailyView: Found ${filtered.length} events for ${date.toDateString()}`);
+          console.log(`DailyView: Found ${filtered.length} events for ${date.toDateString()}`);
           return filtered.sort((a, b) => {
                   const timeA = parseEventDate(a.startTime);
                   const timeB = parseEventDate(b.startTime);
@@ -141,21 +143,33 @@ export const DailyView = ({
     const fetchSessionData = async (event: CalendarEvent) => {
         setIsLoadingAppointmentData(true);
         try {
-            // Placeholder for actual API calls to fetch session notes and prep notes
-            // In a real app, you'd likely fetch these based on event.id or similar
-            const mockSessionNotes = await new Promise<any[]>((resolve) => setTimeout(() => resolve([
-                { id: 'note1', content: 'Client seemed anxious but engaged.', date: '2023-10-26' },
-                { id: 'note2', content: 'Discussed goals for next session.', date: '2023-10-19' },
-            ]), 500));
+            // Fetch session notes for this event
+            const sessionNotesResponse = await fetch(`/api/session-notes/event/${event.id}`);
+            let sessionNotes: any[] = [];
+            
+            if (sessionNotesResponse.ok) {
+                sessionNotes = await sessionNotesResponse.json();
+            }
 
-            const mockPrepNotes = await new Promise<any>((resolve) => setTimeout(() => resolve({
-                goal: 'Improve client\'s self-efficacy.',
-                clientHistory: 'Previous sessions focused on building rapport.',
-                keyAreas: ['Confidence building', 'Cognitive restructuring'],
-            }), 500));
+            // Fetch any existing notes from the appointment
+            if (event.notes) {
+                const existingNote = {
+                    id: `existing_${event.id}`,
+                    content: event.notes,
+                    date: new Date().toISOString().split('T')[0]
+                };
+                sessionNotes.unshift(existingNote);
+            }
 
-            setExistingProgressNotes(mockSessionNotes);
-            setSessionPrepNotes(mockPrepNotes);
+            // Set session prep notes (placeholder for now)
+            const prepNotes = {
+                goal: 'Session preparation and planning',
+                clientHistory: 'Review previous session outcomes',
+                keyAreas: ['Therapeutic rapport', 'Goal achievement', 'Progress tracking']
+            };
+
+            setExistingProgressNotes(sessionNotes);
+            setSessionPrepNotes(prepNotes);
 
         } catch (error) {
             console.error("Error fetching session data:", error);
@@ -217,17 +231,47 @@ export const DailyView = ({
         }
     };
 
-    const handleSaveSessionNotes = () => {
-        if (!selectedEvent) return;
-        // Placeholder for saving session notes
-//toast({
-            title: "Notes Saved",
-            description: "Your session notes have been saved.",
-        });
-        // Optionally clear the textarea or add the new note to existingProgressNotes
-        const newNote = { id: `note_${Date.now()}`, content: sessionNotes, date: new Date().toISOString().split('T')[0] };
-        setExistingProgressNotes(prevNotes => [...prevNotes, newNote]);
-        setSessionNotes('');
+    const handleSaveSessionNotes = async () => {
+        if (!selectedEvent || !sessionNotes.trim()) return;
+        
+        try {
+            // Update the appointment with the new notes
+            const response = await fetch(`/api/appointments/${selectedEvent.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    notes: sessionNotes
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to save notes: ${response.statusText}`);
+            }
+
+            toast({
+                title: "Notes Saved",
+                description: "Your session notes have been saved.",
+            });
+
+            // Add the new note to existing progress notes
+            const newNote = { 
+                id: `note_${Date.now()}`, 
+                content: sessionNotes, 
+                date: new Date().toISOString().split('T')[0] 
+            };
+            setExistingProgressNotes(prevNotes => [newNote, ...prevNotes]);
+            setSessionNotes('');
+
+        } catch (error) {
+            console.error('Error saving session notes:', error);
+            toast({
+                title: "Error",
+                description: "Failed to save session notes. Please try again.",
+                variant: "destructive"
+            });
+        }
     };
 
     const handleDeleteEvent = async () => {
