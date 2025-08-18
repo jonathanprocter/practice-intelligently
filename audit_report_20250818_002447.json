@@ -1,0 +1,80 @@
+{
+  "summary": {
+    "total_tests": 13,
+    "passed_tests": 12,
+    "failed_tests": 1,
+    "pass_rate": 92.3,
+    "timestamp": "2025-08-18T00:24:47.807536"
+  },
+  "results": {
+    "critical": [],
+    "high": [],
+    "medium": [
+      {
+        "test": "David Grossman Appointments",
+        "details": "David's today appointment (8:00 PM) missing",
+        "fix_suggestion": "Update David's appointment times to match calendar"
+      }
+    ],
+    "low": [],
+    "passed": [
+      {
+        "test": "Server Health Check",
+        "details": "Server is responding"
+      },
+      {
+        "test": "Database Connection",
+        "details": "Database is accessible"
+      },
+      {
+        "test": "Core Tables Exist",
+        "details": "All required tables present"
+      },
+      {
+        "test": "Therapist Data",
+        "details": "Therapist data is complete"
+      },
+      {
+        "test": "Dashboard Stats API",
+        "details": "Stats API working, today's sessions: 0"
+      },
+      {
+        "test": "Today's Appointments API",
+        "details": "Found 0 appointments today"
+      },
+      {
+        "test": "Calendar Integration",
+        "details": "Found 4 calendars connected"
+      },
+      {
+        "test": "Client Data Integrity",
+        "details": "All 68 clients have complete data"
+      },
+      {
+        "test": "Appointment Sync",
+        "details": "All appointment counts match: 0"
+      },
+      {
+        "test": "AI Services Health",
+        "details": "All 4 AI services online"
+      },
+      {
+        "test": "Session Notes API",
+        "details": "Found 0 session notes"
+      },
+      {
+        "test": "Recent Activity API",
+        "details": "Found 5 recent activities"
+      }
+    ]
+  },
+  "recommendations": [
+    {
+      "priority": "MEDIUM",
+      "test": "David Grossman Appointments",
+      "issue": "David's today appointment (8:00 PM) missing",
+      "fix": "Update David's appointment times to match calendar",
+      "impact": "Feature limitations"
+    }
+  ]
+}
