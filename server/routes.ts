@@ -1655,7 +1655,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content,
         appointmentId: appointmentId || null,
         aiTags: aiTags || [],
-        source: source || 'manual',
         createdAt: new Date()
       });
 
@@ -1899,7 +1898,7 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
       const eventsWithNotes = new Set(existingNotes.map(note => note.eventId).filter(Boolean));
 
       const eventsWithoutNotes = events.filter(event => 
-        !eventsWithNotes.has(event.google_event_id)
+        !eventsWithNotes.has(event.googleEventId)
       );
 
       res.json(eventsWithoutNotes);
@@ -2088,7 +2087,7 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
                 plan: analysisResult.extractedData.plan || '',
                 tags: analysisResult.extractedData.tags || [],
                 appointmentId: analysisResult.appointmentId || null,
-                source: 'bulk_upload',
+
                 sessionDate: analysisResult.extractedData.sessionDate || new Date(),
                 createdAt: new Date()
               });
@@ -2114,6 +2113,7 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
               console.log(`❌ Document ${globalIndex + 1} failed: ${analysisResult.error}`);
             }
           } catch (error) {
+            const globalIndex = i + index;
             processingResults.errors.push({
               documentIndex: globalIndex,
               title: document.title,
@@ -5342,7 +5342,7 @@ You are Compass, an AI assistant for therapy practice management. You have acces
             }
           }
         } catch (error) {
-          console.error('console.error('Error searching Google Calendar for upcoming appointments:', error);
+          console.error('Error searching Google Calendar for upcoming appointments:', error);
         }
       }
 
@@ -7192,9 +7192,9 @@ Follow-up areas for next session:
         subcategory: taggingResult.subcategory,
         contentSummary: taggingResult.contentSummary,
         clinicalKeywords: taggingResult.clinicalKeywords,
-        confidenceScore: taggingResult.confidenceScore,
+        confidenceScore: String(taggingResult.confidenceScore || 0),
         sensitivityLevel: taggingResult.sensitivityLevel,
-        extractedText: extractedText // THIS WAS THE ORIGINAL ERROR. Replaced 'documentContent' with 'extractedText'
+        extractedText: taggingResult.extractedText || ''
       });
 
       console.log(`✅ Document analyzed and stored with ID: ${documentRecord.id}`);
@@ -7220,36 +7220,6 @@ Follow-up areas for next session:
     }
   });
 
-  app.get("/api/documents/categories", async (req, res) => {
-    try {
-      const { DocumentTagger } = await import('./documentTagger');
-      const categories = DocumentTagger.getAvailableCategories();
-
-      res.json({
-        success: true,
-        categories
-      });
-
-    } catch (error: any) {
-      console.error("Error fetching categories:", error);
-      res.status(500).json({ 
-        error: "Failed to fetch categories",
-        details: error?.message || 'Unknown error'
-      });
-    }
-  });
-
-  const httpServer = createServer(app);
-  return httpServer;
-}    } catch (error: any) {
-      console.error('💥 Error analyzing document:', error);
-      res.status(500).json({ 
-        error: 'Failed to analyze document',
-        message: error.message,
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      });
-    }
-  });
   app.get("/api/documents/categories", async (req, res) => {
     try {
       const { DocumentTagger } = await import('./documentTagger');

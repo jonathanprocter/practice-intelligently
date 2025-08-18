@@ -132,6 +132,10 @@ export interface IStorage {
   completeAssessment(id: string, responses: any, scores?: any): Promise<Assessment>;
 
   // Progress notes functionality merged into session notes methods above
+  getProgressNotes(clientId: string): Promise<SessionNote[]>;
+  getProgressNotesByAppointmentId(appointmentId: string): Promise<SessionNote[]>;
+  getRecentProgressNotes(therapistId: string, limit?: number): Promise<SessionNote[]>;
+  linkProgressNoteToAppointment(sessionNoteId: string, appointmentId: string): Promise<SessionNote>;
   findMatchingAppointment(clientId: string, sessionDate: Date): Promise<Appointment | null>;
 
   // Medication methods
@@ -725,6 +729,32 @@ export class DatabaseStorage implements IStorage {
       .where(eq(sessionNotes.id, id));
   }
 
+  // Progress notes functionality (using session notes)
+  async getProgressNotes(clientId: string): Promise<SessionNote[]> {
+    return await this.getSessionNotes(clientId);
+  }
+
+  async getProgressNotesByAppointmentId(appointmentId: string): Promise<SessionNote[]> {
+    return await db
+      .select()
+      .from(sessionNotes)
+      .where(eq(sessionNotes.appointmentId, appointmentId))
+      .orderBy(desc(sessionNotes.createdAt));
+  }
+
+  async getRecentProgressNotes(therapistId: string, limit: number = 10): Promise<SessionNote[]> {
+    return await db
+      .select()
+      .from(sessionNotes)
+      .where(eq(sessionNotes.therapistId, therapistId))
+      .orderBy(desc(sessionNotes.createdAt))
+      .limit(limit);
+  }
+
+  async linkProgressNoteToAppointment(sessionNoteId: string, appointmentId: string): Promise<SessionNote> {
+    return await this.updateSessionNote(sessionNoteId, { appointmentId });
+  }
+
 
 
   async getUpcomingAppointmentsByClient(clientId: string): Promise<Appointment[]> {
@@ -1173,32 +1203,36 @@ export class DatabaseStorage implements IStorage {
     sensitivityLevel?: string;
     extractedText?: string;
   }): Promise<Document> {
+    const updateData = {
+      ...taggingData,
+      confidenceScore: taggingData.confidenceScore ? String(taggingData.confidenceScore) : undefined,
+      updatedAt: new Date()
+    };
+    
     const [updatedDocument] = await db
       .update(documents)
-      .set({
-        ...taggingData,
-        updatedAt: new Date()
-      })
+      .set(updateData)
       .where(eq(documents.id, id))
       .returning();
     return updatedDocument;
   }
 
   async getDocumentsByCategory(therapistId: string, category?: string, subcategory?: string): Promise<Document[]> {
-    let query = db
+    const whereConditions = [eq(documents.therapistId, therapistId)];
+    
+    if (category) {
+      whereConditions.push(eq(documents.category, category));
+    }
+    
+    if (subcategory) {
+      whereConditions.push(eq(documents.subcategory, subcategory));
+    }
+
+    return await db
       .select()
       .from(documents)
-      .where(eq(documents.therapistId, therapistId));
-
-    if (category) {
-      query = query.where(eq(documents.category, category));
-    }
-
-    if (subcategory) {
-      query = query.where(eq(documents.subcategory, subcategory));
-    }
-
-    return await query.orderBy(desc(documents.uploadedAt));
+      .where(and(...whereConditions))
+      .orderBy(desc(documents.uploadedAt));
   }
 
   async getDocumentsBySensitivity(therapistId: string, sensitivityLevel: string): Promise<Document[]> {
@@ -1540,6 +1574,8 @@ export class DatabaseStorage implements IStorage {
         meetingType: row.meeting_type || null,
         participants: this.safeParseJSON(row.participants, []),
         followUpNotes: row.follow_up_notes || '',
+        aiTags: this.safeParseJSON(row.ai_tags, []),
+        followUpRequired: row.follow_up_required || false,
         confidentialityLevel: row.confidentiality_level || null
       }));
     } catch (error) {
@@ -2425,8 +2461,8 @@ Respond in JSON format:
             therapistId,
             eventId: null,
             sessionNoteId: recentNotes[0]?.id || null,
-            checkinType: analysis.checkinType,
-            priority: analysis.priority,
+            checkinType: analysis.checkinType as 'midweek' | 'followup' | 'crisis_support' | 'goal_reminder' | 'homework_reminder',
+            priority: analysis.priority as 'low' | 'medium' | 'high' | 'urgent',
             subject: analysis.subject,
             messageContent: analysis.messageContent,
             aiReasoning: analysis.reasoning,
@@ -2965,16 +3001,16 @@ Jonathan`,
 
   async getCompassConversations(therapistId: string, sessionId?: string, limit: number = 50): Promise<CompassConversation[]> {
     try {
-      let query = db
-        .select()
-        .from(compassConversations)
-        .where(eq(compassConversations.therapistId, therapistId));
-
+      const whereConditions = [eq(compassConversations.therapistId, therapistId)];
+      
       if (sessionId) {
-        query = query.where(eq(compassConversations.sessionId, sessionId));
+        whereConditions.push(eq(compassConversations.sessionId, sessionId));
       }
 
-      const conversations = await query
+      const conversations = await db
+        .select()
+        .from(compassConversations)
+        .where(and(...whereConditions))
         .orderBy(desc(compassConversations.createdAt))
         .limit(limit);
 
@@ -3045,22 +3081,21 @@ Jonathan`,
 
   async getCompassMemory(therapistId: string, contextType: string, contextKey?: string): Promise<CompassMemory[]> {
     try {
-      let query = db
-        .select()
-        .from(compassMemory)
-        .where(
-          and(
-            eq(compassMemory.therapistId, therapistId),
-            eq(compassMemory.contextType, contextType),
-            eq(compassMemory.isActive, true)
-          )
-        );
+      const whereConditions = [
+        eq(compassMemory.therapistId, therapistId),
+        eq(compassMemory.contextType, contextType),
+        eq(compassMemory.isActive, true)
+      ];
 
       if (contextKey) {
-        query = query.where(eq(compassMemory.contextKey, contextKey));
+        whereConditions.push(eq(compassMemory.contextKey, contextKey));
       }
 
-      const memories = await query.orderBy(desc(compassMemory.lastAccessed));
+      const memories = await db
+        .select()
+        .from(compassMemory)
+        .where(and(...whereConditions))
+        .orderBy(desc(compassMemory.lastAccessed));
 
       return memories;
     } catch (error) {
@@ -3191,12 +3226,12 @@ Jonathan`,
         date: note.sessionDate,
         content: note.content,
         tags: note.tags || [],
-        insights: note.insights || {}
+        insights: (note as any).insights || {}
       }));
 
       const dateRange = {
-        startDate: new Date(Math.min(...sessionContext.map(s => new Date(s.date).getTime()))),
-        endDate: new Date(Math.max(...sessionContext.map(s => new Date(s.date).getTime())))
+        startDate: new Date(Math.min(...sessionContext.map(s => s.date ? new Date(s.date).getTime() : Date.now()))),
+        endDate: new Date(Math.max(...sessionContext.map(s => s.date ? new Date(s.date).getTime() : Date.now())))
       };
 
       // Generate AI summary using OpenAI
