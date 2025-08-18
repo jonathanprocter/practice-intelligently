@@ -1,0 +1,78 @@
+{
+  "audit_summary": {
+    "timestamp": "2025-08-18T00:40:14.394940",
+    "total_tests": 4,
+    "passed_tests": 3,
+    "failed_tests": 1,
+    "pass_rate": 75.0,
+    "critical_issues": 0,
+    "high_priority_issues": 0,
+    "medium_priority_issues": 1,
+    "low_priority_issues": 0,
+    "fixes_applied": 3
+  },
+  "recommendations": [
+    {
+      "priority": "MEDIUM",
+      "issue": "David's today appointment (8:00 PM) missing",
+      "fix": "Update David's appointment times to match calendar",
+      "impact": "Feature limitations or performance issues"
+    }
+  ],
+  "fixes_applied": [
+    "No React Query key format issues found or fixed.",
+    "Document analysis error handling in server/routes.ts appears present.",
+    "Calendar events API returned 4782 events."
+  ],
+  "detailed_results": {
+    "timestamp": "2025-08-18T00:40:14.394940",
+    "critical_issues": [],
+    "high_priority_issues": [],
+    "medium_priority_issues": [
+      {
+        "test": "David Grossman Appointments",
+        "details": "David's today appointment (8:00 PM) missing",
+        "fix_suggestion": "Update David's appointment times to match calendar",
+        "timestamp": "2025-08-18T00:40:16.596037"
+      }
+    ],
+    "low_priority_issues": [],
+    "passed_tests": [
+      {
+        "test": "Server Health Check",
+        "details": "Server is responding",
+        "fix_suggestion": "",
+        "timestamp": "2025-08-18T00:40:16.402408"
+      },
+      {
+        "test": "Database Connection",
+        "details": "Successfully connected to database",
+        "fix_suggestion": "",
+        "timestamp": "2025-08-18T00:40:16.546309"
+      },
+      {
+        "test": "Calendar Events Loading",
+        "details": "Calendar events API returned 4782 events.",
+        "fix_suggestion": "",
+        "timestamp": "2025-08-18T00:40:16.968076"
+      }
+    ],
+    "failed_tests": [
+      {
+        "test": "David Grossman Appointments",
+        "details": "David's today appointment (8:00 PM) missing",
+        "fix_suggestion": "Update David's appointment times to match calendar",
+        "timestamp": "2025-08-18T00:40:16.596037"
+      }
+    ],
+    "performance_metrics": {},
+    "database_analysis": {},
+    "api_coverage": {},
+    "security_analysis": {},
+    "fixes_applied": [
+      "No React Query key format issues found or fixed.",
+      "Document analysis error handling in server/routes.ts appears present.",
+      "Calendar events API returned 4782 events."
+    ]
+  }
+}
