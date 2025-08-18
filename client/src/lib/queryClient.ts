@@ -69,3 +69,11 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Helper function to ensure query keys are always arrays
+export const createQueryKey = (key: string | string[]): string[] => {
+  if (typeof key === 'string') {
+    return [key];
+  }
+  return key;
+};

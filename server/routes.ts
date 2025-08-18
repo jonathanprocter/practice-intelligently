@@ -1779,7 +1779,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
         }
       }
 
-      res.json({ 
+      res.json({
         message: `Linked ${linkedCount} session notes to appointments`,
         linkedCount,
         totalUnlinked: unlinkedNotes.length 
@@ -3421,7 +3421,7 @@ Suggested preparation:
     }
   });
 
-  // Frontend endpoint compatibility - Cross-client patterns (POST)
+  // Frontend compatibility endpoint - Cross-client patterns (POST)
   app.post('/api/ai/cross-client-patterns', async (req, res) => {
     try {
       const { therapistId } = req.body;
@@ -4249,10 +4249,10 @@ You are Compass, an AI assistant for therapy practice management. You have acces
     }
   });
 
-  // ========== END ASSESSMENT MANAGEMENT SYSTEM ROUTES ==========
+  // ========== CALENDAR API ROUTES (Auto-generated) ==========
 
   // Calendar events sync endpoint - Sync Google Calendar events to database
-  app.post('/api/calendar/sync', async (req: any, res: any) => {
+  app.post('/api/calendar/sync', async (req, res) => {
     console.log('🔄 Starting calendar events sync to database...');
     try {
       // Send sync start notification
@@ -4839,7 +4839,7 @@ You are Compass, an AI assistant for therapy practice management. You have acces
       }
       console.error('Error processing uploaded document:', error);
       res.status(500).json({ 
-        error: 'Failed to process document', 
+        error: 'Failed to process document',
         details: error.message,
         stack: error.stack // Add stack trace for better debugging
       });
@@ -5342,7 +5342,7 @@ You are Compass, an AI assistant for therapy practice management. You have acces
             }
           }
         } catch (error) {
-          console.error('Error searching Google Calendar for upcoming appointments:', error);
+          console.error('console.error('Error searching Google Calendar for upcoming appointments:', error);
         }
       }
 
@@ -5876,7 +5876,7 @@ Return ONLY a JSON object with this exact structure:
             tonalAnalysis: progressNote.tonalAnalysis,
             keyPoints: progressNote.keyPoints || [],
             significantQuotes: progressNote.significantQuotes || [],
-            narrativeSummary: progressNote.narrativeSummary,
+            narrativeSummary: progressNote.narrativeSummary || 'Session content processed from uploaded document',
             sessionDate: new Date(sessionDateObj),
             clientId: clientId,
             therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
@@ -5949,7 +5949,7 @@ Return ONLY a JSON object with this exact structure:
       // Try to find the actual client ID if we have a client name
       let actualClientId = clientId;
       if (!actualClientId && processed.detectedClientName) {
-        // Clean the client name (remove 🔒 symbols and extra spaces)
+        // Clean the client name from calendar events
         const cleanClientName = processed.detectedClientName.replace(/🔒\s*/, '').trim();
         console.log(`🧹 Cleaned client name: "${cleanClientName}" from original: "${processed.detectedClientName}"`);
         actualClientId = await storage.getClientIdByName(cleanClientName);
@@ -7220,6 +7220,36 @@ Follow-up areas for next session:
     }
   });
 
+  app.get("/api/documents/categories", async (req, res) => {
+    try {
+      const { DocumentTagger } = await import('./documentTagger');
+      const categories = DocumentTagger.getAvailableCategories();
+
+      res.json({
+        success: true,
+        categories
+      });
+
+    } catch (error: any) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch categories",
+        details: error?.message || 'Unknown error'
+      });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}    } catch (error: any) {
+      console.error('💥 Error analyzing document:', error);
+      res.status(500).json({ 
+        error: 'Failed to analyze document',
+        message: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
+    }
+  });
   app.get("/api/documents/categories", async (req, res) => {
     try {
       const { DocumentTagger } = await import('./documentTagger');
