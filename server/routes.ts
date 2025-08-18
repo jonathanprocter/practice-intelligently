@@ -2905,7 +2905,7 @@ Be precise and clinical in your analysis.
         return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
       }
 
-      // Get ALL calendars and subcalendars first
+      // Get ALL calendars and subcalendars
       const calendars = await simpleOAuth.getCalendars();
       let totalEvents = 0;
       let syncedCalendars = 0;
@@ -3256,6 +3256,12 @@ Suggested preparation:
       const clientId = currentNote.clientId;
 
       // Find next scheduled appointment for this client
+      const currentClientId = clientId; // Use clientId from current note
+      if (!currentClientId) {
+        console.log(`No client ID found for event ${eventId}, cannot fetch next appointment summary.`);
+        return res.json({ notes: currentNotes, actionItems: [], nextAppointment: null });
+      }
+
       const client = await pool.connect();
       try {
         const nextApptResult = await client.query(`
@@ -3264,14 +3270,14 @@ Suggested preparation:
           WHERE client_id = $1 AND start_time > NOW() 
           ORDER BY start_time ASC 
           LIMIT 1
-        `, [clientId]);
+        `, [currentClientId]);
 
         // Get all action items for this client
         const actionItemsResult = await client.query(`
           SELECT * FROM action_items 
           WHERE client_id = $1 AND status != 'completed'
           ORDER BY priority DESC, due_date ASC
-        `, [clientId]);
+        `, [currentClientId]);
 
         // Compile comprehensive summary
         const summary = {
@@ -3769,7 +3775,7 @@ Suggested preparation:
         'josh': 'TxGEqnHWrfWFTfGW9XjX',   // Josh - deep male
         'sam': 'yoZ06aMxZJJ28mfd3POQ',    // Sam - raspy male
         'nicole': 'piTKgcLEGmPE4e6mEKli', // Nicole - warm professional
-        'natasha': 'Xb7hH8MSUJpSbSDYk0k2' // Natasha - calm therapeutic
+        'natasha': 'Xb7hH8MSUJpSbSDYk2' // Natasha - calm therapeutic
       };
 
       const selectedVoiceId = voiceMap[voice as keyof typeof voiceMap] || voiceMap.rachel;
@@ -4221,20 +4227,6 @@ You are Compass, an AI assistant for therapy practice management. You have acces
     } catch (error: any) {
       console.error('Error completing session assessment:', error);
       res.status(500).json({ error: 'Failed to complete assessment', details: error.message });
-    }
-  });
-
-  app.get('/api/assessments/session/active/:therapistId', async (req, res) => {
-    try {
-      const { therapistId } = req.params;
-
-      // Get active session assessments (mock implementation for now)
-      const activeSessionAssessments: any[] = []; // Would fetch from storage layer
-
-      res.json(activeSessionAssessments);
-    } catch (error: any) {
-      console.error('Error fetching active session assessments:', error);
-      res.status(500).json({ error: 'Failed to fetch active assessments', details: error.message });
     }
   });
 
@@ -5243,11 +5235,10 @@ You are Compass, an AI assistant for therapy practice management. You have acces
             notes: appointmentNotesUpdate
           });
           console.log(`✅ Updated database appointment notes: ${appointmentId}`);
-        } catch (error) {
-          console.log(`ℹ️ Appointment ${appointmentId} is a Google Calendar event, notes stored in progress note only`);
+        } catch (error) {          console.log(`ℹ️ Appointment ${appointmentId} is a Google Calendar event, notes stored in progress note only`);
         }
 
-        // Generate AI prep for next appointment if exists
+        // Generate session prep for next appointment if exists
         if (finalClientId !== 'unknown') {
           console.log(`🔄 Generating next session insights for client ID: ${finalClientId} (${actualClientName})`);
           await generateNextSessionInsights(finalClientId, finalTherapistId, savedNote, actualClientName);
@@ -5383,9 +5374,9 @@ Generate specific preparation guidance for the next session including:
 1. Key focus areas to explore
 2. Follow-up questions based on this session
 3. Suggested interventions or techniques
-4. Homework/action items to review
-5. Risk factors or concerns to monitor
-6. Session objectives for continuation of care`;
+4. Homework and Between-Session Activities
+5. Risk Factors or Concerns to Monitor
+6. Session Objectives for Continuation of Care`;
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -5825,7 +5816,7 @@ Format as a structured JSON response with these exact field names: overview, rec
         messages: [
           {
             role: "system",
-            content: `You are an expert clinical therapist creating a progress note. Generate a SOAP format progress note from the session content.
+            content: `You are an expert clinical therapist creating a progress note. Generate a SOAP format progress note.
 
 Return ONLY a JSON object with this exact structure:
 {
@@ -6499,7 +6490,7 @@ Follow-up areas for next session:
             appointmentId: result.appointment.appointmentId,
             googleEventId: result.appointment.googleEventId,
             created: result.appointment.created,
-            linked: result.linked
+            linked: result.appointment.linked
           } : null
         };
 
@@ -7203,7 +7194,7 @@ Follow-up areas for next session:
         clinicalKeywords: taggingResult.clinicalKeywords,
         confidenceScore: taggingResult.confidenceScore,
         sensitivityLevel: taggingResult.sensitivityLevel,
-        extractedText: documentContent // This line was causing the original error
+        extractedText: extractedText // THIS WAS THE ORIGINAL ERROR. Replaced 'documentContent' with 'extractedText'
       });
 
       console.log(`✅ Document analyzed and stored with ID: ${documentRecord.id}`);
