@@ -652,7 +652,7 @@ function getTimestampValue(timestamp: string): number {
   return 0;
 }
 
-// Helper function to sync calendar events to appointments
+// Helper function to sync calendar events to database and send progress updates via WebSocket
 async function syncEventToAppointment(event: any, calendarId: string): Promise<number> {
   try {
     // Skip events without proper time data
@@ -4153,7 +4153,7 @@ You are Compass, an AI assistant for therapy practice management. You have acces
     }
   });
 
-  // Session-based assessment endpoints for real-time integration
+  // Session-based assessment endpoints for real-time administration
   app.post('/api/assessments/session/start', async (req, res) => {
     try {
       const { clientId, appointmentId, assessmentIds, therapistId } = req.body;
@@ -4556,7 +4556,7 @@ You are Compass, an AI assistant for therapy practice management. You have acces
       let allEvents: any[] = [];
 
       if (!calendarId || calendarId === 'all') {
-        // Fetch from ALL calendars when no specific calendar is requested
+        // Fetch from ALL calendars
         const calendars = await simpleOAuth.getCalendars();
         console.log(`📅 Frontend requesting events from ALL ${calendars.length} calendars (GOOGLE API DIRECT)`);
 
@@ -4581,8 +4581,8 @@ You are Compass, an AI assistant for therapy practice management. You have acces
             } else {
               console.log(`  📭 No events found in calendar: ${calendar.summary}`);
             }
-          } catch (calError: any) {
-            console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError?.message || calError);
+          } catch (calError) {
+            console.warn(`Error fetching from calendar ${calendar.summary}:`, calError);
           }
         }
 
@@ -5138,7 +5138,7 @@ You are Compass, an AI assistant for therapy practice management. You have acces
 
               if (matchingEvent) {
                 appointmentId = matchingEvent.id;
-                console.log(`✅ Found matching Google Calendar event: ${matchingEvent.summary} (${appointmentId})`);
+                console.log(`✅ Found matching Google Calendar event: ${matchingEvent.summary} (${matchingEvent.id})`);
               } else {
                 console.log(`❌ No matching Google Calendar event found for ${actualClientName} on ${finalSessionDate}`);
 
@@ -5320,7 +5320,7 @@ You are Compass, an AI assistant for therapy practice management. You have acces
             ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
             : 'http://localhost:5000';
 
-          // Get events from today onwards to findfuture appointments
+          // Get events from today onwards to find future appointments
           const today = new Date();
           const futureDate = new Date(today.getTime() + (90 * 24 * 60 * 60 * 1000)); // Next 90 days
 
@@ -7203,7 +7203,7 @@ Follow-up areas for next session:
         clinicalKeywords: taggingResult.clinicalKeywords,
         confidenceScore: taggingResult.confidenceScore,
         sensitivityLevel: taggingResult.sensitivityLevel,
-        extractedText: documentContent
+        extractedText: documentContent // This line was causing the original error
       });
 
       console.log(`✅ Document analyzed and stored with ID: ${documentRecord.id}`);
