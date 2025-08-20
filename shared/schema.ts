@@ -934,6 +934,19 @@ export const assessmentAuditLogRelations = relations(assessmentAuditLog, ({ one 
   }),
 }));
 
+// Status enums
+export const AppointmentStatus = {
+  SCHEDULED: 'scheduled',
+  CONFIRMED: 'confirmed',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
+  NO_SHOW: 'no_show',
+  CLINICIAN_CANCELED: 'clinician_canceled',
+  RESCHEDULED: 'rescheduled'
+} as const;
+
+export type AppointmentStatusType = typeof AppointmentStatus[keyof typeof AppointmentStatus];
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
