@@ -1,5 +1,6 @@
 import { CalendarEvent } from '@/types/calendar';
-import { AppointmentStatus } from '@/types/sessionNoteTypes';
+
+export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no-show' | 'pending';
 
 export interface StatusBadgeInfo {
   show: boolean;
@@ -30,16 +31,16 @@ export function getStatusBadgeInfo(status: AppointmentStatus): StatusBadgeInfo {
         text: 'CANCELLED',
         color: '#ffc107' // Yellow
       };
-    case 'no_show':
+    case 'no-show':
       return {
         show: true,
         text: 'NO SHOW',
         color: '#dc3545' // Red
       };
-    case 'rescheduled':
+    case 'pending':
       return {
         show: true,
-        text: 'RESCHEDULED',
+        text: 'PENDING',
         color: '#fd7e14' // Orange
       };
     case 'scheduled':
@@ -59,13 +60,13 @@ export function getAppointmentStatusStyles(status: AppointmentStatus): string {
   switch (status) {
     case 'cancelled':
       return 'bg-yellow-50 border-yellow-300 text-yellow-800';
-    case 'no_show':
+    case 'no-show':
       return 'bg-red-50 border-red-300 text-red-800';
     case 'completed':
       return 'bg-purple-50 border-purple-300 text-purple-800';
     case 'confirmed':
       return 'bg-green-50 border-green-300 text-green-800';
-    case 'rescheduled':
+    case 'pending':
       return 'bg-orange-50 border-orange-300 text-orange-800';
     case 'scheduled':
     default:
@@ -77,7 +78,7 @@ export function getAppointmentStatusStyles(status: AppointmentStatus): string {
  * Determine if appointment text should have strikethrough styling
  */
 export function shouldShowStrikethrough(status: AppointmentStatus): boolean {
-  return status === 'cancelled' || status === 'no_show';
+  return status === 'cancelled' || status === 'no-show';
 }
 
 /**
@@ -107,11 +108,82 @@ export function getAppointmentStatusLabel(status: AppointmentStatus): string {
       return 'Completed';
     case 'cancelled':
       return 'Cancelled';
-    case 'no_show':
+    case 'no-show':
       return 'No Show';
-    case 'rescheduled':
-      return 'Rescheduled';
+    case 'pending':
+      return 'Pending';
     default:
       return 'Unknown';
+  }
+}
+export interface StatusBadgeInfo {
+  show: boolean;
+  text: string;
+  color: string;
+}
+
+export function getAppointmentStatusStyles(status: string) {
+  switch (status?.toLowerCase()) {
+    case 'confirmed':
+      return 'bg-green-100 border-green-500 text-green-800';
+    case 'pending':
+      return 'bg-yellow-100 border-yellow-500 text-yellow-800';
+    case 'cancelled':
+      return 'bg-red-100 border-red-500 text-red-800 opacity-60';
+    case 'no-show':
+      return 'bg-gray-100 border-gray-500 text-gray-800 opacity-60';
+    case 'completed':
+      return 'bg-blue-100 border-blue-500 text-blue-800';
+    default:
+      return 'bg-white border-gray-300 text-gray-800';
+  }
+}
+
+export function getStatusBadgeInfo(status: string): StatusBadgeInfo {
+  switch (status?.toLowerCase()) {
+    case 'confirmed':
+      return { show: true, text: 'CONFIRMED', color: '#22c55e' };
+    case 'pending':
+      return { show: true, text: 'PENDING', color: '#f59e0b' };
+    case 'cancelled':
+      return { show: true, text: 'CANCELLED', color: '#ef4444' };
+    case 'no-show':
+      return { show: true, text: 'NO-SHOW', color: '#6b7280' };
+    case 'completed':
+      return { show: true, text: 'COMPLETED', color: '#3b82f6' };
+    default:
+      return { show: false, text: '', color: '#6b7280' };
+  }
+}
+
+export function shouldShowStrikethrough(status: string): boolean {
+  const lowerStatus = status?.toLowerCase();
+  return lowerStatus === 'cancelled' || lowerStatus === 'no-show';
+}
+
+export function isAppointmentEvent(event: any): boolean {
+  // Check if this is an appointment-type event
+  return event.source === 'simplepractice' || 
+         event.calendar?.includes('appointment') ||
+         event.type === 'appointment' ||
+         (event.title && !event.title.toLowerCase().includes('block'));
+}
+
+export function getAppointmentStatusLabel(status: string): string {
+  switch (status?.toLowerCase()) {
+    case 'confirmed':
+      return 'Confirmed';
+    case 'pending':
+      return 'Pending Confirmation';
+    case 'cancelled':
+      return 'Cancelled';
+    case 'no-show':
+      return 'No Show';
+    case 'completed':
+      return 'Completed';
+    case 'scheduled':
+      return 'Scheduled';
+    default:
+      return 'Unknown Status';
   }
 }
