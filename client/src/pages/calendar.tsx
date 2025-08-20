@@ -4,7 +4,7 @@ import { ApiClient } from '@/lib/api';
 import { CalendarEvent, CalendarDay } from '../types/calendar';
 import { getOfficeLocationByDay, getCalendarLocationDisplay } from '@/utils/locationUtils';
 import { getWeekStart, getWeekEnd, getWeekDays, addWeeks, isCurrentWeek, getWeekRangeString } from '../utils/dateUtils';
-// Removed export imports - using direct PDF export now
+import { exportCurrentWeeklyView } from '../utils/currentWeeklyExport';
 import { WeeklyCalendarGrid } from '../components/calendar/WeeklyCalendarGrid';
 import { CalendarHeader } from '../components/calendar/CalendarHeader';
 import { Link } from 'wouter';
@@ -387,34 +387,47 @@ export default function Calendar() {
   };
 
   const handleExportCalendar = async (type: 'weekly' | 'daily' | 'appointments') => {
-    const { exportToPDF, exportDailyToPDF } = await import('@/utils/pdfExport');
-
-    // Convert calendar events to appointment format for PDF export
-    const appointmentData = calendarEvents.map(event => ({
-      id: event.id,
-      clientName: event.clientName || 'Unknown',
-      type: event.type,
-      startTime: event.startTime instanceof Date ? event.startTime.toISOString() : event.startTime,
-      endTime: event.endTime instanceof Date ? event.endTime.toISOString() : event.endTime,
-      status: event.status,
-      notes: event.notes || '',
-      attendees: event.attendees || ''
-    }));
-
     try {
       switch (type) {
         case 'weekly':
-        case 'appointments':
-          await exportToPDF({
-            appointments: appointmentData,
-            weekStart: currentWeek,
+          // Use the PERFECT Current Weekly Layout as specified
+          exportCurrentWeeklyView(calendarEvents, currentWeek, weekEnd);
+          break;
+        case 'daily':
+          const { exportDailyToPDF } = await import('@/utils/pdfExport');
+          // Convert calendar events to appointment format for daily PDF export
+          const dailyAppointmentData = calendarEvents.map(event => ({
+            id: event.id,
+            clientName: event.clientName || 'Unknown',
+            type: event.type,
+            startTime: event.startTime instanceof Date ? event.startTime.toISOString() : event.startTime,
+            endTime: event.endTime instanceof Date ? event.endTime.toISOString() : event.endTime,
+            status: event.status,
+            notes: event.notes || '',
+            attendees: event.attendees || ''
+          }));
+          await exportDailyToPDF({
+            appointments: dailyAppointmentData,
+            date: selectedDate,
             therapistName: 'Dr. Jonathan Procter'
           });
           break;
-        case 'daily':
-          await exportDailyToPDF({
+        case 'appointments':
+          const { exportToPDF } = await import('@/utils/pdfExport');
+          // Convert calendar events to appointment format for appointment list export
+          const appointmentData = calendarEvents.map(event => ({
+            id: event.id,
+            clientName: event.clientName || 'Unknown',
+            type: event.type,
+            startTime: event.startTime instanceof Date ? event.startTime.toISOString() : event.startTime,
+            endTime: event.endTime instanceof Date ? event.endTime.toISOString() : event.endTime,
+            status: event.status,
+            notes: event.notes || '',
+            attendees: event.attendees || ''
+          }));
+          await exportToPDF({
             appointments: appointmentData,
-            date: selectedDate,
+            weekStart: currentWeek,
             therapistName: 'Dr. Jonathan Procter'
           });
           break;
@@ -714,7 +727,7 @@ export default function Calendar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => handleExportCalendar('weekly')}>
-                  Export Weekly View
+                  📊 Current Weekly Layout
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleExportCalendar('daily')}>
                   Export Daily View
