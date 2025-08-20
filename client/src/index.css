@@ -24,14 +24,17 @@
   --ring: hsl(215, 20%, 65%);
   --radius: 0.5rem;
 
-  /* Custom therapy colors */
-  --therapy-primary: hsl(28, 43%, 70%);
-  --therapy-success: hsl(212, 31%, 40%);
-  --therapy-warning: hsl(82, 26%, 64%);
-  --therapy-error: hsl(0, 23%, 56%);
-  --therapy-border: hsl(0, 0%, 87%);
-  --therapy-text: hsl(0, 0%, 10%);
-  --therapy-bg: hsl(0, 0%, 98%);
+  /* Custom therapy colors - SimplePractice Cornflower Blue Theme */
+  --therapy-primary: hsl(218, 85%, 65%); /* Cornflower blue primary */
+  --therapy-primary-light: hsl(218, 85%, 85%); /* Light cornflower blue */
+  --therapy-primary-dark: hsl(218, 85%, 45%); /* Dark cornflower blue */
+  --therapy-success: hsl(142, 71%, 45%); /* Professional green for success */
+  --therapy-warning: hsl(45, 93%, 58%); /* Warm amber for warnings */
+  --therapy-error: hsl(0, 72%, 51%); /* Clear red for errors */
+  --therapy-border: hsl(218, 20%, 90%); /* Soft blue-tinted border */
+  --therapy-text: hsl(218, 20%, 15%); /* Dark blue-tinted text */
+  --therapy-bg: hsl(218, 50%, 98%); /* Very light blue background */
+  --therapy-accent: hsl(218, 30%, 95%); /* Light accent color */
 }
 
 .dark {

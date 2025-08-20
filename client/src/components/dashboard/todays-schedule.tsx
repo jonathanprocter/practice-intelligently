@@ -352,17 +352,17 @@ export default function TodaysSchedule() {
   };
 
   return (
-    <div className="therapy-card">
-      <div className="p-6 border-b border-therapy-border">
+    <div className="therapy-card bg-white border-2 border-therapy-border">
+      <div className="p-6 border-b-2 border-therapy-border bg-therapy-accent">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-therapy-text">Today's Schedule</h3>
-          <Button variant="ghost" className="text-therapy-primary hover:text-therapy-primary/80">
+          <h3 className="text-xl font-bold text-therapy-primary-dark">Today's Schedule</h3>
+          <Button variant="ghost" className="text-therapy-primary hover:text-therapy-primary-dark transition-colors font-medium">
             View All
           </Button>
         </div>
       </div>
       
-      <div className="p-6 space-y-4">
+      <div className="p-6 space-y-4 bg-therapy-bg">
         {appointments && appointments.length > 0 ? (
           appointments.map((appointment) => {
             console.log('Rendering appointment:', appointment.id, appointment.clientName);
@@ -375,14 +375,14 @@ export default function TodaysSchedule() {
             
             console.log('About to return JSX for appointment:', appointment.id);
             return (
-              <div key={appointment.id} className="bg-therapy-bg rounded-lg overflow-hidden border">
+              <div key={appointment.id} className="bg-white rounded-lg overflow-hidden border-2 border-therapy-border hover:border-therapy-primary transition-all duration-200 shadow-sm hover:shadow-md">
                 <div className="flex items-center justify-between p-4">
                   <div className="flex items-center space-x-4">
-                    <div className="flex flex-col items-center">
-                      <span className="text-sm font-medium text-therapy-primary">
+                    <div className="flex flex-col items-center bg-therapy-primary-light rounded-lg p-3 min-w-[80px]">
+                      <span className="text-sm font-bold text-therapy-primary-dark">
                         {formatTime(appointment.startTime)}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-therapy-primary">
                         {calculateDuration(appointment.startTime, appointment.endTime)}
                       </span>
                     </div>
@@ -391,15 +391,15 @@ export default function TodaysSchedule() {
                       <div className="flex items-center space-x-2">
                         <span 
                           onClick={() => handleClientNameClick(clientName)}
-                          className="text-lg font-semibold text-therapy-text hover:text-therapy-primary cursor-pointer"
+                          className="text-lg font-bold text-therapy-text hover:text-therapy-primary cursor-pointer transition-colors duration-200"
                         >
                           {clientName}
                         </span>
-                        <Badge className={getStatusColor(appointment.status)}>
+                        <Badge className="bg-therapy-primary text-white text-xs px-2 py-1 rounded-full font-medium">
                           {appointment.status}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-therapy-text/70 mt-1 font-medium">
                         {appointment.type} • {getCalendarLocationDisplay(appointment.location || '')}
                       </p>
                     </div>
@@ -411,7 +411,7 @@ export default function TodaysSchedule() {
                         onClick={() => handleEndSession(appointment.id)}
                         variant="outline"
                         size="sm"
-                        className="bg-therapy-warning text-white hover:bg-therapy-warning/80"
+                        className="bg-therapy-warning text-white hover:bg-therapy-warning/90 border-therapy-warning shadow-sm font-medium"
                       >
                         <Pause className="h-4 w-4 mr-2" />
                         End Session
@@ -421,7 +421,7 @@ export default function TodaysSchedule() {
                         onClick={() => handleStartSession(appointment.id, clientName)}
                         variant="outline"
                         size="sm"
-                        className="bg-therapy-primary text-white hover:bg-therapy-primary/80"
+                        className="bg-therapy-primary text-white hover:bg-therapy-primary-dark border-therapy-primary shadow-sm font-medium"
                       >
                         <Play className="h-4 w-4 mr-2" />
                         Start Session
