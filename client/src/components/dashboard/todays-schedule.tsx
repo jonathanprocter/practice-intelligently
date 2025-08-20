@@ -389,17 +389,18 @@ export default function TodaysSchedule() {
                     
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
-                        <ClientLink 
-                          clientName={clientName}
+                        <span 
                           onClick={() => handleClientNameClick(clientName)}
                           className="text-lg font-semibold text-therapy-text hover:text-therapy-primary cursor-pointer"
-                        />
+                        >
+                          {clientName}
+                        </span>
                         <Badge className={getStatusColor(appointment.status)}>
                           {appointment.status}
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-500 mt-1">
-                        {appointment.type} • {getCalendarLocationDisplay(appointment.location)}
+                        {appointment.type} • {getCalendarLocationDisplay(appointment.location || '')}
                       </p>
                     </div>
                   </div>

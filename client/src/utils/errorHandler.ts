@@ -39,7 +39,7 @@ interface ApiError {
 }
 
 export function handleApiError(error: ApiError | Error | unknown): string {
-  if (error?.message) {
+  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
     return error.message;
   }
   if (typeof error === 'string') {
