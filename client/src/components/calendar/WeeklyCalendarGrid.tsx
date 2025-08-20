@@ -173,33 +173,49 @@ export const WeeklyCalendarGrid = ({
     return filteredEvents;
   };
 
-  const getEventStyle = (event: CalendarEvent) => {
-    // Ensure dates are properly parsed
+  // Helper to find the time slot index for a given Date object
+  const getTimeSlotIndex = (date: Date): number => {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    // Assuming each time slot is 60 minutes for simplicity in this calculation,
+    // but the actual rendering will use getEventDurationInSlots for precise height.
+    // This function is more for determining the 'top' position based on hour blocks.
+    return hours; // This might need refinement based on how timeSlots are generated and indexed.
+  };
+
+
+  const getEventStyle = (event: CalendarEvent, dayIndex: number): React.CSSProperties => {
     const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
     const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
 
-    // Skip invalid dates
+    // Check if dates are valid
     if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
-      return { height: '30px', marginBottom: '2px', zIndex: 20 };
+      return {
+        position: 'absolute',
+        top: '0px',
+        height: '58px',
+        left: '2px',
+        right: '2px',
+        zIndex: 10,
+      };
     }
 
-    const duration = getEventDurationInSlots({ startTime, endTime });
-    // Calculate precise height based on actual duration
-    const actualDurationMs = endTime.getTime() - startTime.getTime();
-    const actualDurationHours = actualDurationMs / (1000 * 60 * 60);
-    const slotHeight = 30; // 30px per 30-minute slot
-    const preciseHeight = Math.min(duration * slotHeight, actualDurationHours * 2 * slotHeight);
+    const startSlot = getTimeSlotIndex(startTime);
+    const duration = getEventDurationInSlots(startTime, endTime);
 
     return {
-      height: `${preciseHeight}px`,
-      marginBottom: duration > 1 ? '0px' : '2px',
-      zIndex: 20 // Ensure events appear above other elements
+      position: 'absolute',
+      top: `${startSlot * 60}px`,
+      height: `${duration * 60 - 2}px`,
+      left: '2px',
+      right: '2px',
+      zIndex: 10,
     };
-  }
+  };
 
   const getEventSourceClass = (event: CalendarEvent) => {
     // Check if it's a SimplePractice appointment
-    const isSimplePractice = event.source === 'simplepractice' || 
+    const isSimplePractice = event.source === 'simplepractice' ||
                            event.notes?.toLowerCase().includes('simple practice') ||
                            event.title?.toLowerCase().includes('simple practice') ||
                            event.description?.toLowerCase().includes('simple practice') ||
@@ -327,8 +343,8 @@ export const WeeklyCalendarGrid = ({
                   "calendar-cell",
                   timeSlot.minute === 0 ? "hour" : "half-hour",
                   slotIndex === 0 ? "first-time-slot" : "",
-                  dropZone && dropZone.date.toDateString() === day.date.toDateString() && 
-                  dropZone.time === `${timeSlot.hour.toString().padStart(2, '0')}:${timeSlot.minute.toString().padStart(2, '0')}` ? 
+                  dropZone && dropZone.date.toDateString() === day.date.toDateString() &&
+                  dropZone.time === `${timeSlot.hour.toString().padStart(2, '0')}:${timeSlot.minute.toString().padStart(2, '0')}` ?
                   "drop-zone-active" : ""
                 )}
                 onClick={() => onTimeSlotClick(day.date, timeSlot.time)}
@@ -389,7 +405,7 @@ export const WeeklyCalendarGrid = ({
                         "cursor-move hover:shadow-lg transition-shadow"
                       )}
                       style={{
-                        ...getEventStyle(event),
+                        ...getEventStyle(event, dayIndex), // Use the fixed getEventStyle
                         position: 'absolute',
                         width: 'calc(100% - 8px)',
                         height: `${appointmentHeight}px`,
@@ -408,7 +424,7 @@ export const WeeklyCalendarGrid = ({
                         onEventClick(event);
                       }}
                     >
-                      <div className="appointment-name" style={{ 
+                      <div className="appointment-name" style={{
                         fontSize: durationMinutes <= 30 ? '7px' : '9px',
                         lineHeight: durationMinutes <= 30 ? '1.1' : '1.2',
                         fontWeight: 'bold',
@@ -423,7 +439,7 @@ export const WeeklyCalendarGrid = ({
                         ))}
                       </div>
                       {event.location && getLocationDisplay(event.location) && (
-                        <div className="appointment-location" style={{ 
+                        <div className="appointment-location" style={{
                           fontSize: durationMinutes <= 30 ? '6px' : '7px',
                           lineHeight: '1.0',
                           color: '#666',
@@ -435,12 +451,12 @@ export const WeeklyCalendarGrid = ({
                         </div>
                       )}
 
-                      <div className="appointment-spacer" style={{ 
+                      <div className="appointment-spacer" style={{
                         height: durationMinutes <= 30 ? '1px' : '2px',
                         borderBottom: '1px solid #ccc',
                         margin: durationMinutes <= 30 ? '1px 0' : '2px 0'
                       }}></div>
-                      <div className="appointment-time" style={{ 
+                      <div className="appointment-time" style={{
                         fontSize: durationMinutes <= 30 ? '6px' : '8px',
                         lineHeight: '1.0',
                         height: durationMinutes <= 30 ? '10px' : 'auto',
@@ -456,14 +472,14 @@ export const WeeklyCalendarGrid = ({
                             return 'Invalid time';
                           }
 
-                          return `${startTime.toLocaleTimeString('en-US', { 
-                            hour: '2-digit', 
-                            minute: '2-digit', 
-                            hour12: false 
-                          })} - ${endTime.toLocaleTimeString('en-US', { 
-                            hour: '2-digit', 
-                            minute: '2-digit', 
-                            hour12: false 
+                          return `${startTime.toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                          })} - ${endTime.toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
                           })}`;
                         })()}
                       </div>
