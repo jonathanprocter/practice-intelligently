@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, MapPin, User, Clock, MessageSquare, Trash2, Edit, X, Brain, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AppointmentDetailsDialog } from './AppointmentDetailsDialog';
+import { getAppointmentStatusCSS } from '../../utils/appointmentStatusUtils';
 import './DailyViewGrid.css';
 
 interface DailyViewGridProps {
@@ -180,7 +181,7 @@ export const DailyViewGrid = ({
     if (event.status) {
       baseClass += ` status-${event.status}`;
       // Add additional status styling from utils
-      baseClass += ` ${getAppointmentStatusStyles(event.status)}`;
+      baseClass += ` ${getAppointmentStatusCSS(event.status)}`;
     }
 
     return baseClass;
