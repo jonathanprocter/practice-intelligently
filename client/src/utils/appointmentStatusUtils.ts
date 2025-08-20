@@ -1,189 +1,194 @@
+import { AppointmentStatus, type AppointmentStatusType } from '../../../shared/schema';
 import { CalendarEvent } from '@/types/calendar';
 
-export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no-show' | 'pending';
+export function getAppointmentStatusColor(status: AppointmentStatusType | string): string {
+  switch (status) {
+    case AppointmentStatus.SCHEDULED:
+    case AppointmentStatus.CONFIRMED:
+      return '#4285f4'; // Blue
+    case AppointmentStatus.CANCELLED:
+      return '#ffc107'; // Amber
+    case AppointmentStatus.NO_SHOW:
+      return '#dc3545'; // Red
+    case AppointmentStatus.CLINICIAN_CANCELED:
+      return '#6c757d'; // Gray
+    case AppointmentStatus.COMPLETED:
+      return '#28a745'; // Green
+    default:
+      return '#4285f4'; // Default blue
+  }
+}
 
-export interface StatusBadgeInfo {
+export function getAppointmentStatusLabel(status: AppointmentStatusType | string): string {
+  switch (status) {
+    case AppointmentStatus.SCHEDULED:
+      return 'Scheduled';
+    case AppointmentStatus.CONFIRMED:
+      return 'Confirmed';
+    case AppointmentStatus.CANCELLED:
+      return 'CANCELLED';
+    case AppointmentStatus.NO_SHOW:
+      return 'NO SHOW';
+    case AppointmentStatus.CLINICIAN_CANCELED:
+      return 'Clinician Canceled';
+    case AppointmentStatus.COMPLETED:
+      return 'Completed';
+    default:
+      return 'Scheduled';
+  }
+}
+
+export function getAppointmentStatusCSS(status: AppointmentStatusType | string): string {
+  switch (status) {
+    case AppointmentStatus.SCHEDULED:
+    case AppointmentStatus.CONFIRMED:
+      return 'appointment';
+    case AppointmentStatus.CANCELLED:
+      return 'appointment no-show'; // Amber styling
+    case AppointmentStatus.NO_SHOW:
+      return 'appointment cancelled-red'; // Red styling
+    case AppointmentStatus.CLINICIAN_CANCELED:
+      return 'appointment cancelled-minimal'; // Gray styling
+    case AppointmentStatus.COMPLETED:
+      return 'appointment completed';
+    default:
+      return 'appointment';
+  }
+}
+
+export function shouldShowStrikethrough(status: AppointmentStatusType | string): boolean {
+  return status === AppointmentStatus.CANCELLED || 
+         status === AppointmentStatus.NO_SHOW || 
+         status === AppointmentStatus.CLINICIAN_CANCELED;
+}
+
+export function getStatusBadgeInfo(status: AppointmentStatusType | string): {
   show: boolean;
   text: string;
   color: string;
+} {
+  switch (status) {
+    case AppointmentStatus.CANCELLED:
+      return { show: true, text: 'CANCELLED', color: '#fd7e14' };
+    case AppointmentStatus.NO_SHOW:
+      return { show: true, text: 'NO SHOW', color: '#d32f2f' };
+    case AppointmentStatus.CLINICIAN_CANCELED:
+      return { show: true, text: 'Clinician Canceled', color: '#6c757d' };
+    default:
+      return { show: false, text: '', color: '' };
+  }
 }
 
-/**
- * Get styling information for appointment status badges
- */
-export function getStatusBadgeInfo(status: AppointmentStatus): StatusBadgeInfo {
+export function getAppointmentStatusStyles(status: AppointmentStatusType | string): React.CSSProperties {
+  const baseStyles: React.CSSProperties = {
+    position: 'relative',
+    cursor: 'pointer',
+    transition: 'opacity 0.2s',
+    padding: '8px 12px',
+    margin: '2px',
+    borderRadius: '4px',
+    fontSize: '13px',
+    height: '38px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+  };
+
   switch (status) {
-    case 'confirmed':
+    case AppointmentStatus.SCHEDULED:
+    case AppointmentStatus.CONFIRMED:
       return {
-        show: true,
-        text: 'CONFIRMED',
-        color: '#28a745' // Green
+        ...baseStyles,
+        background: '#4285f4',
+        color: 'white',
       };
-    case 'completed':
+    case AppointmentStatus.CANCELLED:
       return {
-        show: true,
-        text: 'COMPLETED',
-        color: '#6f42c1' // Purple
+        ...baseStyles,
+        background: '#fff3cd',
+        color: '#856404',
+        border: '2px solid #ffc107',
       };
-    case 'cancelled':
+    case AppointmentStatus.NO_SHOW:
       return {
-        show: true,
-        text: 'CANCELLED',
-        color: '#ffc107' // Yellow
+        ...baseStyles,
+        background: '#ffebee',
+        color: '#d32f2f',
+        border: '2px solid #f44336',
       };
-    case 'no-show':
+    case AppointmentStatus.CLINICIAN_CANCELED:
       return {
-        show: true,
-        text: 'NO SHOW',
-        color: '#dc3545' // Red
+        ...baseStyles,
+        background: '#f8f9fa',
+        color: '#6c757d',
+        border: '1px solid #dee2e6',
+        opacity: 0.6,
       };
-    case 'pending':
+    case AppointmentStatus.COMPLETED:
       return {
-        show: true,
-        text: 'PENDING',
-        color: '#fd7e14' // Orange
+        ...baseStyles,
+        background: '#d4edda',
+        color: '#155724',
+        border: '1px solid #c3e6cb',
       };
-    case 'scheduled':
     default:
       return {
-        show: false,
-        text: '',
-        color: ''
+        ...baseStyles,
+        background: '#4285f4',
+        color: 'white',
       };
   }
 }
 
-/**
- * Get CSS classes for appointment status styling
- */
-export function getAppointmentStatusStyles(status: AppointmentStatus): string {
-  switch (status) {
-    case 'cancelled':
-      return 'bg-yellow-50 border-yellow-300 text-yellow-800';
-    case 'no-show':
-      return 'bg-red-50 border-red-300 text-red-800';
-    case 'completed':
-      return 'bg-purple-50 border-purple-300 text-purple-800';
-    case 'confirmed':
-      return 'bg-green-50 border-green-300 text-green-800';
-    case 'pending':
-      return 'bg-orange-50 border-orange-300 text-orange-800';
-    case 'scheduled':
-    default:
-      return 'bg-white border-gray-300 text-gray-800';
-  }
-}
-
-/**
- * Determine if appointment text should have strikethrough styling
- */
-export function shouldShowStrikethrough(status: AppointmentStatus): boolean {
-  return status === 'cancelled' || status === 'no-show';
-}
-
-/**
- * Check if an event is an appointment (vs other calendar events)
- */
 export function isAppointmentEvent(event: CalendarEvent): boolean {
-  // Consider an event an appointment if it has a client name or is of appointment type
-  return !!(event.clientName || 
-           event.type === 'individual' || 
-           event.type === 'group' || 
-           event.type === 'intake' || 
-           event.type === 'consultation' || 
-           event.type === 'assessment' || 
-           event.type === 'follow-up');
+  const title = event.title.toLowerCase();
+  return title.includes('appointment') || 
+         title.includes('session') || 
+         title.includes('therapy') ||
+         title.includes('consultation') ||
+         title.includes('patient') ||
+         event.source === 'simplepractice';
 }
 
-/**
- * Get a human-readable label for appointment status
- */
-export function getAppointmentStatusLabel(status: AppointmentStatus): string {
+export function getAppointmentStatusPriority(status: AppointmentStatusType | string): number {
+  // Higher number = higher priority for sorting
   switch (status) {
-    case 'scheduled':
-      return 'Scheduled';
-    case 'confirmed':
-      return 'Confirmed';
-    case 'completed':
-      return 'Completed';
-    case 'cancelled':
-      return 'Cancelled';
-    case 'no-show':
-      return 'No Show';
-    case 'pending':
-      return 'Pending';
+    case AppointmentStatus.NO_SHOW:
+      return 5; // Highest priority - red
+    case AppointmentStatus.CANCELLED:
+      return 4; // High priority - amber
+    case AppointmentStatus.SCHEDULED:
+    case AppointmentStatus.CONFIRMED:
+      return 3; // Medium priority - normal
+    case AppointmentStatus.COMPLETED:
+      return 2; // Lower priority - completed
+    case AppointmentStatus.CLINICIAN_CANCELED:
+      return 1; // Lowest priority - gray
     default:
-      return 'Unknown';
-  }
-}
-export interface StatusBadgeInfo {
-  show: boolean;
-  text: string;
-  color: string;
-}
-
-export function getAppointmentStatusStyles(status: string) {
-  switch (status?.toLowerCase()) {
-    case 'confirmed':
-      return 'bg-green-100 border-green-500 text-green-800';
-    case 'pending':
-      return 'bg-yellow-100 border-yellow-500 text-yellow-800';
-    case 'cancelled':
-      return 'bg-red-100 border-red-500 text-red-800 opacity-60';
-    case 'no-show':
-      return 'bg-gray-100 border-gray-500 text-gray-800 opacity-60';
-    case 'completed':
-      return 'bg-blue-100 border-blue-500 text-blue-800';
-    default:
-      return 'bg-white border-gray-300 text-gray-800';
+      return 3;
   }
 }
 
-export function getStatusBadgeInfo(status: string): StatusBadgeInfo {
-  switch (status?.toLowerCase()) {
-    case 'confirmed':
-      return { show: true, text: 'CONFIRMED', color: '#22c55e' };
-    case 'pending':
-      return { show: true, text: 'PENDING', color: '#f59e0b' };
-    case 'cancelled':
-      return { show: true, text: 'CANCELLED', color: '#ef4444' };
-    case 'no-show':
-      return { show: true, text: 'NO-SHOW', color: '#6b7280' };
-    case 'completed':
-      return { show: true, text: 'COMPLETED', color: '#3b82f6' };
-    default:
-      return { show: false, text: '', color: '#6b7280' };
-  }
+export interface AppointmentStatusStats {
+  total: number;
+  scheduled: number;
+  confirmed: number;
+  cancelled: number;
+  no_show: number;
+  clinician_canceled: number;
+  completed: number;
 }
 
-export function shouldShowStrikethrough(status: string): boolean {
-  const lowerStatus = status?.toLowerCase();
-  return lowerStatus === 'cancelled' || lowerStatus === 'no-show';
-}
+export function calculateAppointmentStats(events: CalendarEvent[]): AppointmentStatusStats {
+  const appointmentEvents = events.filter(isAppointmentEvent);
 
-export function isAppointmentEvent(event: any): boolean {
-  // Check if this is an appointment-type event
-  return event.source === 'simplepractice' || 
-         event.calendar?.includes('appointment') ||
-         event.type === 'appointment' ||
-         (event.title && !event.title.toLowerCase().includes('block'));
-}
-
-export function getAppointmentStatusLabel(status: string): string {
-  switch (status?.toLowerCase()) {
-    case 'confirmed':
-      return 'Confirmed';
-    case 'pending':
-      return 'Pending Confirmation';
-    case 'cancelled':
-      return 'Cancelled';
-    case 'no-show':
-      return 'No Show';
-    case 'completed':
-      return 'Completed';
-    case 'scheduled':
-      return 'Scheduled';
-    default:
-      return 'Unknown Status';
-  }
+  return {
+    total: appointmentEvents.length,
+    scheduled: appointmentEvents.filter(e => e.status === AppointmentStatus.SCHEDULED).length,
+    confirmed: appointmentEvents.filter(e => e.status === AppointmentStatus.CONFIRMED).length,
+    cancelled: appointmentEvents.filter(e => e.status === AppointmentStatus.CANCELLED).length,
+    no_show: appointmentEvents.filter(e => e.status === AppointmentStatus.NO_SHOW).length,
+    clinician_canceled: appointmentEvents.filter(e => e.status === AppointmentStatus.CLINICIAN_CANCELED).length,
+    completed: appointmentEvents.filter(e => e.status === AppointmentStatus.COMPLETED).length,
+  };
 }
