@@ -9,10 +9,12 @@ export interface CalendarEvent {
   status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no-show' | 'pending';
   location?: string;
   notes?: string;
+  description?: string;
+  actionItems?: string;
   isAllDay?: boolean;
   priority?: 'low' | 'medium' | 'high';
   color?: string;
-  source?: 'system' | 'google' | 'manual';
+  source?: 'system' | 'google' | 'manual' | 'simplepractice';
   therapistId: string;
   attendees?: string;
   calendarId?: string;

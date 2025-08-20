@@ -197,8 +197,11 @@
   display: grid;
   grid-template-columns: 80px 1fr;
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: white;
+  max-height: calc(100vh - 300px);
+  min-height: 600px;
 }
 
 /* Time Column */
@@ -207,11 +210,14 @@
   border-right: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  position: sticky;
+  left: 0;
+  z-index: 2;
 }
 
 .time-slot {
   height: 60px;
+  min-height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -219,6 +225,7 @@
   font-size: 0.75rem;
   color: #6b7280;
   font-weight: 500;
+  flex-shrink: 0;
 }
 
 .time-slot.hour {
@@ -241,8 +248,8 @@
   display: grid;
   grid-template-rows: repeat(36, 60px);
   grid-template-columns: 1fr;
-  overflow-y: auto;
   background: white;
+  min-height: 2160px; /* 36 slots * 60px each */
 }
 
 .appointments-column.drag-over {
