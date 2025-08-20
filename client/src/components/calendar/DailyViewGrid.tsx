@@ -150,7 +150,6 @@ export const DailyViewGrid = ({
     
     try {
       await onDeleteEvent(event);
-      setExpandedEventId(null);
       toast({
         title: "Event Deleted",
         description: "The calendar event has been successfully deleted.",
@@ -169,10 +168,12 @@ export const DailyViewGrid = ({
     let baseClass = "appointment";
     
     // Source-based styling
-    if (event.source === 'simplepractice' || event.source === 'SimplePractice') {
+    if (event.source === 'system') {
       baseClass += " simplepractice";
-    } else if (event.source === 'google' || event.source === 'Google Calendar') {
+    } else if (event.source === 'google') {
       baseClass += " google-calendar";
+    } else if (event.source === 'manual') {
+      baseClass += " personal";
     } else {
       baseClass += " personal";
     }

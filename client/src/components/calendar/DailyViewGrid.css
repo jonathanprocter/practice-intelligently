@@ -1,4 +1,12 @@
 /* Daily View Specific Styles */
+.daily-view {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f8f9fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
 .daily-view-container {
   display: flex;
   flex-direction: column;
@@ -25,6 +33,34 @@
   background: white;
   border-bottom: 1px solid #e5e7eb;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.daily-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.daily-stats {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.appointments-count {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.daily-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  gap: 1rem;
+  padding: 1rem;
 }
 
 .date-section {
@@ -474,6 +510,168 @@
 
 .justify-between {
   justify-content: space-between;
+}
+
+/* Daily Notes Section */
+.daily-notes-section {
+  margin-bottom: 1rem;
+}
+
+.daily-notes-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Time Grid Layout */
+.time-grid-container {
+  flex: 1;
+  overflow: hidden;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.time-grid {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  grid-template-rows: auto 1fr;
+  height: 100%;
+  overflow: hidden;
+}
+
+.time-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.events-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.time-grid-row {
+  display: contents;
+}
+
+.time-label-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #f3f4f6;
+  background: #f9fafb;
+  height: 40px;
+}
+
+.time-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.events-cell {
+  position: relative;
+  border-bottom: 1px solid #f3f4f6;
+  min-height: 40px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.events-cell:hover {
+  background: #f8fafc;
+}
+
+.events-cell.has-events {
+  background: white;
+}
+
+/* Appointment styling continues to use existing styles */
+.appointment-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.25rem;
+  overflow: hidden;
+}
+
+.appointment-title {
+  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.appointment-time {
+  font-size: 0.625rem;
+  font-weight: 500;
+  opacity: 0.9;
+  color: inherit;
+}
+
+.appointment-client {
+  font-size: 0.625rem;
+  opacity: 0.8;
+  color: inherit;
+}
+
+.appointment-location {
+  font-size: 0.625rem;
+  opacity: 0.8;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.appointment-actions {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: none;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.appointment:hover .appointment-actions {
+  display: flex;
+}
+
+.quick-insights-btn {
+  padding: 0.125rem;
+  height: auto;
+  width: auto;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 0.25rem;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.quick-insights-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 1);
 }
 
 /* Responsive Design */
