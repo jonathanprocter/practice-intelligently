@@ -391,9 +391,9 @@ const DailyView: React.FC<DailyViewProps> = ({
         {/* Time column */}
         <div className="time-column">
           {timeSlots.map((slot, index) => (
-            <div key={index} className={`time-slot ${slot.minute === 0 ? 'hour' : ''}`}>
+            <div key={index} className={`time-slot ${slot.isHour ? 'hour' : ''}`}>
               <span className={slot.minute === 0 ? 'text-sm' : 'text-xs'}>
-                {slot.display}
+                {slot.time}
               </span>
             </div>
           ))}
@@ -441,7 +441,7 @@ const DailyView: React.FC<DailyViewProps> = ({
               return !(isMarkedAllDay || eIsFullDay || eHours >= 20);
             });
 
-            const eventStyle = getEventStyle(event, eventIndex, filteredTimedEvents);
+            const { className, style } = getEventStyle(event, eventIndex, filteredTimedEvents);
             // Match the event title from /client/src/components/calendar/DailyView.tsx
             const calendarClass = event.calendarId === '0np7slb5u30o7oc29735pb259g' ? 'personal' :
                                 event.calendarId === 'en.usa#holiday@group.v.calendar.google.com' ? 'Holidays in United States' :
@@ -454,8 +454,8 @@ const DailyView: React.FC<DailyViewProps> = ({
             return (
               <div
                 key={`event-container-${event.id}-${eventIndex}`}
-                className={`appointment ${calendarClass} ${statusClass} ${draggedEventId === event.id ? 'dragging' : ''}`}
-                style={eventStyle}
+                className={`appointment ${calendarClass} ${statusClass} ${className} ${draggedEventId === event.id ? 'dragging' : ''}`}
+                style={style}
                 draggable
                 onDragStart={(e) => handleDragStart(e, event)}
                 onDragEnd={handleDragEnd}
