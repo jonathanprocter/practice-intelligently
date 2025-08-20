@@ -8,6 +8,12 @@ import { cn } from '@/lib/utils';
 import { getLocationDisplay } from '../../utils/locationUtils';
 import { addDays, format } from 'date-fns'; // Assuming date-fns is used for formatting and date manipulation
 import { useMemo } from 'react'; // Import useMemo
+import { Button } from '@/components/ui/button';
+import { Package, Sparkles } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { exportWeeklyPackageFromCalendar } from '../../utils/bidirectionalWeeklyPackageLinked';
+import { exportAdvancedBidirectionalWeekly } from '../../utils/bidirectionalLinkedPDFExport';
+import { startOfWeek, endOfWeek } from 'date-fns';
 
 interface WeeklyCalendarGridProps {
   week: CalendarDay[]; // This prop seems unused in the provided code, but kept for signature completeness.
@@ -31,6 +37,9 @@ export const WeeklyCalendarGrid = ({
   const timeSlots = generateTimeSlots();
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
   const [dropZone, setDropZone] = useState<{date: Date, time: string} | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportStatus, setExportStatus] = useState<string>('');
+  const { toast } = useToast();
 
   // Calculate weekStart from the week prop - ensure it's the beginning of the week (Sunday)
   const weekStart = useMemo(() => {
@@ -154,6 +163,83 @@ export const WeeklyCalendarGrid = ({
     });
   };
 
+  const handleBidirectionalExport = async () => {
+    try {
+      setIsExporting(true);
+      setExportStatus('Generating bidirectional weekly package...');
+
+      // Use the first day of the week to determine the current week
+      const currentDate = week && week.length > 0 ? week[0].date : new Date();
+
+      console.log('🎯 EXACT Weekly Package (8 Pages) from Weekly Grid');
+      console.log(`📅 Week Start: ${format(weekStart, 'MMM dd, yyyy')}`);
+      console.log(`📊 Available Events: ${events.length}`);
+
+      // Export the bidirectional weekly package
+      await exportWeeklyPackageFromCalendar(currentDate, events);
+
+      setExportStatus('✅ Bidirectional weekly package exported successfully!');
+
+      toast({
+        title: "Export Complete",
+        description: "Your bidirectional weekly package (8 pages) has been exported successfully!",
+      });
+
+      // Clear status after 3 seconds
+      setTimeout(() => setExportStatus(''), 3000);
+
+    } catch (error) {
+      console.error('Export failed:', error);
+      setExportStatus('❌ Export failed. Please try again.');
+
+      toast({
+        title: "Export Failed",
+        description: "Failed to export the weekly package. Please try again.",
+        variant: "destructive"
+      });
+
+      setTimeout(() => setExportStatus(''), 3000);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleAdvancedExport = async () => {
+    try {
+      setIsExporting(true);
+      setExportStatus('Generating advanced bidirectional package...');
+
+      const currentDate = week && week.length > 0 ? week[0].date : new Date();
+      const weekStartDate = startOfWeek(currentDate, { weekStartsOn: 1 });
+      const weekEndDate = endOfWeek(currentDate, { weekStartsOn: 1 });
+
+      await exportAdvancedBidirectionalWeekly(weekStartDate, weekEndDate, events);
+
+      setExportStatus('✅ Advanced bidirectional package exported successfully!');
+
+      toast({
+        title: "Advanced Export Complete",
+        description: "Your advanced bidirectional package has been exported successfully!",
+      });
+
+      setTimeout(() => setExportStatus(''), 3000);
+
+    } catch (error) {
+      console.error('Advanced export failed:', error);
+      setExportStatus('❌ Advanced export failed. Please try again.');
+
+      toast({
+        title: "Export Failed",
+        description: "Failed to export the advanced package. Please try again.",
+        variant: "destructive"
+      });
+
+      setTimeout(() => setExportStatus(''), 3000);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   // Rendering weekly calendar grid
 
   // Use the week prop directly instead of recalculating
@@ -205,6 +291,76 @@ export const WeeklyCalendarGrid = ({
 
   return (
     <div className="weekly-calendar-container">
+      {/* Bidirectional Export Header */}
+      <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-2">
+            <Package className="h-5 w-5 text-blue-600" />
+            <h3 className="font-semibold text-blue-800">Weekly Package Export</h3>
+          </div>
+          <div className="text-sm text-blue-600">
+            {events.length} events this week
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button
+            onClick={handleBidirectionalExport}
+            disabled={isExporting}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300"
+            size="sm"
+          >
+            {isExporting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Exporting...
+              </>
+            ) : (
+              <>
+                <Package className="mr-2 h-4 w-4" />
+                Export Weekly Package (8 Pages)
+              </>
+            )}
+          </Button>
+
+          <Button
+            onClick={handleAdvancedExport}
+            disabled={isExporting}
+            variant="outline"
+            className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-50"
+            size="sm"
+          >
+            {isExporting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                Exporting...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Advanced Export
+              </>
+            )}
+          </Button>
+        </div>
+
+        {exportStatus && (
+          <div className={`mt-3 p-2 rounded text-sm text-center font-medium ${
+            exportStatus.includes('✅') 
+              ? 'bg-green-100 text-green-800 border border-green-200' 
+              : exportStatus.includes('❌')
+              ? 'bg-red-100 text-red-800 border border-red-200'
+              : 'bg-blue-100 text-blue-800 border border-blue-200'
+          }`}>
+            {exportStatus}
+          </div>
+        )}
+
+        <div className="mt-2 text-xs text-blue-600">
+          💡 Exports 8 pages: 1 weekly overview + 7 daily pages with full bidirectional navigation
+        </div>
+      </div>
+
       {/* Day headers with day names */}
       <div className="grid grid-cols-8 border border-gray-200 mb-0">
         {/* Empty corner for alignment */}
@@ -405,62 +561,63 @@ export const WeeklyCalendarGrid = ({
                       onDragStart={(e) => handleDragStart(e, event)}
                       onDragEnd={handleDragEnd}
                     >
-                      <div 
-                        className="appointment-client-name font-semibold text-gray-900"
-                        style={{ 
-                          fontSize: event.slotsToSpan >= 3 ? '12px' : event.slotsToSpan >= 2 ? '11px' : '10px',
-                          lineHeight: '1.2',
-                          marginBottom: '1px',
-                          wordWrap: 'break-word',
-                          wordBreak: 'break-word',
-                          overflow: 'hidden'
-                        }}
-                      >
-                        {event.clientName || cleanEventTitle(event.title || 'Event')}
-                      </div>
-                      <div 
-                        className="appointment-source text-blue-600"
-                        style={{ 
-                          fontSize: event.slotsToSpan >= 3 ? '10px' : '9px',
-                          lineHeight: '1.1',
-                          marginBottom: 'auto',
-                          fontWeight: '500',
-                          paddingBottom: '2px',
-                          borderBottom: '1px solid #e2e8f0',
-                          overflow: 'hidden',
-                          wordWrap: 'break-word',
-                          wordBreak: 'break-word',
-                          flex: '1',
-                          display: '-webkit-box',
-                          WebkitLineClamp: event.slotsToSpan >= 3 ? 3 : event.slotsToSpan >= 2 ? 2 : 1,
-                          WebkitBoxOrient: 'vertical'
-                        }}
-                      >
-                        {event.calendarName?.includes('Simple Practice') ? 'SimplePractice' : 
-                         event.calendarName?.includes('Google') ? 'Google Calendar' : 
-                         event.source === 'google' ? 'Google Calendar' : 'SimplePractice'} | {event.location || 'Office'}
-                      </div>
-                      <div 
-                        className="appointment-time text-gray-600"
-                        style={{ 
-                          fontSize: event.slotsToSpan >= 3 ? '10px' : '9px',
-                          lineHeight: '1.1',
-                          fontWeight: '500',
-                          paddingTop: '2px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {new Date(event.startTime).toLocaleTimeString('en-US', { 
-                          hour: '2-digit', 
-                          minute: '2-digit',
-                          hour12: false 
-                        })} - {new Date(event.endTime).toLocaleTimeString('en-US', { 
-                          hour: '2-digit', 
-                          minute: '2-digit',
-                          hour12: false 
-                        })}
+                      {/* Event content */}
+                      <div className="flex-1 min-h-0">
+                        {/* Client name or title */}
+                        <div 
+                          className="font-medium text-xs leading-tight mb-1"
+                          style={{ 
+                            fontSize: event.slotsToSpan >= 3 ? '11px' : '10px',
+                            lineHeight: '1.2'
+                          }}
+                        >
+                          {event.clientName ? 
+                            wrapText(event.clientName, event.slotsToSpan >= 3 ? 20 : 15) : 
+                            wrapText(cleanEventTitle(event.title), event.slotsToSpan >= 3 ? 20 : 15)
+                          }
+                        </div>
+
+                        {/* Time display for longer events */}
+                        {event.slotsToSpan >= 2 && (
+                          <div 
+                            className="text-gray-600 text-xs"
+                            style={{ fontSize: '9px', lineHeight: '1.1' }}
+                          >
+                            {(() => {
+                              const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+                              const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+
+                              if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+                                return '';
+                              }
+
+                              const startStr = startTime.toLocaleTimeString('en-US', { 
+                                hour: 'numeric', 
+                                minute: '2-digit',
+                                hour12: true,
+                                timeZone: 'America/New_York'
+                              });
+                              const endStr = endTime.toLocaleTimeString('en-US', { 
+                                hour: 'numeric', 
+                                minute: '2-digit',
+                                hour12: true,
+                                timeZone: 'America/New_York'
+                              });
+
+                              return `${startStr} - ${endStr}`;
+                            })()}
+                          </div>
+                        )}
+
+                        {/* Location for longer events */}
+                        {event.slotsToSpan >= 3 && event.location && (
+                          <div 
+                            className="text-gray-500 text-xs mt-1"
+                            style={{ fontSize: '8px', lineHeight: '1.1' }}
+                          >
+                            📍 {getLocationDisplay(event.location)}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -473,3 +630,4 @@ export const WeeklyCalendarGrid = ({
     </div>
   );
 };
+

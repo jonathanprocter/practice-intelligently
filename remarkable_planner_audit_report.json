@@ -1,0 +1,411 @@
+{
+  "timestamp": "2025-08-19T03:26:59.699651",
+  "project_path": "/home/runner/workspace",
+  "issues": [
+    {
+      "category": "Calendar Integration",
+      "message": "\u274c client/src/components/calendar/DailyView.tsx missing export imports",
+      "severity": "error",
+      "timestamp": "2025-08-19T03:26:59.709403"
+    }
+  ],
+  "warnings": [
+    {
+      "category": "File Check",
+      "message": "\u274c Missing: src/utils/bidirectionalWeeklyPackage.ts",
+      "severity": "warning",
+      "timestamp": "2025-08-19T03:26:59.707370"
+    },
+    {
+      "category": "File Check",
+      "message": "\u274c Missing: src/components/calendar/DailyView.tsx",
+      "severity": "warning",
+      "timestamp": "2025-08-19T03:26:59.710155"
+    },
+    {
+      "category": "File Check",
+      "message": "\u274c Missing: src/components/calendar/WeeklyCalendarGrid.tsx",
+      "severity": "warning",
+      "timestamp": "2025-08-19T03:26:59.710193"
+    },
+    {
+      "category": "File Check",
+      "message": "\u274c Missing: src/types/calendar.ts",
+      "severity": "warning",
+      "timestamp": "2025-08-19T03:26:59.710384"
+    },
+    {
+      "category": "File Check",
+      "message": "\u274c Missing: types/calendar.ts",
+      "severity": "warning",
+      "timestamp": "2025-08-19T03:26:59.710422"
+    }
+  ],
+  "success": [
+    {
+      "category": "Audit",
+      "message": "Checking project structure...",
+      "severity": "info",
+      "timestamp": "2025-08-19T03:26:59.699675"
+    },
+    {
+      "category": "Dependencies",
+      "message": "\u2705 Found jspdf: ^3.0.1 (PDF generation library)",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.699799"
+    },
+    {
+      "category": "Dependencies",
+      "message": "\u2705 Found date-fns: ^3.6.0 (Date manipulation utilities)",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.699823"
+    },
+    {
+      "category": "Export Files",
+      "message": "Checking bidirectional export files...",
+      "severity": "info",
+      "timestamp": "2025-08-19T03:26:59.699846"
+    },
+    {
+      "category": "File Check",
+      "message": "\u2705 Found: client/src/utils/bidirectionalWeeklyPackage.ts",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.699897"
+    },
+    {
+      "category": "Code Analysis",
+      "message": "\u2705 client/src/utils/bidirectionalWeeklyPackage.ts has export functions",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.702044"
+    },
+    {
+      "category": "File Check",
+      "message": "\u2705 Found: client/src/utils/bidirectionalWeeklyPackageLinked.ts",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.702099"
+    },
+    {
+      "category": "Code Analysis",
+      "message": "\u2705 client/src/utils/bidirectionalWeeklyPackageLinked.ts has export functions",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.702334"
+    },
+    {
+      "category": "File Check",
+      "message": "\u2705 Found: client/src/utils/bidirectionalLinkedPDFExport.ts",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.702389"
+    },
+    {
+      "category": "Code Analysis",
+      "message": "\u2705 client/src/utils/bidirectionalLinkedPDFExport.ts has export functions",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.706798"
+    },
+    {
+      "category": "File Check",
+      "message": "\u2705 Found: client/src/pages/planner.tsx",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.706855"
+    },
+    {
+      "category": "File Check",
+      "message": "\u2705 Found: server/pymypdf_bidirectional_export.py",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.707410"
+    },
+    {
+      "category": "Calendar Components",
+      "message": "Checking calendar components...",
+      "severity": "info",
+      "timestamp": "2025-08-19T03:26:59.708217"
+    },
+    {
+      "category": "File Check",
+      "message": "\u2705 Found: client/src/components/calendar/DailyView.tsx",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.708275"
+    },
+    {
+      "category": "File Check",
+      "message": "\u2705 Found: client/src/components/calendar/WeeklyCalendarGrid.tsx",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.709450"
+    },
+    {
+      "category": "Calendar Integration",
+      "message": "\u2705 client/src/components/calendar/WeeklyCalendarGrid.tsx has export imports",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.710092"
+    },
+    {
+      "category": "Type Definitions",
+      "message": "Checking CalendarEvent type...",
+      "severity": "info",
+      "timestamp": "2025-08-19T03:26:59.710210"
+    },
+    {
+      "category": "File Check",
+      "message": "\u2705 Found: client/src/types/calendar.ts",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.710248"
+    },
+    {
+      "category": "Type Definitions",
+      "message": "\u2705 Found CalendarEvent in client/src/types/calendar.ts",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.710310"
+    },
+    {
+      "category": "Type Definitions",
+      "message": "\u2705 CalendarEvent has startTime field",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.710325"
+    },
+    {
+      "category": "Type Definitions",
+      "message": "\u2705 CalendarEvent has endTime field",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.710337"
+    },
+    {
+      "category": "Type Definitions",
+      "message": "\u2705 CalendarEvent has title field",
+      "severity": "success",
+      "timestamp": "2025-08-19T03:26:59.710348"
+    },
+    {
+      "category": "Console Errors",
+      "message": "Checking for common error patterns...",
+      "severity": "info",
+      "timestamp": "2025-08-19T03:26:59.710439"
+    },
+    {
+      "category": "Recommendations",
+      "message": "Generating recommendations...",
+      "severity": "info",
+      "timestamp": "2025-08-19T03:27:02.792091"
+    }
+  ],
+  "file_checks": {
+    "client/src/utils/bidirectionalWeeklyPackage.ts": {
+      "exists": true,
+      "required": true,
+      "full_path": "/home/runner/workspace/client/src/utils/bidirectionalWeeklyPackage.ts"
+    },
+    "client/src/utils/bidirectionalWeeklyPackageLinked.ts": {
+      "exists": true,
+      "required": true,
+      "full_path": "/home/runner/workspace/client/src/utils/bidirectionalWeeklyPackageLinked.ts"
+    },
+    "client/src/utils/bidirectionalLinkedPDFExport.ts": {
+      "exists": true,
+      "required": true,
+      "full_path": "/home/runner/workspace/client/src/utils/bidirectionalLinkedPDFExport.ts"
+    },
+    "client/src/pages/planner.tsx": {
+      "exists": true,
+      "required": false,
+      "full_path": "/home/runner/workspace/client/src/pages/planner.tsx"
+    },
+    "src/utils/bidirectionalWeeklyPackage.ts": {
+      "exists": false,
+      "required": false,
+      "full_path": "/home/runner/workspace/src/utils/bidirectionalWeeklyPackage.ts"
+    },
+    "server/pymypdf_bidirectional_export.py": {
+      "exists": true,
+      "required": false,
+      "full_path": "/home/runner/workspace/server/pymypdf_bidirectional_export.py"
+    },
+    "client/src/components/calendar/DailyView.tsx": {
+      "exists": true,
+      "required": false,
+      "full_path": "/home/runner/workspace/client/src/components/calendar/DailyView.tsx"
+    },
+    "client/src/components/calendar/WeeklyCalendarGrid.tsx": {
+      "exists": true,
+      "required": false,
+      "full_path": "/home/runner/workspace/client/src/components/calendar/WeeklyCalendarGrid.tsx"
+    },
+    "src/components/calendar/DailyView.tsx": {
+      "exists": false,
+      "required": false,
+      "full_path": "/home/runner/workspace/src/components/calendar/DailyView.tsx"
+    },
+    "src/components/calendar/WeeklyCalendarGrid.tsx": {
+      "exists": false,
+      "required": false,
+      "full_path": "/home/runner/workspace/src/components/calendar/WeeklyCalendarGrid.tsx"
+    },
+    "client/src/types/calendar.ts": {
+      "exists": true,
+      "required": false,
+      "full_path": "/home/runner/workspace/client/src/types/calendar.ts"
+    },
+    "src/types/calendar.ts": {
+      "exists": false,
+      "required": false,
+      "full_path": "/home/runner/workspace/src/types/calendar.ts"
+    },
+    "types/calendar.ts": {
+      "exists": false,
+      "required": false,
+      "full_path": "/home/runner/workspace/types/calendar.ts"
+    }
+  },
+  "dependency_checks": {
+    "jspdf": {
+      "found": true,
+      "version": "^3.0.1",
+      "description": "PDF generation library"
+    },
+    "date-fns": {
+      "found": true,
+      "version": "^3.6.0",
+      "description": "Date manipulation utilities"
+    }
+  },
+  "code_analysis": {
+    "client/src/utils/bidirectionalWeeklyPackage.ts": {
+      "exists": true,
+      "analysis": {
+        "imports": [
+          "jsPDF",
+          "date-fns"
+        ],
+        "exports": [
+          "exportBidirectionalWeeklyPackage"
+        ],
+        "functions": [
+          "exportBidirectionalWeeklyPackage"
+        ],
+        "components": [
+          "generateWeeklyOverviewPage",
+          "generateDailyPage"
+        ],
+        "has_jspdf_import": true,
+        "has_date_fns_import": true,
+        "has_export_functions": true
+      }
+    },
+    "client/src/utils/bidirectionalWeeklyPackageLinked.ts": {
+      "exists": true,
+      "analysis": {
+        "imports": [
+          "jsPDF",
+          "date-fns",
+          "bidirectional export functions"
+        ],
+        "exports": [
+          "exportBidirectionalWeeklyPackageLinked",
+          "exportWeeklyPackageFromCalendar",
+          "with"
+        ],
+        "functions": [
+          "exportWeeklyPackageFromCalendar",
+          "exportBidirectionalWeeklyPackage"
+        ],
+        "components": [],
+        "has_jspdf_import": true,
+        "has_date_fns_import": true,
+        "has_export_functions": true
+      }
+    },
+    "client/src/utils/bidirectionalLinkedPDFExport.ts": {
+      "exists": true,
+      "analysis": {
+        "imports": [
+          "jsPDF",
+          "date-fns"
+        ],
+        "exports": [
+          "exportAdvancedBidirectionalWeekly"
+        ],
+        "functions": [
+          "exportAdvancedBidirectionalWeekly"
+        ],
+        "components": [],
+        "has_jspdf_import": true,
+        "has_date_fns_import": true,
+        "has_export_functions": true
+      }
+    },
+    "client/src/pages/planner.tsx": {
+      "exists": true,
+      "analysis": {
+        "imports": [
+          "date-fns",
+          "bidirectional export functions"
+        ],
+        "exports": [
+          "Planner"
+        ],
+        "functions": [
+          "exportWeeklyPackageFromCalendar",
+          "exportAdvancedBidirectionalWeekly"
+        ],
+        "components": [
+          "Planner"
+        ],
+        "has_jspdf_import": false,
+        "has_date_fns_import": true,
+        "has_export_functions": true
+      }
+    },
+    "server/pymypdf_bidirectional_export.py": {
+      "exists": true,
+      "analysis": {
+        "imports": [],
+        "exports": [],
+        "functions": [],
+        "components": [],
+        "has_jspdf_import": false,
+        "has_date_fns_import": false,
+        "has_export_functions": false
+      }
+    },
+    "client/src/components/calendar/DailyView.tsx": {
+      "exists": true,
+      "analysis": {
+        "imports": [],
+        "exports": [
+          "DailyView"
+        ],
+        "functions": [],
+        "components": [
+          "DailyView"
+        ],
+        "has_jspdf_import": false,
+        "has_date_fns_import": false,
+        "has_export_functions": false
+      }
+    },
+    "client/src/components/calendar/WeeklyCalendarGrid.tsx": {
+      "exists": true,
+      "analysis": {
+        "imports": [
+          "date-fns",
+          "bidirectional export functions"
+        ],
+        "exports": [
+          "WeeklyCalendarGrid"
+        ],
+        "functions": [
+          "exportWeeklyPackageFromCalendar",
+          "exportAdvancedBidirectionalWeekly"
+        ],
+        "components": [
+          "WeeklyCalendarGrid"
+        ],
+        "has_jspdf_import": false,
+        "has_date_fns_import": true,
+        "has_export_functions": true
+      }
+    }
+  },
+  "recommendations": [
+    "Add bidirectional export imports to client/src/components/calendar/DailyView.tsx",
+    "Integrate bidirectional export functions into calendar components"
+  ]
+}

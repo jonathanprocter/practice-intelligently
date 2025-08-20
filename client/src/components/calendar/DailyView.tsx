@@ -1,484 +1,672 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { CalendarEvent } from '../../types/calendar';
-import { cleanEventTitle, formatClientName } from '../../utils/textCleaner';
-import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Clock, MapPin, User, FileText, Brain, Calendar, ChevronLeft, ChevronRight, Plus, Sparkles, MessageSquare, Target, TrendingUp, Trash2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { AppointmentSummary } from './AppointmentSummary';
+import { generateTimeSlots } from '../../utils/timeSlots';
+import { formatTime, formatEventTime, getDayNavigationName, getNextDay, getPreviousDay, getDateString } from '../../utils/dateUtils';
+import { getLocationDisplay } from '../../utils/locationUtils';
+import { cleanTitle } from '../../utils/titleCleaner';
+import { cleanEmojis } from '../../utils/emojiCleaner';
+import { useCalendar } from '../../hooks/useCalendar';
+import { useEventDuplication } from '../../hooks/useEventDuplication';
+import { Button } from '../ui/button';
+import { Textarea } from '../ui/textarea';
+import './DailyView.css';
 
 interface DailyViewProps {
-    date: Date;
-    events: CalendarEvent[];
-    onEventClick: (event: CalendarEvent) => void;
-    onTimeSlotClick?: (date: Date, time: string) => void;
-    onPreviousDay: () => void;
-    onNextDay: () => void;
-    onNewAppointment: () => void;
-    onSessionNotes?: (event: CalendarEvent) => void;
-    onDeleteEvent?: (event: CalendarEvent) => void;
+  selectedDate: Date | null;
+  onDateChange: (date: Date) => void;
+  onBackToWeek: () => void;
+  events: CalendarEvent[];
+  onDeleteEvent?: (eventId: string) => void;
 }
 
-interface AIInsight {
-    summary: string;
-    keyPoints: string[];
-    suggestedQuestions: string[];
-    recommendedFollowUp: string[];
-    progressIndicators: string[];
+interface ExpandedEventDetails {
+  id: string;
+  notes: string;
+  actionItems: string;
 }
 
-// Improved date comparison function
-const isSameDay = (date1: Date, date2: Date): boolean => {
-    try {
-          // Normalize both dates to local timezone and compare year, month, day
-          const d1 = new Date(date1);
-          const d2 = new Date(date2);
+interface NoteTimer {
+  [key: string]: NodeJS.Timeout;
+}
 
-          return (
-                  d1.getFullYear() === d2.getFullYear() &&
-                  d1.getMonth() === d2.getMonth() &&
-                  d1.getDate() === d2.getDate()
-                );
-    } catch (error) {
-          console.error('Date comparison error:', error);
-          return false;
-    }
-};
+const DailyView: React.FC<DailyViewProps> = ({
+  selectedDate,
+  onDateChange,
+  onBackToWeek,
+  events,
+  onDeleteEvent
+}) => {
+  // State management
+  const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const [noteTimers, setNoteTimers] = useState<NoteTimer>({});
+  const [eventNotes, setEventNotes] = useState<{ [key: string]: string }>({});
+  const [eventActionItems, setEventActionItems] = useState<{ [key: string]: string }>({});
 
-// Safe date parsing function
-const parseEventDate = (dateInput: string | Date): Date | null => {
-    try {
-          if (dateInput instanceof Date) {
-                  return dateInput;
-          }
+  // Hooks
+  const { updateEvent } = useCalendar();
+  const { checkForDuplicates } = useEventDuplication();
 
-          if (typeof dateInput === 'string') {
-                  const parsed = new Date(dateInput);
-                  if (isNaN(parsed.getTime())) {return null;
-                  }
-                  return parsed;
-          }
-
-          return null;
-    } catch (error) {
-          console.error('Date parsing error:', error, dateInput);
-          return null;
-    }
-};
-
-export const DailyView = ({
-    date,
-    events,
-    onEventClick,
-    onTimeSlotClick,
-    onPreviousDay,
-    onNextDay,
-    onNewAppointment,
-    onSessionNotes,
-    onDeleteEvent
-}: DailyViewProps) => {
-    const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [aiInsights, setAiInsights] = useState<AIInsight | null>(null);
-    const [sessionNotes, setSessionNotes] = useState('');
-    const [existingProgressNotes, setExistingProgressNotes] = useState<any[]>([]);
-    const [sessionPrepNotes, setSessionPrepNotes] = useState<any>(null);
-    const [isLoadingAppointmentData, setIsLoadingAppointmentData] = useState(false);
-    const { toast } = useToast();
-
-    // Improved event filtering with better date handling and debugging
-    const dayEvents = useMemo(() => {
-        if (!events || events.length === 0) {
-            return [];
-        }
-
-          const filtered = events.filter(event => {
-                  if (!event || !event.startTime) {
-                      return false;
-                  }
-
-                  const eventDate = parseEventDate(event.startTime);
-                  if (!eventDate) {
-                      return false;
-                  }
-
-                  const matches = isSameDay(eventDate, date);
-
-                  if (matches) {
-                      console.log(`DailyView: Event "${event.title}" matches date ${date.toDateString()}`);
-                  }
-
-                  return matches;
-          });
-
-          console.log(`DailyView: Found ${filtered.length} events for ${date.toDateString()}`);
-          return filtered.sort((a, b) => {
-                  const timeA = parseEventDate(a.startTime);
-                  const timeB = parseEventDate(b.startTime);
-                  if (!timeA || !timeB) return 0;
-                  return timeA.getTime() - timeB.getTime();
-          });
-    }, [events, date]);
-
-    const handleEventClick = (event: CalendarEvent) => {
-        setSelectedEvent(event);
-        onEventClick(event);
-        // Fetch session notes and prep notes when an event is clicked
-        fetchSessionData(event);
-    };
-
-    const handleCloseDialog = () => {
-        setSelectedEvent(null);
-        setAiInsights(null);
-        setSessionNotes('');
-        setExistingProgressNotes([]);
-        setSessionPrepNotes(null);
-    };
-
-    const fetchSessionData = async (event: CalendarEvent) => {
-        setIsLoadingAppointmentData(true);
-        try {
-            // Fetch session notes for this event
-            const sessionNotesResponse = await fetch(`/api/session-notes/event/${event.id}`);
-            let sessionNotes: any[] = [];
-            
-            if (sessionNotesResponse.ok) {
-                sessionNotes = await sessionNotesResponse.json();
-            }
-
-            // Fetch any existing notes from the appointment
-            if (event.notes) {
-                const existingNote = {
-                    id: `existing_${event.id}`,
-                    content: event.notes,
-                    date: new Date().toISOString().split('T')[0]
-                };
-                sessionNotes.unshift(existingNote);
-            }
-
-            // Set session prep notes (placeholder for now)
-            const prepNotes = {
-                goal: 'Session preparation and planning',
-                clientHistory: 'Review previous session outcomes',
-                keyAreas: ['Therapeutic rapport', 'Goal achievement', 'Progress tracking']
-            };
-
-            setExistingProgressNotes(sessionNotes);
-            setSessionPrepNotes(prepNotes);
-
-        } catch (error) {
-            console.error("Error fetching session data:", error);
-            toast({
-                title: "Error",
-                description: "Failed to load session data.",
-                variant: "destructive"
-            });
-        } finally {
-            setIsLoadingAppointmentData(false);
-        }
-    };
-
-    const analyzeSession = async () => {
-        if (!selectedEvent) return;
-
-        setIsAnalyzing(true);
-        setAiInsights(null); // Clear previous insights
-
-        try {
-            // Placeholder for AI analysis API call
-            const mockAiResponse: AIInsight = {
-                summary: `AI summary of the session with ${cleanEventTitle(selectedEvent.title)}. Focus was on overcoming obstacles.`,
-                keyPoints: [
-                    'Client expressed a breakthrough in understanding.',
-                    'Identified specific actionable steps.',
-                    'Discussed potential setbacks and coping mechanisms.',
-                ],
-                suggestedQuestions: [
-                    'What was the most significant part of today\'s session for you?',
-                    'How do you plan to implement the actionable steps?',
-                    'What support do you anticipate needing in the next week?',
-                ],
-                recommendedFollowUp: [
-                    'Schedule a check-in call in 3 days.',
-                    'Provide additional resources on resilience.',
-                    'Review progress on action steps next session.',
-                ],
-                progressIndicators: [
-                    'Increased client engagement observed.',
-                    'Positive verbal feedback on session effectiveness.',
-                    'Client readily identified next steps.',
-                ],
-            };
-            setAiInsights(mockAiResponse);
-            toast({
-                title: "Analysis Complete",
-                description: "AI insights generated successfully.",
-            });
-        } catch (error) {
-            console.error("Error analyzing session:", error);
-            toast({
-                title: "Error",
-                description: "Failed to generate AI insights.",
-                variant: "destructive"
-            });
-        } finally {
-            setIsAnalyzing(false);
-        }
-    };
-
-    const handleSaveSessionNotes = async () => {
-        if (!selectedEvent || !sessionNotes.trim()) return;
-        
-        try {
-            // Update the appointment with the new notes
-            const response = await fetch(`/api/appointments/${selectedEvent.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    notes: sessionNotes
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Failed to save notes: ${response.statusText}`);
-            }
-
-            toast({
-                title: "Notes Saved",
-                description: "Your session notes have been saved.",
-            });
-
-            // Add the new note to existing progress notes
-            const newNote = { 
-                id: `note_${Date.now()}`, 
-                content: sessionNotes, 
-                date: new Date().toISOString().split('T')[0] 
-            };
-            setExistingProgressNotes(prevNotes => [newNote, ...prevNotes]);
-            setSessionNotes('');
-
-        } catch (error) {
-            console.error('Error saving session notes:', error);
-            toast({
-                title: "Error",
-                description: "Failed to save session notes. Please try again.",
-                variant: "destructive"
-            });
-        }
-    };
-
-    const handleDeleteEvent = async () => {
-        if (!selectedEvent || !onDeleteEvent) return;
-        
-        try {
-            await onDeleteEvent(selectedEvent);
-            setSelectedEvent(null);
-            toast({
-                title: "Event Deleted",
-                description: "The calendar event has been successfully deleted.",
-            });
-        } catch (error) {
-            console.error('Error deleting event:', error);
-            toast({
-                title: "Error",
-                description: "Failed to delete the event. Please try again.",
-                variant: "destructive"
-            });
-        }
-    };
-
+  // Early return for invalid date
+  if (!selectedDate) {
     return (
-        <div className="p-4 h-full flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-                <Button onClick={onPreviousDay} variant="ghost" size="icon">
-                    <ChevronLeft />
-                </Button>
-                <h2 className="text-2xl font-bold text-center">{date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2>
-                <Button onClick={onNextDay} variant="ghost" size="icon">
-                    <ChevronRight />
-                </Button>
-            </div>
-
-            <div className="flex-grow overflow-y-auto">
-                {dayEvents.length === 0 ? (
-                    <p className="text-center text-muted-foreground">No appointments for today.</p>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {dayEvents.map((event) => (
-                            <Card
-                                key={event.id}
-                                className="cursor-pointer hover:shadow-lg transition-shadow"
-                                onClick={() => handleEventClick(event)}
-                            >
-                                <CardHeader>
-                                    <CardTitle className="text-lg truncate">{cleanEventTitle(event.title)}</CardTitle>
-                                    <div className="text-sm text-muted-foreground flex items-center">
-                                        <Clock className="mr-1 h-4 w-4" />
-                                        {event.isAllDay ? 'All Day' : (
-                                            <>
-                                                {event.startTime && parseEventDate(event.startTime)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                {event.endTime && !event.isAllDay && ` - ${parseEventDate(event.endTime)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-                                            </>
-                                        )}
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    {event.location && (
-                                        <div className="flex items-center text-sm mb-1">
-                                            <MapPin className="mr-1 h-4 w-4 text-primary" />
-                                            {event.location}
-                                        </div>
-                                    )}
-                                    {event.clientName && (
-                                        <div className="flex items-center text-sm mb-1">
-                                            <User className="mr-1 h-4 w-4 text-primary" />
-                                            {formatClientName(event.clientName)}
-                                        </div>
-                                    )}
-                                    {event.notes && (
-                                        <div className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                                            {event.notes}
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            <div className="mt-4 flex justify-center">
-                <Button onClick={onNewAppointment} className="w-full max-w-sm">
-                    <Plus className="mr-2 h-4 w-4" /> New Appointment
-                </Button>
-            </div>
-
-            <Dialog open={!!selectedEvent} onOpenChange={handleCloseDialog}>
-                <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>{selectedEvent ? cleanEventTitle(selectedEvent.title) : ''}</DialogTitle>
-                        <DialogDescription>
-                            {selectedEvent && (
-                                <div className="flex flex-col space-y-2">
-                                    <div className="flex items-center text-sm text-muted-foreground">
-                                        <Clock className="mr-1 h-4 w-4" />
-                                        {selectedEvent.isAllDay ? 'All Day' : (
-                                            <>
-                                                {selectedEvent.startTime && parseEventDate(selectedEvent.startTime)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                {selectedEvent.endTime && !selectedEvent.isAllDay && ` - ${parseEventDate(selectedEvent.endTime)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-                                            </>
-                                        )}
-                                    </div>
-                                    {selectedEvent.location && (
-                                        <div className="flex items-center text-sm text-muted-foreground">
-                                            <MapPin className="mr-1 h-4 w-4 text-primary" />
-                                            {selectedEvent.location}
-                                        </div>
-                                    )}
-                                    {selectedEvent.clientName && (
-                                        <div className="flex items-center text-sm text-muted-foreground">
-                                            <User className="mr-1 h-4 w-4 text-primary" />
-                                            {formatClientName(selectedEvent.clientName)}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <ScrollArea className="max-h-[calc(90vh-200px)] pr-4">
-                        {isLoadingAppointmentData ? (
-                            <p>Loading appointment details...</p>
-                        ) : (
-                            <>
-                                {onSessionNotes && (
-                                    <div className="mb-6">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <h3 className="text-lg font-semibold flex items-center">
-                                                <FileText className="mr-2 h-5 w-5" /> Session Notes
-                                            </h3>
-                                            <Button onClick={handleSaveSessionNotes} disabled={!sessionNotes.trim()}>Save Notes</Button>
-                                        </div>
-                                        <Textarea
-                                            value={sessionNotes}
-                                            onChange={(e) => setSessionNotes(e.target.value)}
-                                            placeholder="Enter your notes for this session..."
-                                            className="min-h-[100px]"
-                                        />
-                                        {existingProgressNotes.length > 0 && (
-                                            <div className="mt-4">
-                                                <h4 className="text-md font-semibold mb-2 flex items-center">
-                                                    <TrendingUp className="mr-2 h-4 w-4" /> Previous Progress Notes
-                                                </h4>
-                                                <ul className="space-y-2 max-h-48 overflow-y-auto">
-                                                    {existingProgressNotes.map((note) => (
-                                                        <li key={note.id} className="text-sm text-muted-foreground border-b pb-1">
-                                                            <p>{note.content}</p>
-                                                            <span className="text-xs text-gray-500"> - {note.date}</span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                <div className="mb-6">
-                                    <h3 className="text-lg font-semibold flex items-center mb-2">
-                                        <Brain className="mr-2 h-5 w-5" /> AI Assistant
-                                    </h3>
-                                    <Button onClick={analyzeSession} disabled={isAnalyzing || !selectedEvent}>
-                                        {isAnalyzing ? 'Analyzing...' : (
-                                            <>
-                                                <Sparkles className="mr-2 h-4 w-4" /> Analyze Session
-                                            </>
-                                        )}
-                                    </Button>
-                                    {aiInsights && (
-                                        <div className="mt-4 p-3 border rounded-md bg-secondary/50">
-                                            <AppointmentSummary eventId={selectedEvent?.id || ''} />
-                                        </div>
-                                    )}
-                                </div>
-
-                                {sessionPrepNotes && (
-                                    <div className="mb-6">
-                                        <h3 className="text-lg font-semibold flex items-center mb-2">
-                                            <Target className="mr-2 h-5 w-5" /> Session Prep
-                                        </h3>
-                                        <div className="p-3 border rounded-md bg-background">
-                                            <p className="text-sm font-medium mb-1">Goal: {sessionPrepNotes.goal}</p>
-                                            <p className="text-sm text-muted-foreground mb-1">History: {sessionPrepNotes.clientHistory}</p>
-                                            <p className="text-sm text-muted-foreground">Key Areas: {sessionPrepNotes.keyAreas.join(', ')}</p>
-                                        </div>
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </ScrollArea>
-                    
-                    {/* Dialog Footer with Action Buttons */}
-                    {onDeleteEvent && selectedEvent && (
-                        <div className="flex justify-between items-center pt-4 border-t">
-                            <Button 
-                                variant="destructive" 
-                                onClick={handleDeleteEvent}
-                                className="flex items-center"
-                            >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete Event
-                            </Button>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
+      <div className="daily-view-container">
+        <div className="daily-view-loading">
+          <p>Loading daily view...</p>
         </div>
+      </div>
     );
+  }
+
+  // Generate time slots
+  const timeSlots = useMemo(() => generateTimeSlots(), []);
+
+  // Filter events for the selected date
+  const dayEvents = useMemo(() => {
+    if (!selectedDate || !events) return [];
+    
+    return events.filter((event) => {
+      if (!event.startTime || !event.endTime) return false;
+      
+      try {
+        const eventDate = new Date(event.startTime);
+        const selectedDateStr = selectedDate.toDateString();
+        const eventDateStr = eventDate.toDateString();
+        
+        return selectedDateStr === eventDateStr;
+      } catch (error) {
+        console.warn('Error filtering event:', event, error);
+        return false;
+      }
+    });
+  }, [selectedDate, events]);
+
+  // Calculate statistics
+  const { totalEvents, totalHours, freeTimePercentage } = useMemo(() => {
+    const total = dayEvents.length;
+    const hours = dayEvents.reduce((acc, event) => {
+      if (!event.startTime || !event.endTime) return acc;
+      
+      try {
+        const start = new Date(event.startTime);
+        const end = new Date(event.endTime);
+        const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+        return acc + Math.max(0, duration);
+      } catch (error) {
+        console.warn('Error calculating duration for event:', event, error);
+        return acc;
+      }
+    }, 0);
+    
+    const workingHours = 17.5; // 6 AM to 11:30 PM
+    const freeTime = Math.max(0, ((workingHours - hours) / workingHours) * 100);
+    
+    return {
+      totalEvents: total,
+      totalHours: Math.round(hours * 100) / 100,
+      freeTimePercentage: Math.round(freeTime)
+    };
+  }, [dayEvents]);
+
+  // Event styling function
+  const getEventStyle = useCallback((event: CalendarEvent, eventIndex: number, filteredTimedEvents: CalendarEvent[]) => {
+    if (!event.startTime || !event.endTime) return {};
+
+    try {
+      const startTime = new Date(event.startTime);
+      const endTime = new Date(event.endTime);
+      
+      // Validate dates
+      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+        console.warn('Invalid dates for event:', event);
+        return {};
+      }
+
+      const duration = endTime.getTime() - startTime.getTime();
+      const hours = duration / (1000 * 60 * 60);
+      const startHour = startTime.getHours();
+      const startMinute = startTime.getMinutes();
+      const isMarkedAllDay = (event as any).isAllDay;
+      const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
+
+      if (isFullDay || isMarkedAllDay || hours >= 20) {
+        return {}; // All-day events handled separately
+      }
+
+      // Calculate grid positioning
+      const startSlotIndex = Math.max(0, Math.floor(((startHour - 6) * 60 + startMinute) / 30));
+      const endSlotIndex = Math.min(35, Math.ceil(((endTime.getHours() - 6) * 60 + endTime.getMinutes()) / 30));
+      const gridRowStart = startSlotIndex + 2; // +2 for header rows
+      const gridRowEnd = Math.max(gridRowStart + 1, endSlotIndex + 2);
+
+      // Handle overlapping events
+      const overlappingEvents = filteredTimedEvents.filter((e, i) => {
+        if (i >= eventIndex) return false;
+        if (!e.startTime || !e.endTime) return false;
+        
+        try {
+          const eStart = new Date(e.startTime);
+          const eEnd = new Date(e.endTime);
+          return (startTime < eEnd && endTime > eStart);
+        } catch {
+          return false;
+        }
+      });
+
+      const overlapCount = overlappingEvents.length;
+      const gridColumn = overlapCount > 0 ? `${2 + overlapCount} / 3` : '2 / 3';
+
+      return {
+        gridRowStart,
+        gridRowEnd,
+        gridColumn,
+        zIndex: 10 + eventIndex,
+      };
+    } catch (error) {
+      console.warn('Error calculating event style:', event, error);
+      return {};
+    }
+  }, []);
+
+  // Get calendar class for event
+  const getCalendarClass = useCallback((event: CalendarEvent) => {
+    if (event.calendarId === 'en.usa#holiday@group.v.calendar.google.com') return 'personal';
+    if (event.calendarId === '0np7slb5u30o7oc29735pb259g' || event.source === 'simplepractice') return 'simplepractice';
+    if (event.title?.toLowerCase().includes('haircut') ||
+        event.title?.toLowerCase().includes('dan res') ||
+        event.title?.toLowerCase().includes('blake') ||
+        event.title?.toLowerCase().includes('phone call')) return 'google-calendar';
+    if (event.source === 'simplepractice') return 'simplepractice';
+    return 'google-calendar';
+  }, []);
+
+  // Event handlers
+  const handleDragStart = useCallback((e: React.DragEvent, event: CalendarEvent) => {
+    setDraggedEventId(event.id);
+    e.dataTransfer.effectAllowed = 'move';
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedEventId(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, timeSlot: string) => {
+    e.preventDefault();
+    if (!draggedEventId) return;
+
+    // Handle event movement logic here
+    console.log('Moving event', draggedEventId, 'to', timeSlot);
+    setDraggedEventId(null);
+  }, [draggedEventId]);
+
+  const handleSlotDoubleClick = useCallback((timeSlot: string) => {
+    // Handle creating new appointment
+    console.log('Creating new appointment at', timeSlot);
+  }, []);
+
+  const toggleEventExpansion = useCallback((eventId: string) => {
+    setExpandedEventId(prev => prev === eventId ? null : eventId);
+  }, []);
+
+  const handleEventNotesChange = useCallback((eventId: string, field: 'notes' | 'actionItems', value: string) => {
+    // Clear existing timer for this event and field
+    const timerKey = `${eventId}-${field}`;
+    if (noteTimers[timerKey]) {
+      clearTimeout(noteTimers[timerKey]);
+    }
+
+    // Update local state immediately
+    if (field === 'notes') {
+      setEventNotes(prev => ({ ...prev, [eventId]: value }));
+    } else {
+      setEventActionItems(prev => ({ ...prev, [eventId]: value }));
+    }
+
+    // Set new timer for auto-save
+    const newTimer = setTimeout(() => {
+      // Auto-save logic would go here
+      console.log('Auto-saving', field, 'for event', eventId);
+    }, 2000);
+
+    setNoteTimers(prev => ({ ...prev, [timerKey]: newTimer }));
+  }, [noteTimers]);
+
+  // Helper functions
+  const getCurrentValue = useCallback((event: CalendarEvent, field: 'notes' | 'actionItems') => {
+    const localValue = field === 'notes' ? eventNotes[event.id] : eventActionItems[event.id];
+    return localValue !== undefined ? localValue : (event[field] || '');
+  }, [eventNotes, eventActionItems]);
+
+  // Navigation handlers
+  const onPreviousDay = useCallback(() => {
+    if (selectedDate) {
+      const prevDay = getPreviousDay(selectedDate);
+      onDateChange(prevDay);
+    }
+  }, [selectedDate, onDateChange]);
+
+  const onNextDay = useCallback(() => {
+    if (selectedDate) {
+      const nextDay = getNextDay(selectedDate);
+      onDateChange(nextDay);
+    }
+  }, [selectedDate, onDateChange]);
+
+  const onBackToWeekly = useCallback(() => {
+    onBackToWeek();
+  }, [onBackToWeek]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(noteTimers).forEach(timer => clearTimeout(timer));
+    };
+  }, [noteTimers]);
+
+  return (
+    <div className="daily-view-container">
+      {/* Header Navigation */}
+      <div className="daily-header">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onPreviousDay}
+          className="nav-btn prev-btn"
+          aria-label={`Navigate to ${getDayNavigationName(getPreviousDay(selectedDate))}`}
+          tabIndex={0}
+        >
+          ← {getDayNavigationName(getPreviousDay(selectedDate))}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBackToWeekly}
+          className="nav-btn weekly-btn"
+          aria-label="Navigate to weekly overview"
+          tabIndex={0}
+        >
+          📅 Weekly Overview
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onNextDay}
+          className="nav-btn next-btn"
+          aria-label={`Navigate to ${getDayNavigationName(getNextDay(selectedDate))}`}
+          tabIndex={0}
+        >
+          {getDayNavigationName(getNextDay(selectedDate))} →
+        </Button>
+      </div>
+
+      {/* Daily Header - Date and Statistics */}
+      <div className="daily-header">
+        <div className="date-section">
+          <h1 className="day-title">{getDayNavigationName(selectedDate)}</h1>
+          <h2 className="date-title">{getDateString(selectedDate)}</h2>
+        </div>
+        <div className="stats-section">
+          <div className="stat-item">
+            <span className="stat-number">{totalEvents}</span>
+            <span className="stat-label">Appointments</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">{totalHours.toFixed(1)}h</span>
+            <span className="stat-label">Scheduled</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">{freeTimePercentage}%</span>
+            <span className="stat-label">Free Time</span>
+          </div>
+        </div>
+      </div>
+
+      {/* All Day Events Section */}
+      {dayEvents.some((event, index, array) => {
+        // Remove duplicates first
+        const isDuplicate = array.findIndex(e => e.id === event.id) !== index;
+        if (isDuplicate) return false;
+
+        const isMarkedAllDay = (event as any).isAllDay;
+        // Convert startTime and endTime to Date objects if they aren't already
+        const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+        const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+
+        // Validate dates
+        if (!startTime || !endTime || isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+          return false;
+        }
+
+        const duration = endTime.getTime() - startTime.getTime();
+        const hours = duration / (1000 * 60 * 60);
+        const startHour = startTime.getHours();
+        const startMinute = startTime.getMinutes();
+        const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
+
+        return isMarkedAllDay || isFullDay || hours >= 20;
+      }) && (
+        <div className="all-day-section">
+          <h3 className="all-day-title">All Day</h3>
+          <div className="all-day-events">
+            {dayEvents.filter((event, index, array) => {
+              // Remove duplicates first
+              const isDuplicate = array.findIndex(e => e.id === event.id) !== index;
+              if (isDuplicate) return false;
+
+              const isMarkedAllDay = (event as any).isAllDay;
+              // Convert startTime and endTime to Date objects if they aren't already
+              const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+              const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+
+              // Validate dates
+              if (!startTime || !endTime || isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+                return false;
+              }
+
+              const duration = endTime.getTime() - startTime.getTime();
+              const hours = duration / (1000 * 60 * 60);
+              const startHour = startTime.getHours();
+              const startMinute = startTime.getMinutes();
+              const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
+
+              return isMarkedAllDay || isFullDay || hours >= 20;
+            }).map((event, allDayIndex) => (
+              <div
+                key={`all-day-${event.id}-${allDayIndex}`}
+                className="all-day-event"
+                onClick={() => toggleEventExpansion(event.id)}
+              >
+                <div className="event-title">{event.title}</div>
+                {event.description && (
+                  <div className="event-description">{event.description}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Grid - CSS Grid for perfect alignment */}
+      <div className="schedule-grid">
+        {/* Time column */}
+        <div className="time-column">
+          {timeSlots.map((slot, index) => (
+            <div key={index} className={`time-slot ${slot.isHour ? 'hour' : ''}`}>
+              <span className={slot.minute === 0 ? 'text-sm' : 'text-xs'}>
+                {slot.time}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Appointments column */}
+        <div 
+          className={`appointments-column ${draggedEventId ? 'drag-over' : ''}`}
+          onDrop={(e) => handleDrop(e, 'null')}
+          onDragOver={(e) => e.preventDefault()}
+          onDoubleClick={() => handleSlotDoubleClick('null')}
+          title="Double-click to create new appointment"
+        >
+          {/* Render timed events using CSS Grid positioning */}
+          {dayEvents.filter(event => {
+            // Filter out all-day events from the timed events
+            const isMarkedAllDay = (event as any).isAllDay;
+            // Convert startTime and endTime to Date objects if they aren't already
+            const startTime = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
+            const endTime = event.endTime instanceof Date ? event.endTime : new Date(event.endTime);
+
+            // Validate dates
+            if (!startTime || !endTime || isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+              return false;
+            }
+
+            const duration = endTime.getTime() - startTime.getTime();
+            const hours = duration / (1000 * 60 * 60);
+            const startHour = startTime.getHours();
+            const startMinute = startTime.getMinutes();
+            const isFullDay = startHour === 0 && startMinute === 0 && (hours === 24 || hours % 24 === 0);
+
+            return !(isMarkedAllDay || isFullDay || hours >= 20);
+          }).map((event, eventIndex) => {
+            const filteredTimedEvents = dayEvents.filter(e => {
+              const isMarkedAllDay = (e as any).isAllDay;
+              const eStart = e.startTime instanceof Date ? e.startTime : new Date(e.startTime);
+              const eEnd = e.endTime instanceof Date ? e.endTime : new Date(e.endTime);
+              if (!eStart || !eEnd || isNaN(eStart.getTime()) || isNaN(eEnd.getTime())) return false;
+              const eDuration = eEnd.getTime() - eStart.getTime();
+              const eHours = eDuration / (1000 * 60 * 60);
+              const eStartHour = eStart.getHours();
+              const eStartMinute = eStart.getMinutes();
+              const eIsFullDay = eStartHour === 0 && eStartMinute === 0 && (eHours === 24 || eHours % 24 === 0);
+              return !(isMarkedAllDay || eIsFullDay || eHours >= 20);
+            });
+
+            const { className, style } = getEventStyle(event, eventIndex, filteredTimedEvents);
+            // Match the event title from /client/src/components/calendar/DailyView.tsx
+            const calendarClass = event.calendarId === '0np7slb5u30o7oc29735pb259g' ? 'personal' :
+                                event.calendarId === 'en.usa#holiday@group.v.calendar.google.com' ? 'Holidays in United States' :
+                                event.source === 'simplepractice' ? 'SimplePractice' :
+                                'Google Calendar';
+
+            // Add status styling
+            const statusClass = event.status ? `status-${event.status}` : '';
+
+            return (
+              <div
+                key={`event-container-${event.id}-${eventIndex}`}
+                className={`appointment ${calendarClass} ${statusClass} ${className} ${draggedEventId === event.id ? 'dragging' : ''}`}
+                style={style}
+                draggable
+                onDragStart={(e) => handleDragStart(e, event)}
+                onDragEnd={handleDragEnd}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleEventExpansion(event.id);
+                }}
+              >
+                <div className="appointment-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', padding: '4px' }}>
+                  {/* Left: Event title, calendar, and time */}
+                  <div className="appointment-left">
+                    <div className="appointment-title-bold">{event.title}</div>
+                    <div className="appointment-calendar">
+                      {event.calendarId === '0np7slb5u30o7oc29735pb259g' || event.source === 'simplepractice' ? 'SimplePractice' :
+                       event.calendarId === 'en.usa#holiday@group.v.calendar.google.com' ? 'Holidays in United States' :
+                       'Google Calendar'}
+                    </div>
+                    {event.location && getLocationDisplay(event.location) && (
+                      <span> | {getLocationDisplay(event.location).display}</span>
+                    )}
+                    <div className="appointment-time">{formatEventTime(event)}</div>
+                  </div>
+
+                  {/* Center: Event Notes (bulleted) - only if they exist */}
+                  <div className="appointment-center">
+                    {event.notes && (
+                      <div className="appointment-notes">
+                        <div className="appointment-notes-header">Event Notes</div>
+                        {event.notes.split('\n')
+                          .filter(note => note.trim().length > 0)
+                          .filter(note => note.trim().replace(/[^\w\s]/g, '').trim())
+                          .filter(note => note.length > 0 && note !== '*' && note !== '-')
+                          .map((note, index) => (
+                            <div key={index} className="note-item">{note}</div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: Action Items - only if they exist */}
+                  <div className="appointment-right">
+                    {event.actionItems && (
+                      <div className="appointment-actions">
+                        <div className="appointment-actions-header">Action Items</div>
+                        {event.actionItems.split('\n')
+                          .filter(item => item.trim().length > 0)
+                          .filter(item => item.trim().replace(/[^\w\s]/g, '').trim())
+                          .filter(item => item.length > 0 && item !== '*' && item !== '-')
+                          .map(item => item.trim().replace(/[*\-]/g, '').trim())
+                          .filter(item => item.length > 0 && item !== '*' && item !== '-')
+                          .map((item, index) => (
+                            <div key={index} className="action-item">{item}</div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Modal outside the appointment loop to prevent flickering */}
+      {expandedEventId && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="modal-backdrop"
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              zIndex: 999
+            }}
+            onClick={() => setExpandedEventId(null)}
+          />
+          {/* Modal Content */}
+          <div
+            className="expanded-event-details"
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '500px',
+              maxWidth: '90vw',
+              maxHeight: '80vh',
+              background: '#ffffff',
+              border: '2px solid #333',
+              borderRadius: '8px',
+              padding: '16px',
+              zIndex: 1000,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+              overflow: 'auto'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {(() => {
+              const expandedEvent = dayEvents.find(event => event.id === expandedEventId);
+              if (!expandedEvent) return null;
+
+              return (
+                <div className="space-y-3">
+                  <div className="modal-header">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      {expandedEvent.title}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {formatEventTime(expandedEvent)} | {expandedEvent.calendarId === '0np7slb5u30o7oc29735pb259g' || expandedEvent.source === 'simplepractice' ? 'SimplePractice' :
+                       expandedEvent.calendarId === 'en.usa#holiday@group.v.calendar.google.com' ? 'Holidays in United States' :
+                       'Google Calendar'}
+                    </p>
+                  </div>
+
+                  <div className="notes-area">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Event Notes
+                    </label>
+                    <Textarea
+                      value={getCurrentValue(expandedEvent, 'notes')}
+                      onChange={(e) => handleEventNotesChange(expandedEvent.id, 'notes', e.target.value)}
+                      placeholder="Add notes for this appointment..."
+                      className="w-full text-sm"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="notes-area">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Action Items
+                    </label>
+                    <Textarea
+                      value={getCurrentValue(expandedEvent, 'actionItems')}
+                      onChange={(e) => handleEventNotesChange(expandedEvent.id, 'actionItems', e.target.value)}
+                      placeholder="Add action items and follow-ups..."
+                      className="w-full text-sm"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="flex justify-between pt-2">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        if (onDeleteEvent) {
+                          onDeleteEvent(expandedEvent.id);
+                        }
+                        setExpandedEventId(null);
+                      }}
+                      className="text-xs"
+                    >
+                      Delete
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setExpandedEventId(null)}
+                      className="text-xs"
+                    >
+                      Close
+                    </Button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </>
+      )}
+
+      {/* Footer Navigation Bar - styled buttons implementation */}
+      <div className="nav-footer">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onPreviousDay}
+          className="nav-btn prev-btn"
+          aria-label={`Navigate to ${getDayNavigationName(getPreviousDay(selectedDate))}`}
+          tabIndex={0}
+        >
+          ← {getDayNavigationName(getPreviousDay(selectedDate))}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBackToWeekly}
+          className="nav-btn weekly-btn"
+          aria-label="Navigate to weekly overview"
+          tabIndex={0}
+        >
+          📅 Weekly Overview
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onNextDay}
+          className="nav-btn next-btn"
+          aria-label={`Navigate to ${getDayNavigationName(getNextDay(selectedDate))}`}
+          tabIndex={0}
+        >
+          {getDayNavigationName(getNextDay(selectedDate))} →
+        </Button>
+      </div>
+    </div>
+  );
 };
+
+export default DailyView;
+

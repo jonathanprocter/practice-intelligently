@@ -1,353 +1,403 @@
-/* Daily View Grid Layout - Based on provided specifications */
-
-.daily-view {
+/* Daily View Specific Styles */
+.daily-view-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: white;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  position: relative;
+  background: #f8f9fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Header Section */
+.daily-view-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-size: 1.1rem;
+  color: #6b7280;
+}
+
+/* Header Styles */
 .daily-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
+  padding: 1rem 1.5rem;
+  background: white;
   border-bottom: 1px solid #e5e7eb;
-  background: #f8f9fa;
-  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.daily-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1f2937;
+.date-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.day-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
   margin: 0;
 }
 
-.daily-stats {
+.date-title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin: 0;
+}
+
+.stats-section {
   display: flex;
+  gap: 2rem;
   align-items: center;
 }
 
-.appointments-count {
-  font-size: 14px;
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+.stat-label {
+  font-size: 0.875rem;
   color: #6b7280;
-  background: #f3f4f6;
-  padding: 4px 12px;
-  border-radius: 12px;
   font-weight: 500;
 }
 
-/* Main Content Area */
-.daily-content {
-  flex: 1;
+/* Navigation Buttons */
+.nav-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background: white;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.nav-btn:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.prev-btn, .next-btn {
+  min-width: 120px;
+}
+
+.weekly-btn {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.weekly-btn:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+/* All Day Events */
+.all-day-section {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 1rem 1.5rem;
+}
+
+.all-day-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.75rem 0;
+}
+
+.all-day-events {
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding: 16px 24px 0;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-/* Daily Notes Section */
-.daily-notes-section {
-  flex-shrink: 0;
-  margin-bottom: 16px;
+.all-day-event {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.daily-notes-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: white;
+.all-day-event:hover {
+  background: #fde68a;
+  transform: translateY(-1px);
 }
 
-/* Time Grid Container */
-.time-grid-container {
-  flex: 1;
-  overflow: hidden;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: white;
+.all-day-event .event-title {
+  font-weight: 600;
+  color: #92400e;
+  font-size: 0.875rem;
 }
 
-.time-grid {
+.all-day-event .event-description {
+  font-size: 0.75rem;
+  color: #b45309;
+  margin-top: 0.25rem;
+}
+
+/* Schedule Grid Layout */
+.schedule-grid {
   display: grid;
   grid-template-columns: 80px 1fr;
-  height: 100%;
+  flex: 1;
+  overflow: hidden;
+  background: white;
+}
+
+/* Time Column */
+.time-column {
+  background: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
 }
 
-/* Time Column Header */
-.time-column-header {
-  grid-column: 1;
-  height: 50px;
+.time-slot {
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e5e7eb;
-  border-right: 1px solid #e5e7eb;
-  font-weight: 600;
-  font-size: 12px;
-  color: #374151;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  position: sticky;
-  top: 0;
-  z-index: 20;
-}
-
-/* Events Column Header */
-.events-column-header {
-  grid-column: 2;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e5e7eb;
-  font-weight: 600;
-  font-size: 14px;
-  color: #374151;
-  position: sticky;
-  top: 0;
-  z-index: 20;
-}
-
-/* Time Grid Rows */
-.time-grid-row {
-  display: contents;
-}
-
-/* Time Label Cell */
-.time-label-cell {
-  grid-column: 1;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f9fafb;
   border-bottom: 1px solid #f3f4f6;
-  border-right: 1px solid #e5e7eb;
-}
-
-.time-text {
-  font-size: 11px;
+  font-size: 0.75rem;
   color: #6b7280;
   font-weight: 500;
 }
 
-/* Events Cell */
-.events-cell {
-  grid-column: 2;
-  height: 40px;
-  border-bottom: 1px solid #f3f4f6;
+.time-slot.hour {
+  border-bottom: 1px solid #d1d5db;
+  font-weight: 600;
+  color: #374151;
+}
+
+.time-slot .text-sm {
+  font-size: 0.875rem;
+}
+
+.time-slot .text-xs {
+  font-size: 0.75rem;
+}
+
+/* Appointments Column */
+.appointments-column {
   position: relative;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+  display: grid;
+  grid-template-rows: repeat(36, 60px);
+  grid-template-columns: 1fr;
+  overflow-y: auto;
   background: white;
 }
 
-.events-cell:nth-child(even) {
-  background: #fdfdfd;
+.appointments-column.drag-over {
+  background: #f0f9ff;
 }
 
-.events-cell:hover:not(.has-events) {
-  background: #f9fafb;
-}
-
-.events-cell.has-events {
-  background: transparent;
-}
-
-/* Appointment Styling */
+/* Appointment Styles */
 .appointment {
-  position: absolute;
-  top: 2px;
-  left: 4px;
-  right: 4px;
-  margin: 0;
-  border-radius: 4px;
-  padding: 6px 10px;
+  position: relative;
+  margin: 2px;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid transparent;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  box-sizing: border-box;
   z-index: 10;
-  min-height: 36px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
 }
 
-/* Appointment Type Styling - All appointments use SimplePractice blue box styling */
-.appointment.simplepractice,
-.appointment.google-calendar,
-.appointment.personal,
-.appointment {
-  background: white;
-  border: 2px solid #6495ED;
-  border-left: 4px solid #6495ED;
-}
-
-.appointment.simplepractice:hover,
-.appointment.google-calendar:hover,
-.appointment.personal:hover,
 .appointment:hover {
-  border-color: #4169E1;
-  transform: scale(1.02);
-  box-shadow: 0 2px 8px rgba(100, 149, 237, 0.3);
-  z-index: 15;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.appointment.dragging {
+  opacity: 0.7;
+  transform: rotate(2deg);
+}
 
+/* Calendar-specific styling */
+.appointment.simplepractice {
+  background: #dbeafe;
+  border-left: 4px solid #3b82f6;
+  color: #1e40af;
+}
+
+.appointment.google-calendar {
+  background: #dcfce7;
+  border: 2px dashed #16a34a;
+  color: #15803d;
+}
+
+.appointment.personal {
+  background: #fed7aa;
+  border: 2px solid #ea580c;
+  color: #c2410c;
+}
 
 /* Status-based styling */
-.appointment.status-cancelled {
-  opacity: 0.7;
-  text-decoration: line-through;
-}
-
 .appointment.status-confirmed {
-  border-width: 3px;
+  border-left-color: #10b981;
 }
 
-/* Appointment Structure */
-.appointment {
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: stretch;
+.appointment.status-tentative {
+  border-left-color: #f59e0b;
 }
 
-/* Appointment Content */
-.appointment-content {
+.appointment.status-cancelled {
+  border-left-color: #ef4444;
+  opacity: 0.6;
+}
+
+/* Appointment Layout */
+.appointment-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  padding: 4px;
+  height: 100%;
+}
+
+.appointment-left,
+.appointment-center,
+.appointment-right {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.25rem;
   overflow: hidden;
-  flex: 1;
 }
 
-/* Appointment Actions - Floating AI Insights Button */
-.appointment-actions {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  opacity: 0.8;
-  transition: opacity 0.2s ease;
-  z-index: 20;
-}
-
-.appointment:hover .appointment-actions {
-  opacity: 1;
-}
-
-.quick-insights-btn {
-  background: #6495ED !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 4px !important;
-  padding: 4px !important;
-  width: 24px !important;
-  height: 24px !important;
-  min-height: 24px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.quick-insights-btn:hover {
-  background: #4169E1 !important;
-  transform: scale(1.1);
-  box-shadow: 0 2px 8px rgba(100, 149, 237, 0.4);
-}
-
-.appointment-title {
-  font-weight: 600;
-  font-size: 12px;
-  color: #111827;
+.appointment-title-bold {
+  font-weight: 700;
+  font-size: 0.875rem;
   line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: inherit;
+  margin-bottom: 0.25rem;
+}
+
+.appointment-calendar {
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 .appointment-time {
-  font-size: 10px;
-  color: #6b7280;
-  line-height: 1.1;
-}
-
-.time-range {
-  font-weight: 500;
-}
-
-.appointment-client {
-  font-size: 11px;
-  color: #374151;
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.appointment-location {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  font-size: 10px;
-  color: #6b7280;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Expanded Event Details */
-.appointment-expanded {
-  position: absolute;
-  top: 100%;
-  left: -2px;
-  right: -2px;
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 30;
-  margin-top: 4px;
-  max-width: 320px;
-}
-
-.expanded-content {
-  padding: 12px;
-}
-
-.expanded-section {
-  margin-bottom: 12px;
-}
-
-.expanded-section h4 {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
+  opacity: 0.9;
+}
+
+/* Notes and Action Items */
+.appointment-notes,
+.appointment-actions {
+  font-size: 0.75rem;
+}
+
+.appointment-notes-header,
+.appointment-actions-header {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
   color: #374151;
-  margin-bottom: 4px;
 }
 
-.expanded-section p {
-  font-size: 11px;
+.note-item,
+.action-item {
+  font-size: 0.7rem;
+  line-height: 1.3;
+  margin-bottom: 0.125rem;
   color: #6b7280;
-  line-height: 1.4;
 }
 
-.expanded-actions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+/* Modal Styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.expanded-event-details {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  max-width: 90vw;
+  max-height: 80vh;
+  background: #ffffff;
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 16px;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  overflow: auto;
+}
+
+.modal-header {
+  margin-bottom: 1rem;
+}
+
+.modal-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.modal-header p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.notes-area {
+  margin-bottom: 1rem;
+}
+
+.notes-area label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+.notes-area textarea {
+  width: 100%;
+  font-size: 0.875rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  resize: vertical;
+}
+
+.notes-area textarea:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-color: #3b82f6;
 }
 
 /* Footer Navigation */
@@ -355,117 +405,134 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
+  padding: 1rem 1.5rem;
+  background: white;
   border-top: 1px solid #e5e7eb;
-  background: #f8f9fa;
-  flex-shrink: 0;
-  gap: 12px;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.nav-btn {
-  font-size: 14px;
+/* Utility Classes */
+.space-y-3 > * + * {
+  margin-top: 0.75rem;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-medium {
   font-weight: 500;
-  padding: 8px 16px;
-  white-space: nowrap;
 }
 
-.prev-btn, .next-btn {
-  flex: 1;
-  max-width: 200px;
+.text-gray-900 {
+  color: #111827;
 }
 
-.weekly-btn {
-  flex: 0 0 auto;
+.text-gray-700 {
+  color: #374151;
 }
 
-/* Scrollbar Styling */
-.time-grid::-webkit-scrollbar {
-  width: 6px;
+.text-gray-600 {
+  color: #4b5563;
 }
 
-.time-grid::-webkit-scrollbar-track {
-  background: #f1f5f9;
+.mb-1 {
+  margin-bottom: 0.25rem;
 }
 
-.time-grid::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
+.mb-2 {
+  margin-bottom: 0.5rem;
 }
 
-.time-grid::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+.pt-2 {
+  padding-top: 0.5rem;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.block {
+  display: block;
+}
+
+.flex {
+  display: flex;
+}
+
+.justify-between {
+  justify-content: space-between;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .daily-view {
-    height: 100vh;
-  }
-  
   .daily-header {
-    padding: 12px 16px;
     flex-direction: column;
-    gap: 8px;
-    text-align: center;
+    gap: 1rem;
+    padding: 1rem;
   }
   
-  .daily-title {
-    font-size: 20px;
+  .stats-section {
+    gap: 1rem;
   }
   
-  .daily-content {
-    padding: 12px 16px 0;
-  }
-  
-  .time-grid {
+  .schedule-grid {
     grid-template-columns: 60px 1fr;
   }
   
-  .time-column-header,
-  .events-column-header {
-    font-size: 12px;
-    padding: 0 8px;
+  .time-slot {
+    font-size: 0.625rem;
   }
   
-  .appointment {
-    padding: 4px 6px;
+  .appointment-layout {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
   }
   
-  .appointment-title {
-    font-size: 11px;
+  .appointment-title-bold {
+    font-size: 0.75rem;
   }
   
   .nav-footer {
-    padding: 12px 16px;
     flex-direction: column;
-    gap: 8px;
+    gap: 0.5rem;
   }
   
   .nav-btn {
     width: 100%;
-    max-width: none;
+    max-width: 200px;
   }
 }
 
-/* Focus and accessibility improvements */
-.appointment:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: 1px;
-}
-
-.events-cell:focus {
-  outline: 1px solid #3b82f6;
-  outline-offset: -1px;
-}
-
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  .appointment.simplepractice,
-  .appointment.google-calendar,
-  .appointment.personal,
+@media (max-width: 480px) {
+  .expanded-event-details {
+    width: 95vw;
+    max-height: 90vh;
+    padding: 12px;
+  }
+  
   .appointment {
-    border-width: 3px;
-    border-color: #000080;
-    border-left-width: 5px;
+    padding: 0.25rem;
+  }
+  
+  .time-slot {
+    height: 40px;
+  }
+  
+  .appointments-column {
+    grid-template-rows: repeat(36, 40px);
   }
 }
+
