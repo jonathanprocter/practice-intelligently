@@ -337,38 +337,40 @@ export const DailyViewGrid = ({
               </Button>
             </div>
 
-            {/* Time Slots with Events */}
-            {timeSlots.map((timeSlot, index) => {
-              const slotEvents = getEventsForTimeSlot(dayEvents, date, timeSlot);
-              
-              return (
-                <div key={`slot-${timeSlot.hour}-${timeSlot.minute}`} className="time-grid-row">
-                  {/* Time Label */}
-                  <div className="time-label-cell">
-                    <span className="time-text" data-testid={`time-slot-${timeSlot.display}`}>
-                      {timeSlot.display}
-                    </span>
+            {/* Scrollable Time Slots with Events */}
+            <div className="time-grid-scrollable">
+              {timeSlots.map((timeSlot, index) => {
+                const slotEvents = getEventsForTimeSlot(dayEvents, date, timeSlot);
+                
+                return (
+                  <div key={`slot-${timeSlot.hour}-${timeSlot.minute}`} className="time-grid-row">
+                    {/* Time Label */}
+                    <div className="time-label-cell">
+                      <span className="time-text" data-testid={`time-slot-${timeSlot.display}`}>
+                        {timeSlot.display}
+                      </span>
+                    </div>
+                    
+                    {/* Events Cell */}
+                    <div 
+                      className={cn("events-cell", slotEvents.length > 0 && "has-events")}
+                      onClick={() => {
+                        if (onTimeSlotClick) {
+                          const slotDate = new Date(date);
+                          slotDate.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
+                          onTimeSlotClick(slotDate, timeSlot.display);
+                        }
+                      }}
+                      data-testid={`time-slot-grid-${timeSlot.display}`}
+                    >
+                      {slotEvents.map((event, eventIndex) => 
+                        renderEventInTimeSlot(event, timeSlot, eventIndex)
+                      )}
+                    </div>
                   </div>
-                  
-                  {/* Events Cell */}
-                  <div 
-                    className={cn("events-cell", slotEvents.length > 0 && "has-events")}
-                    onClick={() => {
-                      if (onTimeSlotClick) {
-                        const slotDate = new Date(date);
-                        slotDate.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
-                        onTimeSlotClick(slotDate, timeSlot.display);
-                      }
-                    }}
-                    data-testid={`time-slot-grid-${timeSlot.display}`}
-                  >
-                    {slotEvents.map((event, eventIndex) => 
-                      renderEventInTimeSlot(event, timeSlot, eventIndex)
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

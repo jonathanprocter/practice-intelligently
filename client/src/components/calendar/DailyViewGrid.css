@@ -532,14 +532,18 @@
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .time-grid {
   display: grid;
   grid-template-columns: 80px 1fr;
   grid-template-rows: auto 1fr;
-  height: 100%;
+  flex: 1;
   overflow: hidden;
+  min-height: 0;
 }
 
 .time-column-header {
@@ -567,6 +571,14 @@
   color: #374151;
 }
 
+.time-grid-scrollable {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
 .time-grid-row {
   display: contents;
 }
@@ -580,6 +592,9 @@
   border-bottom: 1px solid #f3f4f6;
   background: #f9fafb;
   height: 40px;
+  position: sticky;
+  left: 0;
+  z-index: 1;
 }
 
 .time-text {
