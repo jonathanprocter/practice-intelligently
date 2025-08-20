@@ -4497,27 +4497,37 @@ You are Compass, an AI assistant for therapy practice management. You have acces
       console.log(`📊 Found ${dbEvents.length} events in database`);
 
       // Transform database events to match Google Calendar API format for frontend compatibility
-      const transformedEvents = dbEvents.map((event: any) => ({
-        id: event.googleEventId,
-        summary: event.summary,
-        description: event.description,
-        start: event.isAllDay 
-          ? { date: event.startTime.toISOString().split('T')[0] }
-          : { dateTime: event.startTime.toISOString(), timeZone: event.timeZone },
-        end: event.isAllDay
-          ? { date: event.endTime.toISOString().split('T')[0] }
-          : { dateTime: event.endTime.toISOString(), timeZone: event.timeZone },
-        location: event.location,
-        status: event.status,
-        attendees: Array.isArray(event.attendees) ? event.attendees : [],
-        recurringEventId: event.recurringEventId,
-        calendarId: event.googleCalendarId,
-        calendarName: event.calendarName,
-        // Add database metadata
-        dbId: event.id,
-        lastSyncTime: event.lastSyncTime,
-        source: 'database'
-      }));
+      const transformedEvents = dbEvents.map((event: any) => {
+        // Determine source based on calendar name
+        let source = 'google';
+        if (event.calendarName && event.calendarName.toLowerCase().includes('simple practice')) {
+          source = 'system';
+        } else if (event.calendarName && event.calendarName.toLowerCase().includes('trevor')) {
+          source = 'manual';
+        }
+
+        return {
+          id: event.googleEventId,
+          summary: event.summary,
+          description: event.description,
+          start: event.isAllDay 
+            ? { date: event.startTime.toISOString().split('T')[0] }
+            : { dateTime: event.startTime.toISOString(), timeZone: event.timeZone },
+          end: event.isAllDay
+            ? { date: event.endTime.toISOString().split('T')[0] }
+            : { dateTime: event.endTime.toISOString(), timeZone: event.timeZone },
+          location: event.location,
+          status: event.status,
+          attendees: Array.isArray(event.attendees) ? event.attendees : [],
+          recurringEventId: event.recurringEventId,
+          calendarId: event.googleCalendarId,
+          calendarName: event.calendarName,
+          // Add database metadata
+          dbId: event.id,
+          lastSyncTime: event.lastSyncTime,
+          source: source
+        };
+      });
 
       console.log(`✅ Returning ${transformedEvents.length} events from database`);
       res.json(transformedEvents);

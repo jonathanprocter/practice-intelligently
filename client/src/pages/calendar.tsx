@@ -127,7 +127,17 @@ export default function Calendar() {
                 startTime: startTime,
                 endTime: endTime,
                 clientId: undefined,
-                clientName: event.summary || event.title || 'Appointment',
+                clientName: (() => {
+                  const title = event.summary || event.title || 'Appointment';
+                  // Extract client name from different appointment formats
+                  if (title.toLowerCase().includes('appointment')) {
+                    return title.replace(/\s+appointment$/i, '').trim();
+                  } else if (title.toLowerCase().match(/(coffee|call|meeting)\s+with\s+(.+)/i)) {
+                    const match = title.match(/(coffee|call|meeting)\s+with\s+(.+)/i);
+                    return match ? match[2].trim() : title;
+                  }
+                  return title;
+                })(),
                 type: 'individual' as const,
                 status: 'scheduled' as const,
                 location: event.location || '',
@@ -135,7 +145,7 @@ export default function Calendar() {
                 isAllDay: !!event.start?.date && !event.start?.dateTime,
                 priority: 'medium' as const,
                 color: undefined,
-                source: 'google' as const,
+                source: event.source || 'google' as const, // Use the actual source from the backend
                 therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
                 attendees: event.attendees || '',
                 calendarId: event.calendarId || event.organizer?.email || 'primary',
