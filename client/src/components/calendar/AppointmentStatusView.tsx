@@ -83,8 +83,10 @@ export function AppointmentStatusView({ events, selectedDate, onEventClick }: Ap
           const getBackgroundColor = (status: string) => {
             switch(status) {
               case 'cancelled': return '#fff3cd';
-              case 'no_show': return '#f8d7da';
-              case 'clinician_canceled': return '#f8f9fa';
+              case 'no-show': return '#f8d7da';
+              case 'completed': return '#e7f3ff';
+              case 'confirmed': return '#e8f5e8';
+              case 'pending': return '#fff3e0';
               default: return '#ffffff';
             }
           };
@@ -92,8 +94,10 @@ export function AppointmentStatusView({ events, selectedDate, onEventClick }: Ap
           const getBorderColor = (status: string) => {
             switch(status) {
               case 'cancelled': return '#ffc107';
-              case 'no_show': return '#dc3545';
-              case 'clinician_canceled': return '#6c757d';
+              case 'no-show': return '#dc3545';
+              case 'completed': return '#007bff';
+              case 'confirmed': return '#28a745';
+              case 'pending': return '#fd7e14';
               default: return '#e2e8f0';
             }
           };
@@ -130,7 +134,7 @@ export function AppointmentStatusView({ events, selectedDate, onEventClick }: Ap
                   {event.title}
                 </div>
                 <div className="text-xs opacity-75 uppercase tracking-wide">
-                  {event.source === 'simplepractice' ? 'SIMPLEPRACTICE' : event.source.toUpperCase()}
+                  {event.source === 'simplepractice' ? 'SIMPLEPRACTICE' : (event.source || 'SYSTEM').toUpperCase()}
                 </div>
                 <div className="font-semibold text-sm">
                   {formatTimeRange(new Date(event.startTime), new Date(event.endTime))}
@@ -142,11 +146,11 @@ export function AppointmentStatusView({ events, selectedDate, onEventClick }: Ap
                 )}
               </div>
 
-              {/* Clinician Canceled Overlay */}
-              {event.status === 'clinician_canceled' && (
+              {/* Cancelled Overlay */}
+              {event.status === 'cancelled' && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-500 bg-opacity-20 rounded-lg">
                   <div className="bg-gray-500 bg-opacity-90 text-white px-2 py-1 rounded text-xs font-bold">
-                    Clinician Canceled
+                    Cancelled
                   </div>
                 </div>
               )}
@@ -185,8 +189,8 @@ export function AppointmentStats({ events, selectedDate }: AppointmentStatsProps
     scheduled: appointmentEvents.filter(e => e.status === 'scheduled').length,
     confirmed: appointmentEvents.filter(e => e.status === 'confirmed').length,
     cancelled: appointmentEvents.filter(e => e.status === 'cancelled').length,
-    no_show: appointmentEvents.filter(e => e.status === 'no_show').length,
-    clinician_canceled: appointmentEvents.filter(e => e.status === 'clinician_canceled').length,
+    no_show: appointmentEvents.filter(e => e.status === 'no-show').length,
+    pending: appointmentEvents.filter(e => e.status === 'pending').length,
     completed: appointmentEvents.filter(e => e.status === 'completed').length,
   };
 
