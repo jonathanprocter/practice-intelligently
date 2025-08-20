@@ -615,7 +615,7 @@ export const WeeklyCalendarGrid = ({
                             className="text-gray-500 text-xs mt-1"
                             style={{ fontSize: '8px', lineHeight: '1.1' }}
                           >
-                            📍 {getLocationDisplay(event.location)}
+                            📍 {getLocationDisplay(event.location).display}
                           </div>
                         )}
                       </div>
