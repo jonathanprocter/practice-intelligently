@@ -36,11 +36,9 @@ export function generateTimeSlots(): TimeSlot[] {
 }
 
 export function getEventDurationInSlots(startTime: Date, endTime: Date): number {
-  if (!startTime || !endTime) {
-    return 1; // Default to 1 slot if dates are invalid
-  }
   const durationMs = endTime.getTime() - startTime.getTime();
-  return Math.ceil(durationMs / (1000 * 60) / 30); // 30-minute slots
+  const durationMinutes = durationMs / (1000 * 60);
+  return Math.ceil(durationMinutes / 30); // 30-minute slots
 }
 
 export function isEventInTimeSlot(event: any, timeSlot: TimeSlot): boolean {
@@ -134,12 +132,12 @@ export function formatTimeRange(startTime: Date, endTime: Date): string {
 export function getEventsForTimeSlot(events: any[], date: Date, timeSlot: TimeSlot): any[] {
   return events.filter(event => {
     const eventDate = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
-
+    
     // Check if event is on the same day
     if (eventDate.toDateString() !== date.toDateString()) {
       return false;
     }
-
+    
     // Check if event overlaps with this time slot
     return isEventInTimeSlot(event, timeSlot);
   });

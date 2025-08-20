@@ -10,7 +10,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, MapPin, User, Clock, MessageSquare, Trash2, Edit, X, Brain, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AppointmentDetailsDialog } from './AppointmentDetailsDialog';
-import { getAppointmentStatusCSS } from '../../utils/appointmentStatusUtils';
 import './DailyViewGrid.css';
 
 interface DailyViewGridProps {
@@ -136,7 +135,7 @@ export const DailyViewGrid = ({
     if (isSameDay(targetDate, today)) return 'Today';
     if (isSameDay(targetDate, tomorrow)) return 'Tomorrow';
     if (isSameDay(targetDate, yesterday)) return 'Yesterday';
-
+    
     return targetDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   }, []);
 
@@ -148,7 +147,7 @@ export const DailyViewGrid = ({
 
   const handleDeleteEvent = async (event: CalendarEvent) => {
     if (!onDeleteEvent) return;
-
+    
     try {
       await onDeleteEvent(event);
       toast({
@@ -165,45 +164,47 @@ export const DailyViewGrid = ({
     }
   };
 
-  const getAppointmentClassName = useCallback((event: CalendarEvent) => {
-    let baseClass = 'appointment';
-
-    // Add calendar-specific styling
-    if (event.source === 'simplepractice') {
-      baseClass += ' simplepractice';
-    } else if (event.source === 'google-calendar') {
-      baseClass += ' google-calendar';
+  const getAppointmentClassName = (event: CalendarEvent) => {
+    let baseClass = "appointment";
+    
+    // Source-based styling
+    if (event.source === 'system') {
+      baseClass += " simplepractice";
+    } else if (event.source === 'google') {
+      baseClass += " google-calendar";
+    } else if (event.source === 'manual') {
+      baseClass += " personal";
     } else {
-      baseClass += ' personal';
+      baseClass += " personal";
     }
-
-    // Add status-based styling
-    if (event.status) {
-      baseClass += ` status-${event.status}`;
-      // Add additional status styling from utils
-      baseClass += ` ${getAppointmentStatusCSS(event.status)}`;
+    
+    // Status-based styling
+    if (event.status === 'cancelled') {
+      baseClass += " status-cancelled";
+    } else if (event.status === 'confirmed') {
+      baseClass += " status-confirmed";
     }
-
+    
     return baseClass;
-  }, []);
+  };
 
   const renderEventInTimeSlot = (event: CalendarEvent, timeSlot: TimeSlot, eventIndex: number) => {
     const startTime = parseEventDate(event.startTime);
     const endTime = parseEventDate(event.endTime);
-
+    
     if (!startTime || !endTime) return null;
 
     // Calculate the duration in 30-minute slots
     const durationMs = endTime.getTime() - startTime.getTime();
     const durationSlots = Math.ceil(durationMs / (30 * 60 * 1000));
-
+    
     // Only render the event in its starting time slot
     const eventStartSlot = timeSlots.find(slot => {
       const slotDate = new Date(date);
       slotDate.setHours(slot.hour, slot.minute, 0, 0);
       return Math.abs(slotDate.getTime() - startTime.getTime()) < 30 * 60 * 1000;
     });
-
+    
     if (eventStartSlot?.hour !== timeSlot.hour || eventStartSlot?.minute !== timeSlot.minute) {
       return null;
     }
@@ -249,7 +250,7 @@ export const DailyViewGrid = ({
             </div>
           )}
         </div>
-
+        
         {/* Quick AI Insights Button */}
         <div className="appointment-actions">
           <Button
@@ -321,7 +322,7 @@ export const DailyViewGrid = ({
             <div className="time-column-header">
               <span className="time-label">Time</span>
             </div>
-
+            
             {/* Events Column Header */}
             <div className="events-column-header">
               <span>Schedule</span>
@@ -340,7 +341,7 @@ export const DailyViewGrid = ({
             <div className="time-grid-scrollable">
               {timeSlots.map((timeSlot, index) => {
                 const slotEvents = getEventsForTimeSlot(dayEvents, date, timeSlot);
-
+                
                 return (
                   <div key={`slot-${timeSlot.hour}-${timeSlot.minute}`} className="time-grid-row">
                     {/* Time Label */}
@@ -349,7 +350,7 @@ export const DailyViewGrid = ({
                         {timeSlot.display}
                       </span>
                     </div>
-
+                    
                     {/* Events Cell */}
                     <div 
                       className={cn("events-cell", slotEvents.length > 0 && "has-events")}
@@ -386,7 +387,7 @@ export const DailyViewGrid = ({
         >
           ← {getDayNavigationName(getPreviousDay())}
         </Button>
-
+        
         {onBackToWeek && (
           <Button
             variant="outline"
@@ -399,7 +400,7 @@ export const DailyViewGrid = ({
             📅 Weekly Overview
           </Button>
         )}
-
+        
         <Button
           variant="outline"
           size="sm"
