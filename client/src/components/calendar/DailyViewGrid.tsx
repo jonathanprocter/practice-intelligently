@@ -215,8 +215,8 @@ export const DailyViewGrid = ({
         className={getAppointmentClassName(event)}
         style={{
           '--grid-span': durationSlots,
-          height: `calc(${durationSlots * 40}px - 2px)`,
-          minHeight: '36px',
+          height: `calc(${durationSlots * 60}px - 4px)`,
+          minHeight: '56px',
           zIndex: 10 + eventIndex
         } as React.CSSProperties}
         onClick={(e) => {
