@@ -21,7 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { CalendarEvent } from '@/types/calendar';
-import { AppointmentStatus } from '../../../../shared/schema';
+
 import { getLocationDisplay } from '@/utils/locationUtils';
 
 interface AppointmentStatusModalProps {
@@ -31,12 +31,12 @@ interface AppointmentStatusModalProps {
 }
 
 const statusOptions = [
-  { value: AppointmentStatus.SCHEDULED, label: 'Scheduled', color: '#4285f4' },
-  { value: AppointmentStatus.CONFIRMED, label: 'Confirmed', color: '#34a853' },
-  { value: AppointmentStatus.CANCELLED, label: 'Cancelled', color: '#ffc107' },
-  { value: AppointmentStatus.NO_SHOW, label: 'No Show', color: '#dc3545' },
-  { value: AppointmentStatus.CLINICIAN_CANCELED, label: 'Clinician Canceled', color: '#6c757d' },
-  { value: AppointmentStatus.COMPLETED, label: 'Completed', color: '#28a745' }
+  { value: 'scheduled', label: 'Scheduled', color: '#4285f4' },
+  { value: 'confirmed', label: 'Confirmed', color: '#34a853' },
+  { value: 'cancelled', label: 'Cancelled', color: '#ffc107' },
+  { value: 'no_show', label: 'No Show', color: '#dc3545' },
+  { value: 'rescheduled', label: 'Rescheduled', color: '#fd7e14' },
+  { value: 'completed', label: 'Completed', color: '#28a745' }
 ];
 
 const locationOptions = [

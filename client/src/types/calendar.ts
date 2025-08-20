@@ -6,7 +6,7 @@ export interface CalendarEvent {
   clientId?: string;
   clientName?: string;
   type: 'individual' | 'group' | 'intake' | 'consultation' | 'assessment' | 'follow-up';
-  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no-show' | 'pending';
+  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show' | 'rescheduled';
   location?: string;
   notes?: string;
   description?: string;

@@ -1,6 +1,5 @@
 import { CalendarEvent } from '@/types/calendar';
-
-export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no-show' | 'pending';
+import { AppointmentStatus } from '@/types/sessionNoteTypes';
 
 export interface StatusBadgeInfo {
   show: boolean;
@@ -31,16 +30,16 @@ export function getStatusBadgeInfo(status: AppointmentStatus): StatusBadgeInfo {
         text: 'CANCELLED',
         color: '#ffc107' // Yellow
       };
-    case 'no-show':
+    case 'no_show':
       return {
         show: true,
         text: 'NO SHOW',
         color: '#dc3545' // Red
       };
-    case 'pending':
+    case 'rescheduled':
       return {
         show: true,
-        text: 'PENDING',
+        text: 'RESCHEDULED',
         color: '#fd7e14' // Orange
       };
     case 'scheduled':
@@ -60,13 +59,13 @@ export function getAppointmentStatusStyles(status: AppointmentStatus): string {
   switch (status) {
     case 'cancelled':
       return 'bg-yellow-50 border-yellow-300 text-yellow-800';
-    case 'no-show':
+    case 'no_show':
       return 'bg-red-50 border-red-300 text-red-800';
     case 'completed':
       return 'bg-purple-50 border-purple-300 text-purple-800';
     case 'confirmed':
       return 'bg-green-50 border-green-300 text-green-800';
-    case 'pending':
+    case 'rescheduled':
       return 'bg-orange-50 border-orange-300 text-orange-800';
     case 'scheduled':
     default:
@@ -78,7 +77,7 @@ export function getAppointmentStatusStyles(status: AppointmentStatus): string {
  * Determine if appointment text should have strikethrough styling
  */
 export function shouldShowStrikethrough(status: AppointmentStatus): boolean {
-  return status === 'cancelled' || status === 'no-show';
+  return status === 'cancelled' || status === 'no_show';
 }
 
 /**
@@ -108,10 +107,10 @@ export function getAppointmentStatusLabel(status: AppointmentStatus): string {
       return 'Completed';
     case 'cancelled':
       return 'Cancelled';
-    case 'no-show':
+    case 'no_show':
       return 'No Show';
-    case 'pending':
-      return 'Pending';
+    case 'rescheduled':
+      return 'Rescheduled';
     default:
       return 'Unknown';
   }

@@ -83,10 +83,10 @@ export function AppointmentStatusView({ events, selectedDate, onEventClick }: Ap
           const getBackgroundColor = (status: string) => {
             switch(status) {
               case 'cancelled': return '#fff3cd';
-              case 'no-show': return '#f8d7da';
+              case 'no_show': return '#f8d7da';
               case 'completed': return '#e7f3ff';
               case 'confirmed': return '#e8f5e8';
-              case 'pending': return '#fff3e0';
+              case 'rescheduled': return '#fff3e0';
               default: return '#ffffff';
             }
           };
@@ -94,10 +94,10 @@ export function AppointmentStatusView({ events, selectedDate, onEventClick }: Ap
           const getBorderColor = (status: string) => {
             switch(status) {
               case 'cancelled': return '#ffc107';
-              case 'no-show': return '#dc3545';
+              case 'no_show': return '#dc3545';
               case 'completed': return '#007bff';
               case 'confirmed': return '#28a745';
-              case 'pending': return '#fd7e14';
+              case 'rescheduled': return '#fd7e14';
               default: return '#e2e8f0';
             }
           };
@@ -190,7 +190,7 @@ export function AppointmentStats({ events, selectedDate }: AppointmentStatsProps
     confirmed: appointmentEvents.filter(e => e.status === 'confirmed').length,
     cancelled: appointmentEvents.filter(e => e.status === 'cancelled').length,
     no_show: appointmentEvents.filter(e => e.status === 'no-show').length,
-    pending: appointmentEvents.filter(e => e.status === 'pending').length,
+    rescheduled: appointmentEvents.filter(e => e.status === 'rescheduled').length,
     completed: appointmentEvents.filter(e => e.status === 'completed').length,
   };
 
