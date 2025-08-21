@@ -277,16 +277,16 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-therapy-bg">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-therapy-border">
-        <div className="px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-therapy-text">
+    <div className="min-h-screen bg-therapy-bg overflow-x-hidden">
+      {/* Sticky Header - iPhone Optimized */}
+      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-therapy-border header-safe">
+        <div className="px-3 sm:px-6 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-therapy-text truncate">
                 {getGreeting()}
               </h1>
-              <p className="text-sm text-therapy-text/60">
+              <p className="text-xs sm:text-sm text-therapy-text/60">
                 {new Date().toLocaleDateString('en-US', { 
                   weekday: 'long', 
                   year: 'numeric', 
@@ -296,8 +296,8 @@ export default function Dashboard() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* Health Indicator */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              {/* Health Indicator - Hidden on mobile */}
               <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-lg">
                 <div className={cn(
                   "h-2 w-2 rounded-full",
@@ -310,14 +310,15 @@ export default function Dashboard() {
                 </span>
               </div>
 
-              {/* Layout Toggle */}
-              <div className="flex bg-gray-100 rounded-lg p-1">
+              {/* Layout Toggle - Simplified for mobile */}
+              <div className="hidden sm:flex bg-gray-100 rounded-lg p-1">
                 <Button
                   variant={dashboardLayout === 'compact' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setDashboardLayout('compact')}
-                  className="px-2"
+                  className="px-2 min-h-[36px]"
                   title="Compact view"
+                  data-testid="layout-compact"
                 >
                   <LayoutGrid className="h-4 w-4" />
                 </Button>
@@ -325,7 +326,8 @@ export default function Dashboard() {
                   variant={dashboardLayout === 'default' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setDashboardLayout('default')}
-                  className="px-2"
+                  className="px-2 min-h-[36px]"
+                  data-testid="layout-default"
                 >
                   Default
                 </Button>
@@ -333,7 +335,8 @@ export default function Dashboard() {
                   variant={dashboardLayout === 'expanded' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setDashboardLayout('expanded')}
-                  className="px-2"
+                  className="px-2 min-h-[36px]"
+                  data-testid="layout-expanded"
                 >
                   Wide
                 </Button>
@@ -344,19 +347,23 @@ export default function Dashboard() {
                 size="sm"
                 onClick={handleRefreshDashboard}
                 disabled={isRefreshing}
+                className="min-h-[44px] flex-1 sm:flex-none"
+                data-testid="refresh-dashboard"
               >
-                <RefreshCw className={cn("h-4 w-4 mr-2", isRefreshing && "animate-spin")} />
-                Refresh
+                <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+                <span className="ml-2 hidden sm:inline">Refresh</span>
               </Button>
 
-              <ApiStatusIndicators />
+              <div className="hidden sm:block">
+                <ApiStatusIndicators />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="p-6 max-w-[1800px] mx-auto space-y-6">
+      {/* Main Content - iPhone Optimized */}
+      <div className="p-3 sm:p-6 max-w-[1800px] mx-auto space-y-4 sm:space-y-6 safe-area-bottom">
         {/* Primary Section - Always visible */}
         <ErrorBoundary>
           <DashboardSection
@@ -368,8 +375,8 @@ export default function Dashboard() {
           </DashboardSection>
         </ErrorBoundary>
 
-        {/* Critical Information Row */}
-        <div className={cn("grid grid-cols-1 gap-6", getGridClass('primary'))}>
+        {/* Critical Information Row - iPhone Responsive */}
+        <div className={cn("grid grid-cols-1 gap-4 sm:gap-6", getGridClass('primary'))}>
           <ErrorBoundary>
             <Suspense fallback={<DashboardSkeleton />}>
               <div className="lg:col-span-2">

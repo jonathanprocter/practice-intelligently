@@ -8,7 +8,7 @@ import { exportCurrentWeeklyView } from '../utils/currentWeeklyExport';
 import { WeeklyCalendarGrid } from '../components/calendar/WeeklyCalendarGrid';
 import { CalendarHeader } from '../components/calendar/CalendarHeader';
 import { Link } from 'wouter';
-import { DailyView } from '../components/calendar/DailyView';
+import DailyView from '../components/calendar/DailyView';
 import { DailyViewGrid } from '../components/calendar/DailyViewGrid';
 import { AppointmentStatusView } from '../components/calendar/AppointmentStatusView';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -159,7 +159,7 @@ export default function Calendar() {
               console.error('Error transforming event:', transformError, event);
               return null;
             }
-          }).filter((event): event is CalendarEvent => event !== null);
+          }).filter((event: CalendarEvent | null): event is CalendarEvent => event !== null);
 
           return transformedEvents;
         } else {
@@ -644,12 +644,12 @@ export default function Calendar() {
 
   return (
     <div className="h-full flex flex-col bg-therapy-bg">
-      {/* Calendar Header */}
-      <div className="space-y-6 p-6 bg-therapy-bg border-b-2 border-therapy-border">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-therapy-text">{weekRangeString}</h1>
-            <div className="flex items-center space-x-3 mt-2">
+      {/* Calendar Header - iPhone Optimized */}
+      <div className="space-y-4 sm:space-y-6 p-3 sm:p-6 bg-therapy-bg border-b-2 border-therapy-border overflow-x-hidden">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-therapy-text truncate">{weekRangeString}</h1>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-sm text-gray-600">Google Calendar Connected</span>
@@ -666,10 +666,10 @@ export default function Calendar() {
               )}
             </div>
 
-            {/* Calendar Selector */}
+            {/* Calendar Selector - iPhone Optimized */}
             <div className="mt-3">
               <Select value={selectedCalendarId} onValueChange={setSelectedCalendarId}>
-                <SelectTrigger className="w-64">
+                <SelectTrigger className="w-full sm:w-64 min-h-[44px]">
                   <SelectValue placeholder="Select calendar" />
                 </SelectTrigger>
                 <SelectContent>
@@ -690,39 +690,54 @@ export default function Calendar() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => syncMutation.mutate()}
-              disabled={syncMutation.isPending}
-            >
-              <CalendarIcon className={`w-4 h-4 mr-2 ${syncMutation.isPending ? 'animate-pulse' : ''}`} />
-              {syncMutation.isPending ? 'Syncing...' : 'Sync Calendar'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isLoading}
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-          </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center">
+            <div className="flex gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => syncMutation.mutate()}
+                disabled={syncMutation.isPending}
+                className="flex-1 sm:flex-none min-h-[44px]"
+                data-testid="sync-calendar-button"
+              >
+                <CalendarIcon className={`w-4 h-4 mr-2 ${syncMutation.isPending ? 'animate-pulse' : ''}`} />
+                <span className="hidden sm:inline">{syncMutation.isPending ? 'Syncing...' : 'Sync Calendar'}</span>
+                <span className="sm:hidden">{syncMutation.isPending ? 'Sync...' : 'Sync'}</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetch()}
+                disabled={isLoading}
+                className="flex-1 sm:flex-none min-h-[44px]"
+                data-testid="refresh-calendar-button"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
+                <span className="sm:hidden">⟳</span>
+              </Button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <Link href="/calendar/integration">
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="min-h-[44px] w-full sm:w-auto"
+                data-testid="calendar-integration-button"
+              >
                 <Settings className="w-4 h-4 mr-2" />
-                Integration
+                <span className="hidden sm:inline">Integration</span>
+                <span className="sm:hidden">Settings</span>
               </Button>
             </Link>
             <Button 
               onClick={handleNewAppointment}
-              className="bg-therapy-primary hover:bg-therapy-primary/80 text-white flex items-center gap-2"
+              className="bg-therapy-primary hover:bg-therapy-primary/80 text-white flex items-center gap-2 min-h-[44px] w-full sm:w-auto"
+              data-testid="new-appointment-button"
             >
               <CalendarIcon className="w-4 h-4" />
-              New Appointment
+              <span className="hidden sm:inline">New Appointment</span>
+              <span className="sm:hidden">+ Appt</span>
             </Button>
 
             <DropdownMenu>
@@ -747,6 +762,7 @@ export default function Calendar() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           </div>
         </div>
 

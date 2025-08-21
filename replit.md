@@ -3,7 +3,24 @@
 ## Overview
 This is a comprehensive full-stack web application designed to streamline therapy practice operations. Its main purpose is to empower therapists in managing clients, appointments, session notes, and action items efficiently. The system integrates advanced AI capabilities for clinical insights, including predictive clinical modeling, advanced pattern recognition, personalized therapeutic recommendations, and practice management intelligence. The business vision is to enhance client care through data-driven insights and improve overall practice efficiency and clinical outcomes.
 
-## Recent Enhancements (August 12, 2025)
+## Recent Enhancements
+
+### August 21, 2025 - iPhone Optimization Complete
+- **Comprehensive iPhone Optimization Implemented**
+  - Added iPhone-specific meta tags and viewport configuration for optimal mobile experience
+  - Implemented touch-friendly UI with 44px minimum touch targets for improved usability
+  - Enhanced mobile navigation with responsive sidebar and header components
+  - Added safe area support for iPhone X+ with notch compatibility
+  - Optimized typography and spacing specifically for iPhone screen sizes
+  - Implemented PWA manifest for app-like iPhone experience with shortcuts
+  - Added touch-specific CSS optimizations, animations, and feedback
+  - Enhanced calendar and dashboard components for mobile responsiveness
+  - Fixed all TypeScript/LSP errors during optimization process
+  - Added comprehensive data-testid attributes for iPhone testing
+  - Improved form controls to prevent zoom on input focus
+  - Enhanced scroll behavior and touch interactions throughout the app
+
+### August 12, 2025
 - **Major Application Stability Achievement**: Comprehensive crash resolution and system stabilization ensuring reliable operation across all components
 - **Compass AI Stabilization**: Successfully replaced problematic Compass component with CompassStable version, eliminating React ref warnings, speech recognition crashes, and network errors while maintaining full text-based chat functionality
 - **Critical Runtime Error Fixes**: Resolved invalid HTTP method errors in document analytics dashboard and client chart components by fixing API call parameter ordering throughout the application

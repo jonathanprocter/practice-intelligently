@@ -58,42 +58,44 @@ export default function Sidebar() {
         />
       )}
       
-      {/* Mobile menu button */}
+      {/* Mobile menu button - iPhone optimized */}
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 lg:hidden"
+        className="fixed top-4 left-4 z-50 lg:hidden min-h-[44px] min-w-[44px] p-2 bg-white/90 backdrop-blur-sm shadow-lg"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
+        data-testid="mobile-menu-button"
       >
-        <Menu className="h-6 w-6" />
+        <Menu className="h-5 w-5" />
       </Button>
 
-      {/* Sidebar */}
-      <div className={`sidebar-nav w-64 shadow-xl fixed h-full z-50 lg:relative lg:translate-x-0 transition-transform duration-300 ${
+      {/* Sidebar - iPhone optimized */}
+      <div className={`sidebar-nav w-72 sm:w-64 shadow-xl fixed h-full z-50 lg:relative lg:translate-x-0 transition-transform duration-300 safe-area-top ${
         isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
-        <div className="p-6 border-b border-white/20">
+        <div className="p-4 sm:p-6 border-b border-white/20">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
               <Brain className="text-white text-lg" />
             </div>
-            <div>
-              <h1 className="text-white font-bold text-lg">Practice Intelligence</h1>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-white font-bold text-base sm:text-lg truncate">Practice Intelligence</h1>
             </div>
           </div>
         </div>
         
-        <nav className="p-4 space-y-2">
+        <nav className="p-3 sm:p-4 space-y-1 overflow-y-auto flex-1">
           {navigationItems.map((item) => (
             <Link
               key={item.path}
               href={item.path}
-              className={`flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 cursor-pointer select-none ${
+              className={`flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 cursor-pointer select-none min-h-[44px] touch-manipulation ${
                 isActive(item.path)
                   ? 'bg-white/20 text-white shadow-sm'
                   : 'text-white/90 hover:bg-white/15 hover:text-white hover:shadow-sm'
               }`}
               onClick={() => setIsMobileOpen(false)}
+              data-testid={`nav-link-${item.path.replace('/', '')}`}
               style={{ 
                 pointerEvents: 'auto',
                 userSelect: 'none',
@@ -103,9 +105,9 @@ export default function Sidebar() {
               }}
             >
               <item.icon className="w-5 h-5 flex-shrink-0" />
-              <span className="font-medium flex-1">{item.label}</span>
+              <span className="font-medium flex-1 text-sm sm:text-base truncate">{item.label}</span>
               {item.badge && (
-                <span className={`text-white text-xs px-2 py-1 rounded-full font-medium ${
+                <span className={`text-white text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${
                   item.badgeColor || 'bg-therapy-primary'
                 }`}>
                   {item.badge}
@@ -117,8 +119,9 @@ export default function Sidebar() {
           <div className="pt-4 border-t border-white/20 mt-4">
             <Link
               href="/settings"
-              className="flex items-center space-x-3 p-3 rounded-lg text-white/90 hover:bg-white/15 hover:text-white hover:shadow-sm transition-all duration-200 cursor-pointer select-none"
+              className="flex items-center space-x-3 p-3 rounded-lg text-white/90 hover:bg-white/15 hover:text-white hover:shadow-sm transition-all duration-200 cursor-pointer select-none min-h-[44px] touch-manipulation"
               onClick={() => setIsMobileOpen(false)}
+              data-testid="nav-link-settings"
               style={{ 
                 pointerEvents: 'auto',
                 userSelect: 'none',
@@ -128,7 +131,7 @@ export default function Sidebar() {
               }}
             >
               <Settings className="w-5 h-5 flex-shrink-0" />
-              <span className="font-medium flex-1">Settings</span>
+              <span className="font-medium text-sm sm:text-base flex-1">Settings</span>
             </Link>
           </div>
         </nav>

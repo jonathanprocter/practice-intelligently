@@ -66,7 +66,17 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    /* iPhone optimizations */
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent horizontal scroll on iPhone */
+    overflow-x: hidden;
+    /* Safe area support for iPhone X+ */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 }
 
@@ -172,20 +182,71 @@
     50% { opacity: 1; }
   }
 
-  /* Touch-friendly improvements for Compass */
+  /* iPhone Touch Optimizations */
   .touch-manipulation {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Improve button touch targets */
+  /* Improve button touch targets for iPhone */
   [data-compass-fab] {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
   }
 
-  /* Ensure proper pointer events for mobile */
+  /* iPhone-specific button improvements */
+  button, [role="button"], .btn, .clickable {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    /* Minimum touch target size for iPhone */
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+
+  /* Input optimizations for iPhone */
+  input, textarea, select {
+    -webkit-appearance: none;
+    -webkit-border-radius: 0;
+    border-radius: 0;
+    font-size: 16px; /* Prevents zoom on iPhone */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Prevent zoom on input focus */
+  @media screen and (max-width: 767px) {
+    input[type="text"],
+    input[type="email"], 
+    input[type="password"],
+    input[type="search"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="number"],
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
+
+  /* iPhone safe area support */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right);
+  }
   
   /* Rich text formatting for Compass messages */
   .rich-text-content {
@@ -210,10 +271,100 @@
     color: var(--therapy-primary);
     font-weight: bold;
   }
+  /* iPhone and touch device optimizations */
   @media (pointer: coarse) {
     .compass-interface button {
       min-height: 44px;
       min-width: 44px;
+    }
+    
+    /* Larger touch targets for all interactive elements */
+    button, [role="button"], a, .clickable {
+      min-height: 44px;
+      padding: 8px 12px;
+    }
+    
+    /* Improve form controls */
+    input, textarea, select {
+      min-height: 44px;
+      padding: 12px;
+    }
+  }
+  
+  /* iPhone-specific landscape optimizations */
+  @media screen and (max-height: 500px) and (orientation: landscape) {
+    .sidebar-nav {
+      width: 200px; /* Reduce sidebar width in landscape */
+    }
+    
+    .appointments-column {
+      grid-template-rows: repeat(36, 35px); /* Smaller rows in landscape */
+    }
+    
+    .time-slot {
+      height: 35px;
+    }
+  }
+  
+  /* iPhone X+ notch support */
+  @supports (padding: max(0px)) {
+    .header-safe {
+      padding-left: max(1rem, env(safe-area-inset-left));
+      padding-right: max(1rem, env(safe-area-inset-right));
+    }
+    
+    .sidebar-nav {
+      padding-top: max(1rem, env(safe-area-inset-top));
+    }
+  }
+  
+  /* Enhanced scroll behavior for iPhone */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent elastic scroll bounce on iPhone */
+  body, html {
+    overscroll-behavior: none;
+  }
+  
+  /* Improve button feedback on iPhone */
+  button:active, [role="button"]:active, .clickable:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+  
+  /* Custom focus styles for iPhone accessibility */
+  button:focus-visible, 
+  input:focus-visible, 
+  select:focus-visible, 
+  textarea:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 2px solid #6495ed;
+    outline-offset: 2px;
+  }
+  
+  /* Improve readability on iPhone */
+  @media screen and (max-width: 767px) {
+    p, span, div {
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.25rem; }
+    h3 { font-size: 1.125rem; }
+  }
+  
+  /* iPhone-specific animations */
+  @media (prefers-reduced-motion: no-preference) {
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   }
 }
