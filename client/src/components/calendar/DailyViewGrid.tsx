@@ -287,7 +287,7 @@ export const DailyViewGrid = ({
         context: 'therapy session follow-up'
       });
       
-      return response.actionItems || [];
+      return (response as any).actionItems || [];
     } catch (error) {
       console.error('Error generating AI action items:', error);
       return [];
@@ -386,7 +386,6 @@ export const DailyViewGrid = ({
               {eventActionItems.length === 0 && (
                 <Sparkles 
                   className="h-3 w-3 ml-1 text-blue-500 cursor-pointer" 
-                  title="Generate AI suggestions"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleGenerateAIActions(event);

@@ -516,7 +516,7 @@ export default function Calendar() {
     },
     onError: (error, variables) => {
       console.error('Delete error:', error);
-      alert(`Failed to delete event: ${error.message}`);
+      alert(`Failed to delete event: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   });
 
@@ -539,7 +539,7 @@ export default function Calendar() {
         calendarId: event.calendarId
       });
     } catch (error) {
-      console.error('Failed to delete event:', error);
+      console.error('Failed to delete event:', error instanceof Error ? error.message : error);
     }
   };
 
