@@ -260,6 +260,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   z-index: 10;
+  background: white;
 }
 
 .appointment:hover {
@@ -274,20 +275,20 @@
 
 /* Calendar-specific styling */
 .appointment.simplepractice {
-  background: #e0f0ff;
-  border-left: 6px solid #6495ed;
+  background: white;
+  border-left: 8px solid #6495ed;
   color: #1e3a8a;
   box-shadow: 0 2px 8px rgba(100, 149, 237, 0.2);
 }
 
 .appointment.google-calendar {
-  background: #dcfce7;
+  background: white;
   border: 2px dashed #16a34a;
   color: #15803d;
 }
 
 .appointment.personal {
-  background: #fed7aa;
+  background: white;
   border: 2px solid #ea580c;
   color: #c2410c;
 }
@@ -640,7 +641,7 @@
 }
 
 .events-cell.has-events {
-  background: white;
+  background: #f8fafc;
 }
 
 /* Appointment content styling for three-column layout */
