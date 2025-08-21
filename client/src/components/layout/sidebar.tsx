@@ -70,32 +70,32 @@ export default function Sidebar() {
       </Button>
 
       {/* Sidebar - iPhone optimized */}
-      <div className={`sidebar-nav w-72 sm:w-64 shadow-xl fixed h-full z-50 lg:relative lg:translate-x-0 transition-transform duration-300 safe-area-top ${
+      <div className={`sidebar-nav w-80 xs:w-72 sm:w-64 shadow-xl fixed h-full z-50 lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out safe-area-top ${
         isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
-        <div className="p-4 sm:p-6 border-b border-white/20">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Brain className="text-white text-lg" />
+        <div className="p-4 xs:p-5 sm:p-6 border-b border-white/20 safe-area-top">
+          <div className="flex items-center space-x-3 xs:space-x-4">
+            <div className="w-12 h-12 xs:w-10 xs:h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Brain className="text-white text-xl xs:text-lg" />
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-white font-bold text-base sm:text-lg truncate">Practice Intelligence</h1>
+              <h1 className="text-white font-bold text-lg xs:text-base sm:text-lg truncate leading-tight">Practice Intelligence</h1>
             </div>
           </div>
         </div>
         
-        <nav className="p-3 sm:p-4 space-y-1 overflow-y-auto flex-1">
+        <nav className="p-2 xs:p-3 sm:p-4 space-y-1 overflow-y-auto flex-1 scrollable-container">
           {navigationItems.map((item) => (
             <Link
               key={item.path}
               href={item.path}
-              className={`flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 cursor-pointer select-none min-h-[44px] touch-manipulation ${
+              className={`flex items-center space-x-3 xs:space-x-4 p-4 xs:p-3 rounded-xl xs:rounded-lg transition-all duration-200 cursor-pointer select-none min-h-[52px] xs:min-h-[48px] touch-manipulation active:scale-95 ${
                 isActive(item.path)
-                  ? 'bg-white/20 text-white shadow-sm'
-                  : 'text-white/90 hover:bg-white/15 hover:text-white hover:shadow-sm'
+                  ? 'bg-white/25 text-white shadow-lg backdrop-blur-sm'
+                  : 'text-white/90 hover:bg-white/15 hover:text-white hover:shadow-sm active:bg-white/20'
               }`}
               onClick={() => setIsMobileOpen(false)}
-              data-testid={`nav-link-${item.path.replace('/', '')}`}
+              data-testid={`nav-link-${item.path.replace('/', '') || 'dashboard'}`}
               style={{ 
                 pointerEvents: 'auto',
                 userSelect: 'none',
@@ -104,10 +104,10 @@ export default function Sidebar() {
                 msUserSelect: 'none'
               }}
             >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
-              <span className="font-medium flex-1 text-sm sm:text-base truncate">{item.label}</span>
+              <item.icon className="w-6 h-6 xs:w-5 xs:h-5 flex-shrink-0" />
+              <span className="font-medium flex-1 text-base xs:text-sm sm:text-base truncate leading-tight">{item.label}</span>
               {item.badge && (
-                <span className={`text-white text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${
+                <span className={`text-white text-xs px-3 py-1.5 xs:px-2 xs:py-1 rounded-full font-medium flex-shrink-0 shadow-sm ${
                   item.badgeColor || 'bg-therapy-primary'
                 }`}>
                   {item.badge}
@@ -116,10 +116,10 @@ export default function Sidebar() {
             </Link>
           ))}
           
-          <div className="pt-4 border-t border-white/20 mt-4">
+          <div className="pt-4 border-t border-white/20 mt-4 safe-area-bottom">
             <Link
               href="/settings"
-              className="flex items-center space-x-3 p-3 rounded-lg text-white/90 hover:bg-white/15 hover:text-white hover:shadow-sm transition-all duration-200 cursor-pointer select-none min-h-[44px] touch-manipulation"
+              className="flex items-center space-x-3 xs:space-x-4 p-4 xs:p-3 rounded-xl xs:rounded-lg text-white/90 hover:bg-white/15 hover:text-white hover:shadow-sm active:bg-white/20 transition-all duration-200 cursor-pointer select-none min-h-[52px] xs:min-h-[48px] touch-manipulation active:scale-95"
               onClick={() => setIsMobileOpen(false)}
               data-testid="nav-link-settings"
               style={{ 

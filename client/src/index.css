@@ -66,17 +66,34 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    /* iPhone optimizations */
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    /* Enhanced iPhone optimizations */
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "kern" 1;
+    
     /* Prevent horizontal scroll on iPhone */
     overflow-x: hidden;
-    /* Safe area support for iPhone X+ */
+    position: relative;
+    
+    /* Enhanced safe area support for iPhone X+ */
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    
+    /* iPhone-specific performance optimizations */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000px;
+    perspective: 1000px;
+    
+    /* Better touch scrolling */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 }
 
@@ -182,10 +199,13 @@
     50% { opacity: 1; }
   }
 
-  /* iPhone Touch Optimizations */
+  /* Enhanced iPhone Touch Optimizations */
   .touch-manipulation {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   /* Improve button touch targets for iPhone */
@@ -193,11 +213,13 @@
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
 
-  /* iPhone-specific button improvements */
+  /* Enhanced iPhone-specific button improvements */
   button, [role="button"], .btn, .clickable {
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    -webkit-tap-highlight-color: rgba(100, 149, 237, 0.2);
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
@@ -205,18 +227,47 @@
     min-height: 44px;
     min-width: 44px;
     touch-action: manipulation;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    position: relative;
+    z-index: 1;
+    /* Better accessibility for iPhone */
+    outline: none;
+    transition: all 0.15s ease-in-out;
   }
 
-  /* Input optimizations for iPhone */
+  /* Enhanced touch feedback */
+  button:active, [role="button"]:active, .clickable:active {
+    transform: scale(0.97);
+    transition: transform 0.1s ease;
+  }
+
+  /* Enhanced Input optimizations for iPhone */
   input, textarea, select {
     -webkit-appearance: none;
-    -webkit-border-radius: 0;
-    border-radius: 0;
+    -moz-appearance: none;
+    appearance: none;
+    -webkit-border-radius: 8px;
+    border-radius: 8px;
     font-size: 16px; /* Prevents zoom on iPhone */
+    line-height: 1.5;
     -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+    /* Better visual feedback */
+    transition: all 0.2s ease;
+    min-height: 44px;
+    padding: 12px 16px;
   }
 
-  /* Prevent zoom on input focus */
+  /* Enhanced focus styles for better accessibility */
+  input:focus, textarea:focus, select:focus {
+    outline: 2px solid var(--therapy-primary);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(100, 149, 237, 0.1);
+  }
+
+  /* Prevent zoom on input focus - Enhanced */
   @media screen and (max-width: 767px) {
     input[type="text"],
     input[type="email"], 
@@ -225,9 +276,21 @@
     input[type="tel"],
     input[type="url"],
     input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    input[type="datetime-local"],
     textarea,
     select {
       font-size: 16px !important;
+      -webkit-text-size-adjust: 100%;
+    }
+    
+    /* Better checkbox and radio buttons on iPhone */
+    input[type="checkbox"], 
+    input[type="radio"] {
+      min-width: 20px;
+      min-height: 20px;
+      transform: scale(1.2);
     }
   }
 
@@ -271,38 +334,100 @@
     color: var(--therapy-primary);
     font-weight: bold;
   }
-  /* iPhone and touch device optimizations */
+  /* Enhanced iPhone and touch device optimizations */
   @media (pointer: coarse) {
     .compass-interface button {
-      min-height: 44px;
-      min-width: 44px;
+      min-height: 48px;
+      min-width: 48px;
+      padding: 12px;
     }
     
     /* Larger touch targets for all interactive elements */
     button, [role="button"], a, .clickable {
-      min-height: 44px;
-      padding: 8px 12px;
+      min-height: 48px;
+      min-width: 48px;
+      padding: 12px 16px;
+      margin: 2px;
     }
     
     /* Improve form controls */
     input, textarea, select {
-      min-height: 44px;
-      padding: 12px;
+      min-height: 48px;
+      padding: 14px 16px;
+      font-size: 16px;
+    }
+    
+    /* Better spacing for mobile cards */
+    .therapy-card {
+      margin: 8px 0;
+      padding: 16px;
+    }
+    
+    /* Optimize navigation for touch */
+    .sidebar-nav a {
+      min-height: 52px;
+      padding: 16px 20px;
+      margin: 2px 0;
     }
   }
   
-  /* iPhone-specific landscape optimizations */
+  /* Enhanced iPhone-specific landscape optimizations */
   @media screen and (max-height: 500px) and (orientation: landscape) {
     .sidebar-nav {
-      width: 200px; /* Reduce sidebar width in landscape */
+      width: 280px;
+      padding-top: max(8px, env(safe-area-inset-top));
     }
     
     .appointments-column {
-      grid-template-rows: repeat(36, 35px); /* Smaller rows in landscape */
+      grid-template-rows: repeat(36, 32px);
     }
     
     .time-slot {
-      height: 35px;
+      height: 32px;
+      font-size: 14px;
+    }
+    
+    /* Compress header in landscape */
+    .header-safe {
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+    
+    .header-safe h2 {
+      font-size: 1.25rem;
+    }
+    
+    /* Make modal dialogs more compact in landscape */
+    .dialog-content {
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+  }
+  
+  /* iPhone-specific portrait optimizations */
+  @media screen and (max-width: 428px) and (orientation: portrait) {
+    .main-content {
+      padding: 12px;
+    }
+    
+    .therapy-card {
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Stack elements vertically on iPhone */
+    .desktop-row {
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    /* Optimize text sizes for iPhone */
+    h1 { font-size: 1.5rem !important; }
+    h2 { font-size: 1.25rem !important; }
+    h3 { font-size: 1.125rem !important; }
+    p, span, div { 
+      font-size: 16px !important;
+      line-height: 1.6 !important;
     }
   }
   
@@ -321,11 +446,31 @@
   /* Enhanced scroll behavior for iPhone */
   * {
     -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
   }
   
   /* Prevent elastic scroll bounce on iPhone */
   body, html {
     overscroll-behavior: none;
+    overscroll-behavior-x: none;
+    overscroll-behavior-y: contain;
+  }
+  
+  /* Scrollable containers optimization */
+  .scrollable-container {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* Better momentum scrolling for iPhone */
+  .calendar-container,
+  .appointments-list,
+  .sidebar-nav,
+  .content-wrapper {
+    -webkit-overflow-scrolling: touch;
+    overflow-scrolling: touch;
+    will-change: scroll-position;
   }
   
   /* Improve button feedback on iPhone */
@@ -344,16 +489,45 @@
     outline-offset: 2px;
   }
   
-  /* Improve readability on iPhone */
+  /* Enhanced readability on iPhone */
   @media screen and (max-width: 767px) {
     p, span, div {
       font-size: 16px;
-      line-height: 1.5;
+      line-height: 1.6;
     }
     
-    h1 { font-size: 1.5rem; }
-    h2 { font-size: 1.25rem; }
-    h3 { font-size: 1.125rem; }
+    h1 { 
+      font-size: 1.5rem; 
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    h2 { 
+      font-size: 1.25rem; 
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    h3 { 
+      font-size: 1.125rem;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    
+    /* Better spacing for iPhone cards and containers */
+    .therapy-card {
+      margin: 8px 4px;
+      padding: 16px 12px;
+      border-radius: 12px;
+    }
+    
+    /* Optimize button spacing */
+    .button-group {
+      gap: 8px;
+    }
+    
+    .button-group > * {
+      flex: 1;
+      min-width: 120px;
+    }
   }
   
   /* iPhone-specific animations */
@@ -506,6 +680,66 @@
   
   .border-therapy-border {
     border-color: var(--therapy-border);
+  }
+  
+  /* iPhone-specific utility classes */
+  .iphone-tap-highlight {
+    -webkit-tap-highlight-color: rgba(100, 149, 237, 0.2);
+  }
+  
+  .iphone-no-callout {
+    -webkit-touch-callout: none;
+  }
+  
+  .iphone-no-select {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  .iphone-smooth-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  .iphone-backface-hidden {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  
+  .iphone-transform-3d {
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+  }
+
+  /* iPhone-specific responsive padding */
+  .safe-responsive {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+  
+  /* iPhone notch and home indicator support */
+  .iphone-notch-safe {
+    padding-top: max(44px, env(safe-area-inset-top));
+  }
+  
+  .iphone-home-indicator-safe {
+    padding-bottom: max(34px, env(safe-area-inset-bottom));
+  }
+
+  /* iPhone-specific animation optimizations */
+  @media (prefers-reduced-motion: no-preference) {
+    .iphone-smooth-animation {
+      transition: all 0.3s cubic-bezier(0.2, 0, 0.2, 1);
+      -webkit-transition: all 0.3s cubic-bezier(0.2, 0, 0.2, 1);
+    }
+  }
+
+  /* iPhone haptic feedback simulation through visual feedback */
+  .iphone-haptic-feedback:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease-in-out;
   }
 }
 

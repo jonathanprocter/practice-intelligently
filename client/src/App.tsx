@@ -40,12 +40,14 @@ import ReauthGoogle from './pages/reauth-google';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex bg-therapy-bg overflow-x-hidden">
+    <div className="min-h-screen flex bg-therapy-bg overflow-x-hidden touch-manipulation">
       <Sidebar />
-      <div className="flex-1 lg:ml-0 min-w-0 flex flex-col">
+      <div className="flex-1 lg:ml-0 min-w-0 flex flex-col relative">
         <Header />
-        <main className="p-3 sm:p-4 lg:p-6 flex-1 min-h-0">
-          {children}
+        <main className="p-2 xs:p-3 sm:p-4 lg:p-6 flex-1 min-h-0 overflow-y-auto scrollable-container safe-area-bottom">
+          <div className="main-content max-w-full">
+            {children}
+          </div>
         </main>
       </div>
       <CompassStable />
