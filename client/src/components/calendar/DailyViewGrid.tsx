@@ -297,10 +297,7 @@ export const DailyViewGrid = ({
   // Handler for generating AI action items
   const handleGenerateAIActions = async (event: CalendarEvent) => {
     try {
-      const notes = event.notes || 
-        (event.clientName?.includes('Paul Benjamin') ? 
-         "Discussed anxiety management strategies and coping mechanisms for work stress" : 
-         "No session notes available");
+      const notes = event.notes || "No session notes available";
       
       const aiActions = await generateAIActionItems(event.clientName || 'Client', notes);
       
@@ -377,9 +374,7 @@ export const DailyViewGrid = ({
             <div className="appointment-notes">
               {event.notes && event.notes.trim() ? 
                 (event.notes.length > 80 ? `${event.notes.substring(0, 80)}...` : event.notes) :
-                event.clientName?.includes('Paul Benjamin') ? 
-                "Discussed anxiety management strategies and coping mechanisms for work stress" :
-                "Session notes will appear here"
+                "No notes yet"
               }
             </div>
           </div>
@@ -416,16 +411,9 @@ export const DailyViewGrid = ({
                 </>
               ) : (
                 <div className="action-item-placeholder">
-                  {event.clientName?.includes('Paul Benjamin') ? (
-                    <>
-                      <div className="action-item">• Practice mindfulness techniques</div>
-                      <div className="action-item">• Review anxiety coping strategies</div>
-                    </>
-                  ) : (
-                    <div className="action-item-empty">
-                      Click <Sparkles className="h-3 w-3 inline mx-1 text-blue-500" /> to generate
-                    </div>
-                  )}
+                  <div className="action-item-empty">
+                    Click <Sparkles className="h-3 w-3 inline mx-1 text-blue-500" /> to generate
+                  </div>
                 </div>
               )}
             </div>
