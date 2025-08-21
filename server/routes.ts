@@ -846,9 +846,9 @@ async function syncCalendarEvents(): Promise<any> {
 
   console.log(`🔄 Starting calendar events sync to database for ${calendars.length} calendars...`);
 
-  // EXPANDED time range: 2010-2035 to capture ALL historical and future events
-  const timeMin = new Date('2010-01-01T00:00:00.000Z').toISOString();
-  const timeMax = new Date('2035-12-31T23:59:59.999Z').toISOString();
+  // COMPREHENSIVE time range: 2015-2030 to capture ALL relevant historical and future events
+  const timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
+  const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
 
   // Sync events from ALL calendars and subcalendars in parallel
   const syncPromises = calendars.map(async (calendar: any) => {
@@ -940,7 +940,7 @@ async function syncCalendarEvents(): Promise<any> {
     appointmentsCreated,
     calendarsProcessed: calendars.length,
     calendarsSuccessful: syncedCalendars,
-    timeRange: '2010-2035',
+    timeRange: '2015-2030',
     syncResults: syncPromises
   };
 }
@@ -2911,9 +2911,9 @@ Be precise and clinical in your analysis.
       let syncedCalendars = 0;
       let appointmentsCreated = 0;
 
-      // EXPANDED time range: 2010-2035 to capture ALL historical and future events
-      const timeMin = new Date('2010-01-01T00:00:00.000Z').toISOString();
-      const timeMax = new Date('2035-12-31T23:59:59.999Z').toISOString();
+      // COMPREHENSIVE time range: 2015-2030 to capture ALL relevant historical and future events
+      const timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
+      const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
 
       // Sync events from ALL calendars and subcalendars in parallel
       const syncPromises = calendars.map(async (calendar: any) => {
@@ -2963,7 +2963,7 @@ Be precise and clinical in your analysis.
         appointmentsCreated,
         calendarsProcessed: calendars.length,
         calendarsSuccessful: syncedCalendars,
-        timeRange: '2010-2035',
+        timeRange: '2015-2030',
         syncResults
       });
     } catch (error: any) {
