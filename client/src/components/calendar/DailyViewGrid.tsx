@@ -85,6 +85,7 @@ export const DailyViewGrid = ({
 
   // Filter and sort events for the selected date
   const dayEvents = useMemo(() => {
+    console.log('DEBUG: Ready to render', events?.length || 0, 'appointments');
     if (!events || events.length === 0) {
       return [];
     }
@@ -99,13 +100,13 @@ export const DailyViewGrid = ({
 
       const matches = isSameDay(eventDate, date);
       if (matches) {
-//         console.log(`DailyViewGrid: Event "${event.title}" matches date ${date.toDateString()}`);
+        console.log(`DailyViewGrid: Event "${event.title}" matches date ${date.toDateString()}`);
       }
 
       return matches;
     });
 
-//     console.log(`DailyViewGrid: Found ${filtered.length} events for ${date.toDateString()}`);
+    console.log(`DailyViewGrid: Found ${filtered.length} events for ${date.toDateString()}`);
     return filtered.sort((a, b) => {
       const timeA = parseEventDate(a.startTime);
       const timeB = parseEventDate(b.startTime);
