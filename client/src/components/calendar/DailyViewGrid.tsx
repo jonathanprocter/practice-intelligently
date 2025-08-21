@@ -365,18 +365,19 @@ export const DailyViewGrid = ({
             )}
           </div>
 
-          {/* Middle Column - Notes (always show) */}
+          {/* Middle Column - Notes (only show if notes exist) */}
           <div className="appointment-center">
-            <div className="appointment-notes-header">
-              <MessageSquare className="h-3 w-3" />
-              Notes
-            </div>
-            <div className="appointment-notes">
-              {event.notes && event.notes.trim() ? 
-                (event.notes.length > 80 ? `${event.notes.substring(0, 80)}...` : event.notes) :
-                ""
-              }
-            </div>
+            {event.notes && event.notes.trim() && (
+              <>
+                <div className="appointment-notes-header">
+                  <MessageSquare className="h-3 w-3" />
+                  Notes
+                </div>
+                <div className="appointment-notes">
+                  {event.notes.length > 80 ? `${event.notes.substring(0, 80)}...` : event.notes}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Right Column - Action Items (always show) */}
