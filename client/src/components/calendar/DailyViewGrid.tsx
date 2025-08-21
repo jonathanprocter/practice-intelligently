@@ -374,7 +374,7 @@ export const DailyViewGrid = ({
             <div className="appointment-notes">
               {event.notes && event.notes.trim() ? 
                 (event.notes.length > 80 ? `${event.notes.substring(0, 80)}...` : event.notes) :
-                "No notes yet"
+                ""
               }
             </div>
           </div>
