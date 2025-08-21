@@ -50,6 +50,7 @@ export function isEventInTimeSlot(event: any, timeSlot: TimeSlot): boolean {
     return false;
   }
 
+  // Create slot start and end times for the same day as the event
   const slotStart = new Date(eventStart);
   slotStart.setHours(timeSlot.hour, timeSlot.minute, 0, 0);
 
@@ -58,15 +59,7 @@ export function isEventInTimeSlot(event: any, timeSlot: TimeSlot): boolean {
 
   const matches = (eventStart < slotEnd) && (eventEnd > slotStart);
 
-  // Debug log for troubleshooting
-  if (matches) {
-    // console.log(`Event "${event.clientName || event.title}" matches time slot ${timeSlot.display}`, {
-    //   eventStart: eventStart.toISOString(),
-    //   eventEnd: eventEnd.toISOString(),
-    //   slotStart: slotStart.toISOString(),
-    //   slotEnd: slotEnd.toISOString()
-    // });
-  }
+  // Uncomment for debugging: if (matches) console.log(`✅ ${timeSlot.display}: "${event.title}"`);
 
   return matches;
 }
@@ -133,12 +126,16 @@ export function getEventsForTimeSlot(events: any[], date: Date, timeSlot: TimeSl
   return events.filter(event => {
     const eventDate = event.startTime instanceof Date ? event.startTime : new Date(event.startTime);
     
-    // Check if event is on the same day
-    if (eventDate.toDateString() !== date.toDateString()) {
-      return false;
-    }
+    // Check if event is on the same day (already filtered before this)
+    // if (eventDate.toDateString() !== date.toDateString()) {
+    //   return false;
+    // }
     
     // Check if event overlaps with this time slot
-    return isEventInTimeSlot(event, timeSlot);
+    const matches = isEventInTimeSlot(event, timeSlot);
+    
+    // Uncomment for debugging: console.log(`Checking ${timeSlot.display} vs ${event.title}: ${matches}`);
+    
+    return matches;
   });
 }

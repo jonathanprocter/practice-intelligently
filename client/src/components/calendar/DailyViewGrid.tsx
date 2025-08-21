@@ -81,7 +81,11 @@ export const DailyViewGrid = ({
   const { toast } = useToast();
 
   // Generate time slots from 6:00 AM to 11:30 PM in 30-minute intervals
-  const timeSlots = useMemo(() => generateTimeSlots(), []);
+  const timeSlots = useMemo(() => {
+    const slots = generateTimeSlots();
+    console.log(`Generated ${slots.length} time slots from ${slots[0]?.display} to ${slots[slots.length - 1]?.display}`);
+    return slots;
+  }, []);
 
   // Filter and sort events for the selected date
   const dayEvents = useMemo(() => {
@@ -107,6 +111,19 @@ export const DailyViewGrid = ({
     });
 
     console.log(`DailyViewGrid: Found ${filtered.length} events for ${date.toDateString()}`);
+    if (filtered.length > 0) {
+      console.log('First event details:', {
+        title: filtered[0].title,
+        startTime: filtered[0].startTime,
+        endTime: filtered[0].endTime,
+        parsedStart: parseEventDate(filtered[0].startTime)
+      });
+      console.log('All event times:');
+      filtered.forEach((event, i) => {
+        const start = parseEventDate(event.startTime);
+        console.log(`${i + 1}. ${event.title}: ${start?.toLocaleTimeString()}`);
+      });
+    }
     return filtered.sort((a, b) => {
       const timeA = parseEventDate(a.startTime);
       const timeB = parseEventDate(b.startTime);
@@ -381,7 +398,7 @@ export const DailyViewGrid = ({
         {/* Time Grid */}
         <div className="time-grid-container">
           {/* Fixed Headers */}
-          <div className="time-grid">
+          <div className="time-grid-header">
             {/* Time Column Header */}
             <div className="time-column-header">
               <span className="time-label">Time</span>
@@ -406,6 +423,7 @@ export const DailyViewGrid = ({
           <div className="time-grid-scrollable">
             {timeSlots.map((timeSlot, index) => {
               const slotEvents = getEventsForTimeSlot(dayEvents, date, timeSlot);
+              // Debug: if (slotEvents.length > 0) console.log(`📅 ${timeSlot.display}: ${slotEvents.length} events`);
               
               return (
                 <div key={`slot-${timeSlot.hour}-${timeSlot.minute}`} className="time-grid-row">
@@ -445,7 +463,7 @@ export const DailyViewGrid = ({
           variant="outline"
           size="sm"
           onClick={onPreviousDay}
-          className="nav-btn prev-btn"
+          className="nav-btn prev-btn border-therapy-border hover:bg-therapy-primary/5 hover:border-therapy-primary text-therapy-text"
           aria-label={`Navigate to ${getDayNavigationName(getPreviousDay())}`}
           data-testid="button-previous-day"
         >
@@ -454,10 +472,10 @@ export const DailyViewGrid = ({
         
         {onBackToWeek && (
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
             onClick={onBackToWeek}
-            className="nav-btn weekly-btn"
+            className="bg-therapy-primary hover:bg-therapy-primary/80 text-white px-6 py-2 font-medium"
             aria-label="Navigate to weekly overview"
             data-testid="button-weekly-overview"
           >
@@ -469,7 +487,7 @@ export const DailyViewGrid = ({
           variant="outline"
           size="sm"
           onClick={onNextDay}
-          className="nav-btn next-btn"
+          className="nav-btn next-btn border-therapy-border hover:bg-therapy-primary/5 hover:border-therapy-primary text-therapy-text"
           aria-label={`Navigate to ${getDayNavigationName(getNextDay())}`}
           data-testid="button-next-day"
         >
