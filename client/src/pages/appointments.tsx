@@ -305,7 +305,15 @@ export default function Appointments() {
   });
 
   const deleteCalendarEventMutation = useMutation({
-    mutationFn: (eventId: string) => ApiClient.deleteCalendarEvent(eventId),
+    mutationFn: async (eventId: string) => {
+      const response = await fetch(`/api/calendar/events/${eventId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete calendar event');
+      }
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
@@ -326,7 +334,7 @@ export default function Appointments() {
 
   const updateAppointmentStatusMutation = useMutation({
     mutationFn: ({ appointmentId, status, reason }: { appointmentId: string, status: string, reason?: string }) => 
-      ApiClient.updateAppointmentStatus(appointmentId, status, reason),
+      ApiClient.updateAppointment(appointmentId, { status }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
@@ -624,12 +632,12 @@ export default function Appointments() {
                 {uniqueClients.length > 0 && (
                   <div className="max-h-32 overflow-y-auto space-y-1">
                     {uniqueClients
-                      .filter(client => !clientFilter || client.toLowerCase().includes(clientFilter.toLowerCase()))
+                      .filter(client => !clientFilter || client?.toLowerCase().includes(clientFilter.toLowerCase()))
                       .slice(0, 5)
                       .map(client => (
                         <button
                           key={client}
-                          onClick={() => setClientFilter(client)}
+                          onClick={() => setClientFilter(client || '')}
                           className="block w-full text-left px-2 py-1 text-xs hover:bg-therapy-primary/10 rounded"
                         >
                           {client}
@@ -679,7 +687,7 @@ export default function Appointments() {
                     {uniqueLocations.map(location => (
                       <button
                         key={location}
-                        onClick={() => setLocationFilter(location)}
+                        onClick={() => setLocationFilter(location || '')}
                         className="block w-full text-left px-2 py-1 text-xs hover:bg-therapy-primary/10 rounded"
                       >
                         {location}
@@ -760,6 +768,7 @@ export default function Appointments() {
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold text-therapy-text truncate">
                         <ClientLink 
+                          clientId={appointment.clientId || 'unknown'}
                           clientName={appointment.clientName || `Client ${appointment.clientId?.substring(0, 8) || 'Unknown'}`}
                           className="hover:text-therapy-primary hover:underline transition-colors"
                         />
@@ -1017,6 +1026,7 @@ export default function Appointments() {
             <DialogTitle className="flex items-center gap-2">
               <Brain className="h-5 w-5 text-therapy-primary" />
               Session Prep - <ClientLink 
+                clientId={selectedAppointment?.clientId || 'unknown'}
                 clientName={selectedAppointment?.clientName || `Client ${selectedAppointment?.clientId?.substring(0, 8) || 'Unknown'}`}
                 className="hover:text-therapy-primary hover:underline transition-colors"
               />
