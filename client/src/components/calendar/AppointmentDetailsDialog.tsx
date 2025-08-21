@@ -82,6 +82,8 @@ export const AppointmentDetailsDialog = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<CalendarEvent>>({});
   const [activeTab, setActiveTab] = useState('details');
+  const [newActionItem, setNewActionItem] = useState({ description: '', priority: 'medium' as const });
+  const [newNote, setNewNote] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -187,6 +189,39 @@ export const AppointmentDetailsDialog = ({
         title: "Error",
         description: "Failed to generate AI insights. Please try again.",
         variant: "destructive"
+      });
+    }
+  });
+
+  // Fetch action items for the client
+  const { data: actionItems } = useQuery({
+    queryKey: ['/api/action-items/client', clientData?.id],
+    queryFn: async () => {
+      if (!clientData?.id) return [];
+      const response = await apiRequest('GET', `/api/action-items/client/${clientData.id}`);
+      return response.json();
+    },
+    enabled: !!clientData?.id && open
+  });
+
+  // Create action item mutation
+  const createActionItemMutation = useMutation({
+    mutationFn: async (actionItem: { description: string; priority: string }) => {
+      const response = await apiRequest('POST', '/api/action-items', {
+        ...actionItem,
+        clientId: clientData?.id,
+        therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+        appointmentId: event?.id,
+        status: 'pending'
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/action-items/client', clientData?.id] });
+      setNewActionItem({ description: '', priority: 'medium' });
+      toast({
+        title: "Action Item Created",
+        description: "New action item has been added to this appointment."
       });
     }
   });
@@ -318,11 +353,12 @@ export const AppointmentDetailsDialog = ({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="notes">Notes</TabsTrigger>
+            <TabsTrigger value="actions">Action Items</TabsTrigger>
             <TabsTrigger value="insights">AI Insights</TabsTrigger>
             <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="space-y-4">
@@ -444,6 +480,167 @@ export const AppointmentDetailsDialog = ({
                 </Button>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="notes" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-therapy-primary" />
+                  Appointment Notes
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="appointment-notes">Current Notes</Label>
+                  <Textarea
+                    id="appointment-notes"
+                    value={editData.notes || ''}
+                    onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+                    rows={6}
+                    placeholder="Add detailed notes for this appointment..."
+                    className="min-h-[150px]"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="quick-note">Add Quick Note</Label>
+                  <div className="flex gap-2">
+                    <Textarea
+                      id="quick-note"
+                      value={newNote}
+                      onChange={(e) => setNewNote(e.target.value)}
+                      rows={2}
+                      placeholder="Quick note to add..."
+                      className="flex-1"
+                    />
+                    <Button
+                      onClick={() => {
+                        if (newNote.trim()) {
+                          const timestamp = new Date().toLocaleString();
+                          const currentNotes = editData.notes || '';
+                          const separator = currentNotes ? '\n\n' : '';
+                          setEditData({
+                            ...editData,
+                            notes: `${currentNotes}${separator}[${timestamp}] ${newNote.trim()}`
+                          });
+                          setNewNote('');
+                        }
+                      }}
+                      disabled={!newNote.trim()}
+                      className="self-end"
+                    >
+                      Add Note
+                    </Button>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleSave}
+                  disabled={updateAppointmentMutation.isPending}
+                  className="w-full"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Notes
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="actions" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-therapy-primary" />
+                  Action Items
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Create New Action Item */}
+                <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium">Create New Action Item</h4>
+                  <div className="space-y-2">
+                    <Label htmlFor="action-description">Description</Label>
+                    <Textarea
+                      id="action-description"
+                      value={newActionItem.description}
+                      onChange={(e) => setNewActionItem({ ...newActionItem, description: e.target.value })}
+                      rows={2}
+                      placeholder="Describe the action item..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="action-priority">Priority</Label>
+                    <select
+                      id="action-priority"
+                      value={newActionItem.priority}
+                      onChange={(e) => setNewActionItem({ ...newActionItem, priority: e.target.value as any })}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="low">Low Priority</option>
+                      <option value="medium">Medium Priority</option>
+                      <option value="high">High Priority</option>
+                    </select>
+                  </div>
+                  <Button
+                    onClick={() => createActionItemMutation.mutate(newActionItem)}
+                    disabled={!newActionItem.description.trim() || createActionItemMutation.isPending}
+                    className="w-full"
+                  >
+                    <Target className="h-4 w-4 mr-2" />
+                    Create Action Item
+                  </Button>
+                </div>
+
+                {/* Existing Action Items */}
+                <div className="space-y-3">
+                  <h4 className="font-medium">Existing Action Items</h4>
+                  {actionItems && actionItems.length > 0 ? (
+                    <div className="space-y-2">
+                      {actionItems.map((item: any) => (
+                        <div key={item.id} className={`p-3 border rounded-lg ${
+                          item.priority === 'high' ? 'border-red-200 bg-red-50' :
+                          item.priority === 'medium' ? 'border-yellow-200 bg-yellow-50' :
+                          'border-green-200 bg-green-50'
+                        }`}>
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{item.description}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge className={getPriorityColor(item.priority)}>
+                                  {item.priority}
+                                </Badge>
+                                <span className="text-xs text-gray-500">
+                                  {item.status === 'completed' ? 'Completed' : 'Pending'}
+                                </span>
+                              </div>
+                            </div>
+                            {item.status === 'pending' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // Mark as completed
+                                  apiRequest('PATCH', `/api/action-items/${item.id}`, { status: 'completed' })
+                                    .then(() => {
+                                      queryClient.invalidateQueries({ queryKey: ['/api/action-items/client', clientData?.id] });
+                                      toast({ title: "Action item marked as completed" });
+                                    });
+                                }}
+                              >
+                                Complete
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">No action items for this appointment.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="insights" className="space-y-4">

@@ -2225,6 +2225,17 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
     }
   });
 
+  app.get("/api/action-items/client/:clientId", async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const items = await storage.getClientActionItems(clientId);
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching client action items:", error);
+      res.status(500).json({ error: "Failed to fetch client action items" });
+    }
+  });
+
   app.post("/api/action-items", async (req, res) => {
     try {
       const validatedData = insertActionItemSchema.parse(req.body);

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { CalendarEvent } from '../../types/calendar';
 import { generateTimeSlots, getEventsForTimeSlot, calculateSlotPosition, formatTimeRange, TimeSlot } from '../../utils/timeSlots';
 import { cleanEventTitle, formatClientName } from '../../utils/textCleaner';
@@ -7,9 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, MapPin, User, Clock, MessageSquare, Trash2, Edit, X, Brain, Zap } from 'lucide-react';
+import { Calendar, MapPin, User, Clock, MessageSquare, Trash2, Edit, X, Brain, Zap, Target } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AppointmentDetailsDialog } from './AppointmentDetailsDialog';
+import { apiRequest } from '@/lib/queryClient';
 import './DailyViewGrid.css';
 
 interface DailyViewGridProps {
@@ -188,6 +190,25 @@ export const DailyViewGrid = ({
     return baseClass;
   };
 
+  // Hook to fetch action items for specific clients
+  const { data: allActionItems } = useQuery({
+    queryKey: ['/api/action-items', 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/action-items/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c');
+      return response.json();
+    },
+    staleTime: 30000 // Cache for 30 seconds
+  });
+
+  // Function to get action items for a specific appointment
+  const getActionItemsForAppointment = (appointmentId: string) => {
+    if (!allActionItems) return [];
+    return allActionItems.filter((item: any) => 
+      item.eventId === appointmentId || 
+      (item.status === 'pending' && item.eventId === appointmentId)
+    );
+  };
+
   const renderEventInTimeSlot = (event: CalendarEvent, timeSlot: TimeSlot, eventIndex: number) => {
     const startTime = parseEventDate(event.startTime);
     const endTime = parseEventDate(event.endTime);
@@ -209,6 +230,9 @@ export const DailyViewGrid = ({
       return null;
     }
 
+    // Get action items for this appointment
+    const eventActionItems = getActionItemsForAppointment(event.id);
+
     return (
       <div
         key={event.id}
@@ -225,28 +249,66 @@ export const DailyViewGrid = ({
         }}
         data-testid={`appointment-${event.id}`}
       >
-        <div className="appointment-content">
-          <div className="appointment-title">
-            {cleanEventTitle(event.title)}
-          </div>
-          <div className="appointment-time">
-            {startTime && endTime && (
-              <span className="time-range">
-                {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-                {' - '}
-                {endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-              </span>
+        <div className="appointment-layout">
+          {/* Left Column - Basic Info */}
+          <div className="appointment-left">
+            <div className="appointment-title-bold">
+              {cleanEventTitle(event.title)}
+            </div>
+            <div className="appointment-time">
+              {startTime && endTime && (
+                <span className="time-range">
+                  {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                  {' - '}
+                  {endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                </span>
+              )}
+            </div>
+            {event.clientName && (
+              <div className="appointment-client">
+                {formatClientName(event.clientName)}
+              </div>
+            )}
+            {event.location && (
+              <div className="appointment-location">
+                <MapPin className="h-3 w-3" />
+                {event.location}
+              </div>
             )}
           </div>
-          {event.clientName && (
-            <div className="appointment-client">
-              {formatClientName(event.clientName)}
+
+          {/* Middle Column - Notes (only if notes exist) */}
+          {event.notes && (
+            <div className="appointment-center">
+              <div className="appointment-notes-header">Notes</div>
+              <div className="appointment-notes">
+                {event.notes.length > 60 ? `${event.notes.substring(0, 60)}...` : event.notes}
+              </div>
             </div>
           )}
-          {event.location && (
-            <div className="appointment-location">
-              <MapPin className="h-3 w-3" />
-              {event.location}
+
+          {/* Right Column - Action Items (only if action items exist) */}
+          {eventActionItems && eventActionItems.length > 0 && (
+            <div className="appointment-right">
+              <div className="appointment-actions-header">
+                <Target className="h-2 w-2 inline mr-1" />
+                Actions ({eventActionItems.length})
+              </div>
+              <div className="appointment-actions">
+                {eventActionItems.slice(0, 2).map((item: any, index: number) => (
+                  <div key={item.id || index} className="action-item">
+                    {item.description.length > 30 ? 
+                      `${item.description.substring(0, 30)}...` : 
+                      item.description
+                    }
+                  </div>
+                ))}
+                {eventActionItems.length > 2 && (
+                  <div className="action-item-more">
+                    +{eventActionItems.length - 2} more
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -317,6 +379,7 @@ export const DailyViewGrid = ({
 
         {/* Time Grid */}
         <div className="time-grid-container">
+          {/* Fixed Headers */}
           <div className="time-grid">
             {/* Time Column Header */}
             <div className="time-column-header">
@@ -336,8 +399,10 @@ export const DailyViewGrid = ({
                 + Add
               </Button>
             </div>
+          </div>
 
-            {/* Time Slots with Events */}
+          {/* Scrollable Time Slots */}
+          <div className="time-grid-scrollable">
             {timeSlots.map((timeSlot, index) => {
               const slotEvents = getEventsForTimeSlot(dayEvents, date, timeSlot);
               
