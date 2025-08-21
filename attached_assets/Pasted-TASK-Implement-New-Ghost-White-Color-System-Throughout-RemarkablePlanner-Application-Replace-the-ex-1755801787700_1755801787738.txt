@@ -1,0 +1,272 @@
+TASK: Implement New Ghost White Color System Throughout RemarkablePlanner Application
+Replace the existing color scheme with this new enhanced color system. This change moves from a warm ivory background to a cooler, more breathable Ghost White system.
+STEP 1: Create/Update Global CSS Variables
+Add these CSS custom properties to your root/global stylesheet (likely in styles/globals.css or app.css):
+css:root {
+  /* ===== BACKGROUND SYSTEM ===== */
+  /* Replace ALL instances of ivory (#FFFFF0) with these: */
+  --color-bg-base: #F3F5F7;        /* Furthest back layer - main canvas */
+  --color-bg-default: #F8F9FA;     /* Default background - Ghost White */
+  --color-bg-raised: #FFFFFF;      /* Cards, modals - Pure White */
+  --color-bg-overlay: rgba(248, 249, 250, 0.97); /* Overlays with transparency */
+  --color-bg-sunken: #EBEEF1;      /* Recessed areas, inputs */
+  
+  /* ===== CORE PALETTE ===== */
+  --color-primary: #3B5998;        /* French Blue - primary actions */
+  --color-success: #B7C9A3;        /* Sage Green - success/available */
+  --color-info: #6B8CAE;           /* Info Steel - information/focus */
+  --color-secondary: #5F7A8E;      /* Slate Blue - secondary/inactive */
+  --color-neutral: #C5CCC8;        /* Silver Sage - borders/disabled */
+  
+  /* ===== COMPLETE COLOR SCALES ===== */
+  /* French Blue Scale */
+  --french-blue-50: #F0F3F9;
+  --french-blue-100: #D6DFF0;
+  --french-blue-200: #A8BCDB;
+  --french-blue-300: #7A95C6;
+  --french-blue-400: #5B79B8;
+  --french-blue-500: #3B5998;  /* Primary */
+  --french-blue-600: #2C4470;
+  --french-blue-700: #1E2F4A;
+  --french-blue-800: #141F31;
+  --french-blue-900: #0A0F18;
+  
+  /* Sage Green Scale */
+  --sage-green-50: #F5F8F3;
+  --sage-green-100: #E8EFE3;
+  --sage-green-200: #D0DDBE;
+  --sage-green-300: #B7C9A3;  /* Success */
+  --sage-green-400: #9FB189;
+  --sage-green-500: #87996F;
+  --sage-green-600: #6F8155;
+  --sage-green-700: #576940;
+  
+  /* Info Steel Scale */
+  --info-steel-50: #F2F5F8;
+  --info-steel-100: #E0E7EF;
+  --info-steel-200: #B8CAD9;
+  --info-steel-300: #8BA4C6;
+  --info-steel-400: #6B8CAE;  /* Info */
+  --info-steel-500: #4B6C8E;
+  --info-steel-600: #3B5570;
+  
+  /* Slate Blue Scale */
+  --slate-blue-50: #F1F3F5;
+  --slate-blue-100: #DDE3E8;
+  --slate-blue-200: #B5C5D0;
+  --slate-blue-300: #8DA7B8;
+  --slate-blue-400: #7490A3;
+  --slate-blue-500: #5F7A8E;  /* Secondary */
+  --slate-blue-600: #4A6179;
+  
+  /* Silver Sage Scale (Fixed for proper contrast) */
+  --silver-sage-50: #FAFBFB;
+  --silver-sage-100: #F5F6F6;
+  --silver-sage-200: #E5E8E6;
+  --silver-sage-300: #C5CCC8;  /* Neutral */
+  --silver-sage-400: #A5ACA8;
+  --silver-sage-500: #8A918D;  /* Text on light backgrounds */
+  --silver-sage-600: #6F7572;
+  
+  /* ===== SEMANTIC COLORS ===== */
+  --color-error: #8B6F7D;
+  --color-error-light: #B89FAB;
+  --color-warning: #7D8B8C;
+  --color-warning-light: #9DABAD;
+  --color-urgent: #6B5B7F;
+  --color-urgent-light: #8B7B9F;
+  
+  /* ===== SEMANTIC TOKENS ===== */
+  --color-text-primary: var(--french-blue-800);
+  --color-text-secondary: var(--slate-blue-600);
+  --color-text-muted: var(--silver-sage-500);
+  --color-text-disabled: var(--silver-sage-400);
+  
+  --color-border-default: var(--silver-sage-200);
+  --color-border-hover: var(--info-steel-300);
+  --color-border-focus: var(--info-steel-400);
+  --color-border-error: var(--color-error);
+  --color-border-success: var(--sage-green-400);
+  
+  /* ===== SHADOWS ===== */
+  --shadow-xs: 0 1px 2px rgba(95, 122, 142, 0.05);
+  --shadow-sm: 0 2px 4px rgba(95, 122, 142, 0.08);
+  --shadow-md: 0 4px 12px rgba(95, 122, 142, 0.10);
+  --shadow-lg: 0 8px 24px rgba(95, 122, 142, 0.12);
+  --shadow-xl: 0 12px 36px rgba(95, 122, 142, 0.15);
+  --shadow-focus: 0 0 0 3px rgba(107, 140, 174, 0.25);
+  
+  /* ===== TRANSITIONS ===== */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+STEP 2: Replace Background Colors
+Search and replace throughout the entire codebase:
+
+Find: #FFFFF0 or ivory → Replace with: var(--color-bg-default)
+Find: background: white → Replace with: background: var(--color-bg-raised)
+Find: background-color: white → Replace with: background-color: var(--color-bg-raised)
+Find: Any hardcoded #3B5998 → Replace with: var(--color-primary)
+Find: Any hardcoded #B7C9A3 → Replace with: var(--color-success)
+Find: Any hardcoded #6B8CAE → Replace with: var(--color-info)
+
+STEP 3: Update Component-Specific Styles
+For the main application container/body:
+cssbody {
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+}
+
+.main-container {
+  background: var(--color-bg-base);
+}
+For cards and panels:
+css.card, .panel, .modal {
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-default);
+  box-shadow: var(--shadow-sm);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-border-hover);
+}
+For navigation:
+css.nav, .header {
+  background: var(--color-primary);
+  color: white;
+}
+
+.nav-item:hover {
+  background: var(--french-blue-600);
+}
+For form inputs:
+cssinput, textarea, select {
+  background: var(--color-bg-raised);
+  border: 2px solid var(--color-border-default);
+  color: var(--color-text-primary);
+  transition: all var(--transition-fast);
+}
+
+input:hover, textarea:hover, select:hover {
+  border-color: var(--color-border-hover);
+  background: var(--color-bg-raised);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: var(--shadow-focus);
+}
+For buttons:
+css.btn-primary {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  transition: all var(--transition-fast);
+}
+
+.btn-primary:hover {
+  background: var(--french-blue-600);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-success {
+  background: var(--color-success);
+  color: white;
+}
+
+.btn-secondary {
+  background: var(--color-secondary);
+  color: white;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+}
+For calendar components:
+css.calendar-day {
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-default);
+}
+
+.calendar-day:hover {
+  background: var(--info-steel-50);
+  border-color: var(--info-steel-300);
+}
+
+.calendar-day.today {
+  background: var(--color-primary);
+  color: white;
+}
+
+.calendar-day.available {
+  background: var(--sage-green-100);
+  border: 2px solid var(--sage-green-400);
+  color: var(--sage-green-700);
+}
+
+.calendar-day.busy {
+  background: var(--slate-blue-100);
+  border-color: var(--slate-blue-400);
+}
+STEP 4: Update Dark Mode (if applicable)
+If the app has dark mode, add these adjustments:
+css@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg-base: #0F1114;
+    --color-bg-default: #1A1D1F;
+    --color-bg-raised: #242729;
+    --color-bg-overlay: rgba(26, 29, 31, 0.97);
+    --color-bg-sunken: #0A0C0E;
+    
+    /* Adjust other colors for dark mode */
+    --color-primary: #5B79B8;
+    --color-success: #8FA47C;
+    --color-info: #8BA4C6;
+    --color-secondary: #7F9AAE;
+    --color-neutral: #4A514D;
+  }
+}
+STEP 5: Component Files to Check
+Ensure these specific files/components are updated:
+
+Calendar.jsx/tsx - Calendar day backgrounds
+Navigation.jsx/tsx - Header/nav backgrounds
+Card.jsx/tsx - Card components
+Button.jsx/tsx - Button variants
+Form.jsx/tsx - Input field backgrounds
+Modal.jsx/tsx - Modal backgrounds
+Layout.jsx/tsx - Main layout containers
+
+STEP 6: Remove Old Color References
+Search for and remove any references to:
+
+"ivory"
+"#FFFFF0"
+"#FFFFED"
+Any inline style attributes with background colors
+
+TESTING CHECKLIST:
+After implementation, verify:
+
+ All backgrounds use the new Ghost White system
+ No yellow/warm tint remains in backgrounds
+ Cards have proper elevation with pure white
+ Form inputs use the raised background
+ Hover states work correctly
+ Focus states show proper outline
+ Calendar states display correctly
+ Text contrast passes WCAG AA standards
+ No hardcoded color values remain
+
+IMPORTANT NOTES:
+
+The main change is replacing warm ivory (#FFFFF0) with cool Ghost White (#F8F9FA)
+Use CSS variables for ALL colors - no hardcoded values
+Maintain the hierarchy: base → default → raised
+Test on both light and dark backgrounds
+Ensure smooth transitions on all interactive elements
