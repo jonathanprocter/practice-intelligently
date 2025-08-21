@@ -37,16 +37,16 @@ export default function QuickStats({ stats }: QuickStatsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {statItems.map((stat, index) => (
-        <div key={index} className="therapy-card p-6">
+        <div key={index} className="therapy-card p-4 xs:p-5 sm:p-6 iphone-card-interaction touch-manipulation hover:shadow-lg transition-all duration-300 cursor-pointer" data-testid={`stat-card-${stat.label.toLowerCase().replace(/\s+/g, '-')}`}>
           <div className="flex items-center justify-between mb-4">
-            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${stat.color}`}>
-              <stat.icon className="text-xl" />
+            <div className={`w-12 h-12 xs:w-10 xs:h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center ${stat.color}`}>
+              <stat.icon className="text-xl xs:text-lg sm:text-xl" />
             </div>
           </div>
-          <h3 className="text-2xl font-bold text-therapy-text mb-1">
+          <h3 className="text-2xl xs:text-xl sm:text-2xl font-bold text-therapy-text mb-1 truncate">
             {stat.value}
           </h3>
-          <p className="text-therapy-text/60 text-sm">{stat.label}</p>
+          <p className="text-therapy-text/60 text-sm xs:text-xs sm:text-sm truncate leading-tight">{stat.label}</p>
         </div>
       ))}
     </div>

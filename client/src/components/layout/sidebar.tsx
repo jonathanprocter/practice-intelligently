@@ -50,23 +50,37 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile overlay */}
+      {/* Mobile overlay with iPhone touch optimization */}
       {isMobileOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden touch-manipulation"
           onClick={() => setIsMobileOpen(false)}
+          onTouchStart={() => setIsMobileOpen(false)}
+          data-testid="sidebar-overlay"
+          style={{
+            WebkitTapHighlightColor: 'transparent',
+            WebkitTouchCallout: 'none',
+            WebkitUserSelect: 'none',
+            userSelect: 'none'
+          }}
         />
       )}
       
-      {/* Mobile menu button - iPhone optimized */}
+      {/* Mobile menu button - Enhanced iPhone optimized */}
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 lg:hidden min-h-[44px] min-w-[44px] p-2 bg-white/90 backdrop-blur-sm shadow-lg"
+        className="fixed top-4 left-4 z-50 lg:hidden min-h-[48px] min-w-[48px] xs:min-h-[44px] xs:min-w-[44px] p-2 bg-white/95 backdrop-blur-md shadow-lg touch-manipulation iphone-haptic-feedback rounded-xl"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
         data-testid="mobile-menu-button"
+        style={{
+          WebkitTapHighlightColor: 'rgba(100, 149, 237, 0.2)',
+          WebkitTouchCallout: 'none',
+          WebkitUserSelect: 'none',
+          userSelect: 'none'
+        }}
       >
-        <Menu className="h-5 w-5" />
+        <Menu className="h-6 w-6 xs:h-5 xs:w-5" />
       </Button>
 
       {/* Sidebar - iPhone optimized */}
@@ -130,8 +144,8 @@ export default function Sidebar() {
                 msUserSelect: 'none'
               }}
             >
-              <Settings className="w-5 h-5 flex-shrink-0" />
-              <span className="font-medium text-sm sm:text-base flex-1">Settings</span>
+              <Settings className="w-6 h-6 xs:w-5 xs:h-5 flex-shrink-0" />
+              <span className="font-medium flex-1 text-base xs:text-sm sm:text-base truncate leading-tight">Settings</span>
             </Link>
           </div>
         </nav>

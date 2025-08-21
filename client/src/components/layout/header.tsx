@@ -40,8 +40,12 @@ export default function Header() {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="relative min-h-[48px] min-w-[48px] xs:min-h-[44px] xs:min-w-[44px] p-2 touch-manipulation"
+            className="relative min-h-[48px] min-w-[48px] xs:min-h-[44px] xs:min-w-[44px] p-2 touch-manipulation iphone-button-enhanced rounded-xl"
             data-testid="notifications-button"
+            style={{
+              WebkitTapHighlightColor: 'rgba(100, 149, 237, 0.1)',
+              WebkitTouchCallout: 'none'
+            }}
           >
             <Bell className="h-5 w-5 xs:h-4 xs:w-4 sm:h-5 sm:w-5" />
             {notificationCount > 0 && (

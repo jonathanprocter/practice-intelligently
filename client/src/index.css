@@ -467,10 +467,24 @@
   .calendar-container,
   .appointments-list,
   .sidebar-nav,
-  .content-wrapper {
+  .content-wrapper,
+  .scrollable-container {
     -webkit-overflow-scrolling: touch;
     overflow-scrolling: touch;
     will-change: scroll-position;
+    /* Improve scroll performance on iPhone */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+  
+  /* Enhanced iPhone scroll container */
+  .iphone-scroll-container {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
+    position: relative;
+    overflow-y: auto;
+    transform: translate3d(0, 0, 0);
   }
   
   /* Improve button feedback on iPhone */
@@ -727,8 +741,9 @@
   .iphone-home-indicator-safe {
     padding-bottom: max(34px, env(safe-area-inset-bottom));
   }
+}
 
-  /* iPhone-specific animation optimizations */
+/* iPhone-specific animation optimizations */
   @media (prefers-reduced-motion: no-preference) {
     .iphone-smooth-animation {
       transition: all 0.3s cubic-bezier(0.2, 0, 0.2, 1);
@@ -741,7 +756,138 @@
     transform: scale(0.95);
     transition: transform 0.1s ease-in-out;
   }
-}
+
+  /* Enhanced iPhone button interactions */
+  .iphone-button-enhanced {
+    transform: translateZ(0);
+    transition: all 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+    -webkit-backface-visibility: hidden;
+  }
+
+  .iphone-button-enhanced:active {
+    transform: scale(0.96) translateZ(0);
+    filter: brightness(0.95);
+  }
+
+  /* iPhone-specific card interactions */
+  .iphone-card-interaction {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  .iphone-card-interaction:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  /* iPhone navigation gesture support */
+  .iphone-nav-gesture {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .iphone-nav-gesture::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease-in-out;
+  }
+
+  .iphone-nav-gesture:active::before {
+    left: 100%;
+  }
+
+  /* iPhone form input optimizations */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="number"],
+  textarea,
+  select {
+    font-size: 16px !important; /* Prevent zoom on focus */
+    -webkit-appearance: none;
+    -webkit-border-radius: 0;
+    border-radius: 8px;
+    background-color: #ffffff;
+    padding: 12px 16px;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  /* iPhone input focus improvements */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(100, 149, 237, 0.2);
+    transform: translateZ(0);
+  }
+
+  /* iPhone button styling consistency */
+  button,
+  .button,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+    font-size: 16px;
+    -webkit-appearance: none;
+    border-radius: 8px;
+    touch-action: manipulation;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* iPhone checkbox and radio improvements */
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: 20px;
+    min-height: 20px;
+    transform: scale(1.2);
+  }
+
+  /* Enhanced iPhone performance optimizations */
+  .iphone-performance-optimized {
+    will-change: transform;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-perspective: 1000px;
+    perspective: 1000px;
+  }
+
+  /* iPhone-specific loading states */
+  .iphone-loading-shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* iPhone accessibility improvements */
+  @media (prefers-reduced-motion: reduce) {
+    .iphone-smooth-animation,
+    .iphone-haptic-feedback,
+    .iphone-card-interaction,
+    .iphone-button-enhanced {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
 
 @media (max-width: 768px) {
   .sidebar-nav {

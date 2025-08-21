@@ -44,8 +44,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="flex-1 lg:ml-0 min-w-0 flex flex-col relative">
         <Header />
-        <main className="p-2 xs:p-3 sm:p-4 lg:p-6 flex-1 min-h-0 overflow-y-auto scrollable-container safe-area-bottom">
-          <div className="main-content max-w-full">
+        <main className="p-2 xs:p-3 sm:p-4 lg:p-6 flex-1 min-h-0 overflow-y-auto iphone-scroll-container safe-area-bottom">
+          <div className="main-content max-w-full touch-manipulation">
             {children}
           </div>
         </main>
