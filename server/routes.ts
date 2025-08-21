@@ -147,8 +147,7 @@ async function detectMultiSessionDocument(content: string): Promise<boolean> {
   }
 }
 
-// Function to parse multi-session document
-// Helper function to detect if content is already a processed progress note
+// Function to detect if content is already a processed progress note
 function detectProcessedProgressNote(content: string): boolean {
   const contentLower = content.toLowerCase();
 
@@ -197,52 +196,161 @@ function detectProcessedProgressNote(content: string): boolean {
   let clinicalCount = clinicalIndicators.filter(indicator => contentLower.includes(indicator)).length;
   let transcriptCount = transcriptIndicators.filter(indicator => contentLower.includes(indicator)).length;
 
-  // Additional structural checks for processed notes
-  const hasStructuredSections = /\n\s*(subjective|objective|assessment|plan)\s*:?/i.test(content);
-  const hasClinicalLanguage = /\b(client|patient)\s+(presented|reports|demonstrated|exhibited)\b/i.test(content);
-  const hasProfessionalFormat = /\b(session type|duration|interventions|therapeutic)\b/i.test(content);
+  // Advanced detection logic
+  console.log(`📊 Content analysis: SOAP(${soapCount}), Clinical(${clinicalCount}), Transcript(${transcriptCount})`);
 
-  // Additional checks for raw transcripts
-  const hasConversationalMarkers = /\b(therapist|client|dr\.|patient):\s/i.test(content);
-  const hasFillerWords = /\b(um|uh|you know|like,|so,)\b/gi.test(content) && (content.match(/\b(um|uh|you know|like,|so,)\b/gi) || []).length > 3;
-  const hasTranscriptFormatting = /\[.*?\]|--|\d{2}:\d{2}|\(inaudible\)/i.test(content);
-
-  console.log(`📊 Content analysis:
-  - SOAP indicators: ${soapCount}/4
-  - Clinical indicators: ${clinicalCount}/${clinicalIndicators.length}
-  - Transcript indicators: ${transcriptCount}/${transcriptIndicators.length}
-  - Structured sections: ${hasStructuredSections}
-  - Clinical language: ${hasClinicalLanguage}
-  - Professional format: ${hasProfessionalFormat}
-  - Conversational markers: ${hasConversationalMarkers}
-  - Filler words: ${hasFillerWords}
-  - Transcript formatting: ${hasTranscriptFormatting}`);
-
-  // Decision logic: Content is considered already processed if:
-  // 1. Has strong SOAP structure (3+ SOAP sections) AND clinical language
-  // 2. Has professional clinical formatting AND minimal transcript markers
-  // 3. Clinical indicators outweigh transcript indicators significantly
-
-  if (soapCount >= 3 && hasClinicalLanguage && hasStructuredSections) {
-    return true; // Strong SOAP note structure
+  // Strong indicators of processed note
+  if (soapCount >= 3) { // Has most/all SOAP sections
+    console.log('✅ Detected as processed: Strong SOAP structure');
+    return true;
   }
 
-  if (hasProfessionalFormat && clinicalCount >= 3 && transcriptCount <= 2) {
-    return true; // Professional clinical format with minimal transcript markers
+  if (clinicalCount >= 3 && transcriptCount <= 1) { // Clinical language without transcript markers
+    console.log('✅ Detected as processed: Clinical terminology dominant');
+    return true;
   }
 
-  if (clinicalCount >= 5 && transcriptCount <= clinicalCount / 2) {
-    return true; // Clinical indicators significantly outweigh transcript indicators
+  // Check for comprehensive progress note structure
+  const comprehensiveIndicators = [
+    'comprehensive clinical progress note',
+    'tonal analysis',
+    'key points:',
+    'significant quotes:',
+    'narrative summary',
+    'supplemental analyses'
+  ];
+
+  const comprehensiveCount = comprehensiveIndicators.filter(indicator => contentLower.includes(indicator)).length;
+  if (comprehensiveCount >= 2) {
+    console.log('✅ Detected as processed: Comprehensive progress note structure');
+    return true;
   }
 
-  if (hasConversationalMarkers || hasFillerWords || hasTranscriptFormatting) {
-    return false; // Clear transcript indicators
+  // Strong indicators of transcript/raw content
+  if (transcriptCount >= 3 && clinicalCount <= 1 && soapCount === 0) {
+    console.log('❌ Detected as transcript: High transcript markers, low clinical structure');
+    return false;
   }
 
-  // Default to requiring processing if unclear
-  return false;
+  // Check content structure - processed notes have structured paragraphs
+  const paragraphs = content.split('\n\n').filter(p => p.trim().length > 50);
+  const avgParagraphLength = paragraphs.reduce((sum, p) => sum + p.length, 0) / paragraphs.length;
+
+  if (avgParagraphLength > 200 && clinicalCount >= 2) {
+    console.log('✅ Detected as processed: Long structured paragraphs with clinical content');
+    return true;
+  }
+
+  // Default to transcript if uncertain but has conversational markers
+  if (transcriptCount > clinicalCount) {
+    console.log('❌ Detected as transcript: More transcript markers than clinical');
+    return false;
+  }
+
+  // Default decision based on overall clinical vs transcript ratio
+  const isProcessed = (soapCount + clinicalCount) > transcriptCount;
+  console.log(`📋 Final decision: ${isProcessed ? 'Processed' : 'Transcript'} - Clinical/SOAP: ${soapCount + clinicalCount}, Transcript: ${transcriptCount}`);
+
+  return isProcessed;
 }
 
+// Helper function to extract date from content
+function extractDateFromContent(content: string): string | null {
+  // Enhanced date extraction patterns with better logic
+  const datePatterns = [
+    // Standard formats - most common first
+    /(?:session date|session|date|on)\s*:?\s*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2})/i,
+    /(?:session date|session|date|on)\s*:?\s*(\d{1,2}[-\/]\d{1,2}[-\/]\d{4})/i,
+
+    // Month name formats
+    /(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2}),?\s+(\d{4})/i,
+    /(\d{1,2})\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{4})/i,
+
+    // Progress note title formats
+    /progress note.*?on\s+([^\.]+)/i,
+    /session.*?on\s+([^\.]+)/i,
+
+    // Session-specific formats
+    /session:\s*(\d{4}-\d{2}-\d{2})/i,
+    /therapy session.*?(\d{1,2}[-\/]\d{1,2}[-\/]\d{4})/i,
+
+    // Look for dates near beginning of document
+    /^.{0,200}(\d{4}[-\/]\d{1,2}[-\/]\d{1,2})/i,
+    /^.{0,200}(\d{1,2}[-\/]\d{1,2}[-\/]\d{4})/i
+  ];
+
+  const monthNames = {
+    'january': '01', 'february': '02', 'march': '03', 'april': '04',
+    'may': '05', 'june': '06', 'july': '07', 'august': '08',
+    'september': '09', 'october': '10', 'november': '11', 'december': '12',
+    'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04',
+    'jun': '06', 'jul': '07', 'aug': '08', 'sep': '09',
+    'oct': '10', 'nov': '11', 'dec': '12'
+  };
+
+  for (const pattern of datePatterns) {
+    const match = content.match(pattern);
+    if (match) {
+      let dateStr = '';
+
+      // Handle month name formats
+      if (match[1] && match[2] && match[3]) {
+        const month1 = monthNames[match[1].toLowerCase()];
+        const month2 = monthNames[match[2].toLowerCase()];
+
+        if (month1) { // Month name is first
+          dateStr = `${match[3]}-${month1}-${match[2].padStart(2, '0')}`;
+        } else if (month2) { // Month name is second
+          dateStr = `${match[3]}-${month2}-${match[1].padStart(2, '0')}`;
+        }
+      } 
+      // Handle simple date matches
+      else if (match[1]) {
+        dateStr = match[1].trim();
+
+        // Clean up common extra text
+        dateStr = dateStr.replace(/[,\.;].*$/, ''); // Remove everything after comma, period, semicolon
+        dateStr = dateStr.replace(/\s+.*$/, ''); // Remove extra text after first space
+
+        // Convert MM/DD/YYYY or MM-DD-YYYY to YYYY-MM-DD
+        if (dateStr.match(/^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}$/)) {
+          const parts = dateStr.split(/[-\/]/);
+          const month = parts[0].padStart(2, '0');
+          const day = parts[1].padStart(2, '0');
+          const year = parts[2];
+          dateStr = `${year}-${month}-${day}`;
+        }
+        // Handle YYYY-MM-DD or YYYY/MM/DD
+        else if (dateStr.match(/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/)) {
+          const parts = dateStr.split(/[-\/]/);
+          const year = parts[0];
+          const month = parts[1].padStart(2, '0');
+          const day = parts[2].padStart(2, '0');
+          dateStr = `${year}-${month}-${day}`;
+        }
+      }
+
+      // Validate date format and range
+      if (dateStr && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const testDate = new Date(dateStr);
+        const currentYear = new Date().getFullYear();
+
+        // Check if it's a valid date and within reasonable range (2020-2030)
+        if (!isNaN(testDate.getTime()) && 
+            testDate.getFullYear() >= 2020 && 
+            testDate.getFullYear() <= 2030) {
+          console.log(`📅 Successfully extracted date: ${dateStr} from pattern: ${pattern.source}`);
+          return dateStr;
+        }
+      }
+    }
+  }
+
+  console.log('❌ No valid date found in content');
+  return null;
+}
+
+// Function to parse multi-session document
 async function parseMultiSessionDocument(content: string, clientId: string, clientName: string, fileName: string) {
   try {
     console.log('🔍 Parsing multi-session document...');
@@ -2280,7 +2388,7 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
   app.post("/api/ai/generate-action-items", async (req, res) => {
     try {
       const { clientName, appointmentNotes, context } = req.body;
-      
+
       if (!openai) {
         throw new Error("OpenAI client not initialized");
       }
@@ -4540,218 +4648,6 @@ You are Compass, an AI assistant for therapy practice management. You have acces
       res.status(500).json({ error: 'Failed to get calendars', details: error.message });
     }
   });
-  // New database-first calendar events endpoint
-  app.get('/api/calendar/events', async (req, res) => {
-    try {
-      const { timeMin, timeMax } = req.query;
-      const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'; // Default therapist ID
-
-      console.log(`📅 Frontend requesting calendar events from DATABASE for therapist: ${therapistId}`);
-
-      // Parse timeMin and timeMax parameters
-      let startDate: Date | undefined;
-      let endDate: Date | undefined;
-
-      if (timeMin) {
-        startDate = new Date(timeMin as string);
-        console.log(`📅 Filtering events from: ${startDate.toISOString()}`);
-      }
-
-      if (timeMax) {
-        endDate = new Date(timeMax as string);
-        console.log(`📅 Filtering events to: ${endDate.toISOString()}`);
-      }
-
-      // Get events from database
-      const dbEvents = await storage.getCalendarEvents(therapistId, startDate, endDate);
-      console.log(`📊 Found ${dbEvents.length} events in database`);
-
-      // Transform database events to match Google Calendar API format for frontend compatibility
-      const transformedEvents = dbEvents.map((event: any) => {
-        // Determine source based on calendar name
-        let source = 'google';
-        if (event.calendarName && event.calendarName.toLowerCase().includes('simple practice')) {
-          source = 'system';
-        } else if (event.calendarName && event.calendarName.toLowerCase().includes('trevor')) {
-          source = 'manual';
-        }
-
-        return {
-          id: event.googleEventId,
-          summary: event.summary,
-          description: event.description,
-          start: event.isAllDay 
-            ? { date: event.startTime.toISOString().split('T')[0] }
-            : { dateTime: event.startTime.toISOString(), timeZone: event.timeZone },
-          end: event.isAllDay
-            ? { date: event.endTime.toISOString().split('T')[0] }
-            : { dateTime: event.endTime.toISOString(), timeZone: event.timeZone },
-          location: event.location,
-          status: event.status,
-          attendees: Array.isArray(event.attendees) ? event.attendees : [],
-          recurringEventId: event.recurringEventId,
-          calendarId: event.googleCalendarId,
-          calendarName: event.calendarName,
-          // Add database metadata
-          dbId: event.id,
-          lastSyncTime: event.lastSyncTime,
-          source: source
-        };
-      });
-
-      console.log(`✅ Returning ${transformedEvents.length} events from database`);
-      res.json(transformedEvents);
-    } catch (error: any) {
-      console.error('Error getting calendar events from database:', error);
-      res.status(500).json({ error: 'Failed to get calendar events from database', details: error.message });
-    }
-  });
-
-  // Fallback endpoint to fetch directly from Google Calendar API (for emergency use)
-  app.get('/api/calendar/events/google', async (req, res) => {
-    try {
-      const { timeMin, timeMax, calendarId } = req.query;
-      const { simpleOAuth } = await import('./oauth-simple');
-
-      if (!simpleOAuth.isConnected()) {
-        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
-      }
-
-      // Try to refresh tokens before fetching events
-      try {
-        await (simpleOAuth as any).refreshTokensIfNeeded();
-      } catch (tokenError: any) {
-        console.error('Token refresh failed during event fetch:', tokenError);
-        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
-      }
-
-      let allEvents: any[] = [];
-
-      if (!calendarId || calendarId === 'all') {
-        // Fetch from ALL calendars
-        const calendars = await simpleOAuth.getCalendars();
-        console.log(`📅 Frontend requesting events from ALL ${calendars.length} calendars (GOOGLE API DIRECT)`);
-
-        for (const calendar of calendars) {
-          try {
-            const events = await simpleOAuth.getEvents(
-              calendar.id,
-              timeMin as string,
-              timeMax as string
-            );
-
-            if (events && events.length > 0) {
-              // Add calendar metadata to each event
-              const eventsWithCalendar = events.map((event: any) => ({
-                ...event,
-                calendarId: calendar.id,
-                calendarName: calendar.summary || '',
-                source: 'google-api'
-              }));
-              allEvents = allEvents.concat(eventsWithCalendar);
-              console.log(`  ✅ Found ${events.length} events in calendar: ${calendar.summary}`);
-            } else {
-              console.log(`  📭 No events found in calendar: ${calendar.summary}`);
-            }
-          } catch (calError) {
-            console.warn(`Error fetching from calendar ${calendar.summary}:`, calError);
-          }
-        }
-
-        console.log(`📊 Total events from all calendars (GOOGLE API): ${allEvents.length}`);
-      } else {
-        // Fetch from specific calendar
-        console.log(`📅 Fetching events from specific calendar: ${calendarId} (GOOGLE API DIRECT)`);
-        const events = await simpleOAuth.getEvents(
-          calendarId as string,
-          timeMin as string,
-          timeMax as string
-        );
-        allEvents = events || [];
-        console.log(`📊 Found ${allEvents.length} events in calendar: ${calendarId}`);
-      }
-
-      res.json(allEvents);
-    } catch (error: any) {
-      console.error('Error getting calendar events from Google API:', error);
-      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
-        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
-      }
-      res.status(500).json({ error: 'Failed to get calendar events from Google API', details: error.message });
-    }
-  });
-  app.get('/api/calendar/events/:eventId/:calendarId', async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const { simpleOAuth } = await import('./oauth-simple');
-
-      if (!simpleOAuth.isConnected()) {
-        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
-      }
-
-      // Get specific event details
-      const event = await simpleOAuth.getEvent(eventId);
-      res.json(event);
-    } catch (error: any) {
-      console.error('Error getting calendar event:', error);
-      res.status(500).json({ error: 'Failed to get calendar event', details: error.message });
-    }
-  });
-
-  app.put('/api/calendar/events/:eventId/:calendarId', async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const updates = req.body;
-      const { simpleOAuth } = await import('./oauth-simple');
-
-      if (!simpleOAuth.isConnected()) {
-        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
-      }
-
-      // Update calendar event
-      const updatedEvent = await simpleOAuth.updateEvent(eventId, updates);
-      res.json(updatedEvent);
-    } catch (error: any) {
-      console.error('Error updating calendar event:', error);
-      res.status(500).json({ error: 'Failed to update calendar event', details: error.message });
-    }
-  });
-  app.get('/api/calendar/calendars', async (req, res) => {
-    try {
-      const { simpleOAuth } = await import('./oauth-simple');
-
-      if (!simpleOAuth.isConnected()) {
-        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
-      }
-
-      // Try to refresh tokens before fetching calendars
-      try {
-        await (simpleOAuth as any).refreshTokensIfNeeded();
-      } catch (tokenError: any) {
-        console.error('Token refresh failed during calendar list fetch:', tokenError);
-        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
-      }
-
-      const calendars = await simpleOAuth.getCalendars();
-
-      // Log calendar information for debugging
-      console.log(`📅 Retrieved ${calendars.length} calendars including subcalendars:`);
-      calendars.forEach((cal: any, index: number) => {
-        const calType = cal.primary ? 'PRIMARY' : 
-                       cal.id?.includes('@group.calendar.google.com') ? 'SUBCALENDAR' :
-                       'PERSONAL';
-        console.log(`  ${index + 1}. "${cal.summary}" (${calType}) - Access: ${cal.accessRole}`);
-      });
-
-      res.json(calendars);
-    } catch (error: any) {
-      console.error('Error getting calendars:', error);
-      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
-        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
-      }
-      res.status(500).json({ error: 'Failed to get calendars', details: error.message });
-    }
-  });
   // ========== AUTH API ROUTES (Auto-generated) ==========
 
   app.get('/api/oauth/is-connected', async (req, res) => {
@@ -4946,8 +4842,7 @@ You are Compass, an AI assistant for therapy practice management. You have acces
       // Process the session document
       const results = await sessionDocProcessor.processSessionDocument(
         fileBuffer,
-        req.file.originalname,
-        therapistId
+        req.file.originalname,        therapistId
       );
 
       // Clean up uploaded file
@@ -5319,18 +5214,47 @@ You are Compass, an AI assistant for therapy practice management. You have acces
         }
 
         // Generate session prep for next appointment if exists
-        if (finalClientId !== 'unknown') {
-          console.log(`🔄 Generating next session insights for client ID: ${finalClientId} (${actualClientName})`);
-          await generateNextSessionInsights(finalClientId, finalTherapistId, savedNote, actualClientName);
-        } else {
-          console.log(`⚠️ Cannot generate next session insights - client ID is unknown for: ${actualClientName}`);
-        }
-      }
+        const upcomingAppointments = await storage.getUpcomingAppointmentsByClient(finalClientId);
+        if (upcomingAppointments.length > 0) {
+          const nextAppointment = upcomingAppointments[0];
 
-      // CRITICAL FIX: ALWAYS generate session prep for next appointment, regardless of current appointment linking
-      if (finalClientId !== 'unknown') {
-        console.log(`🔄 Generating next session prep for client ID: ${finalClientId} (${actualClientName}) - independent of current appointment linking`);
-        await generateNextSessionInsights(finalClientId, finalTherapistId, savedNote, actualClientName);
+          // Generate AI insights for the next session
+          const sessionPrepContent = `Based on progress note from ${savedNote.createdAt}:
+
+Key insights: ${savedNote.keyPoints?.join(', ') || 'No specific key points identified'}
+Assessment: ${savedNote.assessment}
+Plan: ${savedNote.plan}
+
+Follow-up areas for next session:
+- Review progress on treatment goals
+- Explore themes from significant quotes: ${savedNote.significantQuotes?.join(', ') || 'No significant quotes recorded'}
+- Continue interventions outlined in plan`;
+
+          try {
+            const sessionPrepNote = await storage.createSessionPrepNote({
+              appointmentId: nextAppointment.id,
+              eventId: nextAppointment.id,
+              clientId: finalClientId,
+              therapistId: finalTherapistId,
+              prepContent: sessionPrepContent,
+              keyFocusAreas: savedNote.keyPoints || [],
+              previousSessionSummary: `${savedNote.subjective}\n\n${savedNote.objective}`,
+              suggestedInterventions: [savedNote.plan],
+              clientGoals: [],
+              riskFactors: [],
+              homeworkReview: null,
+              sessionObjectives: [`Follow up on: ${savedNote.keyPoints?.slice(0, 2).join(', ') || 'previous session themes'}`],
+              lastUpdatedBy: finalTherapistId
+            });
+
+            console.log(`✅ Session prep note created for next appointment ${nextAppointment.id} with ID: ${sessionPrepNote.id}`);
+          } catch (sessionPrepError: any) {
+            console.error(`❌ Error creating session prep note:`, sessionPrepError);
+            // Don't fail the entire upload if session prep creation fails
+          }
+        } else {
+          console.log(`ℹ️ No upcoming appointments found for client ${actualClientName} (${finalClientId}) - skipping session prep creation`);
+        }
       }
 
       res.json({ 
