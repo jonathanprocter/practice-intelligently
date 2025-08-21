@@ -307,10 +307,10 @@
   opacity: 0.6;
 }
 
-/* Appointment Layout */
+/* Appointment Layout - Three Equal Columns */
 .appointment-layout {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
   padding: 6px;
   height: 100%;
@@ -368,11 +368,10 @@
   padding: 0.25rem;
   border-radius: 0.25rem;
   border-left: 2px solid #3b82f6;
-  max-width: 120px;
 }
 
 .appointment-actions {
-  max-width: 100px;
+  /* No max-width restriction for equal columns */
 }
 
 .note-item,

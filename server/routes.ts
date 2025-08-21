@@ -2268,6 +2268,57 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
     }
   });
 
+  // AI Generate Action Items endpoint
+  app.post("/api/ai/generate-action-items", async (req, res) => {
+    try {
+      const { clientName, appointmentNotes, context } = req.body;
+      
+      if (!openai) {
+        throw new Error("OpenAI client not initialized");
+      }
+
+      const prompt = `Based on this therapy session information, generate 2-3 specific, actionable follow-up items for the client:
+
+Client: ${clientName}
+Session Notes: ${appointmentNotes}
+Context: ${context || 'therapy session follow-up'}
+
+Generate practical action items that could include:
+- Homework assignments based on session content
+- Follow-up activities mentioned in the session  
+- Preparation for upcoming events or appointments
+- Practice exercises related to discussed topics
+- Reminders for things the client wants to work on
+
+Return the action items as a JSON array of strings. Each item should be concise (under 60 characters) and actionable.
+
+Example format: ["Practice deep breathing exercises daily", "Complete mood tracking worksheet", "Schedule follow-up appointment"]`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful therapy assistant that generates actionable follow-up items based on session notes. Respond with valid JSON only."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 300,
+        temperature: 0.7
+      });
+
+      const result = JSON.parse(response.choices[0].message.content || '{"actionItems": []}');
+      res.json(result);
+    } catch (error) {
+      console.error("Error generating AI action items:", error);
+      res.status(500).json({ error: "Failed to generate AI action items", actionItems: [] });
+    }
+  });
+
   // AI Analysis endpoints with provider-specific routing
   app.post('/api/ai/analyze', async (req, res) => {
     try {
