@@ -2256,6 +2256,14 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
       const { id } = req.params;
       const updateData = req.body;
 
+      // Convert any Date objects to ISO strings
+      if (updateData.completedAt && typeof updateData.completedAt === 'object') {
+        updateData.completedAt = updateData.completedAt.toISOString();
+      }
+      if (updateData.dueDate && typeof updateData.dueDate === 'object') {
+        updateData.dueDate = updateData.dueDate.toISOString();
+      }
+
       if (updateData.status === 'completed' && !updateData.completedAt) {
         updateData.completedAt = new Date().toISOString();
       }

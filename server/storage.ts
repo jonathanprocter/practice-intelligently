@@ -850,7 +850,7 @@ export class DatabaseStorage implements IStorage {
   async updateActionItem(id: string, item: Partial<ActionItem>): Promise<ActionItem> {
     const [updatedItem] = await db
       .update(actionItems)
-      .set({ ...item, updatedAt: new Date() })
+      .set({ ...item, updatedAt: new Date().toISOString() })
       .where(eq(actionItems.id, id))
       .returning();
     return updatedItem;
