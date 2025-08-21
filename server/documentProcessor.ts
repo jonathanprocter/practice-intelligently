@@ -73,10 +73,76 @@ export async function extractTextFromFile(filePath: string): Promise<string> {
         throw new Error('No readable text content found in PDF');
       }
     } else if (fileExtension === '.docx') {
-      const mammoth = await import('mammoth');
-      const fileBuffer = await fs.readFile(filePath);
-      const result = await mammoth.extractRawText({ buffer: fileBuffer });
-      return result.value;
+      // Multiple fallback strategies for DOCX extraction
+      try {
+        // First try: Mammoth (primary method)
+        const mammoth = await import('mammoth');
+        const fileBuffer = await fs.readFile(filePath);
+        
+        // Validate buffer is not empty
+        if (!fileBuffer || fileBuffer.length === 0) {
+          throw new Error('DOCX file appears to be empty or corrupted');
+        }
+        
+        console.log(`Processing DOCX file of size: ${fileBuffer.length} bytes`);
+        
+        const result = await mammoth.extractRawText({ buffer: fileBuffer });
+        
+        if (result.value && result.value.trim().length > 0) {
+          console.log(`Successfully extracted ${result.value.length} characters from DOCX`);
+          return result.value.trim();
+        } else {
+          throw new Error('Mammoth extraction returned empty content');
+        }
+      } catch (mammothError) {
+        console.warn('Mammoth DOCX extraction failed, trying alternative methods:', mammothError.message);
+        
+        try {
+          // Fallback 1: Try reading as ZIP and extracting document.xml
+          const AdmZip = await import('adm-zip');
+          const zip = new AdmZip.default(filePath);
+          const documentEntry = zip.getEntry('word/document.xml');
+          
+          if (documentEntry) {
+            const documentXml = documentEntry.getData().toString('utf8');
+            // Basic XML text extraction - remove tags and get text content
+            const textContent = documentXml
+              .replace(/<[^>]*>/g, ' ')  // Remove all XML tags
+              .replace(/\s+/g, ' ')       // Normalize whitespace
+              .trim();
+            
+            if (textContent.length > 0) {
+              console.log(`Successfully extracted ${textContent.length} characters from DOCX via ZIP method`);
+              return textContent;
+            }
+          }
+          
+          throw new Error('Could not extract document.xml from DOCX');
+        } catch (zipError) {
+          console.warn('ZIP extraction method failed:', zipError.message);
+          
+          // Fallback 2: Try reading as plain text (last resort)
+          try {
+            const fileBuffer = await fs.readFile(filePath);
+            const textContent = fileBuffer.toString('utf-8');
+            
+            // Look for readable text patterns in the binary data
+            const readableText = textContent
+              .replace(/[^\x20-\x7E\n\r\t]/g, ' ')  // Keep only printable ASCII + whitespace
+              .replace(/\s+/g, ' ')                   // Normalize whitespace
+              .trim();
+            
+            if (readableText.length > 100) {  // Require reasonable amount of text
+              console.log(`Extracted ${readableText.length} characters from DOCX as plain text`);
+              return readableText;
+            }
+            
+            throw new Error('No readable text found in DOCX file');
+          } catch (textError) {
+            throw new Error(`All DOCX extraction methods failed. Original error: ${mammothError.message}`);
+          }
+        }
+      }
     } else if (['.txt', '.md'].includes(fileExtension)) {
       return await fs.readFile(filePath, 'utf-8');
     } else if (fileExtension === '.doc') {
@@ -86,6 +152,7 @@ export async function extractTextFromFile(filePath: string): Promise<string> {
       throw new Error(`Unsupported file format: ${fileExtension}`);
     }
   } catch (error) {
+    console.error(`Error extracting text from ${fileExtension} file:`, error);
     throw new Error(`Failed to extract text from ${fileExtension} file: ${(error as Error)?.message || 'Unknown error'}`);
   }
 }

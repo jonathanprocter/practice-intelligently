@@ -80,8 +80,32 @@ export class OptimizedComprehensiveProgressNotesParser {
 
   private async extractTextFromDocument(filePath: string): Promise<string> {
     try {
+      // Validate file exists and has content
+      const fs = await import('fs/promises');
+      const stats = await fs.stat(filePath);
+      
+      if (stats.size === 0) {
+        throw new Error('Document file is empty');
+      }
+      
+      if (stats.size > 50 * 1024 * 1024) { // 50MB limit
+        throw new Error('Document file is too large (>50MB)');
+      }
+      
+      console.log(`Processing document: ${filePath} (${Math.round(stats.size / 1024)}KB)`);
+      
       // Use the existing documentProcessor which already handles PDF, DOCX, TXT, etc.
       const extractedText = await extractTextFromFile(filePath);
+      
+      if (!extractedText || extractedText.trim().length === 0) {
+        throw new Error('Document appears to be empty or contains no readable text');
+      }
+      
+      if (extractedText.length < 50) {
+        throw new Error('Document contains insufficient text content for processing');
+      }
+      
+      console.log(`Successfully extracted ${extractedText.length} characters from document`);
       return extractedText;
     } catch (error) {
       console.error('Error extracting text from document:', error);

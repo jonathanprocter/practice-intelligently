@@ -4887,6 +4887,24 @@ You are Compass, an AI assistant for therapy practice management. You have acces
 
       console.log(`Processing comprehensive progress notes: ${req.file.originalname} for therapist: ${therapistId}`);
 
+      // Validate file before processing
+      const fileStats = fs.statSync(req.file.path);
+      if (fileStats.size === 0) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Uploaded file is empty' 
+        });
+      }
+
+      if (fileStats.size > 50 * 1024 * 1024) { // 50MB limit
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ 
+          success: false, 
+          error: 'File is too large (maximum 50MB)' 
+        });
+      }
+
       // Process the comprehensive progress notes document
       const result = await optimizedComprehensiveProgressNotesParser.parseComprehensiveDocument(
         req.file.path,
@@ -4916,11 +4934,34 @@ You are Compass, an AI assistant for therapy practice management. You have acces
       if (req.file && fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
       }
+      
       console.error('Error processing comprehensive progress notes:', error);
-      res.status(500).json({
+      
+      // Provide specific error messages based on error type
+      let errorMessage = 'Failed to process comprehensive progress notes';
+      let statusCode = 500;
+      
+      if (error.message?.includes('Failed to extract text')) {
+        errorMessage = 'Could not extract text from document. The file may be corrupted or in an unsupported format.';
+        statusCode = 400;
+      } else if (error.message?.includes('empty') || error.message?.includes('insufficient')) {
+        errorMessage = 'Document appears to be empty or contains insufficient content for processing.';
+        statusCode = 400;
+      } else if (error.message?.includes('too large')) {
+        errorMessage = 'Document file is too large. Please use a file smaller than 50MB.';
+        statusCode = 400;
+      }
+      
+      res.status(statusCode).json({
         success: false,
-        error: 'Failed to process comprehensive progress notes',
-        details: error.message
+        error: errorMessage,
+        details: error.message,
+        troubleshooting: [
+          'Ensure the document is not corrupted',
+          'Try re-saving the document in a different format',
+          'Verify the document contains readable text',
+          'Check that the file size is under 50MB'
+        ]
       });
     }
   });
