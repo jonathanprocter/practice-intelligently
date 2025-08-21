@@ -2257,7 +2257,7 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
       const updateData = req.body;
 
       if (updateData.status === 'completed' && !updateData.completedAt) {
-        updateData.completedAt = new Date();
+        updateData.completedAt = new Date().toISOString();
       }
 
       const item = await storage.updateActionItem(id, updateData);
