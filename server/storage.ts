@@ -881,9 +881,56 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateActionItem(id: string, item: Partial<ActionItem>): Promise<ActionItem> {
+    // Clean the item data and handle date fields properly
+    const cleanedItem = { ...item };
+    
+    // Handle completedAt field
+    if (cleanedItem.completedAt !== undefined) {
+      if (cleanedItem.completedAt === null) {
+        cleanedItem.completedAt = null;
+      } else if (typeof cleanedItem.completedAt === 'string') {
+        const date = new Date(cleanedItem.completedAt);
+        cleanedItem.completedAt = isNaN(date.getTime()) ? null : date;
+      } else if (cleanedItem.completedAt instanceof Date) {
+        cleanedItem.completedAt = isNaN(cleanedItem.completedAt.getTime()) ? null : cleanedItem.completedAt;
+      } else if (typeof cleanedItem.completedAt === 'object' && cleanedItem.completedAt !== null) {
+        const date = new Date(cleanedItem.completedAt);
+        cleanedItem.completedAt = isNaN(date.getTime()) ? null : date;
+      } else {
+        delete cleanedItem.completedAt;
+      }
+    }
+
+    // Handle dueDate field
+    if (cleanedItem.dueDate !== undefined) {
+      if (cleanedItem.dueDate === null) {
+        cleanedItem.dueDate = null;
+      } else if (typeof cleanedItem.dueDate === 'string') {
+        const date = new Date(cleanedItem.dueDate);
+        cleanedItem.dueDate = isNaN(date.getTime()) ? null : date;
+      } else if (cleanedItem.dueDate instanceof Date) {
+        cleanedItem.dueDate = isNaN(cleanedItem.dueDate.getTime()) ? null : cleanedItem.dueDate;
+      } else if (typeof cleanedItem.dueDate === 'object' && cleanedItem.dueDate !== null) {
+        const date = new Date(cleanedItem.dueDate);
+        cleanedItem.dueDate = isNaN(date.getTime()) ? null : date;
+      } else {
+        delete cleanedItem.dueDate;
+      }
+    }
+
+    // Auto-set completedAt when status is changed to completed
+    if (cleanedItem.status === 'completed' && !cleanedItem.completedAt) {
+      cleanedItem.completedAt = new Date();
+    }
+
+    // Clear completedAt when status is not completed
+    if (cleanedItem.status && cleanedItem.status !== 'completed' && cleanedItem.completedAt) {
+      cleanedItem.completedAt = null;
+    }
+
     const [updatedItem] = await db
       .update(actionItems)
-      .set({ ...item, updatedAt: new Date().toISOString() })
+      .set({ ...cleanedItem, updatedAt: new Date() })
       .where(eq(actionItems.id, id))
       .returning();
     return updatedItem;
