@@ -5,7 +5,7 @@ import { analyzeContent, analyzeSessionTranscript } from "./ai-services";
 import { multiModelAI } from './ai-multi-model';
 import { perplexityClient } from './perplexity';
 import { documentProcessor } from './document-processor';
-import { DocumentProcessor } from './documentProcessor.js';
+import { DocumentProcessor } from './documentProcessor';
 // Removed old import - now using simpleOAuth
 import { generateAppointmentInsights } from "./ai-insights";
 import { pool } from "./db";

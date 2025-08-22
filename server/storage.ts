@@ -464,7 +464,18 @@ export class DatabaseStorage implements IStorage {
 
       const appointmentsWithClients = await db
         .select({
-          ...appointments,
+          id: appointments.id,
+          clientId: appointments.clientId,
+          therapistId: appointments.therapistId,
+          startTime: appointments.startTime,
+          endTime: appointments.endTime,
+          type: appointments.type,
+          status: appointments.status,
+          location: appointments.location,
+          notes: appointments.notes,
+          appointmentNumber: appointments.appointmentNumber,
+          createdAt: appointments.createdAt,
+          updatedAt: appointments.updatedAt,
           clientName: sql<string>`${clients.firstName} || ' ' || ${clients.lastName}`.as('clientName'),
           clientFirstName: clients.firstName,
           clientLastName: clients.lastName,
@@ -491,7 +502,18 @@ export class DatabaseStorage implements IStorage {
 
     const appointmentsWithClients = await db
       .select({
-        ...appointments,
+        id: appointments.id,
+        clientId: appointments.clientId,
+        therapistId: appointments.therapistId,
+        startTime: appointments.startTime,
+        endTime: appointments.endTime,
+        type: appointments.type,
+        status: appointments.status,
+        location: appointments.location,
+        notes: appointments.notes,
+        appointmentNumber: appointments.appointmentNumber,
+        createdAt: appointments.createdAt,
+        updatedAt: appointments.updatedAt,
         clientName: sql<string>`${clients.firstName} || ' ' || ${clients.lastName}`.as('clientName'),
         clientFirstName: clients.firstName,
         clientLastName: clients.lastName,
@@ -514,7 +536,18 @@ export class DatabaseStorage implements IStorage {
     // Use SQL to filter appointments that fall on today's date in Eastern Time
     const appointmentsWithClients = await db
       .select({
-        ...appointments,
+        id: appointments.id,
+        clientId: appointments.clientId,
+        therapistId: appointments.therapistId,
+        startTime: appointments.startTime,
+        endTime: appointments.endTime,
+        type: appointments.type,
+        status: appointments.status,
+        location: appointments.location,
+        notes: appointments.notes,
+        appointmentNumber: appointments.appointmentNumber,
+        createdAt: appointments.createdAt,
+        updatedAt: appointments.updatedAt,
         clientName: sql<string>`${clients.firstName} || ' ' || ${clients.lastName}`.as('clientName'),
         clientFirstName: clients.firstName,
         clientLastName: clients.lastName,
