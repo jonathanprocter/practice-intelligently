@@ -2364,16 +2364,29 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
       const { id } = req.params;
       const updateData = req.body;
 
-      // Convert any Date objects to ISO strings
-      if (updateData.completedAt && typeof updateData.completedAt === 'object') {
-        updateData.completedAt = updateData.completedAt.toISOString();
+      // Properly handle date fields
+      if (updateData.completedAt) {
+        if (typeof updateData.completedAt === 'string') {
+          updateData.completedAt = new Date(updateData.completedAt);
+        } else if (updateData.completedAt instanceof Date) {
+          // Already a Date object, keep as is
+        } else if (typeof updateData.completedAt === 'object') {
+          updateData.completedAt = new Date(updateData.completedAt);
+        }
       }
-      if (updateData.dueDate && typeof updateData.dueDate === 'object') {
-        updateData.dueDate = updateData.dueDate.toISOString();
+
+      if (updateData.dueDate) {
+        if (typeof updateData.dueDate === 'string') {
+          updateData.dueDate = new Date(updateData.dueDate);
+        } else if (updateData.dueDate instanceof Date) {
+          // Already a Date object, keep as is
+        } else if (typeof updateData.dueDate === 'object') {
+          updateData.dueDate = new Date(updateData.dueDate);
+        }
       }
 
       if (updateData.status === 'completed' && !updateData.completedAt) {
-        updateData.completedAt = new Date().toISOString();
+        updateData.completedAt = new Date();
       }
 
       const item = await storage.updateActionItem(id, updateData);
