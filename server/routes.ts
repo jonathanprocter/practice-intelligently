@@ -2364,32 +2364,69 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
       const { id } = req.params;
       const updateData = req.body;
 
-      // Properly handle date fields
-      if (updateData.completedAt) {
-        if (typeof updateData.completedAt === 'string') {
-          updateData.completedAt = new Date(updateData.completedAt);
-        } else if (updateData.completedAt instanceof Date) {
-          // Already a Date object, keep as is
-        } else if (typeof updateData.completedAt === 'object') {
-          updateData.completedAt = new Date(updateData.completedAt);
+      // Create a clean copy of updateData to avoid mutation issues
+      const cleanedData = { ...updateData };
+
+      // Handle completedAt field
+      if (cleanedData.completedAt !== undefined) {
+        if (cleanedData.completedAt === null) {
+          // Explicitly allow null values
+          cleanedData.completedAt = null;
+        } else if (typeof cleanedData.completedAt === 'string') {
+          const date = new Date(cleanedData.completedAt);
+          cleanedData.completedAt = isNaN(date.getTime()) ? null : date;
+        } else if (cleanedData.completedAt instanceof Date) {
+          // Already a Date object, validate it
+          cleanedData.completedAt = isNaN(cleanedData.completedAt.getTime()) ? null : cleanedData.completedAt;
+        } else if (typeof cleanedData.completedAt === 'object' && cleanedData.completedAt !== null) {
+          // Handle object-like dates (e.g., from JSON with date properties)
+          const date = new Date(cleanedData.completedAt);
+          cleanedData.completedAt = isNaN(date.getTime()) ? null : date;
+        } else {
+          // Remove invalid date values
+          delete cleanedData.completedAt;
         }
       }
 
-      if (updateData.dueDate) {
-        if (typeof updateData.dueDate === 'string') {
-          updateData.dueDate = new Date(updateData.dueDate);
-        } else if (updateData.dueDate instanceof Date) {
-          // Already a Date object, keep as is
-        } else if (typeof updateData.dueDate === 'object') {
-          updateData.dueDate = new Date(updateData.dueDate);
+      // Handle dueDate field
+      if (cleanedData.dueDate !== undefined) {
+        if (cleanedData.dueDate === null) {
+          // Explicitly allow null values
+          cleanedData.dueDate = null;
+        } else if (typeof cleanedData.dueDate === 'string') {
+          const date = new Date(cleanedData.dueDate);
+          cleanedData.dueDate = isNaN(date.getTime()) ? null : date;
+        } else if (cleanedData.dueDate instanceof Date) {
+          // Already a Date object, validate it
+          cleanedData.dueDate = isNaN(cleanedData.dueDate.getTime()) ? null : cleanedData.dueDate;
+        } else if (typeof cleanedData.dueDate === 'object' && cleanedData.dueDate !== null) {
+          // Handle object-like dates
+          const date = new Date(cleanedData.dueDate);
+          cleanedData.dueDate = isNaN(date.getTime()) ? null : date;
+        } else {
+          // Remove invalid date values
+          delete cleanedData.dueDate;
         }
       }
 
-      if (updateData.status === 'completed' && !updateData.completedAt) {
-        updateData.completedAt = new Date();
+      // Auto-set completedAt when status is changed to completed
+      if (cleanedData.status === 'completed' && !cleanedData.completedAt) {
+        cleanedData.completedAt = new Date();
       }
 
-      const item = await storage.updateActionItem(id, updateData);
+      // Clear completedAt when status is not completed
+      if (cleanedData.status && cleanedData.status !== 'completed' && cleanedData.completedAt) {
+        cleanedData.completedAt = null;
+      }
+
+      console.log('Updating action item with cleaned data:', {
+        id,
+        completedAt: cleanedData.completedAt,
+        dueDate: cleanedData.dueDate,
+        status: cleanedData.status
+      });
+
+      const item = await storage.updateActionItem(id, cleanedData);
       res.json(item);
     } catch (error) {
       console.error("Error updating action item:", error);
