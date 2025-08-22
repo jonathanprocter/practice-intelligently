@@ -4626,7 +4626,7 @@ You are Compass, an AI assistant for therapy practice management. You have acces
       res.status(500).json({ error: 'Failed to update calendar event', details: error.message });
     }
   });
-  app.get('/api/calendar/events/:eventId/:additionalParam?', async (req, res) => {
+  app.get('/api/calendar/events/:eventId', async (req, res) => {
     try {
       const { eventId } = req.params;
       const { simpleOAuth } = await import('./oauth-simple');
@@ -4644,7 +4644,7 @@ You are Compass, an AI assistant for therapy practice management. You have acces
     }
   });
 
-  app.put('/api/calendar/events/:eventId/:additionalParam?', async (req, res) => {
+  app.put('/api/calendar/events/:eventId', async (req, res) => {
     try {
       const { eventId } = req.params;
       const updates = req.body;
