@@ -4758,6 +4758,25 @@ You are Compass, an AI assistant for therapy practice management. You have acces
     }
   });
 
+  // Add endpoint to refresh tokens
+  app.post('/api/auth/google/refresh', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Not authenticated with Google' });
+      }
+
+      // Force token refresh
+      await simpleOAuth.refreshTokensIfNeeded();
+
+      res.json({ success: true, message: 'Tokens refreshed successfully' });
+    } catch (error: any) {
+      console.error('Error refreshing auth tokens:', error);
+      res.status(500).json({ error: 'Failed to refresh auth tokens', details: error.message });
+    }
+  });
+
   // Google OAuth callback endpoint
   app.get('/api/auth/google/callback', async (req, res) => {
     try {
@@ -4792,14 +4811,21 @@ You are Compass, an AI assistant for therapy practice management. You have acces
   app.get('/api/auth/google', async (req, res) => {
     try {
       const { simpleOAuth } = await import('./oauth-simple');
+      const forceReconnect = req.query.force === 'true';
 
-      // Check if already connected
-      if (simpleOAuth.isConnected()) {
+      // Check if already connected (unless force reconnect is requested)
+      if (simpleOAuth.isConnected() && !forceReconnect) {
         return res.json({
           message: 'Already authenticated with Google',
           connected: true,
           authUrl: null
         });
+      }
+
+      // If force reconnect, clear existing tokens first
+      if (forceReconnect) {
+        console.log('Force reconnect requested, clearing existing tokens...');
+        await simpleOAuth.clearTokens();
       }
 
       // Generate OAuth URL for authentication (await the async call)
@@ -4808,7 +4834,7 @@ You are Compass, an AI assistant for therapy practice management. You have acces
 
       res.json({ 
         authUrl,
-        message: 'Visit this URL to authenticate with Google'
+        message: forceReconnect ? 'Forcing reconnection to Google Calendar' : 'Visit this URL to authenticate with Google'
       });
     } catch (error: any) {
       console.error('Error generating auth URL:', error);

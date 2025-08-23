@@ -362,7 +362,7 @@ export default function TodaysSchedule() {
       <div className="p-6 space-y-4 bg-therapy-bg">
         {appointments && appointments.length > 0 ? (
           appointments.map((appointment) => {
-            console.log('Rendering appointment:', appointment.id, appointment.clientName);
+            // Removed verbose logging for cleaner console output
             const clientName = appointment.clientId === 'calendar-event' 
               ? appointment.type.replace(' Appointment', '').trim()
               : (appointment as any).clientName || appointment.type;
@@ -370,7 +370,7 @@ export default function TodaysSchedule() {
             const isExpanded = expandedReminders.has(appointment.id);
             const isPrepCardExpanded = expandedPrepCards.has(appointment.id);
             
-            console.log('About to return JSX for appointment:', appointment.id);
+            // Component ready to render
             return (
               <div key={appointment.id} className="bg-white rounded-lg overflow-hidden border-2 border-therapy-border hover:border-therapy-primary transition-all duration-200 shadow-sm hover:shadow-md">
                 <div className="flex items-center justify-between p-4">

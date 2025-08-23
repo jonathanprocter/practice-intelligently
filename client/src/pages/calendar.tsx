@@ -56,9 +56,10 @@ export default function Calendar() {
 
   // Fetch Google Calendar events instead of mock appointments
   // Add Connect Google Calendar functionality
-  const connectGoogleCalendar = () => {
+  const connectGoogleCalendar = (force = false) => {
     // Initiating Google Calendar connection
-    window.location.href = '/api/auth/google';
+    const url = force ? '/api/auth/google?force=true' : '/api/auth/google';
+    window.location.href = url;
   };
 
   // Get events based on current view - daily by default, weekly when needed
@@ -624,17 +625,26 @@ export default function Calendar() {
           <CardContent className="p-6 text-center">
             <h2 className="text-xl font-bold text-therapy-text mb-4">Google Calendar Authentication Required</h2>
             <p className="text-therapy-text/70 mb-6">
-              Your Google Calendar session has expired or needs to be reconnected.
-              Please authenticate again to view your calendar events from 2023-2025.
+              Your Google Calendar session may have expired or tokens need to be refreshed.
+              If you're getting "Already authenticated" but still see errors, try a force reconnection.
             </p>
-            <Button 
-              onClick={connectGoogleCalendar}
-              className="bg-blue-600 hover:bg-blue-700 text-white mb-4"
-            >
-              Reconnect Google Calendar
-            </Button>
+            <div className="space-y-3">
+              <Button 
+                onClick={() => connectGoogleCalendar(false)}
+                className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+              >
+                Reconnect Google Calendar
+              </Button>
+              <Button 
+                onClick={() => connectGoogleCalendar(true)}
+                variant="outline"
+                className="w-full border-orange-200 text-orange-700 hover:bg-orange-50"
+              >
+                Force New Connection
+              </Button>
+            </div>
             <p className="text-sm text-therapy-text/50">
-              This will restore access to all your calendars: Simple Practice, TrevorAI, Holidays, and personal events.
+              If reconnecting doesn't work, try "Force New Connection" to clear old tokens and start fresh.
             </p>
           </CardContent>
         </Card>
