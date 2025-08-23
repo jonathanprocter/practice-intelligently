@@ -5,7 +5,7 @@
  */
 
 import fs from 'fs';
-import { storage } from './server/storage.js';
+import { storage } from './server/storage.ts';
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
