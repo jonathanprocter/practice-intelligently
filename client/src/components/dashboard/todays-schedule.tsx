@@ -65,10 +65,7 @@ export default function TodaysSchedule() {
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
   });
 
-  // Debug: log when appointments data is available
-  if (appointments && appointments.length > 0) {
-    console.log('DEBUG: Ready to render', appointments.length, 'appointments');
-  }
+  // Removed verbose logging for cleaner console output
 
   const handleStartSession = (appointmentId: string, clientName: string) => {
     setActiveSession(appointmentId);

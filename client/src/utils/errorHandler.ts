@@ -2,13 +2,20 @@
 export function setupGlobalErrorHandling() {
   // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
-    // Prevent ALL default browser behavior
-    event.preventDefault();
-    event.stopPropagation();
+    // Only prevent default for known API-related errors
+    const error = event.reason;
     
-    // Completely suppress ALL promise rejections as they should be handled by components
-    // This prevents any console pollution from async operations
-    return false;
+    // Check if this is a known API error we want to suppress
+    if (error?.message?.includes('fetch') || 
+        error?.message?.includes('network') ||
+        error?.name === 'AbortError') {
+      console.warn('Handled promise rejection:', error.message);
+      event.preventDefault();
+      return;
+    }
+    
+    // Log other unhandled rejections for debugging
+    console.error('Unhandled promise rejection:', error);
   });
 
   // Handle general errors
