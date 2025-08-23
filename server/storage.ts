@@ -137,6 +137,7 @@ export interface IStorage {
   getRecentProgressNotes(therapistId: string, limit?: number): Promise<SessionNote[]>;
   linkProgressNoteToAppointment(sessionNoteId: string, appointmentId: string): Promise<SessionNote>;
   findMatchingAppointment(clientId: string, sessionDate: Date): Promise<Appointment | null>;
+  getProgressNotesByTherapistId(therapistId: string): Promise<SessionNote[]>;
 
   // Medication methods
   getClientMedications(clientId: string): Promise<Medication[]>;
@@ -330,7 +331,7 @@ export class DatabaseStorage implements IStorage {
     if (id.startsWith('calendar-') || !id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)) {
       return undefined;
     }
-    
+
     const [client] = await db.select().from(clients).where(eq(clients.id, id));
     return client || undefined;
   }
@@ -721,12 +722,12 @@ export class DatabaseStorage implements IStorage {
   async updateSessionNote(id: string, note: Partial<SessionNote>): Promise<SessionNote> {
     // Ensure dates are properly converted and handle sessionDate
     const updateData: any = { ...note, updatedAt: new Date() };
-    
+
     // Handle all date fields properly
     if (updateData.createdAt && typeof updateData.createdAt === 'string') {
       updateData.createdAt = new Date(updateData.createdAt);
     }
-    
+
     if (updateData.sessionDate !== undefined) {
       if (typeof updateData.sessionDate === 'string') {
         // Handle date-only strings by appending time to avoid timezone issues
@@ -788,6 +789,14 @@ export class DatabaseStorage implements IStorage {
     return await this.updateSessionNote(sessionNoteId, { appointmentId });
   }
 
+  // Added method to retrieve progress notes by therapist ID
+  async getProgressNotesByTherapistId(therapistId: string): Promise<SessionNote[]> {
+    return await db
+      .select()
+      .from(sessionNotes)
+      .where(eq(sessionNotes.therapistId, therapistId))
+      .orderBy(desc(sessionNotes.createdAt));
+  }
 
 
   async getUpcomingAppointmentsByClient(clientId: string): Promise<Appointment[]> {
@@ -883,7 +892,7 @@ export class DatabaseStorage implements IStorage {
   async updateActionItem(id: string, item: Partial<ActionItem>): Promise<ActionItem> {
     // Clean the item data and handle date fields properly
     const cleanedItem = { ...item };
-    
+
     // Handle completedAt field
     if (cleanedItem.completedAt !== undefined) {
       if (cleanedItem.completedAt === null) {
@@ -1200,7 +1209,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(communicationLogs.createdAt));
   }
 
-  async getUrgentCommunications(therapistId: string): Promise<CommunicationLog[]> {
+  async getUrgentCommunications(therapistId: string): Promise<CommunicationLog[] > {
     return await db
       .select()
       .from(communicationLogs)
@@ -1288,7 +1297,7 @@ export class DatabaseStorage implements IStorage {
       confidenceScore: taggingData.confidenceScore ? String(taggingData.confidenceScore) : undefined,
       updatedAt: new Date()
     };
-    
+
     const [updatedDocument] = await db
       .update(documents)
       .set(updateData)
@@ -1299,11 +1308,11 @@ export class DatabaseStorage implements IStorage {
 
   async getDocumentsByCategory(therapistId: string, category?: string, subcategory?: string): Promise<Document[]> {
     const whereConditions = [eq(documents.therapistId, therapistId)];
-    
+
     if (category) {
       whereConditions.push(eq(documents.category, category));
     }
-    
+
     if (subcategory) {
       whereConditions.push(eq(documents.subcategory, subcategory));
     }
@@ -1754,7 +1763,7 @@ export class DatabaseStorage implements IStorage {
         keyPoints: this.safeParseJSON(row.key_points, []),
         significantQuotes: this.safeParseJSON(row.significant_quotes, []),
         narrativeSummary: row.narrative_summary || '',
-        tonalAnalysis: row.tonal_analysis || '',
+        tonalAnalysis: row.tonalAnalysis || '',
         manualEntry: row.manual_entry || false,
         meetingType: row.meeting_type || null,
         participants: this.safeParseJSON(row.participants, []),
@@ -3082,7 +3091,7 @@ Jonathan`,
   async getCompassConversations(therapistId: string, sessionId?: string, limit: number = 50): Promise<CompassConversation[]> {
     try {
       const whereConditions = [eq(compassConversations.therapistId, therapistId)];
-      
+
       if (sessionId) {
         whereConditions.push(eq(compassConversations.sessionId, sessionId));
       }
@@ -3139,7 +3148,7 @@ Jonathan`,
             contextValue: memory.contextValue,
             confidence: memory.confidence || existing.confidence,
             lastAccessed: new Date(),
-            accessCount: (existing.accessCount || 0) + 1,
+            accessCount: sql`${compassMemory.accessCount} + 1`,
             updatedAt: new Date()
           })
           .where(eq(compassMemory.id, existing.id))
@@ -3287,7 +3296,7 @@ Jonathan`,
       const sessionNotes = await Promise.all(
         sessionNoteIds.map(id => this.getSessionNote(id))
       );
-      
+
       // Get client information
       const client = await this.getClient(clientId);
       if (!client) {
@@ -3296,7 +3305,7 @@ Jonathan`,
 
       // Filter out any null session notes
       const validSessionNotes = sessionNotes.filter(note => note != null);
-      
+
       if (validSessionNotes.length === 0) {
         throw new Error('No valid session notes found');
       }
@@ -3447,519 +3456,10 @@ Generate a comprehensive summary in the following JSON format:
     }
   }
 
-  // Assessment Management System Implementation
-
-  // Assessment Catalog methods
-  async getAssessmentCatalog(): Promise<AssessmentCatalog[]> {
-    return await db.select().from(assessmentCatalog).where(eq(assessmentCatalog.isActive, true));
-  }
-
-  async getAssessmentCatalogByCategory(category: string): Promise<AssessmentCatalog[]> {
-    return await db.select().from(assessmentCatalog)
-      .where(and(eq(assessmentCatalog.category, category), eq(assessmentCatalog.isActive, true)));
-  }
-
-  async getAssessmentCatalogItem(id: string): Promise<AssessmentCatalog | undefined> {
-    const [item] = await db.select().from(assessmentCatalog).where(eq(assessmentCatalog.id, id));
-    return item || undefined;
-  }
-
-  async createAssessmentCatalogItem(item: InsertAssessmentCatalog): Promise<AssessmentCatalog> {
-    const [newItem] = await db.insert(assessmentCatalog).values(item).returning();
-    return newItem;
-  }
-
-  async updateAssessmentCatalogItem(id: string, item: Partial<AssessmentCatalog>): Promise<AssessmentCatalog> {
-    const [updatedItem] = await db
-      .update(assessmentCatalog)
-      .set({ ...item, updatedAt: new Date() })
-      .where(eq(assessmentCatalog.id, id))
-      .returning();
-    return updatedItem;
-  }
-
-  async deactivateAssessmentCatalogItem(id: string): Promise<AssessmentCatalog> {
-    return await this.updateAssessmentCatalogItem(id, { isActive: false });
-  }
-
-  // Client Assessment methods
-  async getClientAssessments(clientId: string): Promise<ClientAssessment[]> {
-    return await db.select().from(clientAssessments)
-      .where(eq(clientAssessments.clientId, clientId))
-      .orderBy(desc(clientAssessments.assignedDate));
-  }
-
-  async getTherapistAssignedAssessments(therapistId: string, status?: string): Promise<ClientAssessment[]> {
-    const conditions = [eq(clientAssessments.therapistId, therapistId)];
-    if (status) {
-      conditions.push(eq(clientAssessments.status, status));
-    }
-    return await db.select().from(clientAssessments)
-      .where(and(...conditions))
-      .orderBy(desc(clientAssessments.assignedDate));
-  }
-
-  async getClientAssessment(id: string): Promise<ClientAssessment | undefined> {
-    const [assessment] = await db.select().from(clientAssessments).where(eq(clientAssessments.id, id));
-    return assessment || undefined;
-  }
-
-  async assignAssessmentToClient(assignment: InsertClientAssessment): Promise<ClientAssessment> {
-    const [newAssignment] = await db.insert(clientAssessments).values(assignment).returning();
-
-    // Create audit log
-    await this.createAssessmentAuditLog({
-      userId: assignment.therapistId,
-      clientId: assignment.clientId,
-      clientAssessmentId: newAssignment.id,
-      action: 'assign',
-      entityType: 'client_assessment',
-      entityId: newAssignment.id,
-      details: { assessmentCatalogId: assignment.assessmentCatalogId }
-    });
-
-    return newAssignment;
-  }
-
-  async updateClientAssessment(id: string, update: Partial<ClientAssessment>): Promise<ClientAssessment> {
-    const [updatedAssessment] = await db
-      .update(clientAssessments)
-      .set({ ...update, updatedAt: new Date() })
-      .where(eq(clientAssessments.id, id))
-      .returning();
-    return updatedAssessment;
-  }
-
-  async startClientAssessment(id: string): Promise<ClientAssessment> {
-    return await this.updateClientAssessment(id, {
-      status: 'in_progress',
-      startedDate: new Date()
-    });
-  }
-
-  async completeClientAssessment(id: string, completedDate: Date): Promise<ClientAssessment> {
-    return await this.updateClientAssessment(id, {
-      status: 'completed',
-      completedDate,
-      progressPercentage: 100
-    });
-  }
-
-  async sendAssessmentReminder(id: string): Promise<ClientAssessment> {
-    const assessment = await this.getClientAssessment(id);
-    if (!assessment) throw new Error('Assessment not found');
-
-    return await this.updateClientAssessment(id, {
-      remindersSent: (assessment.remindersSent || 0) + 1,
-      lastReminderSent: new Date()
-    });
-  }
-
-  // Assessment Response methods
-  async getAssessmentResponses(clientAssessmentId: string): Promise<AssessmentResponse[]> {
-    return await db.select().from(assessmentResponses)
-      .where(eq(assessmentResponses.clientAssessmentId, clientAssessmentId))
-      .orderBy(desc(assessmentResponses.createdAt));
-  }
-
-  async getAssessmentResponse(id: string): Promise<AssessmentResponse | undefined> {
-    const [response] = await db.select().from(assessmentResponses).where(eq(assessmentResponses.id, id));
-    return response || undefined;
-  }
-
-  async createAssessmentResponse(response: InsertAssessmentResponse): Promise<AssessmentResponse> {
-    const [newResponse] = await db.insert(assessmentResponses).values(response).returning();
-
-    // Create audit log
-    await this.createAssessmentAuditLog({
-      clientAssessmentId: response.clientAssessmentId,
-      action: 'submit_response',
-      entityType: 'assessment_response',
-      entityId: newResponse.id,
-      details: { isPartialSubmission: response.isPartialSubmission }
-    });
-
-    return newResponse;
-  }
-
-  async updateAssessmentResponse(id: string, response: Partial<AssessmentResponse>): Promise<AssessmentResponse> {
-    const [updatedResponse] = await db
-      .update(assessmentResponses)
-      .set({ ...response, updatedAt: new Date() })
-      .where(eq(assessmentResponses.id, id))
-      .returning();
-    return updatedResponse;
-  }
-
-  // Assessment Score methods
-  async getAssessmentScores(clientAssessmentId: string): Promise<AssessmentScore[]> {
-    return await db.select().from(assessmentScores)
-      .where(eq(assessmentScores.clientAssessmentId, clientAssessmentId))
-      .orderBy(desc(assessmentScores.calculatedAt));
-  }
-
-  async getAssessmentScore(id: string): Promise<AssessmentScore | undefined> {
-    const [score] = await db.select().from(assessmentScores).where(eq(assessmentScores.id, id));
-    return score || undefined;
-  }
-
-  async createAssessmentScore(score: InsertAssessmentScore): Promise<AssessmentScore> {
-    const [newScore] = await db.insert(assessmentScores).values(score).returning();
-
-    // Create audit log
-    await this.createAssessmentAuditLog({
-      clientAssessmentId: score.clientAssessmentId,
-      action: 'calculate_score',
-      entityType: 'assessment_score',
-      entityId: newScore.id,
-      details: { scoreType: score.scoreType, scoreValue: score.scoreValue }
-    });
-
-    return newScore;
-  }
-
-  async updateAssessmentScore(id: string, score: Partial<AssessmentScore>): Promise<AssessmentScore> {
-    const [updatedScore] = await db
-      .update(assessmentScores)
-      .set(score)
-      .where(eq(assessmentScores.id, id))
-      .returning();
-    return updatedScore;
-  }
-
-  async validateAssessmentScore(id: string, validatedBy: string): Promise<AssessmentScore> {
-    return await this.updateAssessmentScore(id, {
-      validatedBy,
-      validatedAt: new Date()
-    });
-  }
-
-  // Assessment Package methods
-  async getAssessmentPackages(): Promise<AssessmentPackage[]> {
-    return await db.select().from(assessmentPackages).where(eq(assessmentPackages.isActive, true));
-  }
-
-  async getAssessmentPackage(id: string): Promise<AssessmentPackage | undefined> {
-    const [pkg] = await db.select().from(assessmentPackages).where(eq(assessmentPackages.id, id));
-    return pkg || undefined;
-  }
-
-  async createAssessmentPackage(pkg: InsertAssessmentPackage): Promise<AssessmentPackage> {
-    const [newPackage] = await db.insert(assessmentPackages).values(pkg).returning();
-    return newPackage;
-  }
-
-  async updateAssessmentPackage(id: string, pkg: Partial<AssessmentPackage>): Promise<AssessmentPackage> {
-    const [updatedPackage] = await db
-      .update(assessmentPackages)
-      .set({ ...pkg, updatedAt: new Date() })
-      .where(eq(assessmentPackages.id, id))
-      .returning();
-    return updatedPackage;
-  }
-
-  async deactivateAssessmentPackage(id: string): Promise<AssessmentPackage> {
-    return await this.updateAssessmentPackage(id, { isActive: false });
-  }
-
-  // Assessment Audit methods
-  async createAssessmentAuditLog(log: InsertAssessmentAuditLog): Promise<AssessmentAuditLog> {
-    const [newLog] = await db.insert(assessmentAuditLog).values(log).returning();
-    return newLog;
-  }
-
-  async getAssessmentAuditLogs(entityType: string, entityId: string): Promise<AssessmentAuditLog[]> {
-    return await db.select().from(assessmentAuditLog)
-      .where(and(eq(assessmentAuditLog.entityType, entityType), eq(assessmentAuditLog.entityId, entityId)))
-      .orderBy(desc(assessmentAuditLog.timestamp));
-  }
-
-  async getClientAssessmentAuditLogs(clientAssessmentId: string): Promise<AssessmentAuditLog[]> {
-    return await db.select().from(assessmentAuditLog)
-      .where(eq(assessmentAuditLog.clientAssessmentId, clientAssessmentId))
-      .orderBy(desc(assessmentAuditLog.timestamp));
-  }
-
-  // Recent Activity methods for dashboard
-  async getRecentSessionNotes(therapistId: string, days: number): Promise<SessionNote[]> {
-    const daysAgo = new Date();
-    daysAgo.setDate(daysAgo.getDate() - days);
-
-    return await db
-      .select()
-      .from(sessionNotes)
-      .where(
-        and(
-          eq(sessionNotes.therapistId, therapistId),
-          gte(sessionNotes.createdAt, daysAgo)
-        )
-      )
-      .orderBy(desc(sessionNotes.createdAt))
-      .limit(10);
-  }
-
-  async getRecentAppointments(therapistId: string, days: number): Promise<Appointment[]> {
-    const daysAgo = new Date();
-    daysAgo.setDate(daysAgo.getDate() - days);
-
-    return await db
-      .select()
-      .from(appointments)
-      .where(
-        and(
-          eq(appointments.therapistId, therapistId),
-          or(
-            gte(appointments.createdAt, daysAgo),
-            gte(appointments.startTime, daysAgo)
-          )
-        )
-      )
-      .orderBy(desc(appointments.createdAt))
-      .limit(10);
-  }
-
-  async getRecentClients(therapistId: string, days: number): Promise<Client[]> {
-    const daysAgo = new Date();
-    daysAgo.setDate(daysAgo.getDate() - days);
-
-    return await db
-      .select()
-      .from(clients)
-      .where(
-        and(
-          eq(clients.therapistId, therapistId),
-          gte(clients.createdAt, daysAgo)
-        )
-      )
-      .orderBy(desc(clients.createdAt))
-      .limit(5);
-  }
-
-  async getRecentCompletedActionItems(therapistId: string, days: number): Promise<ActionItem[]> {
-    const daysAgo = new Date();
-    daysAgo.setDate(daysAgo.getDate() - days);
-
-    return await db
-      .select()
-      .from(actionItems)
-      .where(
-        and(
-          eq(actionItems.therapistId, therapistId),
-          eq(actionItems.status, 'completed'),
-          gte(actionItems.updatedAt, daysAgo)
-        )
-      )
-      .orderBy(desc(actionItems.updatedAt))
-      .limit(5);
-  }
-
-  async getCalendarSyncStats(): Promise<{
-    lastSyncAt?: string;
-    appointmentsCount?: number;
-  }> {
-    try {
-      // Get the most recent appointment created/updated to estimate last sync
-      const [recentAppointment] = await db
-        .select({
-          createdAt: appointments.createdAt,
-          updatedAt: appointments.updatedAt
-        })
-        .from(appointments)
-        .where(sql`${appointments.googleEventId} IS NOT NULL`)
-        .orderBy(desc(appointments.updatedAt))
-        .limit(1);
-
-      if (!recentAppointment) {
-        return {};
-      }
-
-      // Count appointments with Google Calendar integration
-      const [countResult] = await db
-        .select({ count: count() })
-        .from(appointments)
-        .where(sql`${appointments.googleEventId} IS NOT NULL`);
-
-      return {
-        lastSyncAt: recentAppointment.updatedAt.toISOString(),
-        appointmentsCount: countResult.count
-      };
-    } catch (error) {
-      console.log('Error getting calendar sync stats:', error);
-      return {};
-    }
-  }
-
-
-
-  // Session recommendation methods
-  async getSessionRecommendations(clientId: string): Promise<SessionRecommendation[]> {
-    return await db
-      .select()
-      .from(sessionRecommendations)
-      .where(eq(sessionRecommendations.clientId, clientId))
-      .orderBy(desc(sessionRecommendations.priority), desc(sessionRecommendations.createdAt));
-  }
-
-  async getTherapistSessionRecommendations(therapistId: string): Promise<SessionRecommendation[]> {
-    return await db
-      .select()
-      .from(sessionRecommendations)
-      .where(eq(sessionRecommendations.therapistId, therapistId))
-      .orderBy(desc(sessionRecommendations.priority), desc(sessionRecommendations.createdAt));
-  }
-
-  async createSessionRecommendation(recommendation: InsertSessionRecommendation): Promise<SessionRecommendation> {
-    const [result] = await db
-      .insert(sessionRecommendations)
-      .values(recommendation)
-      .returning();
-    return result;
-  }
-
-  async updateSessionRecommendation(id: string, recommendation: Partial<SessionRecommendation>): Promise<SessionRecommendation> {
-    const [result] = await db
-      .update(sessionRecommendations)
-      .set({ ...recommendation, updatedAt: new Date() })
-      .where(eq(sessionRecommendations.id, id))
-      .returning();
-    return result;
-  }
-
-  async markRecommendationAsImplemented(id: string, feedback?: string, effectiveness?: string): Promise<SessionRecommendation> {
-    const [result] = await db
-      .update(sessionRecommendations)
-      .set({
-        isImplemented: true,
-        implementedAt: new Date(),
-        feedback,
-        effectiveness,
-        status: 'implemented',
-        updatedAt: new Date()
-      })
-      .where(eq(sessionRecommendations.id, id))
-      .returning();
-    return result;
-  }
-
-  async generateSessionRecommendations(clientId: string, therapistId: string): Promise<SessionRecommendation[]> {
-    try {
-      // Gather client context data
-      const [client, recentSessionNotes, recentAppointments, activeTreatmentPlan, activeActionItems] = await Promise.all([
-        this.getClient(clientId),
-        this.getSessionNotes(clientId),
-        this.getAppointmentsByClient(clientId),
-        this.getActiveTreatmentPlan(clientId),
-        this.getActionItems(clientId)
-      ]);
-
-      if (!client) {
-        throw new Error('Client not found');
-      }
-
-      // Prepare context for AI analysis
-      const context = {
-        client: {
-          name: `${client.firstName} ${client.lastName}`,
-          primaryConcerns: client.primaryConcerns,
-          riskLevel: client.riskLevel,
-          medications: client.medications
-        },
-        recentSessions: recentSessionNotes.slice(0, 5).map(note => ({
-          date: note.createdAt,
-          content: note.content,
-          tags: note.tags
-        })),
-        treatmentPlan: activeTreatmentPlan ? {
-          goals: activeTreatmentPlan.goals,
-          interventions: activeTreatmentPlan.interventions,
-          targetSymptoms: activeTreatmentPlan.targetSymptoms
-        } : null,
-        activeActionItems: activeActionItems.filter(item => item.status === 'pending').map(item => ({
-          title: item.title,
-          priority: item.priority,
-          dueDate: item.dueDate
-        }))
-      };
-
-      // Generate AI recommendations using OpenAI
-      const aiPrompt = `As an expert clinical therapist, analyze the following client data and generate 3-5 specific, actionable session recommendations. Focus on evidence-based interventions and therapeutic techniques.
-
-Client Context:
-${JSON.stringify(context, null, 2)}
-
-Generate recommendations in the following JSON format:
-{
-  "recommendations": [
-    {
-      "recommendationType": "intervention|topic|technique|assessment|homework",
-      "title": "Brief descriptive title",
-      "description": "Detailed description of the recommendation",
-      "rationale": "Clinical reasoning and evidence base",
-      "priority": "low|medium|high|urgent",
-      "confidence": 0.85,
-      "evidenceBase": ["supporting evidence from session notes"],
-      "suggestedApproaches": ["specific techniques or interventions"],
-      "expectedOutcomes": ["anticipated therapeutic outcomes"],
-      "implementationNotes": "Practical guidance for implementation"
-    }
-  ]
-}`;
-
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert clinical therapist with extensive experience in evidence-based practice. Provide specific, actionable recommendations for therapy sessions."
-          },
-          {
-            role: "user",
-            content: aiPrompt
-          }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.3,
-        max_tokens: 2000
-      });
-
-      const aiResult = JSON.parse(response.choices[0].message.content || '{"recommendations": []}');
-      const createdRecommendations: SessionRecommendation[] = [];
-
-      // Create recommendation records in database
-      for (const rec of aiResult.recommendations) {
-        const recommendation: InsertSessionRecommendation = {
-          clientId,
-          therapistId,
-          recommendationType: rec.recommendationType,
-          title: rec.title,
-          description: rec.description,
-          rationale: rec.rationale,
-          priority: rec.priority,
-          confidence: rec.confidence.toString(),
-          evidenceBase: rec.evidenceBase,
-          suggestedApproaches: rec.suggestedApproaches,
-          expectedOutcomes: rec.expectedOutcomes,
-          implementationNotes: rec.implementationNotes,
-          aiModel: 'gpt-4o',
-          generationContext: context,
-          validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // Valid for 30 days
-        };
-
-        const created = await this.createSessionRecommendation(recommendation);
-        createdRecommendations.push(created);
-      }
-
-      return createdRecommendations;
-    } catch (error) {
-      console.error('Error generating session recommendations:', error);
-      throw error;
-    }
-  }
-
   // Calendar Events methods
   async getCalendarEvents(therapistId: string, startDate?: Date, endDate?: Date): Promise<CalendarEvent[]> {
     let query = db.select().from(calendarEvents).where(eq(calendarEvents.therapistId, therapistId));
-    
+
     if (startDate && endDate) {
       query = query.where(
         and(
@@ -3968,7 +3468,7 @@ Generate recommendations in the following JSON format:
         )
       );
     }
-    
+
     return await query.orderBy(asc(calendarEvents.startTime));
   }
 
@@ -3985,7 +3485,7 @@ Generate recommendations in the following JSON format:
   async upsertCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent> {
     // Try to find existing event by Google Event ID
     const existingEvent = await this.getCalendarEventByGoogleId(event.googleEventId);
-    
+
     if (existingEvent) {
       // Update existing event
       const [updatedEvent] = await db
@@ -4014,7 +3514,7 @@ Generate recommendations in the following JSON format:
 
   async syncCalendarEvents(events: InsertCalendarEvent[]): Promise<number> {
     let syncedCount = 0;
-    
+
     for (const event of events) {
       try {
         await this.upsertCalendarEvent(event);
@@ -4023,7 +3523,7 @@ Generate recommendations in the following JSON format:
         console.error('Error syncing calendar event:', error);
       }
     }
-    
+
     return syncedCount;
   }
 }
