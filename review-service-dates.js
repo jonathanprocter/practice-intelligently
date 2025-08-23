@@ -1,6 +1,4 @@
 
-#!/usr/bin/env node
-
 /**
  * Service Date Review Script
  * Reviews all existing progress notes and session notes to extract correct service dates
@@ -370,6 +368,4 @@ async function main() {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(console.error);
-}
+main().catch(console.error);
