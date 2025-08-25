@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiClient } from '@/lib/api';
@@ -11,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { FileText, Search, Trash2, Edit3, Filter, Calendar, User, Tag, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { FileText, Search, Trash2, Edit3, Filter, Calendar, User, Tag, AlertCircle, CheckCircle, Clock, Zap, RefreshCw } from 'lucide-react';
 
 interface SessionNote {
   id: string;
@@ -75,6 +74,35 @@ const NotesManagementPage: React.FC = () => {
     },
     onError: () => {
       toast({ title: 'Failed to delete notes', variant: 'destructive' });
+    },
+  });
+
+  // Re-processing mutation
+  const reprocessMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/progress-notes/reprocess-notes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ therapistId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to re-process notes');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      console.log('Re-processing completed:', data);
+      queryClient.invalidateQueries(['session-notes']);
+      // Show success message
+      alert(`Re-processing completed! Successfully matched ${data.results.successfulMatches} notes.`);
+    },
+    onError: (error) => {
+      console.error('Re-processing failed:', error);
+      alert('Failed to re-process notes. Please try again.');
     },
   });
 
@@ -269,6 +297,19 @@ const NotesManagementPage: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Re-process Button */}
+      <div className="flex justify-end">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => reprocessMutation.mutate()}
+          disabled={reprocessMutation.isPending}
+        >
+          <Zap className="h-4 w-4 mr-2" />
+          {reprocessMutation.isPending ? 'Re-processing...' : 'Re-process Unknown Clients'}
+        </Button>
+      </div>
+
       {/* Notes List */}
       <Card>
         <CardHeader className="pb-4">
@@ -298,7 +339,7 @@ const NotesManagementPage: React.FC = () => {
                     checked={selectedNotes.includes(note.id)}
                     onCheckedChange={(checked) => handleSelectNote(note.id, checked as boolean)}
                   />
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
@@ -342,11 +383,11 @@ const NotesManagementPage: React.FC = () => {
                         </AlertDialog>
                       </div>
                     </div>
-                    
+
                     <p className="text-sm text-gray-600 mb-2 line-clamp-2">
                       {note.content.substring(0, 200)}...
                     </p>
-                    
+
                     {note.tags && note.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {note.tags.slice(0, 3).map((tag, index) => (
@@ -383,7 +424,7 @@ const NotesManagementPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -397,7 +438,7 @@ const NotesManagementPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -411,7 +452,7 @@ const NotesManagementPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">

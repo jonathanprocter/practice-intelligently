@@ -219,38 +219,84 @@ Return only valid JSON with no additional text.
     try {
       // Get all clients for this therapist
       const existingClients = await storage.getClients(therapistId);
+      console.log(`🔍 Matching ${extractedClients.length} extracted clients against ${existingClients.length} database clients`);
       
       for (const extractedClient of extractedClients) {
         let bestMatch = null;
         let bestScore = 0;
+        let matchType = '';
+
+        console.log(`\n🔍 Matching client: "${extractedClient.name}"`);
+
+        // Normalize extracted name for better matching
+        const normalizedExtractedName = this.normalizeName(extractedClient.name);
+        const extractedParts = normalizedExtractedName.split(' ');
+        const extractedFirstName = extractedParts[0]?.toLowerCase() || '';
+        const extractedLastName = extractedParts[extractedParts.length - 1]?.toLowerCase() || '';
+
+        console.log(`   Normalized: "${normalizedExtractedName}" (First: "${extractedFirstName}", Last: "${extractedLastName}")`);
 
         // Try to match by exact name, fuzzy name, or name components
         for (const existingClient of existingClients) {
           const existingFullName = `${existingClient.firstName} ${existingClient.lastName}`.toLowerCase();
-          const extractedName = extractedClient.name.toLowerCase();
+          const existingFirstName = existingClient.firstName.toLowerCase();
+          const existingLastName = existingClient.lastName.toLowerCase();
           
-          // Exact match
-          if (existingFullName === extractedName) {
+          console.log(`   Comparing with: "${existingFullName}"`);
+
+          // 1. Exact full name match
+          if (existingFullName === normalizedExtractedName.toLowerCase()) {
             bestMatch = existingClient;
             bestScore = 1.0;
+            matchType = 'exact_full';
+            console.log(`   ✅ Exact full name match!`);
             break;
           }
-          
-          // Check if last names match and first names are similar
-          if (existingClient.lastName.toLowerCase() === extractedClient.lastName.toLowerCase()) {
-            const firstNameSimilarity = this.calculateStringSimilarity(
-              existingClient.firstName.toLowerCase(),
-              extractedClient.firstName.toLowerCase()
-            );
+
+          // 2. Exact last name + first name match
+          if (existingLastName === extractedLastName && existingFirstName === extractedFirstName) {
+            bestMatch = existingClient;
+            bestScore = 0.95;
+            matchType = 'exact_parts';
+            console.log(`   ✅ Exact first+last name match!`);
+            break;
+          }
+
+          // 3. Exact last name + fuzzy first name
+          if (existingLastName === extractedLastName) {
+            const firstNameSimilarity = this.calculateStringSimilarity(existingFirstName, extractedFirstName);
+            console.log(`   📊 Last name match, first name similarity: ${firstNameSimilarity}`);
             
-            if (firstNameSimilarity > 0.8 && firstNameSimilarity > bestScore) {
+            if (firstNameSimilarity > 0.7 && firstNameSimilarity > bestScore) {
               bestMatch = existingClient;
               bestScore = firstNameSimilarity;
+              matchType = 'last_exact_first_fuzzy';
+            }
+          }
+
+          // 4. Fuzzy full name match
+          const fullNameSimilarity = this.calculateStringSimilarity(existingFullName, normalizedExtractedName.toLowerCase());
+          console.log(`   📊 Full name similarity: ${fullNameSimilarity}`);
+          
+          if (fullNameSimilarity > 0.8 && fullNameSimilarity > bestScore) {
+            bestMatch = existingClient;
+            bestScore = fullNameSimilarity;
+            matchType = 'fuzzy_full';
+          }
+
+          // 5. Check for name variations (nickname matching)
+          if (this.areNamesVariations(extractedFirstName, existingFirstName) && extractedLastName === existingLastName) {
+            if (0.85 > bestScore) {
+              bestMatch = existingClient;
+              bestScore = 0.85;
+              matchType = 'nickname_variation';
+              console.log(`   ✅ Nickname variation match!`);
             }
           }
         }
 
-        if (bestMatch && bestScore > 0.8) {
+        if (bestMatch && bestScore > 0.7) {
+          console.log(`   ✅ MATCHED: "${extractedClient.name}" → "${bestMatch.firstName} ${bestMatch.lastName}" (Score: ${bestScore}, Type: ${matchType})`);
           matchedClients.push({
             extractedClient,
             matchedClientId: bestMatch.id,
@@ -258,9 +304,12 @@ Return only valid JSON with no additional text.
             sessionsProcessed: extractedClient.sessions.length
           });
         } else {
+          console.log(`   ❌ NO MATCH: "${extractedClient.name}" (Best score: ${bestScore})`);
           unmatchedClients.push(extractedClient.name);
         }
       }
+
+      console.log(`\n📊 Matching Summary: ${matchedClients.length} matched, ${unmatchedClients.length} unmatched`);
 
       return {
         matchedClients,
@@ -278,6 +327,54 @@ Return only valid JSON with no additional text.
         errors: [`Database matching error: ${error instanceof Error ? error.message : 'Unknown error'}`]
       };
     }
+  }
+
+  private normalizeName(name: string): string {
+    return name
+      .replace(/[^\w\s]/g, '') // Remove punctuation
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim()
+      .replace(/\b\w/g, l => l.toUpperCase()); // Title case
+  }
+
+  private areNamesVariations(name1: string, name2: string): boolean {
+    const nicknames: { [key: string]: string[] } = {
+      'angelica': ['angie', 'angel', 'angela'],
+      'angelita': ['angie', 'angel', 'angelica'],
+      'angela': ['angie', 'angel', 'angelica'],
+      'elizabeth': ['liz', 'beth', 'betty', 'eliza'],
+      'katherine': ['kate', 'kathy', 'katie', 'kat'],
+      'catherine': ['kate', 'cathy', 'katie', 'cat'],
+      'christopher': ['chris', 'christie'],
+      'anthony': ['tony', 'ant'],
+      'robert': ['rob', 'bob', 'bobby'],
+      'william': ['will', 'bill', 'billy'],
+      'michael': ['mike', 'mick'],
+      'richard': ['rick', 'rich', 'dick'],
+      'joseph': ['joe', 'joey'],
+      'david': ['dave', 'davey'],
+      'james': ['jim', 'jimmy', 'jamie'],
+      'daniel': ['dan', 'danny'],
+      'matthew': ['matt', 'matty'],
+      'jennifer': ['jen', 'jenny', 'jenn'],
+      'jessica': ['jess', 'jessie'],
+      'amanda': ['mandy', 'amy'],
+      'stephanie': ['steph', 'steffi']
+    };
+
+    const n1 = name1.toLowerCase();
+    const n2 = name2.toLowerCase();
+
+    // Check if one is a nickname of the other
+    for (const [fullName, nicks] of Object.entries(nicknames)) {
+      if ((n1 === fullName && nicks.includes(n2)) || 
+          (n2 === fullName && nicks.includes(n1)) ||
+          (nicks.includes(n1) && nicks.includes(n2))) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private calculateStringSimilarity(str1: string, str2: string): number {

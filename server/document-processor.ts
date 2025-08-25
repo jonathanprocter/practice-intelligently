@@ -348,57 +348,145 @@ export class DocumentProcessor {
       let contentData: { clientName?: string; sessionDate?: string } = {};
 
       if (content && content.trim().length > 0) {
-        const analysisPrompt = `Extract client name and session date from this clinical document. 
+        // Enhanced regex-based extraction first
+        const regexData = this.extractWithRegex(content);
+        
+        // If regex extraction finds good results, use them
+        if (regexData.clientName || regexData.sessionDate) {
+          contentData = regexData;
+        } else {
+          // Fall back to AI extraction with improved prompt
+          const analysisPrompt = `You are an expert clinical document analyzer. Extract the client name and session date from this therapy/clinical document.
 
-RESPOND WITH ONLY VALID JSON in this exact format:
+CRITICAL: Look for these specific patterns:
+1. Client names in formats like:
+   - "Comprehensive Clinical Progress Note for [Name]"
+   - "Progress Note for [Name]" 
+   - "Client: [Name]"
+   - "[Name]'s Therapy Session"
+   - Names appearing after "for" or before "'s"
+
+2. Session dates in formats like:
+   - "Session on [Date]"
+   - "Therapy Session on [Date]" 
+   - "[Month] [Day], [Year]"
+   - "YYYY-MM-DD" format
+   - "[Day]/[Month]/[Year]" format
+
+RESPOND WITH ONLY VALID JSON:
 {"clientName": "First Last", "sessionDate": "YYYY-MM-DD"}
 
-If information is not found, use null:
-{"clientName": null, "sessionDate": null}
-
-Look for:
-- Client names in patterns like "Client: [Name]", "Patient: [Name]", or direct name mentions
-- Dates in patterns like "Date: [Date]", "Session Date: [Date]", timestamps, or text like "January 20, 2025"
+If not found, use null values.
 
 Document content:
-${content.substring(0, 3000)}`;
+${content.substring(0, 4000)}`;
 
-        const result = await multiModelAI.generateDetailedInsights(analysisPrompt, 'metadata extraction');
+          try {
+            const result = await this.openai.chat.completions.create({
+              model: "gpt-4o",
+              messages: [
+                {
+                  role: "system",
+                  content: "You are an expert at extracting client names and dates from clinical documents. Always respond with valid JSON only."
+                },
+                {
+                  role: "user",
+                  content: analysisPrompt
+                }
+              ],
+              response_format: { type: "json_object" },
+              temperature: 0.1,
+              max_tokens: 500
+            });
 
-        try {
-          // Clean the AI response first
-          let cleanResponse = result.content.trim();
-
-          // Remove any markdown formatting
-          cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-
-          // Try to parse as JSON first
-          const parsed = JSON.parse(cleanResponse);
-          contentData = {
-            clientName: parsed.clientName || undefined,
-            sessionDate: parsed.sessionDate || undefined,
-          };
-        } catch (jsonError) {
-          // Fallback: extract using regex patterns from AI response
-          const clientMatch = result.content.match(/(?:client.*?name|name).*?[:"]\s*([^"\n,]+)/i);
-          const dateMatch = result.content.match(/(?:session.*?date|date).*?[:"]\s*([^"\n,]+)/i);
-
-          contentData = {
-            clientName: clientMatch?.[1]?.trim().replace(/['"]/g, '') || undefined,
-            sessionDate: dateMatch?.[1]?.trim().replace(/['"]/g, '') || undefined,
-          };
+            const responseText = result.choices[0]?.message?.content;
+            if (responseText) {
+              const parsed = JSON.parse(responseText);
+              contentData = {
+                clientName: parsed.clientName || undefined,
+                sessionDate: parsed.sessionDate || undefined,
+              };
+            }
+          } catch (aiError) {
+            console.error('AI extraction failed, using regex fallback:', aiError);
+            contentData = regexData;
+          }
         }
       }
 
-      // Combine filename and content data, prioritizing filename for names and content for dates
+      // Combine filename and content data, prioritizing content for accuracy
       return {
-        clientName: filenameData.clientName || contentData.clientName,
+        clientName: contentData.clientName || filenameData.clientName,
         sessionDate: contentData.sessionDate || filenameData.sessionDate,
       };
     } catch (error) {
-      // Error extracting metadata (production logging disabled)
+      console.error('Error extracting metadata:', error);
       return {};
     }
+  }
+
+  private extractWithRegex(content: string): { clientName?: string; sessionDate?: string } {
+    let clientName: string | undefined;
+    let sessionDate: string | undefined;
+
+    // Enhanced client name patterns
+    const clientPatterns = [
+      /(?:comprehensive|clinical|progress)\s+(?:clinical\s+)?progress\s+note\s+for\s+([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
+      /progress\s+note\s+for\s+([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
+      /([A-Z][a-z]+\s+[A-Z][a-z]+)'s\s+therapy\s+session/i,
+      /client:\s*([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
+      /patient:\s*([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
+      /therapy\s+session\s+(?:for|with)\s+([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
+      /session\s+(?:for|with)\s+([A-Z][a-z]+\s+[A-Z][a-z]+)/i,
+    ];
+
+    for (const pattern of clientPatterns) {
+      const match = content.match(pattern);
+      if (match && match[1]) {
+        clientName = match[1].trim();
+        break;
+      }
+    }
+
+    // Enhanced date patterns
+    const datePatterns = [
+      /(?:session\s+on|therapy\s+session\s+on)\s+([A-Z][a-z]+\s+\d{1,2},?\s+\d{4})/i,
+      /(?:session\s+date|date):\s*([A-Z][a-z]+\s+\d{1,2},?\s+\d{4})/i,
+      /(\d{4}-\d{2}-\d{2})/,
+      /(\d{1,2}\/\d{1,2}\/\d{4})/,
+      /(\d{1,2}-\d{1,2}-\d{4})/,
+      /([A-Z][a-z]+\s+\d{1,2},?\s+\d{4})/,
+    ];
+
+    for (const pattern of datePatterns) {
+      const match = content.match(pattern);
+      if (match && match[1]) {
+        let dateStr = match[1].trim();
+        
+        // Convert various date formats to YYYY-MM-DD
+        try {
+          const date = new Date(dateStr);
+          if (!isNaN(date.getTime())) {
+            sessionDate = date.toISOString().split('T')[0];
+            break;
+          }
+        } catch (e) {
+          // Try manual parsing for formats like MM/DD/YYYY
+          if (dateStr.includes('/')) {
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+              const month = parts[0].padStart(2, '0');
+              const day = parts[1].padStart(2, '0');
+              const year = parts[2];
+              sessionDate = `${year}-${month}-${day}`;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    return { clientName, sessionDate };
   }
 
   private extractFromFilename(filename: string): { clientName?: string; sessionDate?: string } {
