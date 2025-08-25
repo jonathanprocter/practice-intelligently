@@ -3,7 +3,8 @@ import { useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-quer
 import { 
   Search, File, Folder, ExternalLink, Eye, FileText, Database, 
   AlertCircle, Star, Clock, Download, ChevronDown, Filter,
-  Image, FileSpreadsheet, FileCode, Check, Square
+  Image, FileSpreadsheet, FileCode, Check, Square, Users, Calendar,
+  ClipboardList, FolderOpen, Target
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +43,18 @@ interface NotionDatabase {
   description: Array<{ plain_text: string }>;
   created_time: string;
   last_edited_time: string;
+}
+
+interface DatabaseItem {
+  id: string;
+  type: 'session_note' | 'client' | 'appointment' | 'document' | 'action_item';
+  title: string;
+  clientName?: string;
+  content?: string;
+  createdAt: string;
+  updatedAt: string;
+  tags?: string[];
+  metadata?: any;
 }
 
 interface FilterState {
@@ -197,6 +210,8 @@ export default function ContentViewer() {
   const [selectedPage, setSelectedPage] = useState<NotionPage | null>(null);
   const [activeTab, setActiveTab] = useState('drive');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [selectedDatabaseItem, setSelectedDatabaseItem] = useState<DatabaseItem | null>(null);
+  const [databaseCategory, setDatabaseCategory] = useState('session_notes');
   const [filters, setFilters] = useState<FilterState>({
     fileType: 'all',
     sortBy: 'modifiedTime',
@@ -212,6 +227,80 @@ export default function ContentViewer() {
   const fileListRef = useRef<HTMLDivElement>(null);
 
   const queryClient = useQueryClient();
+  const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+
+  // Database queries
+  const { data: sessionNotes, isLoading: sessionNotesLoading } = useQuery({
+    queryKey: ['session-notes', therapistId],
+    queryFn: async () => {
+      const res = await fetch(`/api/session-notes/therapist/${therapistId}`);
+      if (!res.ok) throw new Error('Failed to fetch session notes');
+      return res.json();
+    },
+    enabled: activeTab === 'database' && databaseCategory === 'session_notes',
+  });
+
+  const { data: clients, isLoading: clientsLoading } = useQuery({
+    queryKey: ['clients', therapistId],
+    queryFn: async () => {
+      const res = await fetch(`/api/clients/${therapistId}`);
+      if (!res.ok) throw new Error('Failed to fetch clients');
+      return res.json();
+    },
+    enabled: activeTab === 'database' && databaseCategory === 'clients',
+  });
+
+  const { data: appointments, isLoading: appointmentsLoading } = useQuery({
+    queryKey: ['appointments', therapistId],
+    queryFn: async () => {
+      const res = await fetch(`/api/appointments/${therapistId}`);
+      if (!res.ok) throw new Error('Failed to fetch appointments');
+      return res.json();
+    },
+    enabled: activeTab === 'database' && databaseCategory === 'appointments',
+  });
+
+  const { data: actionItems, isLoading: actionItemsLoading } = useQuery({
+    queryKey: ['action-items', therapistId],
+    queryFn: async () => {
+      const res = await fetch(`/api/action-items/${therapistId}`);
+      if (!res.ok) throw new Error('Failed to fetch action items');
+      return res.json();
+    },
+    enabled: activeTab === 'database' && databaseCategory === 'action_items',
+  });
+
+  const { data: databaseSearchResults, isLoading: databaseSearchLoading } = useQuery({
+    queryKey: ['database-search', debouncedSearchQuery, databaseCategory],
+    queryFn: async () => {
+      // This would ideally be a unified search endpoint
+      const endpoint = {
+        session_notes: `/api/session-notes/therapist/${therapistId}`,
+        clients: `/api/clients/${therapistId}`,
+        appointments: `/api/appointments/${therapistId}`,
+        action_items: `/api/action-items/${therapistId}`
+      }[databaseCategory];
+      
+      if (!endpoint) return [];
+      
+      const res = await fetch(endpoint);
+      if (!res.ok) throw new Error('Search failed');
+      const data = await res.json();
+      
+      // Filter based on search query
+      return data.filter((item: any) => {
+        const searchFields = [
+          item.title, item.content, item.firstName, item.lastName,
+          item.clientName, item.description, item.notes
+        ].filter(Boolean);
+        
+        return searchFields.some((field: string) => 
+          field.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+        );
+      });
+    },
+    enabled: debouncedSearchQuery.length > 2 && activeTab === 'database',
+  });
 
   // Google Drive infinite query with pagination
   const {
@@ -378,6 +467,12 @@ export default function ContentViewer() {
     updateRecentlyViewed(page);
   }, [updateRecentlyViewed]);
 
+  // Handle database item selection
+  const handleDatabaseItemSelect = useCallback((item: DatabaseItem) => {
+    setSelectedDatabaseItem(item);
+    updateRecentlyViewed(item);
+  }, [updateRecentlyViewed]);
+
   // Toggle favorite
   const toggleFavorite = useCallback((id: string) => {
     setFavorites(prev => 
@@ -450,10 +545,96 @@ export default function ContentViewer() {
     return 'Untitled';
   };
 
+  const getDatabaseItemIcon = (type: string) => {
+    switch (type) {
+      case 'session_note': return <FileText className="h-4 w-4" />;
+      case 'client': return <Users className="h-4 w-4" />;
+      case 'appointment': return <Calendar className="h-4 w-4" />;
+      case 'document': return <FolderOpen className="h-4 w-4" />;
+      case 'action_item': return <Target className="h-4 w-4" />;
+      default: return <File className="h-4 w-4" />;
+    }
+  };
+
+  const formatDatabaseItem = (item: any, type: string): DatabaseItem => {
+    const baseItem = {
+      id: item.id,
+      type: type as DatabaseItem['type'],
+      createdAt: item.createdAt || item.created_at || new Date().toISOString(),
+      updatedAt: item.updatedAt || item.updated_at || new Date().toISOString(),
+      metadata: item
+    };
+
+    switch (type) {
+      case 'session_notes':
+        return {
+          ...baseItem,
+          type: 'session_note',
+          title: item.title || `Session Note - ${new Date(item.createdAt || item.created_at).toLocaleDateString()}`,
+          clientName: item.clientFirstName && item.clientLastName ? 
+            `${item.clientFirstName} ${item.clientLastName}` : 
+            item.clientName || 'Unknown Client',
+          content: item.content || item.subjective || '',
+          tags: item.tags || item.aiTags || []
+        };
+      case 'clients':
+        return {
+          ...baseItem,
+          type: 'client',
+          title: `${item.firstName || ''} ${item.lastName || ''}`.trim() || 'Unnamed Client',
+          content: item.notes || `Phone: ${item.phone || 'N/A'}, Email: ${item.email || 'N/A'}`,
+          tags: [item.status || 'active']
+        };
+      case 'appointments':
+        return {
+          ...baseItem,
+          type: 'appointment',
+          title: `${item.type || 'Appointment'} - ${new Date(item.startTime).toLocaleDateString()}`,
+          clientName: item.clientName || item.client_name,
+          content: item.notes || `${new Date(item.startTime).toLocaleString()} - ${item.status}`,
+          tags: [item.status || 'scheduled']
+        };
+      case 'action_items':
+        return {
+          ...baseItem,
+          type: 'action_item',
+          title: item.description || item.title || 'Action Item',
+          clientName: item.clientName,
+          content: item.notes || `Priority: ${item.priority || 'medium'}, Due: ${item.dueDate ? new Date(item.dueDate).toLocaleDateString() : 'No due date'}`,
+          tags: [item.status || 'pending', item.priority || 'medium']
+        };
+      default:
+        return {
+          ...baseItem,
+          title: item.title || item.name || 'Unknown Item',
+          content: item.description || item.content || ''
+        };
+    }
+  };
+
   const currentDriveFiles = debouncedSearchQuery ? (driveSearchResults || []) : driveFiles;
   const currentNotionItems = debouncedSearchQuery 
     ? (notionSearchResults || []) 
     : [...(notionDatabases || []), ...(notionPages || [])];
+
+  const getCurrentDatabaseItems = (): DatabaseItem[] => {
+    if (debouncedSearchQuery && databaseSearchResults) {
+      return databaseSearchResults.map((item: any) => formatDatabaseItem(item, databaseCategory));
+    }
+
+    const data = {
+      session_notes: sessionNotes,
+      clients: clients,
+      appointments: appointments,
+      action_items: actionItems
+    }[databaseCategory];
+
+    if (!data) return [];
+    
+    return data.map((item: any) => formatDatabaseItem(item, databaseCategory));
+  };
+
+  const currentDatabaseItems = getCurrentDatabaseItems();
 
   return (
     <div className="space-y-6">
@@ -563,9 +744,10 @@ export default function ContentViewer() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="drive">Google Drive</TabsTrigger>
           <TabsTrigger value="notion">Notion</TabsTrigger>
+          <TabsTrigger value="database">Database</TabsTrigger>
         </TabsList>
 
         <TabsContent value="drive" className="space-y-4">
@@ -900,6 +1082,232 @@ export default function ContentViewer() {
                       content={pageContent} 
                       type="notion"
                     />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="database" className="space-y-4">
+          {/* Database Category Selector */}
+          <div className="flex gap-4 mb-4">
+            <div className="flex-1">
+              <SimpleSelect
+                value={databaseCategory}
+                onChange={(value) => setDatabaseCategory(value)}
+                options={[
+                  { value: 'session_notes', label: 'Session Notes & Progress Notes' },
+                  { value: 'clients', label: 'Clients' },
+                  { value: 'appointments', label: 'Appointments' },
+                  { value: 'action_items', label: 'Action Items' }
+                ]}
+              />
+            </div>
+            <Badge variant="outline" className="flex items-center">
+              <Database className="h-3 w-3 mr-1" />
+              {currentDatabaseItems.length} items
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Database Items List */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center">
+                    <Database className="h-5 w-5 mr-2" />
+                    {debouncedSearchQuery ? 'Search Results' : 
+                      databaseCategory.split('_').map(word => 
+                        word.charAt(0).toUpperCase() + word.slice(1)
+                      ).join(' ')
+                    }
+                  </span>
+                  {selectedItems.size > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedItems(new Set())}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {sessionNotesLoading || clientsLoading || appointmentsLoading || actionItemsLoading || databaseSearchLoading ? (
+                  <FileListSkeleton />
+                ) : !currentDatabaseItems || currentDatabaseItems.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Database className="h-12 w-12 text-therapy-text/30 mx-auto mb-4" />
+                    <p className="text-therapy-text/60">No {databaseCategory.replace('_', ' ')} found</p>
+                    <p className="text-therapy-text/40 text-sm">Try adjusting your search or category</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {currentDatabaseItems.map((item: DatabaseItem) => (
+                      <div
+                        key={item.id}
+                        className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                          selectedDatabaseItem?.id === item.id
+                            ? 'bg-therapy-primary/10 border-therapy-primary'
+                            : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => handleDatabaseItemSelect(item)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="p-0 h-auto"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleSelection(item.id);
+                              }}
+                            >
+                              {selectedItems.has(item.id) ? 
+                                <Check className="h-4 w-4" /> : 
+                                <Square className="h-4 w-4" />
+                              }
+                            </Button>
+                            {getDatabaseItemIcon(item.type)}
+                            <div className="flex-1">
+                              <p className="font-medium text-sm flex items-center">
+                                {item.title}
+                                {favorites.includes(item.id) && (
+                                  <Star className="h-3 w-3 ml-2 fill-yellow-400 text-yellow-400" />
+                                )}
+                              </p>
+                              <div className="flex items-center space-x-2">
+                                {item.clientName && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {item.clientName}
+                                  </Badge>
+                                )}
+                                {item.tags?.map((tag, index) => (
+                                  <Badge key={index} variant="outline" className="text-xs">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                              <p className="text-xs text-gray-500">
+                                Updated {new Date(item.updatedAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite(item.id);
+                              }}
+                            >
+                              <Star className={`h-4 w-4 ${favorites.includes(item.id) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Database Item Content */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Item Details</span>
+                  {selectedDatabaseItem && (
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="secondary">
+                        {selectedDatabaseItem.type.replace('_', ' ')}
+                      </Badge>
+                    </div>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!selectedDatabaseItem ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Eye className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p>Select an item to view its details</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="border-b pb-2">
+                      <h3 className="font-semibold flex items-center">
+                        {getDatabaseItemIcon(selectedDatabaseItem.type)}
+                        <span className="ml-2">{selectedDatabaseItem.title}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="ml-2"
+                          onClick={() => toggleFavorite(selectedDatabaseItem.id)}
+                        >
+                          <Star className={`h-4 w-4 ${favorites.includes(selectedDatabaseItem.id) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                        </Button>
+                      </h3>
+                      {selectedDatabaseItem.clientName && (
+                        <p className="text-sm text-therapy-primary font-medium">
+                          Client: {selectedDatabaseItem.clientName}
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-500">
+                        Created: {new Date(selectedDatabaseItem.createdAt).toLocaleDateString()}
+                        {' • '}
+                        Updated: {new Date(selectedDatabaseItem.updatedAt).toLocaleDateString()}
+                      </p>
+                      {selectedDatabaseItem.tags && selectedDatabaseItem.tags.length > 0 && (
+                        <div className="flex gap-1 mt-2">
+                          {selectedDatabaseItem.tags.map((tag, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg overflow-auto max-h-96">
+                      <pre className="whitespace-pre-wrap text-sm">
+                        {selectedDatabaseItem.content || 'No content available'}
+                      </pre>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="flex gap-2">
+                      {selectedDatabaseItem.type === 'session_note' && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={`/session-notes`} target="_blank">
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Open in Session Notes
+                          </a>
+                        </Button>
+                      )}
+                      {selectedDatabaseItem.type === 'client' && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={`/clients`} target="_blank">
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Open in Clients
+                          </a>
+                        </Button>
+                      )}
+                      {selectedDatabaseItem.type === 'appointment' && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={`/appointments`} target="_blank">
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Open in Calendar
+                          </a>
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )}
               </CardContent>
