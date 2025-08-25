@@ -1,3 +1,4 @@
+import React, { lazy, Suspense } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -17,19 +18,12 @@ import Analytics from "@/pages/analytics";
 import AiInsights from "@/pages/ai-insights";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
-import { ProgressNotesPage } from "@/pages/progress-notes";
 import Assessments from "@/pages/assessments";
 import DocumentProcessing from "@/pages/DocumentProcessing";
 import ProcessingResults from "@/pages/ProcessingResults";
 import ClientChart from "@/pages/ClientChart";
 import SessionSummaries from "@/pages/session-summaries";
 import SmartDocuments from "@/pages/smart-documents";
-import { lazy, Suspense } from "react";
-
-
-const OAuthTest = lazy(() => import("./pages/oauth-test"));
-const OAuthSimple = lazy(() => import("./pages/oauth-simple"));
-const OAuthTroubleshoot = lazy(() => import("./pages/oauth-troubleshoot"));
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import CompassStable from "@/components/CompassStable";
@@ -37,6 +31,11 @@ import OAuthTestSimple from './pages/oauth-test-simple';
 import OAuthQuickTest from './pages/oauth-quick-test';
 import ContentViewer from './pages/content-viewer';
 import ReauthGoogle from './pages/reauth-google';
+
+const OAuthTest = lazy(() => import("./pages/oauth-test"));
+const OAuthSimple = lazy(() => import("./pages/oauth-simple"));
+const OAuthTroubleshoot = lazy(() => import("./pages/oauth-troubleshoot"));
+const NotesManagement = lazy(() => import('./pages/notes-management'));
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -74,7 +73,11 @@ function Router() {
       <Route path="/progress-notes" component={SessionNotes} />
       <Route path="/document-processing" component={DocumentProcessing} />
       <Route path="/processing-results" component={ProcessingResults} />
-      <Route path="/notes-management" element={React.lazy(() => import('./pages/notes-management'))} />
+      <Route path="/notes-management">
+        <Suspense fallback={<div className="p-6">Loading...</div>}>
+          <NotesManagement />
+        </Suspense>
+      </Route>
       <Route path="/smart-documents" component={SmartDocuments} />
       <Route path="/assessments" component={Assessments} />
       <Route path="/client-checkins" component={ClientCheckins} />
