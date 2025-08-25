@@ -1,0 +1,51 @@
+[vite] connecting...
+[vite] connected.
+React is not defined
+Global error: 
+ReferenceError {}
+
+React is not defined
+Global error: 
+ReferenceError {}
+message: "React is not defined"
+stack: "ReferenceError: React is not defined↵ at Router (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/src/App.tsx?v=-gZLKlT1nnz8Mz8jnFQZi:166:156)↵ at renderWithHooks (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SXRIVT2P.js?v=f6ae992f:11596:26)↵ at mountIndeterminateComponent (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SXRIVT2P.js?v=f6ae992f:14974:21)↵ at beginWork (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SXRIVT2P.js?v=f6ae992f:15962:22)↵ at HTMLUnknownElement.callCallback2 (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SXRIVT2P.js?v=f6ae992f:3680:22)↵ at Object.invokeGuardedCallbackDev (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SXRIVT2P.js?v=f6ae992f:3705:24)↵ at invokeGuardedCallback (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SXRIVT2P.js?v=f6ae992f:3739:39)↵ at beginWork$1 (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SXRIVT2P.js?v=f6ae992f:19818:15)↵ at performUnitOfWork (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SXRIVT2P.js?v=f6ae992f:19251:20)↵ at workLoopSync (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-SXRIVT2P.js?v=f6ae992f:19190:13)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+
+The above error occurred in the <Router> component:
+
+    at Router (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/src/App.tsx?v=-gZLKlT1nnz8Mz8jnFQZi:166:156)
+    at div
+    at main
+    at div
+    at div
+    at AppLayout (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/src/App.tsx?v=-gZLKlT1nnz8Mz8jnFQZi:56:22)
+    at Provider (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=f6ae992f:38:15)
+    at TooltipProvider (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=f6ae992f:68:5)
+    at QueryClientProvider (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=f6ae992f:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+at Router (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/src/App.tsx?v=-gZLKlT1nnz8Mz8jnFQZi:166:156)
+at div
+at main
+at div
+at div
+at AppLayout (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/src/App.tsx?v=-gZLKlT1nnz8Mz8jnFQZi:56:22)
+at Provider (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=f6ae992f:38:15)
+at TooltipProvider (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=f6ae992f:68:5)
+at QueryClientProvider (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=f6ae992f:2805:3)
+at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+at t.value (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://be19ccdd-fe98-4120-a41d-5c815c7c7a5e-00-24nxj2b2smggx.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+React is not defined
+Global error: 
+ReferenceError {}
