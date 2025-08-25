@@ -74,6 +74,7 @@ function Router() {
       <Route path="/progress-notes" component={SessionNotes} />
       <Route path="/document-processing" component={DocumentProcessing} />
       <Route path="/processing-results" component={ProcessingResults} />
+      <Route path="/notes-management" element={React.lazy(() => import('./pages/notes-management'))} />
       <Route path="/smart-documents" component={SmartDocuments} />
       <Route path="/assessments" component={Assessments} />
       <Route path="/client-checkins" component={ClientCheckins} />

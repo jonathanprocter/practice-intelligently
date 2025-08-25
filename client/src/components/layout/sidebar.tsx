@@ -26,7 +26,7 @@ const getNavigationItems = (clientCount: number, urgentActionItemCount: number) 
 export default function Sidebar() {
   const [location] = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  
+
   // Get real client count
   const { data: clients } = useQuery({
     queryKey: ['clients'],
@@ -40,7 +40,7 @@ export default function Sidebar() {
     queryFn: ApiClient.getUrgentActionItems,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
-  
+
   const navigationItems = getNavigationItems(clients?.length || 0, urgentActionItems?.length || 0);
 
   const isActive = (path: string) => {
@@ -65,7 +65,7 @@ export default function Sidebar() {
           }}
         />
       )}
-      
+
       {/* Mobile menu button - Enhanced iPhone optimized */}
       <Button
         variant="ghost"
@@ -97,7 +97,7 @@ export default function Sidebar() {
             </div>
           </div>
         </div>
-        
+
         <nav className="p-2 xs:p-3 sm:p-4 space-y-1 overflow-y-auto flex-1 scrollable-container">
           {navigationItems.map((item) => (
             <Link
@@ -129,7 +129,7 @@ export default function Sidebar() {
               )}
             </Link>
           ))}
-          
+
           <div className="pt-4 border-t border-white/20 mt-4 safe-area-bottom">
             <Link
               href="/settings"

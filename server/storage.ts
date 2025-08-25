@@ -245,7 +245,7 @@ export interface IStorage {
   getRecentAppointments(therapistId: string, days: number): Promise<Appointment[]>;
   getRecentClients(therapistId: string, days: number): Promise<Client[]>;
   getRecentCompletedActionItems(therapistId: string, days: number): Promise<ActionItem[]>;
-  getCalendarSyncStats(): Promise<{
+  getCalendarSyncStats(therapistId: string): Promise<{
     lastSyncAt?: string;
     appointmentsCount?: number;
   }>;
@@ -289,6 +289,45 @@ export class DatabaseStorage implements IStorage {
       console.warn('Failed to parse JSON:', jsonString);
       return defaultValue;
     }
+  }
+
+  // Helper to map session note rows from DB
+  private mapSessionNoteRow(row: any): SessionNote {
+    return {
+      id: row.id,
+      appointmentId: row.appointment_id || null,
+      eventId: row.event_id,
+      clientId: row.client_id,
+      therapistId: row.therapist_id,
+      content: row.content,
+      transcript: row.transcript || null,
+      aiSummary: row.ai_summary || null,
+      tags: row.tags || [],
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at),
+      location: row.location || null,
+      title: row.title || 'Session Note',
+      subjective: row.subjective || '',
+      objective: row.objective || '',
+      assessment: row.assessment || '',
+      plan: row.plan || '',
+      sessionType: row.session_type || 'Individual Therapy',
+      duration: row.duration || 50,
+      sessionDate: row.session_date ? new Date(row.session_date) : null,
+      keyPoints: this.safeParseJSON(row.key_points, []),
+      significantQuotes: this.safeParseJSON(row.significant_quotes, []),
+      narrativeSummary: row.narrative_summary || '',
+      tonalAnalysis: row.tonal_analysis || '',
+      manualEntry: row.manual_entry || false,
+      meetingType: row.meeting_type || null,
+      participants: this.safeParseJSON(row.participants, []),
+      followUpNotes: row.follow_up_notes || '',
+      aiTags: this.safeParseJSON(row.ai_tags, []),
+      followUpRequired: row.follow_up_required || false,
+      confidentialityLevel: row.confidentiality_level || null,
+      clientFirstName: row.first_name, // Added from join
+      clientLastName: row.last_name  // Added from join
+    };
   }
 
   async getUser(id: string): Promise<User | undefined> {
