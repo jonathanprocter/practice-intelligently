@@ -675,17 +675,69 @@ Respond with JSON in this exact format:
       extractedData = JSON.parse(extractionResponse);
     }
 
-    // Match client using fuzzy matching
+    // Enhanced client matching with better fuzzy logic and logging
     let matchedClient = null;
     if (extractedData.clientName) {
-      const clientName = extractedData.clientName.toLowerCase();
+      console.log(`🔍 Attempting to match client: "${extractedData.clientName}"`);
+      
+      const extractedNameLower = extractedData.clientName.toLowerCase().trim();
+      const extractedParts = extractedNameLower.split(/\s+/);
+      const extractedFirst = extractedParts[0] || '';
+      const extractedLast = extractedParts[extractedParts.length - 1] || '';
+      
+      console.log(`   Parsed name parts: first="${extractedFirst}", last="${extractedLast}"`);
+      console.log(`   Available clients: ${clients.length}`);
+      
+      // Try exact match first
       matchedClient = clients.find(client => {
         const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
-        const firstName = client.firstName?.toLowerCase() || '';
-        const lastName = client.lastName?.toLowerCase() || '';
-        return fullName.includes(clientName) || clientName.includes(fullName) ||
-               clientName.includes(firstName) || clientName.includes(lastName);
+        const exactMatch = fullName === extractedNameLower;
+        if (exactMatch) console.log(`   ✅ Exact match found: ${client.firstName} ${client.lastName}`);
+        return exactMatch;
       });
+
+      // If no exact match, try fuzzy matching
+      if (!matchedClient) {
+        let bestMatch = null;
+        let bestScore = 0;
+
+        for (const client of clients) {
+          const clientFirstLower = client.firstName?.toLowerCase() || '';
+          const clientLastLower = client.lastName?.toLowerCase() || '';
+          const clientFullName = `${clientFirstLower} ${clientLastLower}`;
+          
+          let score = 0;
+          
+          // Score based on different matching criteria
+          if (clientFirstLower === extractedFirst && clientLastLower === extractedLast) {
+            score = 1.0; // Perfect match
+          } else if (clientFullName.includes(extractedNameLower) || extractedNameLower.includes(clientFullName)) {
+            score = 0.9; // Full name contains
+          } else if (clientLastLower === extractedLast && (clientFirstLower.includes(extractedFirst) || extractedFirst.includes(clientFirstLower))) {
+            score = 0.8; // Last name exact, first name partial
+          } else if (clientFirstLower === extractedFirst || clientLastLower === extractedLast) {
+            score = 0.6; // One name exact match
+          } else if (clientFirstLower.includes(extractedFirst) || clientLastLower.includes(extractedLast)) {
+            score = 0.4; // Partial match
+          }
+          
+          console.log(`   Comparing with ${client.firstName} ${client.lastName}: score=${score}`);
+          
+          if (score > bestScore && score >= 0.6) {
+            bestScore = score;
+            bestMatch = client;
+          }
+        }
+
+        if (bestMatch) {
+          matchedClient = bestMatch;
+          console.log(`   ✅ Fuzzy match found: ${bestMatch.firstName} ${bestMatch.lastName} (score: ${bestScore})`);
+        } else {
+          console.log(`   ❌ No suitable match found for "${extractedData.clientName}"`);
+        }
+      }
+    } else {
+      console.log('   ⚠️ No client name extracted from document');
     }
 
     if (!matchedClient) {
@@ -696,16 +748,42 @@ Respond with JSON in this exact format:
       };
     }
 
-    // Match appointment by date if session date is available
+    // Enhanced appointment matching by date with better logging
     let matchedAppointment = null;
-    if (extractedData.sessionDate) {
-      const sessionDate = new Date(extractedData.sessionDate);
-      matchedAppointment = appointments.find(apt => {
-        if (apt.clientId !== matchedClient.id) return false;
-        const aptDate = new Date(apt.startTime);
-        const daysDiff = Math.abs((aptDate.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24));
-        return daysDiff <= 1; // Within 1 day
-      });
+    if (extractedData.sessionDate && matchedClient) {
+      console.log(`🗓️ Attempting to match appointment for date: "${extractedData.sessionDate}"`);
+      
+      try {
+        const sessionDate = new Date(extractedData.sessionDate);
+        if (isNaN(sessionDate.getTime())) {
+          console.log('   ❌ Invalid session date format');
+        } else {
+          console.log(`   📅 Parsed session date: ${sessionDate.toISOString().split('T')[0]}`);
+          
+          const clientAppointments = appointments.filter(apt => apt.clientId === matchedClient.id);
+          console.log(`   📋 Found ${clientAppointments.length} appointments for client`);
+          
+          matchedAppointment = clientAppointments.find(apt => {
+            const aptDate = new Date(apt.startTime);
+            const daysDiff = Math.abs((aptDate.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24));
+            const isMatch = daysDiff <= 1; // Within 1 day
+            
+            console.log(`   Comparing with appointment ${aptDate.toISOString().split('T')[0]}: diff=${daysDiff.toFixed(1)} days, match=${isMatch}`);
+            return isMatch;
+          });
+
+          if (matchedAppointment) {
+            const aptDate = new Date(matchedAppointment.startTime);
+            console.log(`   ✅ Appointment match found: ${aptDate.toISOString().split('T')[0]}`);
+          } else {
+            console.log('   ❌ No matching appointment found within date range');
+          }
+        }
+      } catch (dateError) {
+        console.log(`   ❌ Date parsing error: ${dateError}`);
+      }
+    } else if (!extractedData.sessionDate) {
+      console.log('   ⚠️ No session date extracted from document');
     }
 
     return {
