@@ -3497,88 +3497,120 @@ Generate a comprehensive summary in the following JSON format:
   }
 
   // Added methods for recent activity and calendar sync stats
-  async getRecentClients(therapistId: string, limit: number = 5): Promise<Client[]> {
-    const clients = await db
-      .select()
-      .from(clients)
-      .where(eq(clients.therapistId, therapistId))
-      .orderBy(desc(clients.createdAt))
-      .limit(limit);
+  async getRecentSessionNotes(therapistId: string, days: number): Promise<SessionNote[]> {
+    try {
+      const dateThreshold = new Date();
+      dateThreshold.setDate(dateThreshold.getDate() - days);
 
-    // Fetch session counts for each client
-    const clientsWithSessionCounts = await Promise.all(clients.map(async client => {
-      const [sessionCountResult] = await db
-        .select({ count: count() })
-        .from(sessionNotes)
-        .where(eq(sessionNotes.clientId, client.id));
+      const result = await pool.query(
+        'SELECT * FROM session_notes WHERE therapist_id = $1 AND created_at >= $2 ORDER BY created_at DESC LIMIT 10',
+        [therapistId, dateThreshold]
+      );
 
-      return {
-        ...client,
-        sessionCount: sessionCountResult.count || 0
-      };
-    }));
-
-    return clientsWithSessionCounts;
+      return result.rows.map((row: any) => this.mapSessionNoteRow(row));
+    } catch (error) {
+      console.error('Error in getRecentSessionNotes:', error);
+      return [];
+    }
   }
 
-  async getRecentCompletedActionItems(therapistId: string, limit: number = 5): Promise<ActionItem[]> {
-    return await db
-      .select()
-      .from(actionItems)
-      .where(
-        and(
-          eq(actionItems.therapistId, therapistId),
-          eq(actionItems.status, 'completed')
+  async getRecentAppointments(therapistId: string, days: number): Promise<Appointment[]> {
+    try {
+      const dateThreshold = new Date();
+      dateThreshold.setDate(dateThreshold.getDate() - days);
+
+      return await db
+        .select()
+        .from(appointments)
+        .where(
+          and(
+            eq(appointments.therapistId, therapistId),
+            gte(appointments.startTime, dateThreshold)
+          )
         )
-      )
-      .orderBy(desc(actionItems.completedAt))
-      .limit(limit);
+        .orderBy(desc(appointments.startTime))
+        .limit(10);
+    } catch (error) {
+      console.error('Error in getRecentAppointments:', error);
+      return [];
+    }
+  }
+
+  async getRecentClients(therapistId: string, days: number): Promise<Client[]> {
+    try {
+      const dateThreshold = new Date();
+      dateThreshold.setDate(dateThreshold.getDate() - days);
+
+      return await db
+        .select()
+        .from(clients)
+        .where(
+          and(
+            eq(clients.therapistId, therapistId),
+            gte(clients.createdAt, dateThreshold)
+          )
+        )
+        .orderBy(desc(clients.createdAt))
+        .limit(10);
+    } catch (error) {
+      console.error('Error in getRecentClients:', error);
+      return [];
+    }
+  }
+
+  async getRecentCompletedActionItems(therapistId: string, days: number): Promise<ActionItem[]> {
+    try {
+      const dateThreshold = new Date();
+      dateThreshold.setDate(dateThreshold.getDate() - days);
+
+      return await db
+        .select()
+        .from(actionItems)
+        .where(
+          and(
+            eq(actionItems.therapistId, therapistId),
+            eq(actionItems.status, 'completed'),
+            gte(actionItems.completedAt, dateThreshold)
+          )
+        )
+        .orderBy(desc(actionItems.completedAt))
+        .limit(10);
+    } catch (error) {
+      console.error('Error in getRecentCompletedActionItems:', error);
+      return [];
+    }
   }
 
   async getCalendarSyncStats(therapistId: string): Promise<{
-    totalAppointments: number;
-    syncedAppointments: number;
-    syncPercentage: number;
-    lastSync: Date | null;
+    lastSyncAt?: string;
+    appointmentsCount?: number;
   }> {
-    const [totalAppointmentsResult] = await db
-      .select({ count: count() })
-      .from(appointments)
-      .where(eq(appointments.therapistId, therapistId));
+    try {
+      // Get the most recent calendar event sync time
+      const [lastEvent] = await db
+        .select()
+        .from(calendarEvents)
+        .where(eq(calendarEvents.therapistId, therapistId))
+        .orderBy(desc(calendarEvents.lastSyncTime))
+        .limit(1);
 
-    const [syncedAppointmentsResult] = await db
-      .select({ count: count() })
-      .from(appointments)
-      .where(
-        and(
-          eq(appointments.therapistId, therapistId),
-          sql`${appointments.googleEventId} IS NOT NULL`
-        )
-      );
+      // Count total appointments
+      const [appointmentCount] = await db
+        .select({ count: count() })
+        .from(appointments)
+        .where(eq(appointments.therapistId, therapistId));
 
-    const [lastSyncResult] = await db
-      .select({ lastSync: sql`MAX(${appointments.lastSyncAt})` })
-      .from(appointments)
-      .where(
-        and(
-          eq(appointments.therapistId, therapistId),
-          sql`${appointments.googleEventId} IS NOT NULL`
-        )
-      );
-
-    const totalAppointments = totalAppointmentsResult?.count || 0;
-    const syncedAppointments = syncedAppointmentsResult?.count || 0;
-    const syncPercentage = totalAppointments > 0
-      ? Math.round((syncedAppointments / totalAppointments) * 100)
-      : 0;
-    const lastSync = lastSyncResult?.lastSync ? new Date(lastSyncResult.lastSync) : null;
-
-    return {
-      totalAppointments,
-      syncedAppointments,
-      syncPercentage,
-      lastSync
-    };
+      return {
+        lastSyncAt: lastEvent?.lastSyncTime?.toISOString(),
+        appointmentsCount: appointmentCount.count
+      };
+    } catch (error) {
+      console.error('Error getting calendar sync stats:', error);
+      return {
+        lastSyncAt: undefined,
+        appointmentsCount: 0
+      };
+    }
   }
 }
 
