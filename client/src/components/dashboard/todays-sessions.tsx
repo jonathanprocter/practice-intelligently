@@ -137,7 +137,7 @@ export default function TodaysSessions() {
                     <User className="h-3 w-3" />
                     <ClientLink 
                       clientId={note.clientId} 
-                      fallback={`Client ${note.clientId.substring(0, 8)}`}
+                      clientName={`Client ${note.clientId.substring(0, 8)}`}
                       className="hover:text-therapy-primary hover:underline transition-colors"
                     />
                   </div>

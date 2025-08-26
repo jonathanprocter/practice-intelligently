@@ -3525,7 +3525,7 @@ Generate a comprehensive summary in the following JSON format:
       endOfDay.setHours(23, 59, 59, 999);
 
       const result = await pool.query(
-        'SELECT sn.*, c.first_name, c.last_name FROM session_notes sn LEFT JOIN clients c ON sn.client_id = c.id WHERE sn.therapist_id = $1 AND sn.created_at >= $2 AND sn.created_at <= $3 ORDER BY sn.created_at DESC',
+        'SELECT sn.*, c.first_name, c.last_name FROM session_notes sn LEFT JOIN clients c ON sn.client_id = c.id::text WHERE sn.therapist_id = $1 AND sn.created_at >= $2 AND sn.created_at <= $3 ORDER BY sn.created_at DESC',
         [therapistId, startOfDay, endOfDay]
       );
 
