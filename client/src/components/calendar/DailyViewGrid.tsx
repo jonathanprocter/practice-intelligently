@@ -187,11 +187,26 @@ export const DailyViewGrid = ({
   const getAppointmentClassName = (event: CalendarEvent) => {
     let baseClass = "appointment";
     
-    // Source-based styling
-    if (event.source === 'system') {
+    // Check if this is a personal event (Nora or Blake) that should stay green
+    const eventTitle = (event.title || '').toLowerCase();
+    const isPersonalEvent = eventTitle.includes('nora') || eventTitle.includes('blake');
+    
+    // Source-based styling with special handling for personal events
+    if (isPersonalEvent) {
+      // Keep Nora and Blake events green regardless of source
+      baseClass += " google-calendar";
+    } else if (event.source === 'system') {
       baseClass += " simplepractice";
     } else if (event.source === 'google') {
-      baseClass += " google-calendar";
+      // Check if this is from SimplePractice calendar but not personal
+      const isFromSimplePractice = eventTitle.includes('appointment') || 
+                                   eventTitle.includes('session') ||
+                                   event.title?.includes('Appointment');
+      if (isFromSimplePractice) {
+        baseClass += " simplepractice";
+      } else {
+        baseClass += " google-calendar";
+      }
     } else if (event.source === 'manual') {
       baseClass += " personal";
     } else {
