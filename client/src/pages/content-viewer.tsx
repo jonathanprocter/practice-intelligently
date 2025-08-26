@@ -247,12 +247,14 @@ export default function ContentViewer() {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (item: DatabaseItem) => {
-      const endpoint = {
+      const endpointMap = {
         session_note: `/api/session-notes/${item.id}`,
         client: `/api/clients/${item.id}`,
         appointment: `/api/appointments/${item.id}`,
         action_item: `/api/action-items/${item.id}`
-      }[item.type as keyof typeof endpoint] || null;
+      } as const;
+      
+      const endpoint = endpointMap[item.type as keyof typeof endpointMap];
 
       if (!endpoint) throw new Error('Unsupported item type');
 
@@ -544,18 +546,20 @@ export default function ContentViewer() {
     console.log('Delete dialog state set to true');
   }, []);
 
+  const handleDeleteCancel = useCallback(() => {
+    console.log('Delete cancelled');
+    setDeleteConfirmOpen(false);
+    setItemToDelete(null);
+  }, []);
+
   const handleDeleteConfirm = useCallback(() => {
+    console.log('Delete confirmed');
     if (itemToDelete) {
       deleteMutation.mutate(itemToDelete);
       setDeleteConfirmOpen(false);
       setItemToDelete(null);
     }
   }, [itemToDelete, deleteMutation]);
-
-  const handleDeleteCancel = useCallback(() => {
-    setDeleteConfirmOpen(false);
-    setItemToDelete(null);
-  }, []);
 
   // Handle database item selection
   const handleDatabaseItemSelect = useCallback((item: DatabaseItem) => {
@@ -1477,31 +1481,37 @@ export default function ContentViewer() {
       </Tabs>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <AlertDialogContent className="max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete {itemToDelete?.type?.replace('_', ' ') || 'item'}</AlertDialogTitle>
-            <AlertDialogDescription>
+      {deleteConfirmOpen && (
+        <div className="debug-dialog-wrapper" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '400px', width: '90%' }}>
+            <h2 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: 'bold' }}>
+              Delete {itemToDelete?.type?.replace('_', ' ') || 'item'}
+            </h2>
+            <p style={{ marginBottom: '20px', color: '#666' }}>
               Are you sure you want to delete "{itemToDelete?.title || 'this item'}"? 
               {itemToDelete?.clientName && ` for client ${itemToDelete.clientName}`}
               This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleDeleteCancel} data-testid="button-cancel-delete">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteConfirm}
-              className="bg-red-600 hover:bg-red-700"
-              data-testid="button-confirm-delete"
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button 
+                onClick={handleDeleteCancel}
+                style={{ padding: '8px 16px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: 'white' }}
+                data-testid="button-cancel-delete"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleDeleteConfirm}
+                style={{ padding: '8px 16px', border: 'none', borderRadius: '4px', backgroundColor: '#dc2626', color: 'white' }}
+                data-testid="button-confirm-delete"
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
