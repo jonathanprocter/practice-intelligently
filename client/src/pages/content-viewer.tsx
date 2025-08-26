@@ -252,7 +252,7 @@ export default function ContentViewer() {
         client: `/api/clients/${item.id}`,
         appointment: `/api/appointments/${item.id}`,
         action_item: `/api/action-items/${item.id}`
-      }[item.type];
+      }[item.type as keyof typeof endpoint] || null;
 
       if (!endpoint) throw new Error('Unsupported item type');
 
@@ -262,12 +262,14 @@ export default function ContentViewer() {
     },
     onSuccess: (_, deletedItem) => {
       // Invalidate and refetch relevant queries
-      const queryKey = {
+      const queryKeyMap = {
         session_note: ['session-notes', therapistId],
         client: ['clients', therapistId],
         appointment: ['appointments', therapistId],
         action_item: ['action-items', therapistId]
-      }[deletedItem.type];
+      } as const;
+      
+      const queryKey = queryKeyMap[deletedItem.type as keyof typeof queryKeyMap];
 
       if (queryKey) {
         queryClient.invalidateQueries({ queryKey });
@@ -536,8 +538,10 @@ export default function ContentViewer() {
   // Delete handlers
   const handleDeleteClick = useCallback((item: DatabaseItem, e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log('Delete clicked for item:', item);
     setItemToDelete(item);
     setDeleteConfirmOpen(true);
+    console.log('Delete dialog state set to true');
   }, []);
 
   const handleDeleteConfirm = useCallback(() => {
@@ -1474,11 +1478,11 @@ export default function ContentViewer() {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {itemToDelete?.type.replace('_', ' ')}</AlertDialogTitle>
+            <AlertDialogTitle>Delete {itemToDelete?.type?.replace('_', ' ') || 'item'}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{itemToDelete?.title}"? 
+              Are you sure you want to delete "{itemToDelete?.title || 'this item'}"? 
               {itemToDelete?.clientName && ` for client ${itemToDelete.clientName}`}
               This action cannot be undone.
             </AlertDialogDescription>
