@@ -2091,7 +2091,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
   app.get("/api/session-notes/event/:eventId", async (req, res) => {
     try {
       const { eventId } = req.params;
-      const notes = await storage.getSessionNotesByClientIdByEventId(eventId);
+      const notes = await storage.getSessionNotesByEventId(eventId);
       res.json(notes);
     } catch (error) {
       console.error("Error fetching session notes by event ID:", error);
@@ -2915,7 +2915,7 @@ Be precise and clinical in your analysis.
       }
 
       // Get recent session notes for this client
-      const sessionNotes = await storage.getSessionNotesByClientIdByClientId(clientId);
+      const sessionNotes = await storage.getSessionNotesByClientId(clientId);
       const recentNotes = sessionNotes.slice(0, 3); // Last 3 sessions
 
       // Create analysis content for AI
@@ -2971,7 +2971,7 @@ Be precise and clinical in your analysis.
       }
 
       // Get recent session notes for context
-      const sessionNotes = await storage.getSessionNotesByClientIdByClientId(clientId);
+      const sessionNotes = await storage.getSessionNotesByClientId(clientId);
       const recentNotes = sessionNotes.slice(0, 5); // Last 5 sessions for better context
 
       // Create structured insights response
@@ -3535,7 +3535,7 @@ Be precise and clinical in your analysis.
         }
 
         // Get client session history and notes for context
-        const sessionNotes = await storage.getSessionNotesByClientIdByClientId(clientId);
+        const sessionNotes = await storage.getSessionNotesByClientId(clientId);
         const appointments = await storage.getAppointmentsByClient(clientId);
 
         // Try to find the actual appointment by event ID first
@@ -3664,7 +3664,7 @@ Suggested preparation:
       const { eventId } = req.params;
 
       // Get current appointment details
-      const currentNotes = await storage.getSessionNotesByClientIdByEventId(eventId);
+      const currentNotes = await storage.getSessionNotesByEventId(eventId);
 
       if (currentNotes.length === 0) {
         return res.json({ notes: [], actionItems: [], nextAppointment: null });
@@ -6820,7 +6820,7 @@ Follow-up areas for next session:
 
       // Get session notes with optional client filter
       const sessionNotes = clientId 
-        ? await storage.getSessionNotesByClientIdByClientId(clientId as string)
+        ? await storage.getSessionNotesByClientId(clientId as string)
         : await storage.getSessionNotesByClientId(therapistId as string);
 
       res.json(sessionNotes);
