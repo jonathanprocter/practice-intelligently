@@ -247,6 +247,8 @@ export default function ContentViewer() {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (item: DatabaseItem) => {
+      console.log('🔥 MUTATION FUNCTION CALLED with item:', item);
+      
       const endpointMap = {
         session_note: `/api/session-notes/${item.id}`,
         client: `/api/clients/${item.id}`,
@@ -255,14 +257,30 @@ export default function ContentViewer() {
       } as const;
       
       const endpoint = endpointMap[item.type as keyof typeof endpointMap];
+      console.log('🔥 Using endpoint:', endpoint);
 
-      if (!endpoint) throw new Error('Unsupported item type');
+      if (!endpoint) {
+        console.error('🔥 Unsupported item type:', item.type);
+        throw new Error('Unsupported item type');
+      }
 
+      console.log('🔥 Making DELETE request...');
       const res = await fetch(endpoint, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete item');
-      return res.json();
+      console.log('🔥 Response status:', res.status, 'ok:', res.ok);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('🔥 Delete failed:', errorText);
+        throw new Error(`Failed to delete item: ${errorText}`);
+      }
+      
+      const result = await res.json();
+      console.log('🔥 Delete successful, result:', result);
+      return result;
     },
     onSuccess: (_, deletedItem) => {
+      console.log('✅ DELETE SUCCESS for item:', deletedItem);
+      
       // Invalidate and refetch relevant queries
       const queryKeyMap = {
         session_note: ['session-notes', therapistId],
@@ -272,6 +290,7 @@ export default function ContentViewer() {
       } as const;
       
       const queryKey = queryKeyMap[deletedItem.type as keyof typeof queryKeyMap];
+      console.log('✅ Invalidating query key:', queryKey);
 
       if (queryKey) {
         queryClient.invalidateQueries({ queryKey });
@@ -287,8 +306,8 @@ export default function ContentViewer() {
         description: `${deletedItem.type.replace('_', ' ')} has been deleted successfully.`,
       });
     },
-    onError: (error) => {
-      console.error('Delete error:', error);
+    onError: (error, variables) => {
+      console.error('❌ DELETE ERROR:', error, 'for item:', variables);
       toast({
         title: 'Delete failed',
         description: 'Failed to delete the item. Please try again.',
@@ -1558,47 +1577,65 @@ export default function ContentViewer() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ marginBottom: '16px', fontSize: '24px', fontWeight: 'bold', color: 'red' }}>
-              Delete {itemToDelete?.type?.replace('_', ' ') || 'item'}
+            <h2 style={{ marginBottom: '20px', fontSize: '28px', fontWeight: 'bold', color: 'red', textAlign: 'center' }}>
+              ⚠️ DELETE CONFIRMATION ⚠️
             </h2>
-            <p style={{ marginBottom: '20px', color: '#333', fontSize: '16px' }}>
-              Are you sure you want to delete "{itemToDelete?.title || itemToDelete?.metadata?.title || 'this item'}"? 
-              {itemToDelete?.clientName && ` for client ${itemToDelete.clientName}`}
-              This action cannot be undone.
-            </p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button 
-                onClick={handleDeleteCancel}
-                style={{ 
-                  padding: '12px 24px', 
-                  border: '2px solid #666', 
-                  borderRadius: '4px', 
-                  backgroundColor: '#f5f5f5',
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                  color: '#333'
-                }}
-                data-testid="button-cancel-delete"
-              >
-                ❌ Cancel
-              </button>
+            <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: '#fff3cd', border: '2px solid #ffc107', borderRadius: '8px' }}>
+              <p style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '10px', color: '#856404' }}>
+                You are about to permanently delete:
+              </p>
+              <p style={{ fontSize: '16px', color: '#856404', marginBottom: '10px' }}>
+                "{itemToDelete?.title || itemToDelete?.metadata?.title || 'this item'}"
+              </p>
+              {itemToDelete?.clientName && (
+                <p style={{ fontSize: '16px', color: '#856404', marginBottom: '10px' }}>
+                  Client: {itemToDelete.clientName}
+                </p>
+              )}
+              <p style={{ fontSize: '14px', color: '#dc3545', fontWeight: 'bold' }}>
+                ⚠️ THIS ACTION CANNOT BE UNDONE! ⚠️
+              </p>
+            </div>
+            
+            {/* Big DELETE button first */}
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
               <button 
                 onClick={handleDeleteConfirm}
                 style={{ 
-                  padding: '12px 24px', 
-                  border: '3px solid #dc2626', 
-                  borderRadius: '4px', 
+                  padding: '20px 40px', 
+                  border: '4px solid #dc2626', 
+                  borderRadius: '8px', 
                   backgroundColor: '#dc2626', 
                   color: 'white',
-                  fontSize: '18px',
+                  fontSize: '24px',
                   fontWeight: 'bold',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 8px rgba(220, 38, 38, 0.3)'
+                  boxShadow: '0 6px 12px rgba(220, 38, 38, 0.4)',
+                  minWidth: '300px'
                 }}
                 data-testid="button-confirm-delete"
                 disabled={deleteMutation.isPending}
               >
-                {deleteMutation.isPending ? '🔄 Deleting...' : '🗑️ DELETE NOW'}
+                {deleteMutation.isPending ? '🔄 DELETING...' : '🗑️ YES, DELETE PERMANENTLY'}
+              </button>
+            </div>
+            
+            {/* Small cancel button */}
+            <div style={{ textAlign: 'center' }}>
+              <button 
+                onClick={handleDeleteCancel}
+                style={{ 
+                  padding: '10px 20px', 
+                  border: '1px solid #6c757d', 
+                  borderRadius: '4px', 
+                  backgroundColor: '#f8f9fa',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  color: '#6c757d'
+                }}
+                data-testid="button-cancel-delete"
+              >
+                Cancel (Keep Item)
               </button>
             </div>
           </div>
