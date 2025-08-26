@@ -1550,7 +1550,9 @@ export default function ContentViewer() {
           }}
           onClick={(e) => {
             // Only close if clicking on overlay, not the dialog
+            console.log('🔥 OVERLAY CLICKED - target:', e.target, 'currentTarget:', e.currentTarget);
             if (e.target === e.currentTarget) {
+              console.log('🔥 CLOSING DIALOG VIA OVERLAY CLICK');
               handleDeleteCancel();
             }
           }}
@@ -1587,12 +1589,75 @@ export default function ContentViewer() {
             {/* ONLY ONE GIANT DELETE BUTTON - NO CANCEL BUTTON */}
             <div style={{ textAlign: 'center', marginBottom: '30px' }}>
               <button 
-                onClick={(e) => {
-                  console.log('🔥 GIANT DELETE BUTTON CLICKED!');
-                  handleDeleteConfirm(e);
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('🔥 BUTTON CLICKED - STARTING DELETE PROCESS');
+                  
+                  if (!itemToDelete) {
+                    console.error('🔥 ERROR: No item to delete');
+                    return;
+                  }
+                  
+                  console.log('🔥 Item to delete:', itemToDelete.id, itemToDelete.type);
+                  
+                  try {
+                    // Make direct fetch call instead of using mutation
+                    const endpoint = `/api/session-notes/${itemToDelete.id}`;
+                    console.log('🔥 Making direct DELETE request to:', endpoint);
+                    
+                    const response = await fetch(endpoint, {
+                      method: 'DELETE',
+                      headers: {
+                        'Content-Type': 'application/json'
+                      }
+                    });
+                    
+                    console.log('🔥 Response status:', response.status);
+                    console.log('🔥 Response ok:', response.ok);
+                    
+                    if (response.ok) {
+                      const result = await response.json();
+                      console.log('✅ DELETE SUCCESSFUL:', result);
+                      
+                      // Close dialog
+                      setDeleteConfirmOpen(false);
+                      setItemToDelete(null);
+                      
+                      // Refresh the session notes list
+                      queryClient.invalidateQueries({ queryKey: ['session-notes'] });
+                      
+                      // Show success message
+                      toast({
+                        title: 'Success',
+                        description: 'Session note deleted successfully'
+                      });
+                    } else {
+                      const errorText = await response.text();
+                      console.error('❌ DELETE FAILED:', errorText);
+                      toast({
+                        title: 'Error',
+                        description: 'Failed to delete session note',
+                        variant: 'destructive'
+                      });
+                    }
+                  } catch (error) {
+                    console.error('❌ DELETE ERROR:', error);
+                    toast({
+                      title: 'Error', 
+                      description: 'Network error during delete',
+                      variant: 'destructive'
+                    });
+                  }
                 }}
-                onMouseDown={() => console.log('🔥 MOUSE DOWN ON DELETE BUTTON')}
-                onMouseUp={() => console.log('🔥 MOUSE UP ON DELETE BUTTON')}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  console.log('🔥 MOUSE DOWN ON DELETE BUTTON');
+                }}
+                onMouseUp={(e) => {
+                  e.stopPropagation();
+                  console.log('🔥 MOUSE UP ON DELETE BUTTON');
+                }}
                 style={{ 
                   padding: '30px 60px', 
                   border: '6px solid #dc2626', 
