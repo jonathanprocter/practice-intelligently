@@ -1567,72 +1567,57 @@ export default function ContentViewer() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ marginBottom: '20px', fontSize: '28px', fontWeight: 'bold', color: 'red', textAlign: 'center' }}>
-              ⚠️ DELETE CONFIRMATION ⚠️
-            </h2>
-            <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: '#fff3cd', border: '2px solid #ffc107', borderRadius: '8px' }}>
-              <p style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '10px', color: '#856404' }}>
-                You are about to permanently delete:
-              </p>
-              <p style={{ fontSize: '16px', color: '#856404', marginBottom: '10px' }}>
-                "{itemToDelete?.title || itemToDelete?.metadata?.title || 'this item'}"
-              </p>
-              {itemToDelete?.clientName && (
-                <p style={{ fontSize: '16px', color: '#856404', marginBottom: '10px' }}>
-                  Client: {itemToDelete.clientName}
+            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+              <h1 style={{ fontSize: '36px', fontWeight: 'bold', color: '#dc2626', marginBottom: '20px' }}>
+                🗑️ DELETE SESSION NOTE
+              </h1>
+              <div style={{ padding: '20px', backgroundColor: '#fff3cd', border: '3px solid #ffc107', borderRadius: '12px', marginBottom: '30px' }}>
+                <p style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '15px', color: '#856404' }}>
+                  Item to delete:
                 </p>
-              )}
-              <p style={{ fontSize: '14px', color: '#dc3545', fontWeight: 'bold' }}>
-                ⚠️ THIS ACTION CANNOT BE UNDONE! ⚠️
-              </p>
+                <p style={{ fontSize: '18px', color: '#856404', marginBottom: '15px', fontWeight: 'bold' }}>
+                  "{itemToDelete?.title || itemToDelete?.metadata?.title || 'Session Note'}"
+                </p>
+                <p style={{ fontSize: '16px', color: '#dc3545', fontWeight: 'bold' }}>
+                  ⚠️ THIS WILL PERMANENTLY DELETE THE SESSION NOTE ⚠️
+                </p>
+              </div>
             </div>
             
-            {/* Big DELETE button first */}
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            {/* ONLY ONE GIANT DELETE BUTTON - NO CANCEL BUTTON */}
+            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
               <button 
                 onClick={(e) => {
-                  console.log('🔥 BUTTON CLICKED EVENT FIRED!');
+                  console.log('🔥 GIANT DELETE BUTTON CLICKED!');
                   handleDeleteConfirm(e);
                 }}
-                onMouseDown={() => console.log('🔥 BUTTON MOUSE DOWN')}
-                onMouseUp={() => console.log('🔥 BUTTON MOUSE UP')}
+                onMouseDown={() => console.log('🔥 MOUSE DOWN ON DELETE BUTTON')}
+                onMouseUp={() => console.log('🔥 MOUSE UP ON DELETE BUTTON')}
                 style={{ 
-                  padding: '20px 40px', 
-                  border: '4px solid #dc2626', 
-                  borderRadius: '8px', 
+                  padding: '30px 60px', 
+                  border: '6px solid #dc2626', 
+                  borderRadius: '12px', 
                   backgroundColor: '#dc2626', 
                   color: 'white',
-                  fontSize: '24px',
+                  fontSize: '28px',
                   fontWeight: 'bold',
                   cursor: 'pointer',
-                  boxShadow: '0 6px 12px rgba(220, 38, 38, 0.4)',
-                  minWidth: '300px'
+                  boxShadow: '0 8px 16px rgba(220, 38, 38, 0.5)',
+                  minWidth: '400px',
+                  minHeight: '100px',
+                  display: 'block',
+                  margin: '0 auto'
                 }}
                 data-testid="button-confirm-delete"
                 disabled={deleteMutation.isPending}
                 type="button"
               >
-                {deleteMutation.isPending ? '🔄 DELETING...' : '🗑️ YES, DELETE PERMANENTLY'}
+                {deleteMutation.isPending ? '🔄 DELETING...' : '🗑️ DELETE SESSION NOTE NOW'}
               </button>
             </div>
             
-            {/* Small cancel button */}
-            <div style={{ textAlign: 'center' }}>
-              <button 
-                onClick={handleDeleteCancel}
-                style={{ 
-                  padding: '10px 20px', 
-                  border: '1px solid #6c757d', 
-                  borderRadius: '4px', 
-                  backgroundColor: '#f8f9fa',
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  color: '#6c757d'
-                }}
-                data-testid="button-cancel-delete"
-              >
-                Cancel (Keep Item)
-              </button>
+            <div style={{ textAlign: 'center', fontSize: '14px', color: '#666' }}>
+              <p>Click anywhere outside this dialog to cancel</p>
             </div>
           </div>
         </div>
