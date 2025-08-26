@@ -1739,6 +1739,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual metadata override for document processing
+  app.post("/api/documents/manual-metadata-override", async (req, res) => {
+    try {
+      const { 
+        documentContent, 
+        originalMetadata, 
+        manualOverrides, 
+        therapistId,
+        createProgressNote = false 
+      } = req.body;
+
+      if (!documentContent || !therapistId) {
+        return res.status(400).json({ 
+          error: "Missing required fields: documentContent and therapistId" 
+        });
+      }
+
+      console.log('🔧 Processing manual metadata override...');
+      console.log('Original metadata:', originalMetadata);
+      console.log('Manual overrides:', manualOverrides);
+
+      // Combine original extraction with manual overrides
+      const finalMetadata = {
+        clientName: manualOverrides.clientName || originalMetadata?.clientName,
+        sessionDate: manualOverrides.sessionDate || originalMetadata?.sessionDate,
+        confidence: {
+          name: manualOverrides.clientName ? 1.0 : (originalMetadata?.confidence?.name || 0),
+          date: manualOverrides.sessionDate ? 1.0 : (originalMetadata?.confidence?.date || 0)
+        },
+        extractionMethods: [
+          ...(originalMetadata?.extractionMethods || []),
+          ...(manualOverrides.clientName ? ['Manual-Override-Name'] : []),
+          ...(manualOverrides.sessionDate ? ['Manual-Override-Date'] : [])
+        ],
+        manuallyReviewed: true
+      };
+
+      let result = {
+        metadata: finalMetadata,
+        sessionNote: null,
+        analysis: {
+          originalExtraction: originalMetadata,
+          manualOverrides: manualOverrides,
+          finalMetadata: finalMetadata
+        }
+      };
+
+      // If requested, create a progress note with the corrected metadata
+      if (createProgressNote && finalMetadata.clientName && finalMetadata.sessionDate) {
+        try {
+          // Match client name to database
+          const clients = await storage.getClients(therapistId);
+          const matchedClient = clients.find(client => 
+            `${client.firstName} ${client.lastName}`.toLowerCase() === finalMetadata.clientName.toLowerCase()
+          );
+
+          if (matchedClient) {
+            console.log(`✅ Creating progress note for matched client: ${matchedClient.firstName} ${matchedClient.lastName}`);
+            
+            // Generate progress note using the document processor
+            const progressNote = await documentProcessor.generateProgressNote(
+              documentContent,
+              matchedClient.id,
+              finalMetadata.sessionDate
+            );
+
+            // Create the session note in database
+            const sessionNote = await storage.createSessionNote({
+              clientId: matchedClient.id,
+              therapistId: therapistId,
+              title: progressNote.title,
+              content: documentContent,
+              subjective: progressNote.subjective,
+              objective: progressNote.objective,
+              assessment: progressNote.assessment,
+              plan: progressNote.plan,
+              tonalAnalysis: progressNote.tonalAnalysis,
+              keyPoints: progressNote.keyPoints,
+              significantQuotes: progressNote.significantQuotes,
+              narrativeSummary: progressNote.narrativeSummary,
+              tags: progressNote.aiTags,
+              sessionDate: new Date(finalMetadata.sessionDate),
+              createdAt: new Date()
+            });
+
+            result.sessionNote = sessionNote;
+            console.log(`✅ Created session note with ID: ${sessionNote.id}`);
+          } else {
+            console.log(`❌ No matching client found for: ${finalMetadata.clientName}`);
+            result.analysis.warning = `No matching client found for: ${finalMetadata.clientName}`;
+          }
+        } catch (noteCreationError) {
+          console.error('Error creating progress note:', noteCreationError);
+          result.analysis.error = 'Failed to create progress note: ' + noteCreationError.message;
+        }
+      }
+
+      res.json({
+        success: true,
+        ...result,
+        message: 'Manual metadata override processed successfully'
+      });
+
+    } catch (error: any) {
+      console.error("Error processing manual metadata override:", error);
+      res.status(500).json({ 
+        error: "Failed to process manual override",
+        details: error?.message || 'Unknown error'
+      });
+    }
+  });
+
   app.get("/api/session-notes/today/:therapistId", async (req, res) => {
     try {
       const { therapistId } = req.params;

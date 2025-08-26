@@ -339,56 +339,84 @@ export class DocumentProcessor {
     });
   }
 
-  private async extractMetadata(content: string, filename?: string): Promise<{ clientName?: string; sessionDate?: string }> {
+  private async extractMetadata(content: string, filename?: string): Promise<{ 
+    clientName?: string; 
+    sessionDate?: string; 
+    confidence?: { name: number; date: number }; 
+    extractionMethods?: string[];
+    alternatives?: { names: string[]; dates: string[] };
+  }> {
     try {
-      console.log('🔍 Starting metadata extraction...');
+      console.log('🔍 Starting enhanced metadata extraction...');
       
-      // Enhanced AI extraction with comprehensive prompt
-      const analysisPrompt = `You are an expert clinical document analyzer. Extract the EXACT client name and session date from this therapy/clinical document.
+      // Enhanced AI extraction with multiple validation passes
+      const analysisPrompt = `You are an expert clinical document analyzer. Extract client name and session date with maximum precision.
+
+ANALYSIS TASK:
+1. Find the EXACT client name as written in the document
+2. Extract the EXACT session/appointment date
+3. Provide confidence scores (0.0-1.0) for each extraction
+4. List alternative possibilities if multiple candidates exist
+
+SEARCH PATTERNS:
+Client Names:
+- "Comprehensive Clinical Progress Note for [Name]"
+- "Progress Note for [Name]" 
+- "[Name]'s Therapy Session"
+- "Client: [Name]" or "Patient: [Name]"
+- Names in document headers/titles
+- Names appearing with appointment/session context
+
+Session Dates:
+- "Session on [Date]" or "Therapy Session on [Date]"
+- "Date: [Date]" in headers
+- "[Date]" near session/appointment references
+- ISO format: YYYY-MM-DD
+- US format: MM/DD/YYYY or M/D/YYYY
+- Text format: "Month DD, YYYY"
 
 CRITICAL REQUIREMENTS:
-1. Find the EXACT client name as written in the document - do not modify, abbreviate, or change it
-2. Look for these specific client name patterns:
-   - "Comprehensive Clinical Progress Note for [Exact Name]"
-   - "Progress Note for [Exact Name]"
-   - "[Exact Name]'s Therapy Session"
-   - "Client: [Exact Name]"
-   - Names appearing after "for" or before "'s"
-   - Names in headers or titles
-
-3. Extract the EXACT session date - look for these date patterns:
-   - "Session on September 13, 2024"
-   - "Therapy Session on [Date]"
-   - "September 13, 2024"
-   - "2024-09-13" format
-   - "09/13/2024" or "9/13/2024" format
-   - Dates in headers or appointment references
-
-4. Convert dates to YYYY-MM-DD format
-
-EXAMPLE FROM YOUR TRAINING:
-Document: "Comprehensive Clinical Progress Note for Angelica Ruden's Therapy Session on September 13, 2024"
-Expected Output: {"clientName": "Angelica Ruden", "sessionDate": "2024-09-13"}
-
-RESPOND WITH ONLY VALID JSON:
-{"clientName": "Exact Full Name", "sessionDate": "YYYY-MM-DD"}
-
-If not found clearly, use null values.
+- Extract EXACT names without modification
+- Convert all dates to YYYY-MM-DD format
+- Provide confidence scores based on context clarity
+- List up to 3 alternative possibilities for each field
 
 Document filename: ${filename || 'unknown'}
 Document content:
-${content.substring(0, 5000)}`;
+${content.substring(0, 6000)}
 
-      let extractedData: { clientName?: string; sessionDate?: string } = {};
+RESPOND WITH ONLY VALID JSON:
+{
+  "primary": {
+    "clientName": "Exact Full Name or null",
+    "sessionDate": "YYYY-MM-DD or null",
+    "nameConfidence": 0.95,
+    "dateConfidence": 0.90
+  },
+  "alternatives": {
+    "clientNames": ["Alternative Name 1", "Alternative Name 2"],
+    "sessionDates": ["2024-09-13", "2024-09-12"]
+  },
+  "extractionContext": {
+    "nameSource": "Document title/header/content",
+    "dateSource": "Session header/content",
+    "ambiguities": ["Note any uncertainties"]
+  }
+}`;
+
+      let extractedData: any = {};
+      let confidence = { name: 0, date: 0 };
+      let extractionMethods: string[] = [];
+      let alternatives = { names: [], dates: [] };
 
       try {
-        console.log('🤖 Using enhanced AI extraction...');
+        console.log('🤖 Using enhanced AI extraction with validation...');
         const result = await this.openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {
               role: "system",
-              content: "You are an expert clinical document analyzer. Extract EXACT client names and dates. Always respond with valid JSON only. Do not modify or abbreviate names."
+              content: "You are a precision clinical document analyzer. Provide accurate extractions with confidence metrics. Always respond with valid JSON only."
             },
             {
               role: "user",
@@ -397,45 +425,156 @@ ${content.substring(0, 5000)}`;
           ],
           response_format: { type: "json_object" },
           temperature: 0.0,
-          max_tokens: 300
+          max_tokens: 800
         });
 
         const responseText = result.choices[0]?.message?.content;
-        console.log('🤖 AI Response:', responseText);
+        console.log('🤖 Enhanced AI Response:', responseText);
         
         if (responseText) {
           const parsed = JSON.parse(responseText);
-          extractedData = {
-            clientName: parsed.clientName || undefined,
-            sessionDate: parsed.sessionDate || undefined,
-          };
+          if (parsed.primary) {
+            extractedData = {
+              clientName: parsed.primary.clientName || undefined,
+              sessionDate: parsed.primary.sessionDate || undefined,
+            };
+            confidence = {
+              name: parsed.primary.nameConfidence || 0,
+              date: parsed.primary.dateConfidence || 0
+            };
+            alternatives = parsed.alternatives || { clientNames: [], sessionDates: [] };
+            extractionMethods.push('AI-Enhanced');
+          }
           
-          console.log('✅ AI Extracted:', extractedData);
+          console.log('✅ Enhanced AI Extracted:', extractedData);
+          console.log('📊 Confidence Scores:', confidence);
         }
       } catch (aiError) {
-        console.error('❌ AI extraction failed:', aiError);
-        // Fallback to enhanced regex extraction
-        extractedData = this.extractWithRegex(content);
-        console.log('🔄 Regex fallback result:', extractedData);
+        console.error('❌ Enhanced AI extraction failed:', aiError);
+        // Fallback to regex with confidence scoring
+        const regexResult = this.extractWithRegexEnhanced(content);
+        extractedData = regexResult.data;
+        confidence = regexResult.confidence;
+        extractionMethods.push('Regex-Fallback');
+        console.log('🔄 Enhanced regex fallback result:', extractedData);
       }
 
-      // Additional fallback: extract from filename if content extraction failed
-      if (!extractedData.clientName || !extractedData.sessionDate) {
+      // Filename extraction as additional validation
+      if (!extractedData.clientName || !extractedData.sessionDate || confidence.name < 0.8 || confidence.date < 0.8) {
         const filenameData = this.extractFromFilename(filename || '');
-        console.log('📁 Filename extraction:', filenameData);
+        console.log('📁 Filename extraction for validation:', filenameData);
         
-        extractedData = {
-          clientName: extractedData.clientName || filenameData.clientName,
-          sessionDate: extractedData.sessionDate || filenameData.sessionDate,
-        };
+        // Use filename data if confidence is low or data is missing
+        if (!extractedData.clientName && filenameData.clientName) {
+          extractedData.clientName = filenameData.clientName;
+          confidence.name = Math.max(confidence.name, 0.6);
+          extractionMethods.push('Filename-Client');
+        }
+        if (!extractedData.sessionDate && filenameData.sessionDate) {
+          extractedData.sessionDate = filenameData.sessionDate;
+          confidence.date = Math.max(confidence.date, 0.6);
+          extractionMethods.push('Filename-Date');
+        }
       }
 
-      console.log('📋 Final extracted metadata:', extractedData);
-      return extractedData;
+      const finalResult = {
+        ...extractedData,
+        confidence,
+        extractionMethods,
+        alternatives
+      };
+
+      console.log('📋 Final enhanced extraction result:', finalResult);
+      return finalResult;
     } catch (error) {
-      console.error('❌ Error extracting metadata:', error);
-      return {};
+      console.error('❌ Error in enhanced metadata extraction:', error);
+      return { confidence: { name: 0, date: 0 }, extractionMethods: ['Error'], alternatives: { names: [], dates: [] } };
     }
+  }
+
+  private extractWithRegexEnhanced(content: string): { 
+    data: { clientName?: string; sessionDate?: string }; 
+    confidence: { name: number; date: number } 
+  } {
+    let clientName: string | undefined;
+    let sessionDate: string | undefined;
+    let nameConfidence = 0;
+    let dateConfidence = 0;
+
+    console.log('🔍 Starting enhanced regex extraction...');
+
+    // Enhanced client name patterns with confidence scoring
+    const clientPatterns = [
+      { pattern: /(?:comprehensive\s+clinical\s+progress\s+note\s+for\s+)([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i, confidence: 0.95 },
+      { pattern: /(?:clinical\s+progress\s+note\s+for\s+)([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i, confidence: 0.90 },
+      { pattern: /(?:progress\s+note\s+for\s+)([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i, confidence: 0.85 },
+      { pattern: /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)'s\s+therapy\s+session/i, confidence: 0.90 },
+      { pattern: /client:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i, confidence: 0.85 },
+      { pattern: /patient:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i, confidence: 0.85 },
+      { pattern: /therapy\s+session\s+(?:for|with)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i, confidence: 0.80 },
+      { pattern: /\b([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:attended|presented|reported|expressed)/i, confidence: 0.75 },
+    ];
+
+    for (const { pattern, confidence } of clientPatterns) {
+      const match = content.match(pattern);
+      if (match && match[1]) {
+        clientName = match[1].trim();
+        nameConfidence = confidence;
+        console.log(`✅ Client name found with confidence ${confidence}: "${clientName}"`);
+        break;
+      }
+    }
+
+    // Enhanced date patterns with confidence scoring
+    const datePatterns = [
+      { pattern: /(?:session\s+on|therapy\s+session\s+on)\s+([A-Z][a-z]+\s+\d{1,2},?\s+\d{4})/i, confidence: 0.95 },
+      { pattern: /(?:session\s+date|date):\s*([A-Z][a-z]+\s+\d{1,2},?\s+\d{4})/i, confidence: 0.90 },
+      { pattern: /(?:session\s+date|date):\s*(\d{4}-\d{2}-\d{2})/i, confidence: 0.95 },
+      { pattern: /(?:session\s+date|date):\s*(\d{1,2}\/\d{1,2}\/\d{4})/i, confidence: 0.90 },
+      { pattern: /\b([A-Z][a-z]+\s+\d{1,2},?\s+\d{4})\b/i, confidence: 0.70 },
+      { pattern: /(\d{4}-\d{2}-\d{2})/i, confidence: 0.60 },
+      { pattern: /(\d{1,2}\/\d{1,2}\/\d{4})/i, confidence: 0.60 },
+    ];
+
+    for (const { pattern, confidence } of datePatterns) {
+      const match = content.match(pattern);
+      if (match && match[1]) {
+        let dateStr = match[1].trim();
+        console.log(`🗓️ Found date string with confidence ${confidence}: "${dateStr}"`);
+        
+        // Convert various date formats to YYYY-MM-DD
+        try {
+          const date = new Date(dateStr);
+          if (!isNaN(date.getTime()) && date.getFullYear() > 2020 && date.getFullYear() < 2030) {
+            sessionDate = date.toISOString().split('T')[0];
+            dateConfidence = confidence;
+            console.log(`✅ Converted to: ${sessionDate}`);
+            break;
+          }
+        } catch (e) {
+          // Try manual parsing for formats like MM/DD/YYYY
+          if (dateStr.includes('/')) {
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+              const month = parts[0].padStart(2, '0');
+              const day = parts[1].padStart(2, '0');
+              const year = parts[2];
+              sessionDate = `${year}-${month}-${day}`;
+              dateConfidence = confidence * 0.9; // Slightly lower confidence for manual parsing
+              console.log(`✅ Manual conversion: ${sessionDate}`);
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    const result = { 
+      data: { clientName, sessionDate }, 
+      confidence: { name: nameConfidence, date: dateConfidence } 
+    };
+    console.log('📋 Enhanced regex extraction result:', result);
+    return result;
   }
 
   private extractWithRegex(content: string): { clientName?: string; sessionDate?: string } {
