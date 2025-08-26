@@ -352,17 +352,16 @@ export class DatabaseStorage implements IStorage {
       transcript: row.transcript || null,
       aiSummary: row.ai_summary || null,
       tags: row.tags || [],
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at),
+      createdAt: new Date(row.created_at || new Date()),
+      updatedAt: new Date(row.updated_at || new Date()),
       location: row.location || null,
       title: row.title || 'Session Note',
       subjective: row.subjective || '',
       objective: row.objective || '',
       assessment: row.assessment || '',
       plan: row.plan || '',
-      sessionType: row.session_type || 'Individual Therapy',
       duration: row.duration || 50,
-      sessionDate: row.session_date ? new Date(row.session_date) : null,
+      sessionDate: row.session_date ? new Date(row.session_date || new Date()) : null,
       keyPoints: this.safeParseJSON(row.key_points, []),
       significantQuotes: this.safeParseJSON(row.significant_quotes, []),
       narrativeSummary: row.narrative_summary || '',
@@ -452,10 +451,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAppointmentsByClientAndDate(clientId: string, sessionDate: Date): Promise<Appointment[]> {
-    const startOfDay = new Date(sessionDate);
+    const startOfDay = new Date(sessionDate || new Date());
     startOfDay.setHours(0, 0, 0, 0);
 
-    const endOfDay = new Date(sessionDate);
+    const endOfDay = new Date(sessionDate || new Date());
     endOfDay.setHours(23, 59, 59, 999);
 
     return await db
@@ -548,8 +547,8 @@ export class DatabaseStorage implements IStorage {
     if (date) {
       // Handle date filtering in Eastern Time
       const easternDateString = date.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
-      const startOfDay = new Date(easternDateString + 'T00:00:00.000-04:00'); // EDT offset
-      const endOfDay = new Date(easternDateString + 'T23:59:59.999-04:00');
+      const startOfDay = new Date(easternDateString + 'T00:00:00.000-04:00' || new Date()); // EDT offset
+      const endOfDay = new Date(easternDateString + 'T23:59:59.999-04:00' || new Date());
 
       const appointmentsWithClients = await db
         .select({
@@ -821,12 +820,12 @@ export class DatabaseStorage implements IStorage {
       if (cleanedItem.completedAt === null) {
         cleanedItem.completedAt = null;
       } else if (typeof cleanedItem.completedAt === 'string') {
-        const date = new Date(cleanedItem.completedAt);
+        const date = new Date(cleanedItem.completedAt || new Date());
         cleanedItem.completedAt = isNaN(date.getTime()) ? null : date;
       } else if (cleanedItem.completedAt instanceof Date) {
         cleanedItem.completedAt = isNaN(cleanedItem.completedAt.getTime()) ? null : cleanedItem.completedAt;
       } else if (typeof cleanedItem.completedAt === 'object' && cleanedItem.completedAt !== null) {
-        const date = new Date(cleanedItem.completedAt);
+        const date = new Date(cleanedItem.completedAt || new Date());
         cleanedItem.completedAt = isNaN(date.getTime()) ? null : date;
       } else {
         delete cleanedItem.completedAt;
@@ -838,12 +837,12 @@ export class DatabaseStorage implements IStorage {
       if (cleanedItem.dueDate === null) {
         cleanedItem.dueDate = null;
       } else if (typeof cleanedItem.dueDate === 'string') {
-        const date = new Date(cleanedItem.dueDate);
+        const date = new Date(cleanedItem.dueDate || new Date());
         cleanedItem.dueDate = isNaN(date.getTime()) ? null : date;
       } else if (cleanedItem.dueDate instanceof Date) {
         cleanedItem.dueDate = isNaN(cleanedItem.dueDate.getTime()) ? null : cleanedItem.dueDate;
       } else if (typeof cleanedItem.dueDate === 'object' && cleanedItem.dueDate !== null) {
-        const date = new Date(cleanedItem.dueDate);
+        const date = new Date(cleanedItem.dueDate || new Date());
         cleanedItem.dueDate = isNaN(date.getTime()) ? null : date;
       } else {
         delete cleanedItem.dueDate;
@@ -1103,9 +1102,9 @@ export class DatabaseStorage implements IStorage {
 
   async findMatchingAppointment(clientId: string, sessionDate: Date): Promise<Appointment | null> {
     // Find appointments within 3 days of the session date for the client
-    const startDate = new Date(sessionDate);
+    const startDate = new Date(sessionDate || new Date());
     startDate.setDate(startDate.getDate() - 3);
-    const endDate = new Date(sessionDate);
+    const endDate = new Date(sessionDate || new Date());
     endDate.setDate(endDate.getDate() + 3);
 
     const [appointment] = await db
@@ -1399,9 +1398,9 @@ export class DatabaseStorage implements IStorage {
     riskClients: number;
   }> {
     const today = new Date();
-    const startOfDay = new Date(today);
+    const startOfDay = new Date(today || new Date());
     startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(today);
+    const endOfDay = new Date(today || new Date());
     endOfDay.setHours(23, 59, 59, 999);
 
     const [todaysSessions] = await db
@@ -1575,7 +1574,7 @@ export class DatabaseStorage implements IStorage {
 
     const now = new Date();
     const overdueAmount = bills
-      .filter(bill => bill.status === 'pending' && bill.dueDate && new Date(bill.dueDate) < now)
+      .filter(bill => bill.status === 'pending' && bill.dueDate && new Date(bill.dueDate || new Date()) < now)
       .reduce((sum, bill) => sum + parseFloat(bill.totalAmount || '0'), 0);
 
     return {
@@ -1613,8 +1612,8 @@ export class DatabaseStorage implements IStorage {
         transcript: row.transcript || null,
         aiSummary: row.ai_summary || null,
         tags: row.tags || [],
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at),
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date()),
         // Add missing required fields with default values
         location: row.location || null,
         title: row.title || 'Session Note',
@@ -1624,7 +1623,7 @@ export class DatabaseStorage implements IStorage {
         plan: row.plan || '',
         sessionType: row.session_type || 'Individual Therapy',
         duration: row.duration || 50,
-        sessionDate: row.session_date ? new Date(row.session_date) : null,
+        sessionDate: row.session_date ? new Date(row.session_date || new Date()) : null,
         keyPoints: this.safeParseJSON(row.key_points, []),
         significantQuotes: this.safeParseJSON(row.significant_quotes, []),
         narrativeSummary: row.narrative_summary || '',
@@ -1660,8 +1659,8 @@ export class DatabaseStorage implements IStorage {
         transcript: row.transcript || null,
         aiSummary: row.ai_summary || null,
         tags: row.tags || [],
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at),
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date()),
         // Add missing required fields with default values
         location: row.location || null,
         title: row.title || 'Session Note',
@@ -1671,7 +1670,7 @@ export class DatabaseStorage implements IStorage {
         plan: row.plan || '',
         sessionType: row.session_type || 'Individual Therapy',
         duration: row.duration || 50,
-        sessionDate: row.session_date ? new Date(row.session_date) : null,
+        sessionDate: row.session_date ? new Date(row.session_date || new Date()) : null,
         keyPoints: this.safeParseJSON(row.key_points, []),
         significantQuotes: this.safeParseJSON(row.significant_quotes, []),
         narrativeSummary: row.narrative_summary || '',
@@ -1718,8 +1717,8 @@ export class DatabaseStorage implements IStorage {
         transcript: row.transcript || null,
         aiSummary: row.ai_summary || null,
         tags: row.tags || [],
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at),
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date()),
         // Add missing required fields with default values
         location: row.location || null,
         title: row.title || 'Session Note',
@@ -1729,7 +1728,7 @@ export class DatabaseStorage implements IStorage {
         plan: row.plan || '',
         sessionType: row.session_type || 'Individual Therapy',
         duration: row.duration || 50,
-        sessionDate: row.session_date ? new Date(row.session_date) : null,
+        sessionDate: row.session_date ? new Date(row.session_date || new Date()) : null,
         keyPoints: this.safeParseJSON(row.key_points, []),
         significantQuotes: this.safeParseJSON(row.significant_quotes, []),
         narrativeSummary: row.narrative_summary || '',
@@ -1770,21 +1769,25 @@ export class DatabaseStorage implements IStorage {
         id: row.id,
         clientId: row.client_id,
         therapistId: row.therapist_id,
-        startTime: new Date(row.start_time),
-        endTime: new Date(row.end_time),
+        startTime: new Date(row.start_time || new Date()),
+        endTime: new Date(row.end_time || new Date()),
         type: row.type,
+      googleCalendarId: row.google_calendar_id || null,
+      googleCalendarName: row.google_calendar_name || null,
+      lastGoogleSync: row.last_google_sync ? new Date(row.last_google_sync || new Date()) : null,
+      isVirtual: row.is_virtual || false,
         status: row.status,
         location: row.location || '',
         notes: row.notes || '',
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at),
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date()),
         // Add missing required fields with default values
         appointmentNumber: row.appointment_number || null,
         recurringId: row.recurring_id || null,
         recurringType: row.recurring_type || null,
-        recurringEnd: row.recurring_end ? new Date(row.recurring_end) : null,
+        recurringEnd: row.recurring_end ? new Date(row.recurring_end || new Date()) : null,
         reminderSent: row.reminder_sent || false,
-        reminderTime: row.reminder_time ? new Date(row.reminder_time) : null,
+        reminderTime: row.reminder_time ? new Date(row.reminder_time || new Date()) : null,
         meetingType: row.meeting_type || 'in_person',
         sessionFee: row.session_fee || null,
         paymentStatus: row.payment_status || 'pending',
@@ -1793,7 +1796,7 @@ export class DatabaseStorage implements IStorage {
         attendanceStatus: row.attendance_status || 'scheduled',
         duration: row.duration || 50,
         googleEventId: row.google_event_id || null,
-        lastSyncAt: row.last_sync_at ? new Date(row.last_sync_at) : null,
+        lastSyncAt: row.last_sync_at ? new Date(row.last_sync_at || new Date()) : null,
         insuranceClaim: this.safeParseJSON(row.insurance_claim, {})
       }));
     } catch (error) {
@@ -1828,8 +1831,10 @@ export class DatabaseStorage implements IStorage {
         followUpQuestions: row.follow_up_questions || [],
         psychoeducationalMaterials: row.psychoeducational_materials || [],
         lastUpdatedBy: row.last_updated_by,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+      followUpQuestions: this.safeParseJSON(row.follow_up_questions, []),
+      psychoeducationalMaterials: this.safeParseJSON(row.psychoeducational_materials, []),
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date())
       }));
     } catch (error) {
       console.error('Error in getSessionPrepNotes:', error);
@@ -1863,8 +1868,10 @@ export class DatabaseStorage implements IStorage {
         sessionObjectives: row.session_objectives || [],
         aiGeneratedInsights: row.ai_generated_insights,
         lastUpdatedBy: row.last_updated_by,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+      followUpQuestions: this.safeParseJSON(row.follow_up_questions, []),
+      psychoeducationalMaterials: this.safeParseJSON(row.psychoeducational_materials, []),
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date())
       };
     } catch (error) {
       console.error('Error in getSessionPrepNote:', error);
@@ -1900,8 +1907,10 @@ export class DatabaseStorage implements IStorage {
         followUpQuestions: row.follow_up_questions || [],
         psychoeducationalMaterials: row.psychoeducational_materials || [],
         lastUpdatedBy: row.last_updated_by,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+      followUpQuestions: this.safeParseJSON(row.follow_up_questions, []),
+      psychoeducationalMaterials: this.safeParseJSON(row.psychoeducational_materials, []),
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date())
       };
     } catch (error) {
       console.error('Error in getSessionPrepNoteByEventId:', error);
@@ -1934,8 +1943,10 @@ export class DatabaseStorage implements IStorage {
         followUpQuestions: row.follow_up_questions || [],
         psychoeducationalMaterials: row.psychoeducational_materials || [],
         lastUpdatedBy: row.last_updated_by,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+      followUpQuestions: this.safeParseJSON(row.follow_up_questions, []),
+      psychoeducationalMaterials: this.safeParseJSON(row.psychoeducational_materials, []),
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date())
       }));
     } catch (error) {
       console.error('Error in getSessionPrepNotesByClient:', error);
@@ -1988,8 +1999,10 @@ export class DatabaseStorage implements IStorage {
         sessionObjectives: row.session_objectives || [],
         aiGeneratedInsights: row.ai_generated_insights,
         lastUpdatedBy: row.last_updated_by,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+      followUpQuestions: this.safeParseJSON(row.follow_up_questions, []),
+      psychoeducationalMaterials: this.safeParseJSON(row.psychoeducational_materials, []),
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date())
       };
     } catch (error) {
       console.error('Error in createSessionPrepNote:', error);
@@ -2071,8 +2084,10 @@ export class DatabaseStorage implements IStorage {
         sessionObjectives: row.session_objectives || [],
         aiGeneratedInsights: row.ai_generated_insights,
         lastUpdatedBy: row.last_updated_by,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+      followUpQuestions: this.safeParseJSON(row.follow_up_questions, []),
+      psychoeducationalMaterials: this.safeParseJSON(row.psychoeducational_materials, []),
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date())
       };
     } catch (error) {
       console.error('Error in updateSessionPrepNote:', error);
@@ -2114,7 +2129,7 @@ export class DatabaseStorage implements IStorage {
 
 Client: ${client.firstName} ${client.lastName}
 Recent Sessions:
-${sessionContext.map((s, i) => `Session ${i + 1} (${new Date(s.date).toLocaleDateString()}): ${s.content}`).join('\n\n')}
+${sessionContext.map((s, i) => `Session ${i + 1} (${new Date(s.date || new Date()).toLocaleDateString()}): ${s.content}`).join('\n\n')}
 
 Please provide:
 1. Clinical insights and preparation notes
@@ -2269,15 +2284,15 @@ Respond in JSON format:
         triggerContext: row.trigger_context || {},
         deliveryMethod: row.delivery_method,
         status: row.status,
-        generatedAt: new Date(row.generated_at),
-        reviewedAt: row.reviewed_at ? new Date(row.reviewed_at) : null,
-        sentAt: row.sent_at ? new Date(row.sent_at) : null,
-        archivedAt: row.archived_at ? new Date(row.archived_at) : null,
-        expiresAt: new Date(row.expires_at),
+        generatedAt: new Date(row.generated_at || new Date()),
+        reviewedAt: row.reviewed_at ? new Date(row.reviewed_at || new Date()) : null,
+        sentAt: row.sent_at ? new Date(row.sent_at || new Date()) : null,
+        archivedAt: row.archived_at ? new Date(row.archived_at || new Date()) : null,
+        expiresAt: new Date(row.expires_at || new Date()),
         clientResponse: row.client_response,
-        responseReceivedAt: row.response_received_at ? new Date(row.response_received_at) : null,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+        responseReceivedAt: row.response_received_at ? new Date(row.response_received_at || new Date()) : null,
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date())
       }));
     } catch (error) {
       console.error('Error in getClientCheckins:', error);
@@ -2306,15 +2321,15 @@ Respond in JSON format:
         triggerContext: row.trigger_context || {},
         deliveryMethod: row.delivery_method,
         status: row.status,
-        generatedAt: new Date(row.generated_at),
-        reviewedAt: row.reviewed_at ? new Date(row.reviewed_at) : null,
-        sentAt: row.sent_at ? new Date(row.sent_at) : null,
-        archivedAt: row.archived_at ? new Date(row.archived_at) : null,
-        expiresAt: new Date(row.expires_at),
+        generatedAt: new Date(row.generated_at || new Date()),
+        reviewedAt: row.reviewed_at ? new Date(row.reviewed_at || new Date()) : null,
+        sentAt: row.sent_at ? new Date(row.sent_at || new Date()) : null,
+        archivedAt: row.archived_at ? new Date(row.archived_at || new Date()) : null,
+        expiresAt: new Date(row.expires_at || new Date()),
         clientResponse: row.client_response,
-        responseReceivedAt: row.response_received_at ? new Date(row.response_received_at) : null,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+        responseReceivedAt: row.response_received_at ? new Date(row.response_received_at || new Date()) : null,
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date())
       }));
     } catch (error) {
       console.error('Error in getClientCheckinsByClient:', error);
@@ -2346,15 +2361,15 @@ Respond in JSON format:
         triggerContext: row.trigger_context || {},
         deliveryMethod: row.delivery_method,
         status: row.status,
-        generatedAt: new Date(row.generated_at),
-        reviewedAt: row.reviewed_at ? new Date(row.reviewed_at) : null,
-        sentAt: row.sent_at ? new Date(row.sent_at) : null,
-        archivedAt: row.archived_at ? new Date(row.archived_at) : null,
-        expiresAt: new Date(row.expires_at),
+        generatedAt: new Date(row.generated_at || new Date()),
+        reviewedAt: row.reviewed_at ? new Date(row.reviewed_at || new Date()) : null,
+        sentAt: row.sent_at ? new Date(row.sent_at || new Date()) : null,
+        archivedAt: row.archived_at ? new Date(row.archived_at || new Date()) : null,
+        expiresAt: new Date(row.expires_at || new Date()),
         clientResponse: row.client_response,
-        responseReceivedAt: row.response_received_at ? new Date(row.response_received_at) : null,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+        responseReceivedAt: row.response_received_at ? new Date(row.response_received_at || new Date()) : null,
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date())
       };
     } catch (error) {
       console.error('Error in getClientCheckin:', error);
@@ -2403,15 +2418,15 @@ Respond in JSON format:
         triggerContext: row.trigger_context || {},
         deliveryMethod: row.delivery_method,
         status: row.status,
-        generatedAt: new Date(row.generated_at),
-        reviewedAt: row.reviewed_at ? new Date(row.reviewed_at) : null,
-        sentAt: row.sent_at ? new Date(row.sent_at) : null,
-        archivedAt: row.archived_at ? new Date(row.archived_at) : null,
-        expiresAt: new Date(row.expires_at),
+        generatedAt: new Date(row.generated_at || new Date()),
+        reviewedAt: row.reviewed_at ? new Date(row.reviewed_at || new Date()) : null,
+        sentAt: row.sent_at ? new Date(row.sent_at || new Date()) : null,
+        archivedAt: row.archived_at ? new Date(row.archived_at || new Date()) : null,
+        expiresAt: new Date(row.expires_at || new Date()),
         clientResponse: row.client_response,
-        responseReceivedAt: row.response_received_at ? new Date(row.response_received_at) : null,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+        responseReceivedAt: row.response_received_at ? new Date(row.response_received_at || new Date()) : null,
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date())
       };
     } catch (error) {
       console.error('Error in createClientCheckin:', error);
@@ -2473,15 +2488,15 @@ Respond in JSON format:
         triggerContext: row.trigger_context || {},
         deliveryMethod: row.delivery_method,
         status: row.status,
-        generatedAt: new Date(row.generated_at),
-        reviewedAt: row.reviewed_at ? new Date(row.reviewed_at) : null,
-        sentAt: row.sent_at ? new Date(row.sent_at) : null,
-        archivedAt: row.archived_at ? new Date(row.archived_at) : null,
-        expiresAt: new Date(row.expires_at),
+        generatedAt: new Date(row.generated_at || new Date()),
+        reviewedAt: row.reviewed_at ? new Date(row.reviewed_at || new Date()) : null,
+        sentAt: row.sent_at ? new Date(row.sent_at || new Date()) : null,
+        archivedAt: row.archived_at ? new Date(row.archived_at || new Date()) : null,
+        expiresAt: new Date(row.expires_at || new Date()),
         clientResponse: row.client_response,
-        responseReceivedAt: row.response_received_at ? new Date(row.response_received_at) : null,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+        responseReceivedAt: row.response_received_at ? new Date(row.response_received_at || new Date()) : null,
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date())
       };
     } catch (error) {
       console.error('Error in updateClientCheckin:', error);
@@ -2506,7 +2521,7 @@ Respond in JSON format:
         const existingCheckins = await this.getClientCheckinsByClient(client.id);
         const recentCheckin = existingCheckins.find(checkin =>
           checkin.status !== 'archived' && checkin.status !== 'deleted' &&
-          new Date(checkin.generatedAt).getTime() > Date.now() - (7 * 24 * 60 * 60 * 1000) // Within 7 days
+          new Date(checkin.generatedAt || new Date()).getTime() > Date.now() - (7 * 24 * 60 * 60 * 1000) // Within 7 days
         );
 
         if (recentCheckin) continue; // Skip if already has recent check-in
@@ -2556,13 +2571,13 @@ Respond in JSON format:
       const { generateClinicalAnalysis } = await import('./ai-services');
 
       const lastSession = sessionNotes[0];
-      const daysSinceLastSession = Math.floor((Date.now() - new Date(lastSession.createdAt).getTime()) / (24 * 60 * 60 * 1000));
+      const daysSinceLastSession = Math.floor((Date.now() - new Date(lastSession.createdAt || new Date()).getTime()) / (24 * 60 * 60 * 1000));
 
       // Prepare context for AI analysis
       const sessionContext = sessionNotes.slice(0, 2).map(note => ({
         date: note.createdAt,
         content: note.content,
-        daysSince: Math.floor((Date.now() - new Date(note.createdAt).getTime()) / (24 * 60 * 60 * 1000))
+        daysSince: Math.floor((Date.now() - new Date(note.createdAt || new Date()).getTime()) / (24 * 60 * 60 * 1000))
       }));
 
       const prompt = `You are writing a check-in message on behalf of Jonathan, a licensed mental health counselor. Your tone must sound like Jonathan himself is speaking - warm, clear, professional, conversational but composed, with occasional dry wit when appropriate.
@@ -2633,7 +2648,7 @@ Respond with JSON:
       console.error('Error in AI analysis:', error);
       // Fallback to simple logic
       const lastSession = sessionNotes[0];
-      const daysSinceLastSession = Math.floor((Date.now() - new Date(lastSession.createdAt).getTime()) / (24 * 60 * 60 * 1000));
+      const daysSinceLastSession = Math.floor((Date.now() - new Date(lastSession.createdAt || new Date()).getTime()) / (24 * 60 * 60 * 1000));
       return this.getSimpleCheckinAnalysis(client, sessionNotes, daysSinceLastSession);
     }
   }
@@ -2751,7 +2766,7 @@ Jonathan`,
         status: row.status,
         sessionCount: parseInt(row.session_count) || 0,
         progressLevel: this.assessClientProgress(row.status, parseInt(row.session_count) || 0),
-        createdAt: new Date(row.created_at)
+        createdAt: new Date(row.created_at || new Date())
       }));
     } catch (error) {
       console.error('Error in getClientOutcomesByTherapist:', error);
@@ -2784,11 +2799,11 @@ Jonathan`,
         description: row.description,
         priority: row.priority as 'low' | 'medium' | 'high',
         status: row.status as 'pending' | 'in-progress' | 'completed',
-        dueDate: row.due_date ? new Date(row.due_date) : null,
-        completedAt: row.completed_at ? new Date(row.completed_at) : null,
+        dueDate: row.due_date ? new Date(row.due_date || new Date()) : null,
+        completedAt: row.completed_at ? new Date(row.completed_at || new Date()) : null,
         eventId: row.event_id,
-        createdAt: new Date(row.created_at),
-        updatedAt: new Date(row.updated_at)
+        createdAt: new Date(row.created_at || new Date()),
+        updatedAt: new Date(row.updated_at || new Date())
       }));
     } catch (error) {
       console.error('Error in getActionItemsByEventId:', error);
@@ -3289,8 +3304,8 @@ Jonathan`,
       }));
 
       const dateRange = {
-        startDate: new Date(Math.min(...sessionContext.map(s => s.date ? new Date(s.date).getTime() : Date.now()))),
-        endDate: new Date(Math.max(...sessionContext.map(s => s.date ? new Date(s.date).getTime() : Date.now())))
+        startDate: new Date(Math.min(...sessionContext.map(s => s.date ? new Date(s.date || new Date()).getTime() : Date.now()))),
+        endDate: new Date(Math.max(...sessionContext.map(s => s.date ? new Date(s.date || new Date()).getTime() : Date.now())))
       };
 
       // Generate AI summary using OpenAI
@@ -3519,9 +3534,9 @@ Generate a comprehensive summary in the following JSON format:
     try {
       // Get today's date in Eastern Time
       const today = new Date();
-      const startOfDay = new Date(today);
+      const startOfDay = new Date(today || new Date());
       startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(today);
+      const endOfDay = new Date(today || new Date());
       endOfDay.setHours(23, 59, 59, 999);
 
       const result = await pool.query(
@@ -3632,6 +3647,73 @@ Generate a comprehensive summary in the following JSON format:
         lastSyncAt: undefined,
         appointmentsCount: 0
       };
+    }
+  }
+
+  // Essential missing interface methods
+  async getSessionNotes(clientId: string): Promise<SessionNote[]> {
+    return await this.getSessionNotesByClientId(clientId);
+  }
+
+  async getSessionNote(id: string): Promise<SessionNote | undefined> {
+    return await this.getSessionNoteById(id);
+  }
+
+  async createSessionNote(note: InsertSessionNote): Promise<SessionNote> {
+    try {
+      const [sessionNote] = await db
+        .insert(sessionNotes)
+        .values({
+          ...note,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+      return sessionNote;
+    } catch (error) {
+      console.error('Error in createSessionNote:', error);
+      throw error;
+    }
+  }
+
+  async updateSessionNote(id: string, note: Partial<SessionNote>): Promise<SessionNote> {
+    try {
+      const [updatedNote] = await db
+        .update(sessionNotes)
+        .set({ ...note, updatedAt: new Date() })
+        .where(eq(sessionNotes.id, id))
+        .returning();
+      return updatedNote;
+    } catch (error) {
+      console.error('Error in updateSessionNote:', error);
+      throw error;
+    }
+  }
+
+  async deleteSessionNote(id: string): Promise<void> {
+    try {
+      await db.delete(sessionNotes).where(eq(sessionNotes.id, id));
+    } catch (error) {
+      console.error('Error in deleteSessionNote:', error);
+      throw error;
+    }
+  }
+
+  async getSessionNotesByEventId(eventId: string): Promise<SessionNote[]> {
+    try {
+      const query = `
+        SELECT sn.*, c.first_name, c.last_name
+        FROM session_notes sn
+        LEFT JOIN clients c ON sn.client_id = c.id
+        WHERE sn.event_id = $1
+        ORDER BY sn.created_at DESC
+      `;
+      
+      const result = await pool.query(query, [eventId]);
+      return result.rows.map(row => this.mapSessionNoteRow(row));
+    } catch (error) {
+      console.error('Error in getSessionNotesByEventId:', error);
+      return [];
     }
   }
 }

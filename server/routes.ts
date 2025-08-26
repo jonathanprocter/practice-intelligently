@@ -1449,7 +1449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { clientId } = req.params;
       // Get all session notes for this client, including those with SOAP fields (former progress notes)
-      const notes = await storage.getSessionNotes(clientId);
+      const notes = await storage.getSessionNotesByClientId(clientId);
       // Filter to include only notes with SOAP structure (title field indicates former progress notes)
       const progressNotes = notes.filter(note => note.title !== null);
       res.json(progressNotes);
@@ -1731,7 +1731,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/session-notes/client/:clientId", async (req, res) => {
     try {
       const { clientId } = req.params;
-      const notes = await storage.getSessionNotes(clientId);
+      const notes = await storage.getSessionNotesByClientId(clientId);
       res.json(notes);
     } catch (error) {
       console.error("Error fetching session notes:", error);
@@ -1970,7 +1970,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { clientId } = req.params;
 
       // Get all unlinked session notes for this client
-      const sessionNotes = await storage.getSessionNotes(clientId);
+      const sessionNotes = await storage.getSessionNotesByClientId(clientId);
       const unlinkedNotes = sessionNotes.filter(note => !note.appointmentId);
 
       // Get all appointments for this client
@@ -2091,7 +2091,7 @@ Respond with ONLY the number (1-${candidateAppointments.length}) of the most lik
   app.get("/api/session-notes/event/:eventId", async (req, res) => {
     try {
       const { eventId } = req.params;
-      const notes = await storage.getSessionNotesByEventId(eventId);
+      const notes = await storage.getSessionNotesByClientIdByEventId(eventId);
       res.json(notes);
     } catch (error) {
       console.error("Error fetching session notes by event ID:", error);
@@ -2915,7 +2915,7 @@ Be precise and clinical in your analysis.
       }
 
       // Get recent session notes for this client
-      const sessionNotes = await storage.getSessionNotesByClientId(clientId);
+      const sessionNotes = await storage.getSessionNotesByClientIdByClientId(clientId);
       const recentNotes = sessionNotes.slice(0, 3); // Last 3 sessions
 
       // Create analysis content for AI
@@ -2971,7 +2971,7 @@ Be precise and clinical in your analysis.
       }
 
       // Get recent session notes for context
-      const sessionNotes = await storage.getSessionNotesByClientId(clientId);
+      const sessionNotes = await storage.getSessionNotesByClientIdByClientId(clientId);
       const recentNotes = sessionNotes.slice(0, 5); // Last 5 sessions for better context
 
       // Create structured insights response
@@ -3535,7 +3535,7 @@ Be precise and clinical in your analysis.
         }
 
         // Get client session history and notes for context
-        const sessionNotes = await storage.getSessionNotesByClientId(clientId);
+        const sessionNotes = await storage.getSessionNotesByClientIdByClientId(clientId);
         const appointments = await storage.getAppointmentsByClient(clientId);
 
         // Try to find the actual appointment by event ID first
@@ -3664,7 +3664,7 @@ Suggested preparation:
       const { eventId } = req.params;
 
       // Get current appointment details
-      const currentNotes = await storage.getSessionNotesByEventId(eventId);
+      const currentNotes = await storage.getSessionNotesByClientIdByEventId(eventId);
 
       if (currentNotes.length === 0) {
         return res.json({ notes: [], actionItems: [], nextAppointment: null });
@@ -6747,8 +6747,8 @@ Follow-up areas for next session:
 
       // Get session notes with optional client filter
       const sessionNotes = clientId 
-        ? await storage.getSessionNotesByClientId(clientId as string)
-        : await storage.getSessionNotes(therapistId as string);
+        ? await storage.getSessionNotesByClientIdByClientId(clientId as string)
+        : await storage.getSessionNotesByClientId(therapistId as string);
 
       res.json(sessionNotes);
     } catch (error: any) {

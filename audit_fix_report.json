@@ -1,0 +1,148 @@
+{
+  "timestamp": "2025-08-26 02:40:47",
+  "total_issues": 13,
+  "fixed_issues": 2,
+  "success_rate": "15.4%",
+  "issues_by_category": {
+    "interface_implementation": {
+      "total": 6,
+      "fixed": 0
+    },
+    "type_safety": {
+      "total": 4,
+      "fixed": 0
+    },
+    "database_schema": {
+      "total": 1,
+      "fixed": 1
+    },
+    "null_handling": {
+      "total": 1,
+      "fixed": 1
+    },
+    "compatibility": {
+      "total": 1,
+      "fixed": 0
+    }
+  },
+  "issues_by_priority": {
+    "critical": {
+      "total": 6,
+      "fixed": 0
+    },
+    "high": {
+      "total": 4,
+      "fixed": 1
+    },
+    "medium": {
+      "total": 3,
+      "fixed": 1
+    }
+  },
+  "detailed_fixes": [
+    {
+      "description": "DatabaseStorage class missing getSessionNotes method",
+      "category": "interface_implementation",
+      "priority": "critical",
+      "file": "server/storage.ts",
+      "line": 331,
+      "status": "failed"
+    },
+    {
+      "description": "DatabaseStorage class missing createSessionNote method",
+      "category": "interface_implementation",
+      "priority": "critical",
+      "file": "server/storage.ts",
+      "line": 331,
+      "status": "failed"
+    },
+    {
+      "description": "DatabaseStorage class missing deleteSessionNote method",
+      "category": "interface_implementation",
+      "priority": "critical",
+      "file": "server/storage.ts",
+      "line": 331,
+      "status": "failed"
+    },
+    {
+      "description": "DatabaseStorage class missing updateSessionNote method",
+      "category": "interface_implementation",
+      "priority": "critical",
+      "file": "server/storage.ts",
+      "line": 331,
+      "status": "failed"
+    },
+    {
+      "description": "DatabaseStorage class missing getSessionNote method",
+      "category": "interface_implementation",
+      "priority": "critical",
+      "file": "server/storage.ts",
+      "line": 331,
+      "status": "failed"
+    },
+    {
+      "description": "DatabaseStorage class missing getSessionNotesByEventId method",
+      "category": "interface_implementation",
+      "priority": "critical",
+      "file": "server/storage.ts",
+      "line": 331,
+      "status": "failed"
+    },
+    {
+      "description": "Missing aiTags and followUpRequired properties in session note mapping",
+      "category": "type_safety",
+      "priority": "high",
+      "file": "server/storage.ts",
+      "line": 1653,
+      "status": "failed"
+    },
+    {
+      "description": "Missing sessionType property in session note object",
+      "category": "type_safety",
+      "priority": "high",
+      "file": "server/storage.ts",
+      "line": 363,
+      "status": "failed"
+    },
+    {
+      "description": "Missing followUpQuestions and psychoeducationalMaterials in session prep notes",
+      "category": "type_safety",
+      "priority": "high",
+      "file": "server/storage.ts",
+      "line": 1850,
+      "status": "failed"
+    },
+    {
+      "description": "Implicit any types in method parameters",
+      "category": "type_safety",
+      "priority": "medium",
+      "file": "server/storage.ts",
+      "line": 3277,
+      "status": "failed"
+    },
+    {
+      "description": "Missing googleCalendarId, lastGoogleSync properties in appointments",
+      "category": "database_schema",
+      "priority": "high",
+      "file": "server/storage.ts",
+      "line": 1769,
+      "status": "fixed"
+    },
+    {
+      "description": "Null handling issue with Date constructor",
+      "category": "null_handling",
+      "priority": "medium",
+      "file": "server/storage.ts",
+      "line": 2509,
+      "status": "fixed"
+    },
+    {
+      "description": "ES2018+ regex features used without proper target",
+      "category": "compatibility",
+      "priority": "medium",
+      "file": "server/storage.ts",
+      "line": 2839,
+      "status": "failed"
+    }
+  ]
+}
