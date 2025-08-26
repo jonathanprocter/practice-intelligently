@@ -3678,9 +3678,23 @@ Generate a comprehensive summary in the following JSON format:
 
   async updateSessionNote(id: string, note: Partial<SessionNote>): Promise<SessionNote> {
     try {
+      // Create a clean update object, filtering out any undefined/null values
+      const updateData: any = {};
+      
+      // Only include defined values from the note object
+      Object.keys(note).forEach(key => {
+        const value = (note as any)[key];
+        if (value !== undefined && value !== null) {
+          updateData[key] = value;
+        }
+      });
+      
+      // Always update the timestamp for tracking changes
+      updateData.updatedAt = sql`NOW()`;
+      
       const [updatedNote] = await db
         .update(sessionNotes)
-        .set({ ...note, updatedAt: new Date() })
+        .set(updateData)
         .where(eq(sessionNotes.id, id))
         .returning();
       return updatedNote;
