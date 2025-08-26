@@ -1,16 +1,27 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { 
   Search, File, Folder, ExternalLink, Eye, FileText, Database, 
   AlertCircle, Star, Clock, Download, ChevronDown, Filter,
   Image, FileSpreadsheet, FileCode, Check, Square, Users, Calendar,
-  ClipboardList, FolderOpen, Target
+  ClipboardList, FolderOpen, Target, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Enhanced type definitions
 interface DriveFile {
@@ -213,6 +224,8 @@ export default function ContentViewer() {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [selectedDatabaseItem, setSelectedDatabaseItem] = useState<DatabaseItem | null>(null);
   const [databaseCategory, setDatabaseCategory] = useState('session_notes');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<DatabaseItem | null>(null);
   const [filters, setFilters] = useState<FilterState>({
     fileType: 'all',
     sortBy: 'modifiedTime',
@@ -228,7 +241,57 @@ export default function ContentViewer() {
   const fileListRef = useRef<HTMLDivElement>(null);
 
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (item: DatabaseItem) => {
+      const endpoint = {
+        session_note: `/api/session-notes/${item.id}`,
+        client: `/api/clients/${item.id}`,
+        appointment: `/api/appointments/${item.id}`,
+        action_item: `/api/action-items/${item.id}`
+      }[item.type];
+
+      if (!endpoint) throw new Error('Unsupported item type');
+
+      const res = await fetch(endpoint, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete item');
+      return res.json();
+    },
+    onSuccess: (_, deletedItem) => {
+      // Invalidate and refetch relevant queries
+      const queryKey = {
+        session_note: ['session-notes', therapistId],
+        client: ['clients', therapistId],
+        appointment: ['appointments', therapistId],
+        action_item: ['action-items', therapistId]
+      }[deletedItem.type];
+
+      if (queryKey) {
+        queryClient.invalidateQueries({ queryKey });
+      }
+
+      // Clear selection if deleted item was selected
+      if (selectedDatabaseItem?.id === deletedItem.id) {
+        setSelectedDatabaseItem(null);
+      }
+
+      toast({
+        title: 'Item deleted',
+        description: `${deletedItem.type.replace('_', ' ')} has been deleted successfully.`,
+      });
+    },
+    onError: (error) => {
+      console.error('Delete error:', error);
+      toast({
+        title: 'Delete failed',
+        description: 'Failed to delete the item. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
 
   // Database queries
   const { data: sessionNotes, isLoading: sessionNotesLoading } = useQuery({
@@ -469,6 +532,26 @@ export default function ContentViewer() {
     setSelectedPage(page);
     updateRecentlyViewed(page);
   }, [updateRecentlyViewed]);
+
+  // Delete handlers
+  const handleDeleteClick = useCallback((item: DatabaseItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setItemToDelete(item);
+    setDeleteConfirmOpen(true);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (itemToDelete) {
+      deleteMutation.mutate(itemToDelete);
+      setDeleteConfirmOpen(false);
+      setItemToDelete(null);
+    }
+  }, [itemToDelete, deleteMutation]);
+
+  const handleDeleteCancel = useCallback(() => {
+    setDeleteConfirmOpen(false);
+    setItemToDelete(null);
+  }, []);
 
   // Handle database item selection
   const handleDatabaseItemSelect = useCallback((item: DatabaseItem) => {
@@ -1264,6 +1347,15 @@ export default function ContentViewer() {
                             <Button variant="ghost" size="sm">
                               <Eye className="h-4 w-4" />
                             </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => handleDeleteClick(item, e)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              data-testid={`button-delete-${item.type}-${item.id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -1361,6 +1453,16 @@ export default function ContentViewer() {
                           </a>
                         </Button>
                       )}
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={(e) => handleDeleteClick(selectedDatabaseItem, e)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                        data-testid={`button-delete-selected-${selectedDatabaseItem.type}`}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -1369,6 +1471,33 @@ export default function ContentViewer() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {itemToDelete?.type.replace('_', ' ')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{itemToDelete?.title}"? 
+              {itemToDelete?.clientName && ` for client ${itemToDelete.clientName}`}
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeleteCancel} data-testid="button-cancel-delete">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700"
+              data-testid="button-confirm-delete"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
