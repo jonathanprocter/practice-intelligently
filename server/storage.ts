@@ -50,6 +50,15 @@ export interface IStorage {
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointment(id: string, appointment: Partial<Appointment>): Promise<Appointment>;
   cancelAppointment(id: string, reason: string): Promise<Appointment>;
+  deleteAppointment(id: string): Promise<void>;
+  getAppointment(id: string): Promise<Appointment | undefined>;
+  rescheduleAppointment(id: string, newStartTime: Date, newEndTime: Date): Promise<Appointment>;
+  completeAppointment(id: string): Promise<Appointment>;
+  checkInAppointment(id: string): Promise<Appointment>;
+  markNoShow(id: string, reason?: string): Promise<Appointment>;
+  getAppointmentByEventId(eventId: string): Promise<Appointment | null>;
+  updateAppointmentSessionPrep(appointmentId: string, sessionPrep: string): Promise<void>;
+  getAppointmentsByTherapistTimeframe(therapistId: string, timeframe: 'week' | 'month' | 'quarter'): Promise<Appointment[]>;
 
   // Session notes methods
   getSessionNotes(clientId: string): Promise<SessionNote[]>;
@@ -58,11 +67,17 @@ export interface IStorage {
   getSessionNotesByEventId(eventId: string): Promise<SessionNote[]>;
   createSessionNote(note: InsertSessionNote): Promise<SessionNote>;
   updateSessionNote(id: string, note: Partial<SessionNote>): Promise<SessionNote>;
+  deleteSessionNote(id: string): Promise<void>;
+  getTodaysSessionNotes(therapistId: string): Promise<SessionNote[]>;
+  getSessionNotesByClientId(clientId: string): Promise<SessionNote[]>;
+  getAllSessionNotesByTherapist(therapistId: string): Promise<SessionNote[]>;
+  getSessionNotesByTherapistTimeframe(therapistId: string, timeframe: 'week' | 'month' | 'quarter'): Promise<SessionNote[]>;
 
   // Session prep notes methods
   getSessionPrepNotes(eventId: string): Promise<SessionPrepNote[]>;
   getSessionPrepNote(id: string): Promise<SessionPrepNote | undefined>;
   getSessionPrepNoteByEventId(eventId: string): Promise<SessionPrepNote | undefined>;
+  getSessionPrepNotesByClient(clientId: string): Promise<SessionPrepNote[]>;
   createSessionPrepNote(note: InsertSessionPrepNote): Promise<SessionPrepNote>;
   updateSessionPrepNote(id: string, note: Partial<SessionPrepNote>): Promise<SessionPrepNote>;
   generateAIInsightsForSession(eventId: string, clientId: string): Promise<{
@@ -138,6 +153,21 @@ export interface IStorage {
   linkProgressNoteToAppointment(sessionNoteId: string, appointmentId: string): Promise<SessionNote>;
   findMatchingAppointment(clientId: string, sessionDate: Date): Promise<Appointment | null>;
   getProgressNotesByTherapistId(therapistId: string): Promise<SessionNote[]>;
+  createProgressNote(data: {
+    clientId: string;
+    therapistId: string;
+    title: string;
+    subjective: string;
+    objective: string;
+    assessment: string;
+    plan: string;
+    tonalAnalysis: string;
+    keyPoints: string[];
+    significantQuotes: string[];
+    narrativeSummary: string;
+    sessionDate: Date;
+    appointmentId?: string;
+  }): Promise<any>;
 
   // Medication methods
   getClientMedications(clientId: string): Promise<Medication[]>;
@@ -158,6 +188,24 @@ export interface IStorage {
   createDocument(document: InsertDocument): Promise<Document>;
   updateDocument(id: string, document: Partial<Document>): Promise<Document>;
   deleteDocument(id: string): Promise<void>;
+  updateDocumentWithTags(id: string, taggingData: {
+    aiTags?: any;
+    category?: string;
+    subcategory?: string;
+    contentSummary?: string;
+    clinicalKeywords?: any;
+    confidenceScore?: number;
+    sensitivityLevel?: string;
+    extractedText?: string;
+  }): Promise<Document>;
+  getDocumentsByCategory(therapistId: string, category?: string, subcategory?: string): Promise<Document[]>;
+  getDocumentsBySensitivity(therapistId: string, sensitivityLevel: string): Promise<Document[]>;
+  searchDocumentsByTags(therapistId: string, searchTags: string[]): Promise<Document[]>;
+  getDocumentTagStatistics(therapistId: string): Promise<{
+    categoryCounts: Array<{ category: string; count: number }>;
+    sensitivityCounts: Array<{ level: string; count: number }>;
+    totalDocuments: number;
+  }>;
 
   // Audit methods
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
@@ -201,6 +249,11 @@ export interface IStorage {
   setCompassMemory(memory: InsertCompassMemory): Promise<CompassMemory>;
   getCompassMemory(therapistId: string, contextType: string, contextKey?: string): Promise<CompassMemory[]>;
   updateCompassMemoryAccess(id: string): Promise<CompassMemory>;
+  getCompassLearningContext(therapistId: string): Promise<{
+    preferences: any;
+    patterns: any;
+    frequentQueries: any;
+  }>;
 
   // Assessment Management System methods
 
@@ -239,6 +292,8 @@ export interface IStorage {
   getAssessmentPackages(): Promise<AssessmentPackage[]>;
   getAssessmentPackage(id: string): Promise<AssessmentPackage | undefined>;
   createAssessmentPackage(pkg: InsertAssessmentPackage): Promise<AssessmentPackage>;
+  updateAssessmentPackage(id: string, pkg: Partial<AssessmentPackage>): Promise<AssessmentPackage>;
+  deactivateAssessmentPackage(id: string): Promise<AssessmentPackage>;
 
   // Recent Activity methods for dashboard
   getRecentSessionNotes(therapistId: string, days: number): Promise<SessionNote[]>;
@@ -249,18 +304,11 @@ export interface IStorage {
     lastSyncAt?: string;
     appointmentsCount?: number;
   }>;
-  updateAssessmentPackage(id: string, pkg: Partial<AssessmentPackage>): Promise<AssessmentPackage>;
-  deactivateAssessmentPackage(id: string): Promise<AssessmentPackage>;
 
   // Assessment Audit methods
   createAssessmentAuditLog(log: InsertAssessmentAuditLog): Promise<AssessmentAuditLog>;
   getAssessmentAuditLogs(entityType: string, entityId: string): Promise<AssessmentAuditLog[]>;
   getClientAssessmentAuditLogs(clientAssessmentId: string): Promise<AssessmentAuditLog[]>;
-  getCompassLearningContext(therapistId: string): Promise<{
-    preferences: any;
-    patterns: any;
-    frequentQueries: any;
-  }>;
 
   // Session summaries methods
   getSessionSummaries(clientId: string): Promise<SessionSummary[]>;
@@ -693,166 +741,8 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async getSessionNotes(clientId: string): Promise<SessionNote[]> {
-    return await db
-      .select()
-      .from(sessionNotes)
-      .where(eq(sessionNotes.clientId, clientId))
-      .orderBy(desc(sessionNotes.createdAt));
-  }
-
-  async getSessionNote(id: string): Promise<SessionNote | undefined> {
-    const [note] = await db.select().from(sessionNotes).where(eq(sessionNotes.id, id));
-    return note || undefined;
-  }
-
-
-
-  async getSessionNotesByEventId(eventId: string): Promise<SessionNote[]> {
-    try {
-      const notes = await db
-        .select()
-        .from(sessionNotes)
-        .where(eq(sessionNotes.eventId, eventId))
-        .orderBy(desc(sessionNotes.createdAt));
-
-      return notes;
-    } catch (error) {
-      console.error('Error in getSessionNotesByEventId:', error);
-      throw error;
-    }
-  }
-
-  async createSessionNote(note: InsertSessionNote): Promise<SessionNote> {
-    const [newNote] = await db
-      .insert(sessionNotes)
-      .values(note)
-      .returning();
-    return newNote;
-  }
-
-  async getTodaysSessionNotes(therapistId: string): Promise<SessionNote[]> {
-    // Get today's date in Eastern Time
-    const today = new Date();
-    const easternToday = new Date(today.toLocaleString("en-US", {timeZone: "America/New_York"}));
-    const startOfDay = new Date(easternToday.getFullYear(), easternToday.getMonth(), easternToday.getDate());
-    const endOfDay = new Date(easternToday.getFullYear(), easternToday.getMonth(), easternToday.getDate(), 23, 59, 59);
-
-    return await db
-      .select()
-      .from(sessionNotes)
-      .where(
-        and(
-          eq(sessionNotes.therapistId, therapistId),
-          gte(sessionNotes.createdAt, startOfDay),
-          lte(sessionNotes.createdAt, endOfDay)
-        )
-      )
-      .orderBy(desc(sessionNotes.createdAt));
-  }
-
-  async updateSessionNote(id: string, note: Partial<SessionNote>): Promise<SessionNote> {
-    // Ensure dates are properly converted and handle sessionDate
-    const updateData: any = { ...note, updatedAt: new Date() };
-
-    // Handle all date fields properly
-    if (updateData.createdAt && typeof updateData.createdAt === 'string') {
-      updateData.createdAt = new Date(updateData.createdAt);
-    }
-
-    if (updateData.sessionDate !== undefined) {
-      if (typeof updateData.sessionDate === 'string') {
-        // Handle date-only strings by appending time to avoid timezone issues
-        const dateStr = updateData.sessionDate.includes('T') 
-          ? updateData.sessionDate 
-          : updateData.sessionDate + 'T12:00:00.000Z';
-        updateData.sessionDate = new Date(dateStr);
-      }
-      // Ensure it's a valid date, otherwise remove it
-      if (!updateData.sessionDate || isNaN(updateData.sessionDate.getTime())) {
-        delete updateData.sessionDate;
-      }
-    }
-
-    // Remove any undefined values that could cause issues
-    Object.keys(updateData).forEach(key => {
-      if (updateData[key] === undefined) {
-        delete updateData[key];
-      }
-    });
-
-    const [updatedNote] = await db
-      .update(sessionNotes)
-      .set(updateData)
-      .where(eq(sessionNotes.id, id))
-      .returning();
-    return updatedNote;
-  }
-
-  async deleteSessionNote(id: string): Promise<void> {
-    await db
-      .delete(sessionNotes)
-      .where(eq(sessionNotes.id, id));
-  }
-
-  // Progress notes functionality (using session notes)
-  async getProgressNotes(clientId: string): Promise<SessionNote[]> {
-    return await this.getSessionNotes(clientId);
-  }
-
-  async getProgressNotesByAppointmentId(appointmentId: string): Promise<SessionNote[]> {
-    return await db
-      .select()
-      .from(sessionNotes)
-      .where(eq(sessionNotes.appointmentId, appointmentId))
-      .orderBy(desc(sessionNotes.createdAt));
-  }
-
-  async getRecentProgressNotes(therapistId: string, limit: number = 10): Promise<SessionNote[]> {
-    return await db
-      .select()
-      .from(sessionNotes)
-      .where(eq(sessionNotes.therapistId, therapistId))
-      .orderBy(desc(sessionNotes.createdAt))
-      .limit(limit);
-  }
-
-  async linkProgressNoteToAppointment(sessionNoteId: string, appointmentId: string): Promise<SessionNote> {
-    return await this.updateSessionNote(sessionNoteId, { appointmentId });
-  }
-
-  // Added method to retrieve progress notes by therapist ID
-  async getProgressNotesByTherapistId(therapistId: string): Promise<SessionNote[]> {
-    return await db
-      .select()
-      .from(sessionNotes)
-      .where(eq(sessionNotes.therapistId, therapistId))
-      .orderBy(desc(sessionNotes.createdAt));
-  }
-
-
-  async getUpcomingAppointmentsByClient(clientId: string): Promise<Appointment[]> {
-    const now = new Date();
-    return await db
-      .select()
-      .from(appointments)
-      .where(
-        and(
-          eq(appointments.clientId, clientId),
-          gte(appointments.startTime, now),
-          eq(appointments.status, 'scheduled')
-        )
-      )
-      .orderBy(appointments.startTime)
-      .limit(5); // Limit to next 5 appointments
-  }
-
-  async getAppointmentsByClient(clientId: string): Promise<Appointment[]> {
-    return await db
-      .select()
-      .from(appointments)
-      .where(eq(appointments.clientId, clientId))
-      .orderBy(desc(appointments.startTime));
+  async deleteAppointment(appointmentId: string): Promise<void> {
+    await db.delete(appointments).where(eq(appointments.id, appointmentId));
   }
 
   async getAppointmentByEventId(eventId: string): Promise<Appointment | null> {
@@ -1148,20 +1038,67 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  // Progress notes methods
-  // Progress note functionality merged into session notes methods above
+  // Progress notes functionality (using session notes)
+  async getProgressNotes(clientId: string): Promise<SessionNote[]> {
+    return await this.getSessionNotes(clientId);
+  }
 
-  // Merged into getSessionNotes method - now uses session_notes table with SOAP fields
+  async getProgressNotesByAppointmentId(appointmentId: string): Promise<SessionNote[]> {
+    return await db
+      .select()
+      .from(sessionNotes)
+      .where(eq(sessionNotes.appointmentId, appointmentId))
+      .orderBy(desc(sessionNotes.createdAt));
+  }
+
+  async getRecentProgressNotes(therapistId: string, limit: number = 10): Promise<SessionNote[]> {
+    return await db
+      .select()
+      .from(sessionNotes)
+      .where(eq(sessionNotes.therapistId, therapistId))
+      .orderBy(desc(sessionNotes.createdAt))
+      .limit(limit);
+  }
+
+  async linkProgressNoteToAppointment(sessionNoteId: string, appointmentId: string): Promise<SessionNote> {
+    return await this.updateSessionNote(sessionNoteId, { appointmentId });
+  }
+
+  // Added method to retrieve progress notes by therapist ID
+  async getProgressNotesByTherapistId(therapistId: string): Promise<SessionNote[]> {
+    return await db
+      .select()
+      .from(sessionNotes)
+      .where(eq(sessionNotes.therapistId, therapistId))
+      .orderBy(desc(sessionNotes.createdAt));
+  }
 
 
+  async getUpcomingAppointmentsByClient(clientId: string): Promise<Appointment[]> {
+    const now = new Date();
+    return await db
+      .select()
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.clientId, clientId),
+          gte(appointments.startTime, now),
+          eq(appointments.status, 'scheduled')
+        )
+      )
+      .orderBy(appointments.startTime)
+      .limit(5); // Limit to next 5 appointments
+  }
 
-  // Merged into session notes - use getSessionNotes or getAllSessionNotes instead
+  async getAppointmentsByClient(clientId: string): Promise<Appointment[]> {
+    return await db
+      .select()
+      .from(appointments)
+      .where(eq(appointments.clientId, clientId))
+      .orderBy(desc(appointments.startTime));
+  }
 
 
-
-  // Progress note updates merged into updateSessionNote method
-
-  // Appointment linking is now handled within session notes via appointmentId field
 
   async findMatchingAppointment(clientId: string, sessionDate: Date): Promise<Appointment | null> {
     // Find appointments within 3 days of the session date for the client
@@ -3557,6 +3494,91 @@ Generate a comprehensive summary in the following JSON format:
     }
 
     return syncedCount;
+  }
+
+  // Added methods for recent activity and calendar sync stats
+  async getRecentClients(therapistId: string, limit: number = 5): Promise<Client[]> {
+    const clients = await db
+      .select()
+      .from(clients)
+      .where(eq(clients.therapistId, therapistId))
+      .orderBy(desc(clients.createdAt))
+      .limit(limit);
+
+    // Fetch session counts for each client
+    const clientsWithSessionCounts = await Promise.all(clients.map(async client => {
+      const [sessionCountResult] = await db
+        .select({ count: count() })
+        .from(sessionNotes)
+        .where(eq(sessionNotes.clientId, client.id));
+
+      return {
+        ...client,
+        sessionCount: sessionCountResult.count || 0
+      };
+    }));
+
+    return clientsWithSessionCounts;
+  }
+
+  async getRecentCompletedActionItems(therapistId: string, limit: number = 5): Promise<ActionItem[]> {
+    return await db
+      .select()
+      .from(actionItems)
+      .where(
+        and(
+          eq(actionItems.therapistId, therapistId),
+          eq(actionItems.status, 'completed')
+        )
+      )
+      .orderBy(desc(actionItems.completedAt))
+      .limit(limit);
+  }
+
+  async getCalendarSyncStats(therapistId: string): Promise<{
+    totalAppointments: number;
+    syncedAppointments: number;
+    syncPercentage: number;
+    lastSync: Date | null;
+  }> {
+    const [totalAppointmentsResult] = await db
+      .select({ count: count() })
+      .from(appointments)
+      .where(eq(appointments.therapistId, therapistId));
+
+    const [syncedAppointmentsResult] = await db
+      .select({ count: count() })
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.therapistId, therapistId),
+          sql`${appointments.googleEventId} IS NOT NULL`
+        )
+      );
+
+    const [lastSyncResult] = await db
+      .select({ lastSync: sql`MAX(${appointments.lastSyncAt})` })
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.therapistId, therapistId),
+          sql`${appointments.googleEventId} IS NOT NULL`
+        )
+      );
+
+    const totalAppointments = totalAppointmentsResult?.count || 0;
+    const syncedAppointments = syncedAppointmentsResult?.count || 0;
+    const syncPercentage = totalAppointments > 0
+      ? Math.round((syncedAppointments / totalAppointments) * 100)
+      : 0;
+    const lastSync = lastSyncResult?.lastSync ? new Date(lastSyncResult.lastSync) : null;
+
+    return {
+      totalAppointments,
+      syncedAppointments,
+      syncPercentage,
+      lastSync
+    };
   }
 }
 
