@@ -537,33 +537,37 @@ export default function ContentViewer() {
     updateRecentlyViewed(page);
   }, [updateRecentlyViewed]);
 
-  // Delete handlers
+  // Delete handlers - simplified without dependencies that cause re-renders
   const handleDeleteClick = useCallback((item: DatabaseItem, e: React.MouseEvent) => {
     e.stopPropagation();
     console.log('Delete clicked for item:', item);
-    console.log('Current deleteConfirmOpen state:', deleteConfirmOpen);
-    setItemToDelete(item);
-    setDeleteConfirmOpen(true);
+    
+    // Set both states in a single React.batch update
+    React.startTransition(() => {
+      setItemToDelete(item);
+      setDeleteConfirmOpen(true);
+    });
+    
     console.log('Delete dialog state set to true');
-    // Force re-render check
-    setTimeout(() => {
-      console.log('After timeout - deleteConfirmOpen:', deleteConfirmOpen);
-      console.log('After timeout - itemToDelete:', itemToDelete);
-    }, 100);
-  }, [deleteConfirmOpen, itemToDelete]);
+  }, []); // Remove dependencies that cause re-renders
 
   const handleDeleteCancel = useCallback(() => {
     console.log('Delete cancelled');
-    setDeleteConfirmOpen(false);
-    setItemToDelete(null);
+    React.startTransition(() => {
+      setDeleteConfirmOpen(false);
+      setItemToDelete(null);
+    });
   }, []);
 
   const handleDeleteConfirm = useCallback(() => {
-    console.log('Delete confirmed');
+    console.log('Delete confirmed for item:', itemToDelete?.id);
     if (itemToDelete) {
+      console.log('Executing delete mutation...');
       deleteMutation.mutate(itemToDelete);
-      setDeleteConfirmOpen(false);
-      setItemToDelete(null);
+      React.startTransition(() => {
+        setDeleteConfirmOpen(false);
+        setItemToDelete(null);
+      });
     }
   }, [itemToDelete, deleteMutation]);
 
