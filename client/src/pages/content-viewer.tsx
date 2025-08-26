@@ -224,8 +224,7 @@ export default function ContentViewer() {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [selectedDatabaseItem, setSelectedDatabaseItem] = useState<DatabaseItem | null>(null);
   const [databaseCategory, setDatabaseCategory] = useState('session_notes');
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<DatabaseItem | null>(null);
+  const [showBulkActions, setShowBulkActions] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     fileType: 'all',
     sortBy: 'modifiedTime',
@@ -244,77 +243,166 @@ export default function ContentViewer() {
   const { toast } = useToast();
   const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
 
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: async (item: DatabaseItem) => {
-      console.log('🔥 MUTATION FUNCTION CALLED with item:', item);
-      
-      const endpointMap = {
-        session_note: `/api/session-notes/${item.id}`,
-        client: `/api/clients/${item.id}`,
-        appointment: `/api/appointments/${item.id}`,
-        action_item: `/api/action-items/${item.id}`
-      } as const;
-      
-      const endpoint = endpointMap[item.type as keyof typeof endpointMap];
-      console.log('🔥 Using endpoint:', endpoint);
+  // Multi-select functions
+  const toggleSelectAll = () => {
+    const currentItems = getCurrentDatabaseItems();
+    if (selectedItems.size === currentItems.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(currentItems.map(item => item.id)));
+    }
+  };
 
-      if (!endpoint) {
-        console.error('🔥 Unsupported item type:', item.type);
-        throw new Error('Unsupported item type');
-      }
+  const toggleSelectItem = (itemId: string) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(itemId)) {
+      newSelected.delete(itemId);
+    } else {
+      newSelected.add(itemId);
+    }
+    setSelectedItems(newSelected);
+  };
 
-      console.log('🔥 Making DELETE request...');
-      const res = await fetch(endpoint, { method: 'DELETE' });
-      console.log('🔥 Response status:', res.status, 'ok:', res.ok);
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('🔥 Delete failed:', errorText);
-        throw new Error(`Failed to delete item: ${errorText}`);
-      }
-      
-      const result = await res.json();
-      console.log('🔥 Delete successful, result:', result);
-      return result;
-    },
-    onSuccess: (_, deletedItem) => {
-      console.log('✅ DELETE SUCCESS for item:', deletedItem);
-      
-      // Invalidate and refetch relevant queries
-      const queryKeyMap = {
-        session_note: ['session-notes', therapistId],
-        client: ['clients', therapistId],
-        appointment: ['appointments', therapistId],
-        action_item: ['action-items', therapistId]
-      } as const;
-      
-      const queryKey = queryKeyMap[deletedItem.type as keyof typeof queryKeyMap];
-      console.log('✅ Invalidating query key:', queryKey);
+  // Delete functions
+  const deleteItem = async (item: DatabaseItem) => {
+    const endpointMap = {
+      session_note: `/api/session-notes/${item.id}`,
+      client: `/api/clients/${item.id}`,
+      appointment: `/api/appointments/${item.id}`,
+      action_item: `/api/action-items/${item.id}`
+    } as const;
+    
+    const endpoint = endpointMap[item.type as keyof typeof endpointMap];
+    if (!endpoint) throw new Error('Unsupported item type');
 
-      if (queryKey) {
-        queryClient.invalidateQueries({ queryKey });
-      }
+    const response = await fetch(endpoint, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to delete item: ${errorText}`);
+    }
+    
+    return response.json();
+  };
 
-      // Clear selection if deleted item was selected
-      if (selectedDatabaseItem?.id === deletedItem.id) {
-        setSelectedDatabaseItem(null);
-      }
-
+  const handleSingleDelete = async (item: DatabaseItem) => {
+    if (!confirm(`Delete "${item.title || 'this item'}"? This action cannot be undone.`)) {
+      return;
+    }
+    
+    try {
+      await deleteItem(item);
+      
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['session-notes'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['action-items'] });
+      
       toast({
-        title: 'Item deleted',
-        description: `${deletedItem.type.replace('_', ' ')} has been deleted successfully.`,
+        title: 'Success',
+        description: 'Item deleted successfully'
       });
-    },
-    onError: (error, variables) => {
-      console.error('❌ DELETE ERROR:', error, 'for item:', variables);
+    } catch (error) {
+      console.error('Delete failed:', error);
       toast({
-        title: 'Delete failed',
-        description: 'Failed to delete the item. Please try again.',
-        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete item',
+        variant: 'destructive'
       });
-    },
-  });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedItems.size === 0) return;
+    
+    if (!confirm(`Delete ${selectedItems.size} selected items? This action cannot be undone.`)) {
+      return;
+    }
+    
+    const currentItems = getCurrentDatabaseItems();
+    const itemsToDelete = currentItems.filter(item => selectedItems.has(item.id));
+    
+    try {
+      // Delete all selected items
+      await Promise.all(itemsToDelete.map(item => deleteItem(item)));
+      
+      // Clear selections
+      setSelectedItems(new Set());
+      
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['session-notes'] });
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['action-items'] });
+      
+      toast({
+        title: 'Success',
+        description: `${itemsToDelete.length} items deleted successfully`
+      });
+    } catch (error) {
+      console.error('Bulk delete failed:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete some items',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  // Get current database items based on category
+  const getCurrentDatabaseItems = (): DatabaseItem[] => {
+    switch (databaseCategory) {
+      case 'session_notes':
+        return sessionNotes?.map((note: any) => ({
+          id: note.id,
+          type: 'session_note' as const,
+          title: note.title || 'Session Note',
+          clientName: note.clientName,
+          content: note.content,
+          createdAt: note.createdAt,
+          updatedAt: note.updatedAt,
+          tags: note.tags || [],
+          metadata: note
+        })) || [];
+      case 'clients':
+        return clients?.map((client: any) => ({
+          id: client.id,
+          type: 'client' as const,
+          title: client.name,
+          content: client.email,
+          createdAt: client.createdAt,
+          updatedAt: client.updatedAt,
+          metadata: client
+        })) || [];
+      case 'appointments':
+        return appointments?.map((apt: any) => ({
+          id: apt.id,
+          type: 'appointment' as const,
+          title: apt.title || 'Appointment',
+          clientName: apt.clientName,
+          content: apt.notes,
+          createdAt: apt.createdAt,
+          updatedAt: apt.updatedAt,
+          metadata: apt
+        })) || [];
+      case 'action_items':
+        return actionItems?.map((item: any) => ({
+          id: item.id,
+          type: 'action_item' as const,
+          title: item.title,
+          content: item.description,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          metadata: item
+        })) || [];
+      default:
+        return [];
+    }
+  };
 
   // Database queries
   const { data: sessionNotes, isLoading: sessionNotesLoading } = useQuery({
@@ -556,50 +644,7 @@ export default function ContentViewer() {
     updateRecentlyViewed(page);
   }, [updateRecentlyViewed]);
 
-  // Delete handlers - simplified without dependencies that cause re-renders
-  const handleDeleteClick = useCallback((item: DatabaseItem, e: React.MouseEvent) => {
-    e.stopPropagation();
-    console.log('Delete clicked for item:', item);
-    
-    // Set both states in a single React.batch update
-    React.startTransition(() => {
-      setItemToDelete(item);
-      setDeleteConfirmOpen(true);
-    });
-    
-    console.log('Delete dialog state set to true');
-  }, []); // Remove dependencies that cause re-renders
 
-  const handleDeleteCancel = useCallback(() => {
-    console.log('Delete cancelled');
-    React.startTransition(() => {
-      setDeleteConfirmOpen(false);
-      setItemToDelete(null);
-    });
-  }, []);
-
-  const handleDeleteConfirm = useCallback((e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    console.log('🔥 DELETE CONFIRMED BUTTON CLICKED for item:', itemToDelete?.id);
-    console.log('🔥 Current itemToDelete:', itemToDelete);
-    console.log('🔥 deleteMutation object:', deleteMutation);
-    
-    if (itemToDelete) {
-      console.log('🔥 Calling deleteMutation.mutate...');
-      deleteMutation.mutate(itemToDelete);
-      React.startTransition(() => {
-        setDeleteConfirmOpen(false);
-        setItemToDelete(null);
-      });
-    } else {
-      console.error('🔥 ERROR: itemToDelete is null/undefined!');
-    }
-  }, [itemToDelete, deleteMutation]);
-
-  // Debug effect to track state changes
-  useEffect(() => {
-    console.log('State changed - deleteConfirmOpen:', deleteConfirmOpen, 'itemToDelete:', itemToDelete?.id);
-  }, [deleteConfirmOpen, itemToDelete]);
 
   // Handle database item selection
   const handleDatabaseItemSelect = useCallback((item: DatabaseItem) => {
@@ -802,22 +847,7 @@ export default function ContentViewer() {
     ? (notionSearchResults || []) 
     : [...(notionDatabases || []), ...(notionPages || [])];
 
-  const getCurrentDatabaseItems = (): DatabaseItem[] => {
-    if (debouncedSearchQuery && databaseSearchResults) {
-      return databaseSearchResults.map((item: any) => formatDatabaseItem(item, databaseCategory));
-    }
 
-    const data = {
-      session_notes: sessionNotes,
-      clients: clients,
-      appointments: appointments,
-      action_items: actionItems
-    }[databaseCategory];
-
-    if (!data) return [];
-    
-    return data.map((item: any) => formatDatabaseItem(item, databaseCategory));
-  };
 
   const currentDatabaseItems = getCurrentDatabaseItems();
 
@@ -1308,15 +1338,36 @@ export default function ContentViewer() {
                       ).join(' ')
                     }
                   </span>
-                  {selectedItems.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    {selectedItems.size > 0 && (
+                      <>
+                        <Badge variant="secondary">{selectedItems.size} selected</Badge>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleBulkDelete}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Selected
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedItems(new Set())}
+                        >
+                          Clear
+                        </Button>
+                      </>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setSelectedItems(new Set())}
+                      onClick={toggleSelectAll}
                     >
-                      Clear
+                      {selectedItems.size === getCurrentDatabaseItems().length ? 'Deselect All' : 'Select All'}
                     </Button>
-                  )}
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1348,7 +1399,7 @@ export default function ContentViewer() {
                               className="p-0 h-auto"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                toggleSelection(item.id);
+                                toggleSelectItem(item.id);
                               }}
                             >
                               {selectedItems.has(item.id) ? 
@@ -1398,7 +1449,10 @@ export default function ContentViewer() {
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={(e) => handleDeleteClick(item, e)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSingleDelete(item);
+                              }}
                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
                               data-testid={`button-delete-${item.type}-${item.id}`}
                             >
@@ -1504,7 +1558,10 @@ export default function ContentViewer() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={(e) => handleDeleteClick(selectedDatabaseItem, e)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSingleDelete(selectedDatabaseItem);
+                        }}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                         data-testid={`button-delete-selected-${selectedDatabaseItem.type}`}
                       >
@@ -1520,173 +1577,7 @@ export default function ContentViewer() {
         </TabsContent>
       </Tabs>
 
-      {/* Delete Confirmation Dialog - Debug version */}
-      <div style={{ 
-        position: 'fixed', 
-        top: '10px', 
-        right: '10px', 
-        backgroundColor: 'yellow', 
-        padding: '10px', 
-        zIndex: 10000,
-        fontSize: '12px'
-      }}>
-        Debug: deleteConfirmOpen={deleteConfirmOpen.toString()}, itemToDelete={itemToDelete ? itemToDelete.id : 'null'}
-      </div>
 
-      {deleteConfirmOpen && itemToDelete ? (
-        <div 
-          className="debug-dialog-wrapper" 
-          style={{ 
-            position: 'fixed', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            bottom: 0, 
-            zIndex: 9999, 
-            backgroundColor: 'rgba(255,0,0,0.8)', // Red background to make it obvious
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          onClick={(e) => {
-            // Only close if clicking on overlay, not the dialog
-            console.log('🔥 OVERLAY CLICKED - target:', e.target, 'currentTarget:', e.currentTarget);
-            if (e.target === e.currentTarget) {
-              console.log('🔥 CLOSING DIALOG VIA OVERLAY CLICK');
-              handleDeleteCancel();
-            }
-          }}
-        >
-          <div 
-            style={{ 
-              backgroundColor: 'white', 
-              padding: '30px', 
-              borderRadius: '8px', 
-              maxWidth: '500px', 
-              width: '90%',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-              border: '3px solid red' // Make it very obvious
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-              <h1 style={{ fontSize: '36px', fontWeight: 'bold', color: '#dc2626', marginBottom: '20px' }}>
-                🗑️ DELETE SESSION NOTE
-              </h1>
-              <div style={{ padding: '20px', backgroundColor: '#fff3cd', border: '3px solid #ffc107', borderRadius: '12px', marginBottom: '30px' }}>
-                <p style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '15px', color: '#856404' }}>
-                  Item to delete:
-                </p>
-                <p style={{ fontSize: '18px', color: '#856404', marginBottom: '15px', fontWeight: 'bold' }}>
-                  "{itemToDelete?.title || itemToDelete?.metadata?.title || 'Session Note'}"
-                </p>
-                <p style={{ fontSize: '16px', color: '#dc3545', fontWeight: 'bold' }}>
-                  ⚠️ THIS WILL PERMANENTLY DELETE THE SESSION NOTE ⚠️
-                </p>
-              </div>
-            </div>
-            
-            {/* ONLY ONE GIANT DELETE BUTTON - NO CANCEL BUTTON */}
-            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-              <button 
-                onClick={async (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('🔥 BUTTON CLICKED - STARTING DELETE PROCESS');
-                  
-                  if (!itemToDelete) {
-                    console.error('🔥 ERROR: No item to delete');
-                    return;
-                  }
-                  
-                  console.log('🔥 Item to delete:', itemToDelete.id, itemToDelete.type);
-                  
-                  try {
-                    // Make direct fetch call instead of using mutation
-                    const endpoint = `/api/session-notes/${itemToDelete.id}`;
-                    console.log('🔥 Making direct DELETE request to:', endpoint);
-                    
-                    const response = await fetch(endpoint, {
-                      method: 'DELETE',
-                      headers: {
-                        'Content-Type': 'application/json'
-                      }
-                    });
-                    
-                    console.log('🔥 Response status:', response.status);
-                    console.log('🔥 Response ok:', response.ok);
-                    
-                    if (response.ok) {
-                      const result = await response.json();
-                      console.log('✅ DELETE SUCCESSFUL:', result);
-                      
-                      // Close dialog
-                      setDeleteConfirmOpen(false);
-                      setItemToDelete(null);
-                      
-                      // Refresh the session notes list
-                      queryClient.invalidateQueries({ queryKey: ['session-notes'] });
-                      
-                      // Show success message
-                      toast({
-                        title: 'Success',
-                        description: 'Session note deleted successfully'
-                      });
-                    } else {
-                      const errorText = await response.text();
-                      console.error('❌ DELETE FAILED:', errorText);
-                      toast({
-                        title: 'Error',
-                        description: 'Failed to delete session note',
-                        variant: 'destructive'
-                      });
-                    }
-                  } catch (error) {
-                    console.error('❌ DELETE ERROR:', error);
-                    toast({
-                      title: 'Error', 
-                      description: 'Network error during delete',
-                      variant: 'destructive'
-                    });
-                  }
-                }}
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  console.log('🔥 MOUSE DOWN ON DELETE BUTTON');
-                }}
-                onMouseUp={(e) => {
-                  e.stopPropagation();
-                  console.log('🔥 MOUSE UP ON DELETE BUTTON');
-                }}
-                style={{ 
-                  padding: '30px 60px', 
-                  border: '6px solid #dc2626', 
-                  borderRadius: '12px', 
-                  backgroundColor: '#dc2626', 
-                  color: 'white',
-                  fontSize: '28px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  boxShadow: '0 8px 16px rgba(220, 38, 38, 0.5)',
-                  minWidth: '400px',
-                  minHeight: '100px',
-                  display: 'block',
-                  margin: '0 auto'
-                }}
-                data-testid="button-confirm-delete"
-                disabled={deleteMutation.isPending}
-                type="button"
-              >
-                {deleteMutation.isPending ? '🔄 DELETING...' : '🗑️ DELETE SESSION NOTE NOW'}
-              </button>
-            </div>
-            
-            <div style={{ textAlign: 'center', fontSize: '14px', color: '#666' }}>
-              <p>Click anywhere outside this dialog to cancel</p>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
