@@ -567,6 +567,11 @@ export default function ContentViewer() {
     }
   }, [itemToDelete, deleteMutation]);
 
+  // Debug effect to track state changes
+  useEffect(() => {
+    console.log('State changed - deleteConfirmOpen:', deleteConfirmOpen, 'itemToDelete:', itemToDelete?.id);
+  }, [deleteConfirmOpen, itemToDelete]);
+
   // Handle database item selection
   const handleDatabaseItemSelect = useCallback((item: DatabaseItem) => {
     setSelectedDatabaseItem(item);
@@ -1496,10 +1501,10 @@ export default function ContentViewer() {
         zIndex: 10000,
         fontSize: '12px'
       }}>
-        Debug: deleteConfirmOpen={deleteConfirmOpen.toString()}, itemToDelete={itemToDelete ? 'exists' : 'null'}
+        Debug: deleteConfirmOpen={deleteConfirmOpen.toString()}, itemToDelete={itemToDelete ? itemToDelete.id : 'null'}
       </div>
 
-      {deleteConfirmOpen ? (
+      {deleteConfirmOpen && itemToDelete ? (
         <div 
           className="debug-dialog-wrapper" 
           style={{ 
