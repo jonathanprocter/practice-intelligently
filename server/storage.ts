@@ -297,6 +297,7 @@ export interface IStorage {
 
   // Recent Activity methods for dashboard
   getRecentSessionNotes(therapistId: string, days: number): Promise<SessionNote[]>;
+  getTodaysSessionNotes(therapistId: string): Promise<SessionNote[]>;
   getRecentAppointments(therapistId: string, days: number): Promise<Appointment[]>;
   getRecentClients(therapistId: string, days: number): Promise<Client[]>;
   getRecentCompletedActionItems(therapistId: string, days: number): Promise<ActionItem[]>;
@@ -3510,6 +3511,27 @@ Generate a comprehensive summary in the following JSON format:
       return result.rows.map((row: any) => this.mapSessionNoteRow(row));
     } catch (error) {
       console.error('Error in getRecentSessionNotes:', error);
+      return [];
+    }
+  }
+
+  async getTodaysSessionNotes(therapistId: string): Promise<SessionNote[]> {
+    try {
+      // Get today's date in Eastern Time
+      const today = new Date();
+      const startOfDay = new Date(today);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(today);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const result = await pool.query(
+        'SELECT sn.*, c.first_name, c.last_name FROM session_notes sn LEFT JOIN clients c ON sn.client_id = c.id WHERE sn.therapist_id = $1 AND sn.created_at >= $2 AND sn.created_at <= $3 ORDER BY sn.created_at DESC',
+        [therapistId, startOfDay, endOfDay]
+      );
+
+      return result.rows.map((row: any) => this.mapSessionNoteRow(row));
+    } catch (error) {
+      console.error('Error in getTodaysSessionNotes:', error);
       return [];
     }
   }
