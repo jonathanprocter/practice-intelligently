@@ -1557,19 +1557,26 @@ export default function ContentViewer() {
                     {currentDatabaseItems.map((item: DatabaseItem) => (
                       <div
                         key={item.id}
-                        className={`p-3 rounded-lg border cursor-pointer transition-colors overflow-hidden ${
+                        className={`p-3 rounded-lg border cursor-pointer transition-colors overflow-hidden relative ${
                           selectedDatabaseItem?.id === item.id
                             ? 'bg-therapy-primary/10 border-therapy-primary'
                             : 'hover:bg-gray-50'
                         }`}
                         onClick={() => handleDatabaseItemSelect(item)}
                       >
+                        {/* Client Name Corner Badge */}
+                        {item.clientName && (
+                          <div className="absolute top-2 right-2 bg-therapy-primary text-white px-2 py-1 rounded-md text-xs font-semibold shadow-sm">
+                            {item.clientName}
+                          </div>
+                        )}
+                        
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-3 flex-1 min-w-0 pr-20">
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="p-0 h-auto"
+                              className="p-0 h-auto shrink-0"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 toggleSelectItem(item.id);
@@ -1580,7 +1587,9 @@ export default function ContentViewer() {
                                 <Square className="h-4 w-4" />
                               }
                             </Button>
-                            {getDatabaseItemIcon(item.type)}
+                            <div className="shrink-0">
+                              {getDatabaseItemIcon(item.type)}
+                            </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-sm flex items-center truncate">
                                 <span className="truncate">{item.title}</span>
@@ -1589,11 +1598,6 @@ export default function ContentViewer() {
                                 )}
                               </p>
                               <div className="flex flex-wrap gap-1.5 mt-2">
-                                {item.clientName && (
-                                  <Badge variant="secondary" className="text-xs shrink-0">
-                                    {item.clientName}
-                                  </Badge>
-                                )}
                                 {item.tags?.map((tag, index) => (
                                   <Badge key={index} variant="outline" className="text-xs shrink-0 max-w-[120px] truncate">
                                     {tag}
@@ -1694,21 +1698,28 @@ export default function ContentViewer() {
                     <p>Select an item to view its details</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="border-b pb-2">
+                  <div className="space-y-4 relative">
+                    {/* Client Name Corner Badge for Detail View */}
+                    {selectedDatabaseItem.clientName && (
+                      <div className="absolute top-0 right-0 bg-therapy-primary text-white px-3 py-1.5 rounded-bl-lg rounded-tr-lg text-sm font-bold shadow-md">
+                        {selectedDatabaseItem.clientName}
+                      </div>
+                    )}
+                    
+                    <div className="border-b pb-2 pr-24">
                       {editingItem === selectedDatabaseItem.id ? (
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <h3 className="font-semibold flex items-center">
                               {getDatabaseItemIcon(selectedDatabaseItem.type)}
-                              <span className="ml-2">Editing</span>
+                              <span className="ml-2">Editing Session Note</span>
                             </h3>
                             <div className="flex gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => saveEdit(selectedDatabaseItem)}
-                                className="text-green-600"
+                                className="text-green-600 hover:bg-green-50"
                               >
                                 <Save className="h-4 w-4 mr-2" />
                                 Save
@@ -1717,7 +1728,7 @@ export default function ContentViewer() {
                                 variant="outline"
                                 size="sm"
                                 onClick={cancelEditing}
-                                className="text-gray-600"
+                                className="text-gray-600 hover:bg-gray-50"
                               >
                                 <X className="h-4 w-4 mr-2" />
                                 Cancel
@@ -1725,29 +1736,27 @@ export default function ContentViewer() {
                             </div>
                           </div>
                           <Input
-                            placeholder="Title"
+                            placeholder="Session title"
                             value={editForm.title}
                             onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                            className="font-medium"
                           />
                         </div>
                       ) : (
-                        <h3 className="font-semibold flex items-center">
-                          {getDatabaseItemIcon(selectedDatabaseItem.type)}
-                          <span className="ml-2">{selectedDatabaseItem.title}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="ml-2"
-                            onClick={() => toggleFavorite(selectedDatabaseItem.id)}
-                          >
-                            <Star className={`h-4 w-4 ${favorites.includes(selectedDatabaseItem.id) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
-                          </Button>
-                        </h3>
-                      )}
-                      {selectedDatabaseItem.clientName && (
-                        <p className="text-sm text-therapy-primary font-medium">
-                          Client: {selectedDatabaseItem.clientName}
-                        </p>
+                        <div className="space-y-2">
+                          <h3 className="font-semibold flex items-center text-lg">
+                            {getDatabaseItemIcon(selectedDatabaseItem.type)}
+                            <span className="ml-2 truncate">{selectedDatabaseItem.title}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="ml-2 shrink-0"
+                              onClick={() => toggleFavorite(selectedDatabaseItem.id)}
+                            >
+                              <Star className={`h-4 w-4 ${favorites.includes(selectedDatabaseItem.id) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                            </Button>
+                          </h3>
+                        </div>
                       )}
                       <p className="text-sm text-gray-500">
                         Created: {new Date(selectedDatabaseItem.createdAt).toLocaleDateString()}
