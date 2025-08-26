@@ -4724,6 +4724,79 @@ You are Compass, an AI assistant for therapy practice management. You have acces
 
   // ========== CALENDAR API ROUTES (Auto-generated) ==========
 
+  // Calendar events without therapist ID (frontend compatibility)
+  app.get('/api/calendar/events', async (req, res) => {
+    try {
+      const { timeMin, timeMax, calendarId } = req.query;
+      const { simpleOAuth } = await import('./oauth-simple');
+
+      if (!simpleOAuth.isConnected()) {
+        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
+      }
+
+      // Try to refresh tokens before fetching events
+      try {
+        await (simpleOAuth as any).refreshTokensIfNeeded();
+      } catch (tokenError: any) {
+        console.error('Token refresh failed during event fetch:', tokenError);
+        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
+      }
+
+      let allEvents: any[] = [];
+
+      if (!calendarId || calendarId === 'all') {
+        // Fetch from ALL calendars when no specific calendar is requested
+        const calendars = await simpleOAuth.getCalendars();
+        console.log(`📅 Requesting events from ALL ${calendars.length} calendars`);
+
+        for (const calendar of calendars) {
+          try {
+            const events = await simpleOAuth.getEvents(
+              calendar.id,
+              timeMin as string,
+              timeMax as string
+            );
+
+            if (events && events.length > 0) {
+              // Add calendar metadata to each event
+              const eventsWithCalendar = events.map((event: any) => ({
+                ...event,
+                calendarId: calendar.id,
+                calendarName: calendar.summary
+              }));
+              allEvents = allEvents.concat(eventsWithCalendar);
+              console.log(`  ✅ Found ${events.length} events in calendar: ${calendar.summary}`);
+            } else {
+              console.log(`  📭 No events found in calendar: ${calendar.summary}`);
+            }
+          } catch (calError: any) {
+            console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError?.message || calError);
+          }
+        }
+
+        console.log(`📊 Total events from all calendars: ${allEvents.length}`);
+      } else {
+        // Fetch from specific calendar
+        console.log(`📅 Fetching events from specific calendar: ${calendarId}`);
+        const events = await simpleOAuth.getEvents(
+          calendarId as string,
+          timeMin as string,
+          timeMax as string
+        );
+        allEvents = events || [];
+        console.log(`📊 Found ${allEvents.length} events in calendar: ${calendarId}`);
+      }
+
+      res.json(allEvents);
+    } catch (error: any) {
+      console.error('Error getting calendar events:', error);
+      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
+        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
+      }
+      res.status(500).json({ error: 'Failed to get calendar events', details: error.message });
+    }
+  });
+
   // Calendar events for a specific therapist (frontend compatibility)
   app.get('/api/calendar/events/:therapistId', async (req, res) => {
     try {

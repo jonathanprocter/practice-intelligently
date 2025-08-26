@@ -558,7 +558,7 @@ export default function Calendar() {
                   Connect your Google Calendar to view and manage your appointments
                 </p>
               </div>
-              <Button onClick={connectGoogleCalendar} className="w-full">
+              <Button onClick={() => connectGoogleCalendar()} className="w-full">
                 Connect Google Calendar
               </Button>
               <div className="flex gap-2">
