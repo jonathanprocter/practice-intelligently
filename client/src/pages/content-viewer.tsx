@@ -1557,7 +1557,7 @@ export default function ContentViewer() {
                     {currentDatabaseItems.map((item: DatabaseItem) => (
                       <div
                         key={item.id}
-                        className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                        className={`p-3 rounded-lg border cursor-pointer transition-colors overflow-hidden ${
                           selectedDatabaseItem?.id === item.id
                             ? 'bg-therapy-primary/10 border-therapy-primary'
                             : 'hover:bg-gray-50'
@@ -1581,26 +1581,26 @@ export default function ContentViewer() {
                               }
                             </Button>
                             {getDatabaseItemIcon(item.type)}
-                            <div className="flex-1">
-                              <p className="font-medium text-sm flex items-center">
-                                {item.title}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm flex items-center truncate">
+                                <span className="truncate">{item.title}</span>
                                 {favorites.includes(item.id) && (
-                                  <Star className="h-3 w-3 ml-2 fill-yellow-400 text-yellow-400" />
+                                  <Star className="h-3 w-3 ml-2 fill-yellow-400 text-yellow-400 shrink-0" />
                                 )}
                               </p>
-                              <div className="flex items-center space-x-2">
+                              <div className="flex flex-wrap gap-1.5 mt-2">
                                 {item.clientName && (
-                                  <Badge variant="secondary" className="text-xs">
+                                  <Badge variant="secondary" className="text-xs shrink-0">
                                     {item.clientName}
                                   </Badge>
                                 )}
                                 {item.tags?.map((tag, index) => (
-                                  <Badge key={index} variant="outline" className="text-xs">
+                                  <Badge key={index} variant="outline" className="text-xs shrink-0 max-w-[120px] truncate">
                                     {tag}
                                   </Badge>
                                 ))}
                               </div>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-gray-500 truncate">
                                 Updated {new Date(item.updatedAt).toLocaleDateString()}
                               </p>
                             </div>
@@ -1755,9 +1755,9 @@ export default function ContentViewer() {
                         Updated: {new Date(selectedDatabaseItem.updatedAt).toLocaleDateString()}
                       </p>
                       {selectedDatabaseItem.tags && selectedDatabaseItem.tags.length > 0 && (
-                        <div className="flex gap-1 mt-2">
+                        <div className="flex flex-wrap gap-1.5 mt-2">
                           {selectedDatabaseItem.tags.map((tag, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
+                            <Badge key={index} variant="outline" className="text-xs shrink-0 max-w-[140px] truncate">
                               {tag}
                             </Badge>
                           ))}
