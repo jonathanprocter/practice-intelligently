@@ -353,19 +353,20 @@ export class DocumentProcessor {
       const analysisPrompt = `You are an expert clinical document analyzer. Extract client name and session date with maximum precision.
 
 ANALYSIS TASK:
-1. Find the EXACT client name as written in the document
+1. Find the EXACT client name as written in the document - look EVERYWHERE in the content
 2. Extract the EXACT session/appointment date
 3. Provide confidence scores (0.0-1.0) for each extraction
 4. List alternative possibilities if multiple candidates exist
 
-SEARCH PATTERNS:
-Client Names:
-- "Comprehensive Clinical Progress Note for [Name]"
-- "Progress Note for [Name]" 
-- "[Name]'s Therapy Session"
-- "Client: [Name]" or "Patient: [Name]"
-- Names in document headers/titles
-- Names appearing with appointment/session context
+COMPREHENSIVE CLIENT NAME SEARCH PATTERNS:
+- Document titles: "Comprehensive Clinical Progress Note for [Name]", "Progress Note for [Name]"
+- Session headers: "[Name]'s Therapy Session", "Session with [Name]"
+- Direct references: "Client: [Name]", "Patient: [Name]", "[Name] attended", "[Name] presented"
+- Within content: "[Name] reported", "[Name] expressed", "[Name] described", "[Name] stated"
+- Possessive forms: "[Name]'s session", "[Name]'s therapy", "[Name]'s treatment"
+- Action contexts: "[Name] discussed", "[Name] mentioned", "[Name] shared", "[Name] indicated"
+- Clinical references: "The client [Name]", "Patient [Name]", "Individual [Name]"
+- Anywhere a proper name appears that could be the client
 
 Session Dates:
 - "Session on [Date]" or "Therapy Session on [Date]"
@@ -375,15 +376,23 @@ Session Dates:
 - US format: MM/DD/YYYY or M/D/YYYY
 - Text format: "Month DD, YYYY"
 
+SEARCH STRATEGY:
+1. Scan the ENTIRE document content for proper names (First Last format)
+2. Look for names that appear multiple times or in clinical contexts
+3. Check for names near therapy/session/clinical terminology
+4. Consider names that appear with possessive pronouns or action verbs
+5. Prioritize names that appear in structured contexts (titles, headers)
+
 CRITICAL REQUIREMENTS:
 - Extract EXACT names without modification
+- Search the FULL document content, not just headers
 - Convert all dates to YYYY-MM-DD format
-- Provide confidence scores based on context clarity
+- Provide confidence scores based on context clarity and frequency
 - List up to 3 alternative possibilities for each field
 
 Document filename: ${filename || 'unknown'}
 Document content:
-${content.substring(0, 6000)}
+${content.substring(0, 8000)}
 
 RESPOND WITH ONLY VALID JSON:
 {
@@ -503,26 +512,82 @@ RESPOND WITH ONLY VALID JSON:
 
     console.log('🔍 Starting enhanced regex extraction...');
 
-    // Enhanced client name patterns with confidence scoring
+    // Enhanced client name patterns with confidence scoring - search throughout entire document
     const clientPatterns = [
+      // High confidence patterns (structured contexts)
       { pattern: /(?:comprehensive\s+clinical\s+progress\s+note\s+for\s+)([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i, confidence: 0.95 },
       { pattern: /(?:clinical\s+progress\s+note\s+for\s+)([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i, confidence: 0.90 },
       { pattern: /(?:progress\s+note\s+for\s+)([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i, confidence: 0.85 },
       { pattern: /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)'s\s+therapy\s+session/i, confidence: 0.90 },
+      
+      // Direct reference patterns
       { pattern: /client:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i, confidence: 0.85 },
       { pattern: /patient:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i, confidence: 0.85 },
       { pattern: /therapy\s+session\s+(?:for|with)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i, confidence: 0.80 },
-      { pattern: /\b([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:attended|presented|reported|expressed)/i, confidence: 0.75 },
+      { pattern: /session\s+(?:for|with)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i, confidence: 0.80 },
+      
+      // Content-based patterns (names mentioned within notes)
+      { pattern: /\b([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:attended|presented|reported|expressed|stated|described|discussed|mentioned|shared|indicated)/i, confidence: 0.85 },
+      { pattern: /\b([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:was|is|has|had|will|would|could|should)/i, confidence: 0.75 },
+      { pattern: /(?:the\s+client\s+)([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i, confidence: 0.80 },
+      { pattern: /(?:patient\s+)([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i, confidence: 0.80 },
+      
+      // Possessive and action patterns
+      { pattern: /([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)'s\s+(?:session|therapy|treatment|progress|goals|concerns)/i, confidence: 0.85 },
+      { pattern: /([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:continues|completed|began|started|ended|finished)/i, confidence: 0.75 },
+      
+      // Broader name patterns (lower confidence but catches more cases)
+      { pattern: /\b([A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?)\b/g, confidence: 0.60 }, // General proper names
     ];
 
+    // Track all potential names with their frequencies and contexts
+    const nameMatches = new Map<string, { count: number, maxConfidence: number, contexts: string[] }>();
+    
     for (const { pattern, confidence } of clientPatterns) {
-      const match = content.match(pattern);
-      if (match && match[1]) {
-        clientName = match[1].trim();
-        nameConfidence = confidence;
-        console.log(`✅ Client name found with confidence ${confidence}: "${clientName}"`);
-        break;
+      const matches = pattern.global ? Array.from(content.matchAll(pattern)) : [content.match(pattern)].filter(Boolean);
+      
+      for (const match of matches) {
+        if (match && match[1]) {
+          const foundName = match[1].trim();
+          
+          // Filter out common words that might match the pattern
+          const commonWords = ['The Client', 'This Patient', 'Individual Therapy', 'Session Notes', 'Progress Note'];
+          if (commonWords.some(word => foundName.toLowerCase().includes(word.toLowerCase()))) {
+            continue;
+          }
+          
+          // Only consider names with reasonable length and format
+          if (foundName.length >= 5 && foundName.length <= 50 && foundName.includes(' ')) {
+            if (!nameMatches.has(foundName)) {
+              nameMatches.set(foundName, { count: 1, maxConfidence: confidence, contexts: [match[0]] });
+            } else {
+              const existing = nameMatches.get(foundName)!;
+              existing.count++;
+              existing.maxConfidence = Math.max(existing.maxConfidence, confidence);
+              existing.contexts.push(match[0]);
+            }
+          }
+        }
       }
+    }
+    
+    // Find the best candidate based on confidence and frequency
+    let bestCandidate: { name: string, score: number } | null = null;
+    
+    for (const [name, data] of nameMatches) {
+      // Calculate composite score: confidence + frequency bonus
+      const frequencyBonus = Math.min(data.count * 0.1, 0.3); // Max 0.3 bonus for frequency
+      const score = data.maxConfidence + frequencyBonus;
+      
+      if (!bestCandidate || score > bestCandidate.score) {
+        bestCandidate = { name, score };
+      }
+    }
+    
+    if (bestCandidate) {
+      clientName = bestCandidate.name;
+      nameConfidence = Math.min(bestCandidate.score, 1.0);
+      console.log(`✅ Client name found with confidence ${nameConfidence}: "${clientName}" (${nameMatches.get(clientName)?.count} occurrences)`);
     }
 
     // Enhanced date patterns with confidence scoring
