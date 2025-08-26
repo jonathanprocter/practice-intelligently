@@ -560,16 +560,32 @@ export default function ContentViewer() {
   }, []);
 
   const handleDeleteConfirm = useCallback(() => {
-    console.log('Delete confirmed for item:', itemToDelete?.id);
+    console.log('🔥 DELETE CONFIRMED for item:', itemToDelete?.id);
     if (itemToDelete) {
-      console.log('Executing delete mutation...');
-      deleteMutation.mutate(itemToDelete);
+      console.log('🔥 Executing delete mutation...');
+      deleteMutation.mutate(itemToDelete, {
+        onSuccess: () => {
+          console.log('✅ Delete successful!');
+          toast({
+            title: "Success",
+            description: "Item deleted successfully",
+          });
+        },
+        onError: (error) => {
+          console.error('❌ Delete failed:', error);
+          toast({
+            title: "Error",
+            description: "Failed to delete item",
+            variant: "destructive",
+          });
+        }
+      });
       React.startTransition(() => {
         setDeleteConfirmOpen(false);
         setItemToDelete(null);
       });
     }
-  }, [itemToDelete, deleteMutation]);
+  }, [itemToDelete, deleteMutation, toast]);
 
   // Debug effect to track state changes
   useEffect(() => {
@@ -1555,31 +1571,34 @@ export default function ContentViewer() {
                 onClick={handleDeleteCancel}
                 style={{ 
                   padding: '12px 24px', 
-                  border: '1px solid #ccc', 
+                  border: '2px solid #666', 
                   borderRadius: '4px', 
-                  backgroundColor: 'white',
+                  backgroundColor: '#f5f5f5',
                   fontSize: '16px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  color: '#333'
                 }}
                 data-testid="button-cancel-delete"
               >
-                Cancel
+                ❌ Cancel
               </button>
               <button 
                 onClick={handleDeleteConfirm}
                 style={{ 
                   padding: '12px 24px', 
-                  border: 'none', 
+                  border: '3px solid #dc2626', 
                   borderRadius: '4px', 
                   backgroundColor: '#dc2626', 
                   color: 'white',
-                  fontSize: '16px',
-                  cursor: 'pointer'
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 8px rgba(220, 38, 38, 0.3)'
                 }}
                 data-testid="button-confirm-delete"
                 disabled={deleteMutation.isPending}
               >
-                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                {deleteMutation.isPending ? '🔄 Deleting...' : '🗑️ DELETE NOW'}
               </button>
             </div>
           </div>
