@@ -20,7 +20,31 @@ export function setupGlobalErrorHandling() {
 
   // Handle general errors
   window.addEventListener('error', (event) => {
-    console.error('Global error:', event.error);
+    const error = event.error;
+    const message = event.message || error?.message || '';
+    
+    // Filter out non-critical errors that are just noise
+    const ignoredErrors = [
+      'ResizeObserver loop',
+      'ResizeObserver loop completed with undelivered notifications',
+      'createHotContext',
+      'Non-Error promise rejection captured',
+      'Script error.'  // Cross-origin script errors
+    ];
+    
+    // Check if this is an error we should ignore
+    const shouldIgnore = ignoredErrors.some(ignoredError => 
+      message.includes(ignoredError)
+    );
+    
+    if (shouldIgnore) {
+      // Silently ignore these harmless errors
+      event.preventDefault();
+      return;
+    }
+    
+    // Log genuine errors for debugging
+    console.error('Global error:', error);
   });
 }
 
