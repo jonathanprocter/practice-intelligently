@@ -81,7 +81,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 // Custom hook for local storage
-function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
+function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key);
@@ -92,10 +92,11 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => voi
     }
   });
 
-  const setValue = (value: T) => {
+  const setValue = (value: T | ((prev: T) => T)) => {
     try {
-      setStoredValue(value);
-      window.localStorage.setItem(key, JSON.stringify(value));
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      window.localStorage.setItem(key, JSON.stringify(valueToStore));
     } catch (error) {
       console.error(`Error saving ${key} to localStorage:`, error);
     }
@@ -329,14 +330,15 @@ export default function ContentViewer() {
       }
       return res.json();
     },
-    getNextPageParam: (lastPage) => lastPage?.nextPageToken,
+    initialPageParam: null,
+    getNextPageParam: (lastPage: any) => lastPage?.nextPageToken,
     retry: 3,
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Flatten pages for display
   const driveFiles = useMemo(() => 
-    driveData?.pages?.flatMap(page => 
+    driveData?.pages?.flatMap((page: any) => 
       Array.isArray(page) ? page : (page?.files || [])
     ) || [],
     [driveData]
@@ -432,7 +434,7 @@ export default function ContentViewer() {
       if ((e.ctrlKey || e.metaKey) && e.key === 'a' && fileListRef.current === document.activeElement) {
         e.preventDefault();
         const allIds = new Set(currentDriveFiles.map((f: DriveFile) => f.id));
-        setSelectedItems(allIds);
+        setSelectedItems(allIds as Set<string>);
       }
     };
 
@@ -442,18 +444,19 @@ export default function ContentViewer() {
 
   // Prefetch common queries
   useEffect(() => {
-    queryClient.prefetchQuery(['drive-files'], () => 
-      fetch('/api/drive/files').then(res => res.json())
-    );
+    queryClient.prefetchQuery({ 
+      queryKey: ['drive-files'], 
+      queryFn: () => fetch('/api/drive/files').then(res => res.json())
+    });
   }, [queryClient]);
 
   // Update recently viewed
   const updateRecentlyViewed = useCallback((item: any) => {
-    setRecentlyViewed(prev => {
-      const filtered = prev.filter(i => i.id !== item.id);
+    setRecentlyViewed((prev: any[]) => {
+      const filtered = prev.filter((i: any) => i.id !== item.id);
       return [item, ...filtered].slice(0, 10);
     });
-  }, [setRecentlyViewed]);
+  }, []);
 
   // Handle file selection
   const handleFileSelect = useCallback((file: DriveFile) => {
@@ -475,12 +478,12 @@ export default function ContentViewer() {
 
   // Toggle favorite
   const toggleFavorite = useCallback((id: string) => {
-    setFavorites(prev => 
+    setFavorites((prev: string[]) => 
       prev.includes(id) 
-        ? prev.filter(f => f !== id)
+        ? prev.filter((f: string) => f !== id)
         : [...prev, id]
     );
-  }, [setFavorites]);
+  }, []);
 
   // Toggle selection for bulk actions
   const toggleSelection = useCallback((id: string) => {

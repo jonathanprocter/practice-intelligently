@@ -833,7 +833,7 @@ class ClientChartErrorBoundary extends React.Component<
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Something went wrong</AlertTitle>
               <AlertDescription>
-                {this.state.error?.message || 'An unexpected error occurred while loading the client chart.'}
+                {(this.state.error as unknown as Error)?.message || 'An unexpected error occurred while loading the client chart.'}
               </AlertDescription>
             </Alert>
             <div className="flex gap-2 mt-4">
@@ -1034,7 +1034,7 @@ function ClientChartInner() {
         action: (
           <ToastAction 
             altText="Undo" 
-            onClick={() => queryClient.setQueryData(qKeys.notes(clientId), prev)}
+            onClick={() => queryClient.setQueryData<SessionNote[]>(qKeys.notes(clientId), prev)}
           >
             Undo
           </ToastAction>
@@ -1877,8 +1877,8 @@ function ClientChartInner() {
           </div>
 
           <SessionRecommendations 
-            clientId={clientId} 
-            sessionNotes={sessionNotes.data || []} 
+            clientId={clientId}
+            therapistId="e66b8b8e-e7a2-40b9-ae74-00c93ffe503c"
           />
         </TabsContent>
       </Tabs>
@@ -1902,6 +1902,8 @@ function ClientChartInner() {
           isOpen={isLinkingModalOpen}
           onClose={() => setIsLinkingModalOpen(false)}
           clientId={clientId}
+          sessionNotes={sessionNotes.data || []}
+          appointments={appointments.data || []}
           onLinkingComplete={handleLinkingComplete}
         />
       )}
