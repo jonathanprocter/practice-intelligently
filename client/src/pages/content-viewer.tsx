@@ -541,10 +541,16 @@ export default function ContentViewer() {
   const handleDeleteClick = useCallback((item: DatabaseItem, e: React.MouseEvent) => {
     e.stopPropagation();
     console.log('Delete clicked for item:', item);
+    console.log('Current deleteConfirmOpen state:', deleteConfirmOpen);
     setItemToDelete(item);
     setDeleteConfirmOpen(true);
     console.log('Delete dialog state set to true');
-  }, []);
+    // Force re-render check
+    setTimeout(() => {
+      console.log('After timeout - deleteConfirmOpen:', deleteConfirmOpen);
+      console.log('After timeout - itemToDelete:', itemToDelete);
+    }, 100);
+  }, [deleteConfirmOpen, itemToDelete]);
 
   const handleDeleteCancel = useCallback(() => {
     console.log('Delete cancelled');
@@ -1480,29 +1486,87 @@ export default function ContentViewer() {
         </TabsContent>
       </Tabs>
 
-      {/* Delete Confirmation Dialog */}
-      {deleteConfirmOpen && (
-        <div className="debug-dialog-wrapper" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', backgroundColor: 'white', padding: '20px', borderRadius: '8px', maxWidth: '400px', width: '90%' }}>
-            <h2 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: 'bold' }}>
+      {/* Delete Confirmation Dialog - Debug version */}
+      <div style={{ 
+        position: 'fixed', 
+        top: '10px', 
+        right: '10px', 
+        backgroundColor: 'yellow', 
+        padding: '10px', 
+        zIndex: 10000,
+        fontSize: '12px'
+      }}>
+        Debug: deleteConfirmOpen={deleteConfirmOpen.toString()}, itemToDelete={itemToDelete ? 'exists' : 'null'}
+      </div>
+
+      {deleteConfirmOpen ? (
+        <div 
+          className="debug-dialog-wrapper" 
+          style={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            zIndex: 9999, 
+            backgroundColor: 'rgba(255,0,0,0.8)', // Red background to make it obvious
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onClick={(e) => {
+            // Only close if clicking on overlay, not the dialog
+            if (e.target === e.currentTarget) {
+              handleDeleteCancel();
+            }
+          }}
+        >
+          <div 
+            style={{ 
+              backgroundColor: 'white', 
+              padding: '30px', 
+              borderRadius: '8px', 
+              maxWidth: '500px', 
+              width: '90%',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+              border: '3px solid red' // Make it very obvious
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ marginBottom: '16px', fontSize: '24px', fontWeight: 'bold', color: 'red' }}>
               Delete {itemToDelete?.type?.replace('_', ' ') || 'item'}
             </h2>
-            <p style={{ marginBottom: '20px', color: '#666' }}>
-              Are you sure you want to delete "{itemToDelete?.title || 'this item'}"? 
+            <p style={{ marginBottom: '20px', color: '#333', fontSize: '16px' }}>
+              Are you sure you want to delete "{itemToDelete?.title || itemToDelete?.metadata?.title || 'this item'}"? 
               {itemToDelete?.clientName && ` for client ${itemToDelete.clientName}`}
               This action cannot be undone.
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
               <button 
                 onClick={handleDeleteCancel}
-                style={{ padding: '8px 16px', border: '1px solid #ccc', borderRadius: '4px', backgroundColor: 'white' }}
+                style={{ 
+                  padding: '12px 24px', 
+                  border: '1px solid #ccc', 
+                  borderRadius: '4px', 
+                  backgroundColor: 'white',
+                  fontSize: '16px',
+                  cursor: 'pointer'
+                }}
                 data-testid="button-cancel-delete"
               >
                 Cancel
               </button>
               <button 
                 onClick={handleDeleteConfirm}
-                style={{ padding: '8px 16px', border: 'none', borderRadius: '4px', backgroundColor: '#dc2626', color: 'white' }}
+                style={{ 
+                  padding: '12px 24px', 
+                  border: 'none', 
+                  borderRadius: '4px', 
+                  backgroundColor: '#dc2626', 
+                  color: 'white',
+                  fontSize: '16px',
+                  cursor: 'pointer'
+                }}
                 data-testid="button-confirm-delete"
                 disabled={deleteMutation.isPending}
               >
@@ -1511,7 +1575,7 @@ export default function ContentViewer() {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
