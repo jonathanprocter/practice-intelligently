@@ -4,10 +4,11 @@ import {
   Search, File, Folder, ExternalLink, Eye, FileText, Database, 
   AlertCircle, Star, Clock, Download, ChevronDown, Filter,
   Image, FileSpreadsheet, FileCode, Check, Square, Users, Calendar,
-  ClipboardList, FolderOpen, Target, Trash2
+  ClipboardList, FolderOpen, Target, Trash2, Edit3, Save, X, Tag, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -225,6 +226,9 @@ export default function ContentViewer() {
   const [selectedDatabaseItem, setSelectedDatabaseItem] = useState<DatabaseItem | null>(null);
   const [databaseCategory, setDatabaseCategory] = useState('session_notes');
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [editingItem, setEditingItem] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ title: '', content: '' });
+  const [aiTaggingItems, setAiTaggingItems] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState<FilterState>({
     fileType: 'all',
     sortBy: 'modifiedTime',
@@ -350,6 +354,163 @@ export default function ContentViewer() {
         description: 'Failed to delete some items',
         variant: 'destructive'
       });
+    }
+  };
+
+  // Editing functions
+  const startEditing = (item: DatabaseItem) => {
+    setEditingItem(item.id);
+    setEditForm({
+      title: item.title || '',
+      content: item.content || ''
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingItem(null);
+    setEditForm({ title: '', content: '' });
+  };
+
+  const saveEdit = async (item: DatabaseItem) => {
+    if (!editingItem) return;
+    
+    try {
+      const endpoint = `/api/session-notes/${item.id}`;
+      const response = await fetch(endpoint, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editForm.title,
+          content: editForm.content
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to update');
+      
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['session-notes'] });
+      
+      setEditingItem(null);
+      setEditForm({ title: '', content: '' });
+      
+      toast({
+        title: 'Success',
+        description: 'Session note updated successfully'
+      });
+    } catch (error) {
+      console.error('Update failed:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update session note',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  // AI Tagging function
+  const runAiTagging = async (item: DatabaseItem) => {
+    setAiTaggingItems(prev => new Set([...Array.from(prev), item.id]));
+    
+    try {
+      const response = await fetch(`/api/session-notes/${item.id}/generate-tags`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) throw new Error('Failed to generate tags');
+      
+      const result = await response.json();
+      
+      // Refresh data to show new tags
+      queryClient.invalidateQueries({ queryKey: ['session-notes'] });
+      
+      toast({
+        title: 'Success',
+        description: `Generated ${result.tags?.length || 0} AI tags for this session note`
+      });
+    } catch (error) {
+      console.error('AI tagging failed:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate AI tags',
+        variant: 'destructive'
+      });
+    } finally {
+      setAiTaggingItems(prev => {
+        const newSet = new Set(Array.from(prev));
+        newSet.delete(item.id);
+        return newSet;
+      });
+    }
+  };
+
+  // Bulk AI tagging for items without tags
+  const runBulkAiTagging = async () => {
+    const currentItems = getCurrentDatabaseItems();
+    const itemsWithoutTags = currentItems.filter(item => 
+      item.type === 'session_note' && (!item.tags || item.tags.length === 0)
+    );
+    
+    if (itemsWithoutTags.length === 0) {
+      toast({
+        title: 'Info',
+        description: 'All session notes already have tags'
+      });
+      return;
+    }
+    
+    if (!confirm(`Run AI tagging on ${itemsWithoutTags.length} session notes without tags?`)) {
+      return;
+    }
+    
+    // Add all items to loading state
+    setAiTaggingItems(new Set(itemsWithoutTags.map(item => item.id)));
+    
+    try {
+      // Process in batches to avoid overwhelming the API
+      const batchSize = 5;
+      let processed = 0;
+      
+      for (let i = 0; i < itemsWithoutTags.length; i += batchSize) {
+        const batch = itemsWithoutTags.slice(i, i + batchSize);
+        
+        await Promise.all(batch.map(async (item) => {
+          try {
+            const response = await fetch(`/api/session-notes/${item.id}/generate-tags`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (response.ok) {
+              processed++;
+            }
+          } catch (error) {
+            console.error(`Failed to tag ${item.id}:`, error);
+          }
+        }));
+        
+        // Small delay between batches
+        if (i + batchSize < itemsWithoutTags.length) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['session-notes'] });
+      
+      toast({
+        title: 'Success',
+        description: `Generated AI tags for ${processed} session notes`
+      });
+    } catch (error) {
+      console.error('Bulk AI tagging failed:', error);
+      toast({
+        title: 'Error',
+        description: 'Some AI tagging operations failed',
+        variant: 'destructive'
+      });
+    } finally {
+      setAiTaggingItems(new Set());
     }
   };
 
@@ -1367,6 +1528,18 @@ export default function ContentViewer() {
                     >
                       {selectedItems.size === getCurrentDatabaseItems().length ? 'Deselect All' : 'Select All'}
                     </Button>
+                    {databaseCategory === 'session_notes' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={runBulkAiTagging}
+                        className="text-blue-600 hover:text-blue-700"
+                        disabled={aiTaggingItems.size > 0}
+                      >
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        {aiTaggingItems.size > 0 ? 'Tagging...' : 'AI Tag All'}
+                      </Button>
+                    )}
                   </div>
                 </CardTitle>
               </CardHeader>
@@ -1443,6 +1616,39 @@ export default function ContentViewer() {
                             >
                               <Star className={`h-4 w-4 ${favorites.includes(item.id) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                             </Button>
+                            {item.type === 'session_note' && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  startEditing(item);
+                                }}
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                data-testid={`button-edit-${item.id}`}
+                              >
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {item.type === 'session_note' && (!item.tags || item.tags.length === 0) && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  runAiTagging(item);
+                                }}
+                                className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                disabled={aiTaggingItems.has(item.id)}
+                                data-testid={`button-ai-tag-${item.id}`}
+                              >
+                                {aiTaggingItems.has(item.id) ? (
+                                  <Sparkles className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Tag className="h-4 w-4" />
+                                )}
+                              </Button>
+                            )}
                             <Button variant="ghost" size="sm">
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -1490,18 +1696,54 @@ export default function ContentViewer() {
                 ) : (
                   <div className="space-y-4">
                     <div className="border-b pb-2">
-                      <h3 className="font-semibold flex items-center">
-                        {getDatabaseItemIcon(selectedDatabaseItem.type)}
-                        <span className="ml-2">{selectedDatabaseItem.title}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="ml-2"
-                          onClick={() => toggleFavorite(selectedDatabaseItem.id)}
-                        >
-                          <Star className={`h-4 w-4 ${favorites.includes(selectedDatabaseItem.id) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
-                        </Button>
-                      </h3>
+                      {editingItem === selectedDatabaseItem.id ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-semibold flex items-center">
+                              {getDatabaseItemIcon(selectedDatabaseItem.type)}
+                              <span className="ml-2">Editing</span>
+                            </h3>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => saveEdit(selectedDatabaseItem)}
+                                className="text-green-600"
+                              >
+                                <Save className="h-4 w-4 mr-2" />
+                                Save
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={cancelEditing}
+                                className="text-gray-600"
+                              >
+                                <X className="h-4 w-4 mr-2" />
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                          <Input
+                            placeholder="Title"
+                            value={editForm.title}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                          />
+                        </div>
+                      ) : (
+                        <h3 className="font-semibold flex items-center">
+                          {getDatabaseItemIcon(selectedDatabaseItem.type)}
+                          <span className="ml-2">{selectedDatabaseItem.title}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="ml-2"
+                            onClick={() => toggleFavorite(selectedDatabaseItem.id)}
+                          >
+                            <Star className={`h-4 w-4 ${favorites.includes(selectedDatabaseItem.id) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                          </Button>
+                        </h3>
+                      )}
                       {selectedDatabaseItem.clientName && (
                         <p className="text-sm text-therapy-primary font-medium">
                           Client: {selectedDatabaseItem.clientName}
@@ -1523,11 +1765,21 @@ export default function ContentViewer() {
                       )}
                     </div>
                     
-                    <div className="bg-gray-50 p-4 rounded-lg overflow-auto max-h-96">
-                      <pre className="whitespace-pre-wrap text-sm">
-                        {selectedDatabaseItem.content || 'No content available'}
-                      </pre>
-                    </div>
+                    {editingItem === selectedDatabaseItem.id ? (
+                      <Textarea
+                        placeholder="Content"
+                        value={editForm.content}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, content: e.target.value }))}
+                        rows={12}
+                        className="min-h-[300px] font-mono text-sm"
+                      />
+                    ) : (
+                      <div className="bg-gray-50 p-4 rounded-lg overflow-auto max-h-96">
+                        <pre className="whitespace-pre-wrap text-sm">
+                          {selectedDatabaseItem.content || 'No content available'}
+                        </pre>
+                      </div>
+                    )}
 
                     {/* Quick Actions */}
                     <div className="flex gap-2">
