@@ -902,22 +902,28 @@ export default function ContentViewer() {
     
     // Common patterns for client names in session notes
     const patterns = [
-      // Match "Progress Note for [Name]'s Therapy Session" format
-      /(?:Progress Note for|Clinical Progress Note for)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)'s/i,
+      // Match "Comprehensive Clinical Progress Note for [Name]'s Therapy Session" format
+      /(?:Comprehensive Clinical Progress Note for|Clinical Progress Note for|Progress Note for)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)'s\s+Therapy/i,
+      // Match "Clinical Progress Note - [Name] - Date" format
+      /Clinical Progress Note\s*[-–—]\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*[-–—]/i,
+      // Match titles that start with names followed by progress indicators
+      /^([A-Z][a-z]+\s+[A-Z][a-z]+)(?:\s*[-–—]\s*(?:Progress|Clinical|Session|Therapy))/i,
       // Match "Session Note for [Name]" format  
       /(?:Session Note for|Therapy Session for)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
       // Match "Client: [Name]" format
       /(?:Client|Patient|Individual):\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
       // Match "Session with [Name]" format
       /(?:Session with|Therapy with|Counseling with)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
-      // Match names at beginning of lines followed by common separators
+      // Match names at beginning of content followed by common separators
       /(?:^|\n)([A-Z][a-z]+\s+[A-Z][a-z]+)(?:\s*-|\s*\(|\s*:|\s*,)/,
       // Match "Subject: [Name]" format
       /Subject:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
       // Match "Client Name: [Name]" format
       /Client Name:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
       // Match "Name - Session Date" format at start
-      /^([A-Z][a-z]+\s+[A-Z][a-z]+)\s*-\s*(?:Session|Therapy|Progress)/i
+      /^([A-Z][a-z]+\s+[A-Z][a-z]+)\s*-\s*(?:Session|Therapy|Progress)/i,
+      // Match comprehensive format variations  
+      /Comprehensive.*(?:Progress Note|Session).*for\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i
     ];
     
     for (const pattern of patterns) {
@@ -946,7 +952,7 @@ export default function ContentViewer() {
     switch (type) {
       case 'session_notes':
         // Try multiple sources for client name
-        let clientName = 'Unknown Client';
+        let clientName = null;
         
         if (item.clientFirstName && item.clientLastName) {
           clientName = `${item.clientFirstName} ${item.clientLastName}`;
@@ -954,7 +960,7 @@ export default function ContentViewer() {
           clientName = item.clientName;
         } else {
           // Extract from content if available
-          const extractedName = extractClientNameFromContent(item.content || item.subjective || item.notes || '');
+          const extractedName = extractClientNameFromContent(item.content || item.subjective || item.notes || item.title || '');
           if (extractedName) {
             clientName = extractedName;
           }
