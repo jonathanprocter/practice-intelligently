@@ -578,33 +578,23 @@ export default function ContentViewer() {
     });
   }, []);
 
-  const handleDeleteConfirm = useCallback(() => {
-    console.log('🔥 DELETE CONFIRMED for item:', itemToDelete?.id);
+  const handleDeleteConfirm = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    console.log('🔥 DELETE CONFIRMED BUTTON CLICKED for item:', itemToDelete?.id);
+    console.log('🔥 Current itemToDelete:', itemToDelete);
+    console.log('🔥 deleteMutation object:', deleteMutation);
+    
     if (itemToDelete) {
-      console.log('🔥 Executing delete mutation...');
-      deleteMutation.mutate(itemToDelete, {
-        onSuccess: () => {
-          console.log('✅ Delete successful!');
-          toast({
-            title: "Success",
-            description: "Item deleted successfully",
-          });
-        },
-        onError: (error) => {
-          console.error('❌ Delete failed:', error);
-          toast({
-            title: "Error",
-            description: "Failed to delete item",
-            variant: "destructive",
-          });
-        }
-      });
+      console.log('🔥 Calling deleteMutation.mutate...');
+      deleteMutation.mutate(itemToDelete);
       React.startTransition(() => {
         setDeleteConfirmOpen(false);
         setItemToDelete(null);
       });
+    } else {
+      console.error('🔥 ERROR: itemToDelete is null/undefined!');
     }
-  }, [itemToDelete, deleteMutation, toast]);
+  }, [itemToDelete, deleteMutation]);
 
   // Debug effect to track state changes
   useEffect(() => {
@@ -1600,7 +1590,12 @@ export default function ContentViewer() {
             {/* Big DELETE button first */}
             <div style={{ textAlign: 'center', marginBottom: '20px' }}>
               <button 
-                onClick={handleDeleteConfirm}
+                onClick={(e) => {
+                  console.log('🔥 BUTTON CLICKED EVENT FIRED!');
+                  handleDeleteConfirm(e);
+                }}
+                onMouseDown={() => console.log('🔥 BUTTON MOUSE DOWN')}
+                onMouseUp={() => console.log('🔥 BUTTON MOUSE UP')}
                 style={{ 
                   padding: '20px 40px', 
                   border: '4px solid #dc2626', 
@@ -1615,6 +1610,7 @@ export default function ContentViewer() {
                 }}
                 data-testid="button-confirm-delete"
                 disabled={deleteMutation.isPending}
+                type="button"
               >
                 {deleteMutation.isPending ? '🔄 DELETING...' : '🗑️ YES, DELETE PERMANENTLY'}
               </button>
