@@ -124,11 +124,45 @@ class SimpleOAuth {
   }
 
   isConnected(): boolean {
-    return this.isAuthenticated && this.tokens !== null;
+    if (!this.isAuthenticated || this.tokens === null) {
+      return false;
+    }
+    
+    // Check if tokens are expired
+    if (this.tokens.expiry_date && this.tokens.expiry_date <= Date.now()) {
+      console.log('OAuth tokens have expired');
+      return false;
+    }
+    
+    return true;
+  }
+
+  async testConnection(): Promise<boolean> {
+    try {
+      if (!this.isConnected()) {
+        return false;
+      }
+      
+      // Try to refresh tokens first
+      await this.refreshTokensIfNeeded();
+      
+      if (!this.isConnected()) {
+        return false;
+      }
+      
+      // Make a simple API call to test if the connection actually works
+      const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
+      await calendar.calendarList.list({ maxResults: 1 });
+      
+      return true;
+    } catch (error) {
+      console.log('Connection test failed:', error);
+      return false;
+    }
   }
 
   // Add automatic token refresh method
-  private async refreshTokensIfNeeded(): Promise<void> {
+  async refreshTokensIfNeeded(): Promise<void> {
     if (!this.tokens || !this.tokens.refresh_token) {
       console.log('No refresh token available, need to re-authenticate');
       this.isAuthenticated = false;

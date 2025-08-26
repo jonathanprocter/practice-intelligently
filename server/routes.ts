@@ -5005,11 +5005,18 @@ You are Compass, an AI assistant for therapy practice management. You have acces
 
       // Check if already connected (unless force reconnect is requested)
       if (simpleOAuth.isConnected() && !forceReconnect) {
-        return res.json({
-          message: 'Already authenticated with Google',
-          connected: true,
-          authUrl: null
-        });
+        // Test if the connection actually works
+        const connectionWorks = await simpleOAuth.testConnection();
+        if (connectionWorks) {
+          return res.json({
+            message: 'Already authenticated with Google',
+            connected: true,
+            authUrl: null
+          });
+        } else {
+          console.log('Connection test failed, will provide new auth URL');
+          // Fall through to generate new auth URL
+        }
       }
 
       // If force reconnect, clear existing tokens first
