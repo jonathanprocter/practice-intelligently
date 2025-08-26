@@ -768,7 +768,7 @@ export default function ContentViewer() {
       // Ctrl/Cmd + A to select all visible items
       if ((e.ctrlKey || e.metaKey) && e.key === 'a' && fileListRef.current === document.activeElement) {
         e.preventDefault();
-        const allIds = new Set(currentDriveFiles.map((f: DriveFile) => f.id));
+        const allIds = new Set((driveFiles || []).map((f: DriveFile) => f.id));
         setSelectedItems(allIds as Set<string>);
       }
     };
@@ -897,83 +897,113 @@ export default function ContentViewer() {
   };
 
   // Enhanced client name extraction from session note content
-  const extractClientNameFromContent = (content: string): string | null => {
-    if (!content) return null;
+  const extractClientNameFromContent = useCallback((content: string): string | null => {
+    if (!content || typeof content !== 'string') return null;
     
-    // Common patterns for client names in session notes
-    const patterns = [
-      // Match "Comprehensive Clinical Progress Note for [Name]'s Therapy Session" format
-      /(?:Comprehensive Clinical Progress Note for|Clinical Progress Note for|Progress Note for)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)'s\s+Therapy/i,
-      // Match "Clinical Progress Note - [Name] - Date" format
-      /Clinical Progress Note\s*[-–—]\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*[-–—]/i,
-      // Match titles that start with names followed by progress indicators
-      /^([A-Z][a-z]+\s+[A-Z][a-z]+)(?:\s*[-–—]\s*(?:Progress|Clinical|Session|Therapy))/i,
-      // Match "Session Note for [Name]" format  
-      /(?:Session Note for|Therapy Session for)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
-      // Match "Client: [Name]" format
-      /(?:Client|Patient|Individual):\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
-      // Match "Session with [Name]" format
-      /(?:Session with|Therapy with|Counseling with)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
-      // Match names at beginning of content followed by common separators
-      /(?:^|\n)([A-Z][a-z]+\s+[A-Z][a-z]+)(?:\s*-|\s*\(|\s*:|\s*,)/,
-      // Match "Subject: [Name]" format
-      /Subject:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
-      // Match "Client Name: [Name]" format
-      /Client Name:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
-      // Match "Name - Session Date" format at start
-      /^([A-Z][a-z]+\s+[A-Z][a-z]+)\s*-\s*(?:Session|Therapy|Progress)/i,
-      // Match comprehensive format variations  
-      /Comprehensive.*(?:Progress Note|Session).*for\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i
-    ];
-    
-    for (const pattern of patterns) {
-      const match = content.match(pattern);
-      if (match && match[1]) {
-        const name = match[1].trim();
-        // Validate it looks like a real name (at least 2 words, reasonable length)
-        if (name.split(' ').length >= 2 && name.length >= 3 && name.length <= 50) {
-          return name;
+    try {
+      // Common patterns for client names in session notes
+      const patterns = [
+        // Match "Comprehensive Clinical Progress Note for [Name]'s Therapy Session" format
+        /(?:Comprehensive Clinical Progress Note for|Clinical Progress Note for|Progress Note for)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)'s\s+Therapy/i,
+        // Match "Clinical Progress Note - [Name] - Date" format
+        /Clinical Progress Note\s*[-–—]\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*[-–—]/i,
+        // Match titles that start with names followed by progress indicators
+        /^([A-Z][a-z]+\s+[A-Z][a-z]+)(?:\s*[-–—]\s*(?:Progress|Clinical|Session|Therapy))/i,
+        // Match "Session Note for [Name]" format  
+        /(?:Session Note for|Therapy Session for)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
+        // Match "Client: [Name]" format
+        /(?:Client|Patient|Individual):\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
+        // Match "Session with [Name]" format
+        /(?:Session with|Therapy with|Counseling with)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
+        // Match names at beginning of content followed by common separators
+        /(?:^|\n)([A-Z][a-z]+\s+[A-Z][a-z]+)(?:\s*-|\s*\(|\s*:|\s*,)/,
+        // Match "Subject: [Name]" format
+        /Subject:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
+        // Match "Client Name: [Name]" format
+        /Client Name:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i,
+        // Match "Name - Session Date" format at start
+        /^([A-Z][a-z]+\s+[A-Z][a-z]+)\s*-\s*(?:Session|Therapy|Progress)/i,
+        // Match comprehensive format variations  
+        /Comprehensive.*(?:Progress Note|Session).*for\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i
+      ];
+      
+      for (const pattern of patterns) {
+        try {
+          const match = content.match(pattern);
+          if (match && match[1]) {
+            const name = match[1].trim();
+            // Validate it looks like a real name (at least 2 words, reasonable length)
+            if (name.split(' ').length >= 2 && name.length >= 3 && name.length <= 50) {
+              return name;
+            }
+          }
+        } catch (patternError) {
+          console.warn('Pattern matching error:', patternError);
+          continue;
         }
       }
+    } catch (error) {
+      console.error('Error in extractClientNameFromContent:', error);
     }
     
     return null;
-  };
+  }, []);
 
-  const formatDatabaseItem = (item: any, type: string): DatabaseItem => {
-    const baseItem = {
-      id: item.id,
-      type: type as DatabaseItem['type'],
-      createdAt: item.createdAt || item.created_at || new Date().toISOString(),
-      updatedAt: item.updatedAt || item.updated_at || new Date().toISOString(),
-      metadata: item
-    };
+  const formatDatabaseItem = useCallback((item: any, type: string): DatabaseItem => {
+    if (!item || !item.id) {
+      console.warn('Invalid item passed to formatDatabaseItem:', item);
+      return {
+        id: 'unknown',
+        type: 'session_note',
+        title: 'Invalid Item',
+        content: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        metadata: {}
+      };
+    }
 
-    switch (type) {
-      case 'session_notes':
-        // Try multiple sources for client name
-        let clientName = null;
-        
-        if (item.clientFirstName && item.clientLastName) {
-          clientName = `${item.clientFirstName} ${item.clientLastName}`;
-        } else if (item.clientName) {
-          clientName = item.clientName;
-        } else {
-          // Extract from content if available
-          const extractedName = extractClientNameFromContent(item.content || item.subjective || item.notes || item.title || '');
-          if (extractedName) {
-            clientName = extractedName;
+    try {
+      const baseItem = {
+        id: String(item.id),
+        type: type as DatabaseItem['type'],
+        createdAt: item.createdAt || item.created_at || new Date().toISOString(),
+        updatedAt: item.updatedAt || item.updated_at || new Date().toISOString(),
+        metadata: item
+      };
+
+      switch (type) {
+        case 'session_notes':
+          // Try multiple sources for client name with error handling
+          let clientName = null;
+          
+          try {
+            if (item.clientFirstName && item.clientLastName) {
+              clientName = `${String(item.clientFirstName)} ${String(item.clientLastName)}`;
+            } else if (item.clientName) {
+              clientName = String(item.clientName);
+            } else {
+              // Extract from content if available
+              const extractedName = extractClientNameFromContent(
+                item.content || item.subjective || item.notes || item.title || ''
+              );
+              if (extractedName) {
+                clientName = extractedName;
+              }
+            }
+          } catch (nameError) {
+            console.warn('Error extracting client name:', nameError);
+            clientName = null;
           }
-        }
-        
-        return {
-          ...baseItem,
-          type: 'session_note',
-          title: item.title || `Session Note - ${new Date(item.createdAt || item.created_at).toLocaleDateString()}`,
-          clientName,
-          content: item.content || item.subjective || '',
-          tags: item.tags || item.aiTags || []
-        };
+          
+          return {
+            ...baseItem,
+            type: 'session_note',
+            title: item.title || `Session Note - ${new Date(item.createdAt || item.created_at || new Date()).toLocaleDateString()}`,
+            clientName: clientName || undefined,
+            content: item.content || item.subjective || '',
+            tags: Array.isArray(item.tags) ? item.tags : (Array.isArray(item.aiTags) ? item.aiTags : [])
+          };
       case 'clients':
         return {
           ...baseItem,
@@ -1007,7 +1037,19 @@ export default function ContentViewer() {
           content: item.description || item.content || ''
         };
     }
-  };
+    } catch (error) {
+      console.error('Error in formatDatabaseItem:', error);
+      return {
+        id: String(item.id || 'error'),
+        type: 'session_note',
+        title: 'Error Loading Item',
+        content: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        metadata: {}
+      };
+    }
+  }, [extractClientNameFromContent]);
 
   const currentDriveFiles = debouncedSearchQuery ? (driveSearchResults || []) : driveFiles;
   const currentNotionItems = debouncedSearchQuery 
