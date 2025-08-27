@@ -5272,6 +5272,7 @@ You are Compass, an AI assistant for therapy practice management. You have acces
         totalSessions: result.totalSessions,
         successfulMatches: result.successfulMatches,
         createdProgressNotes: result.createdProgressNotes,
+        storedDocuments: result.storedDocuments || 0,
         processingDetails: result.processingDetails
       });
 

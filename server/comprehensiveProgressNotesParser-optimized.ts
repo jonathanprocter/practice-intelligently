@@ -39,6 +39,7 @@ interface ProcessingResult {
   totalSessions: number;
   successfulMatches: number;
   createdProgressNotes: number;
+  storedDocuments: number;
   processingDetails: ClientMatch[];
   errors: string[];
 }
@@ -47,18 +48,30 @@ export class OptimizedComprehensiveProgressNotesParser {
   
   async parseComprehensiveDocument(filePath: string, therapistId: string): Promise<ProcessingResult> {
     try {
-      console.log('Starting optimized comprehensive document parsing...');
+      console.log('🚀 Starting optimized comprehensive document parsing...');
       
       // Extract text from document
       const text = await this.extractTextFromDocument(filePath);
-      console.log(`Extracted text: ${text.length} characters`);
+      console.log(`📄 Extracted text: ${text.length} characters`);
       
       // Parse document structure with chunking strategy
       const extractedClients = await this.parseDocumentStructureOptimized(text);
-      console.log(`Extracted ${extractedClients.length} clients with ${extractedClients.reduce((sum, client) => sum + client.sessions.length, 0)} total sessions`);
+      console.log(`👥 Extracted ${extractedClients.length} clients with ${extractedClients.reduce((sum, client) => sum + client.sessions.length, 0)} total sessions`);
       
       // Match clients with database
       const clientMatches = await this.matchClientsWithDatabase(extractedClients, therapistId);
+      console.log('🔍 CLIENT MATCHING DEBUG:');
+      clientMatches.forEach(match => {
+        console.log(`  • "${match.extractedClient.name}" → ${match.matchType} match (${Math.round(match.confidence * 100)}% confidence)`);
+        if (match.matchedDbClient) {
+          console.log(`    ✅ Matched to database client: ${match.matchedDbClient.firstName} ${match.matchedDbClient.lastName} (ID: ${match.matchedDbClient.id})`);
+        } else {
+          console.log(`    ❌ No database match found`);
+        }
+      });
+      
+      // Store document records for successful matches
+      const storedDocuments = await this.storeDocumentRecordsForMatches(clientMatches, filePath, therapistId);
       
       // Create progress notes for matched clients
       const createdProgressNotes = await this.createProgressNotesForMatches(clientMatches, therapistId);
@@ -68,12 +81,13 @@ export class OptimizedComprehensiveProgressNotesParser {
         totalSessions: extractedClients.reduce((sum, client) => sum + client.sessions.length, 0),
         successfulMatches: clientMatches.filter(match => match.matchedDbClient).length,
         createdProgressNotes,
+        storedDocuments,
         processingDetails: clientMatches,
         errors: []
       };
       
     } catch (error: any) {
-      console.error('Error in parseComprehensiveDocument:', error);
+      console.error('❌ Error in parseComprehensiveDocument:', error);
       throw new Error(`Failed to parse comprehensive progress notes: ${error?.message || 'Unknown error'}`);
     }
   }
@@ -587,6 +601,101 @@ ${section.substring(0, 15000)}
     }
     
     return createdCount;
+  }
+
+  private async storeDocumentRecordsForMatches(matches: ClientMatch[], filePath: string, therapistId: string): Promise<number> {
+    let storedCount = 0;
+    
+    console.log('📁 Storing document records with proper client linking...');
+    
+    try {
+      // Import DocumentTagger for AI analysis
+      const { DocumentTagger } = await import('./documentTagger');
+      
+      // Get original filename
+      const originalName = filePath.split('/').pop() || 'unknown-document';
+      const fileExtension = originalName.includes('.') ? originalName.split('.').pop() : 'unknown';
+      
+      // Store one document record for each matched client
+      for (const match of matches) {
+        if (!match.matchedDbClient) continue;
+        
+        try {
+          console.log(`📄 Creating document record for client: ${match.matchedDbClient.firstName} ${match.matchedDbClient.lastName}`);
+          
+          // Analyze document with AI (generates tags, category, summary, etc.)
+          const taggingResult = await DocumentTagger.analyzeDocument(
+            filePath,
+            originalName,
+            '.' + fileExtension
+          );
+          
+          // Create document record with proper client linking
+          const documentRecord = await storage.createDocument({
+            therapistId,
+            clientId: match.matchedDbClient.id, // ✅ PROPER CLIENT LINKING!
+            fileName: originalName,
+            originalName,
+            fileType: this.getMimeTypeFromExtension(fileExtension),
+            fileSize: await this.getFileSize(filePath),
+            documentType: taggingResult.category,
+            filePath,
+            isConfidential: taggingResult.sensitivityLevel === 'high' || taggingResult.sensitivityLevel === 'confidential',
+            tags: {}, // Keep empty for compatibility
+            
+            // AI analysis results
+            aiTags: taggingResult.aiTags,
+            category: taggingResult.category,
+            subcategory: taggingResult.subcategory,
+            contentSummary: taggingResult.contentSummary,
+            clinicalKeywords: taggingResult.clinicalKeywords,
+            confidenceScore: String(taggingResult.confidenceScore || 0),
+            sensitivityLevel: taggingResult.sensitivityLevel,
+            extractedText: taggingResult.extractedText || ''
+          });
+          
+          console.log(`✅ Created document record: ${documentRecord.id} linked to client: ${match.matchedDbClient.id}`);
+          storedCount++;
+          
+        } catch (error) {
+          console.error(`❌ Error creating document record for ${match.matchedDbClient.firstName} ${match.matchedDbClient.lastName}:`, error);
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Error in storeDocumentRecordsForMatches:', error);
+    }
+    
+    console.log(`📁 Stored ${storedCount} document records with proper client linking`);
+    return storedCount;
+  }
+
+  private getMimeTypeFromExtension(extension: string): string {
+    const mimeTypes: { [key: string]: string } = {
+      'pdf': 'application/pdf',
+      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'doc': 'application/msword',
+      'txt': 'text/plain',
+      'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'xls': 'application/vnd.ms-excel',
+      'csv': 'text/csv',
+      'png': 'image/png',
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg'
+    };
+    
+    return mimeTypes[extension.toLowerCase()] || 'application/octet-stream';
+  }
+  
+  private async getFileSize(filePath: string): Promise<number> {
+    try {
+      const fs = await import('fs/promises');
+      const stats = await fs.stat(filePath);
+      return stats.size;
+    } catch (error) {
+      console.warn(`Could not get file size for ${filePath}:`, error);
+      return 0;
+    }
   }
 
   private validateAndFixDate(dateStr: string): string {
