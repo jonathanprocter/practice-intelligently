@@ -1,0 +1,32 @@
+{
+  "timestamp": "2025-08-27T01:30:42.764010",
+  "fixes_applied": [
+    {
+      "description": "Added missing storage methods for document operations",
+      "file_path": "server/storage.ts",
+      "timestamp": "2025-08-27T01:30:42.684142"
+    },
+    {
+      "description": "Added missing Brain import to DocumentProcessor.tsx",
+      "file_path": "client/src/components/documents/DocumentProcessor.tsx",
+      "timestamp": "2025-08-27T01:30:42.700349"
+    }
+  ],
+  "issues_found": [
+    {
+      "description": "Could not find API parameter order issues in DocumentAnalyticsDashboard.tsx",
+      "file_path": "client/src/components/documents/DocumentAnalyticsDashboard.tsx",
+      "timestamp": "2025-08-27T01:30:42.677472"
+    },
+    {
+      "description": "Could not find insertion point in routes.ts",
+      "file_path": "server/routes.ts",
+      "timestamp": "2025-08-27T01:30:42.680597"
+    }
+  ],
+  "summary": {
+    "total_fixes": 2,
+    "total_issues": 2,
+    "success_rate": 50.0
+  }
+}

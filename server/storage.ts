@@ -3729,6 +3729,39 @@ Generate a comprehensive summary in the following JSON format:
       console.error('Error in getSessionNotesByEventId:', error);
       return [];
     }
+
+  async getDocumentsByTherapist(therapistId: string): Promise<any[]> {
+    try {
+      const result = await db.select()
+        .from(documents)
+        .where(eq(documents.therapistId, therapistId))
+        .orderBy(desc(documents.createdAt));
+      
+      return result;
+    } catch (error) {
+      console.error('Error fetching documents by therapist:', error);
+      return [];
+    }
+  }
+
+  async createDocument(documentData: any): Promise<any> {
+    try {
+      const [document] = await db.insert(documents)
+        .values({
+          ...documentData,
+          id: randomUUID(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+      
+      return document;
+    } catch (error) {
+      console.error('Error creating document:', error);
+      throw error;
+    }
+  }
+
   }
 }
 
