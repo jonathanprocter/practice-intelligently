@@ -279,7 +279,7 @@ function extractDateFromContent(content: string): string | null {
     /^.{0,200}(\d{1,2}[-\/]\d{1,2}[-\/]\d{4})/i
   ];
 
-  const monthNames = {
+  const monthNames: { [key: string]: string } = {
     'january': '01', 'february': '02', 'march': '03', 'april': '04',
     'may': '05', 'june': '06', 'july': '07', 'august': '08',
     'september': '09', 'october': '10', 'november': '11', 'december': '12',
@@ -1080,9 +1080,9 @@ async function syncCalendarEvents(): Promise<any> {
       appointmentsCreated += calendarAppointments;
 
       // Send progress update via WebSocket
-      if (global.wss) {
-        global.wss.clients.forEach((client: WebSocket) => {
-          if (client.readyState === WebSocket.OPEN) {
+      if ((global as any).wss) {
+        (global as any).wss.clients.forEach((client: any) => {
+          if (client.readyState === 1) { // WebSocket.OPEN
             client.send(JSON.stringify({
               type: 'sync_progress',
               data: {
@@ -1820,8 +1820,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               significantQuotes: progressNote.significantQuotes,
               narrativeSummary: progressNote.narrativeSummary,
               tags: progressNote.aiTags,
-              sessionDate: new Date(finalMetadata.sessionDate),
-              createdAt: new Date()
+              sessionDate: new Date(finalMetadata.sessionDate)
             });
 
             result.sessionNote = sessionNote;
@@ -1958,8 +1957,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         objective: objective || null,
         assessment: assessment || null,
         plan: plan || null,
-        aiTags: aiTags || [],
-        createdAt: new Date()
+        aiTags: aiTags || []
       });
 
       console.log(`✅ Created new session note with ID: ${sessionNote.id}`);
@@ -2392,8 +2390,7 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
                 tags: analysisResult.extractedData.tags || [],
                 appointmentId: analysisResult.appointmentId || null,
 
-                sessionDate: analysisResult.extractedData.sessionDate || new Date(),
-                createdAt: new Date()
+                sessionDate: analysisResult.extractedData.sessionDate || new Date()
               });
 
               processingResults.sessions.push({
@@ -5584,7 +5581,7 @@ You are Compass, an AI assistant for therapy practice management. You have acces
           aiAnalysis: preformatted 
             ? `Multi-session document processed on ${new Date().toLocaleDateString()}` 
             : comprehensiveNote.narrativeSummary,
-          createdAt: new Date(finalSessionDate)
+          sessionDate: new Date(finalSessionDate)
         };
         savedNote = await storage.createSessionNote(sessionNoteData);
         console.log(`✅ Created session note linked to appointment: ${appointmentId}`);
@@ -6748,7 +6745,6 @@ Follow-up areas for next session:
       // Create new client check-in
       const checkin = await storage.createClientCheckin({
         ...checkinData,
-        createdAt: new Date(),
         status: checkinData.status || 'pending'
       });
 

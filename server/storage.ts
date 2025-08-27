@@ -3762,6 +3762,232 @@ Generate a comprehensive summary in the following JSON format:
       throw error;
     }
   }
+
+  // Session recommendation methods
+  async getSessionRecommendations(clientId: string): Promise<SessionRecommendation[]> {
+    return await db
+      .select()
+      .from(sessionRecommendations)
+      .where(eq(sessionRecommendations.clientId, clientId))
+      .orderBy(desc(sessionRecommendations.createdAt));
+  }
+
+  async getTherapistSessionRecommendations(therapistId: string): Promise<SessionRecommendation[]> {
+    return await db
+      .select()
+      .from(sessionRecommendations)
+      .where(eq(sessionRecommendations.therapistId, therapistId))
+      .orderBy(desc(sessionRecommendations.createdAt));
+  }
+
+  async createSessionRecommendation(recommendation: InsertSessionRecommendation): Promise<SessionRecommendation> {
+    const [newRecommendation] = await db
+      .insert(sessionRecommendations)
+      .values(recommendation)
+      .returning();
+    return newRecommendation;
+  }
+
+  async updateSessionRecommendation(id: string, recommendation: Partial<SessionRecommendation>): Promise<SessionRecommendation> {
+    const [updatedRecommendation] = await db
+      .update(sessionRecommendations)
+      .set({ ...recommendation, updatedAt: new Date() })
+      .where(eq(sessionRecommendations.id, id))
+      .returning();
+    return updatedRecommendation;
+  }
+
+  async markRecommendationAsImplemented(id: string, feedback?: string, effectiveness?: string): Promise<SessionRecommendation> {
+    const [updatedRecommendation] = await db
+      .update(sessionRecommendations)
+      .set({
+        isImplemented: true,
+        implementedAt: new Date(),
+        feedback: feedback || null,
+        effectiveness: effectiveness || null,
+        status: 'implemented',
+        updatedAt: new Date()
+      })
+      .where(eq(sessionRecommendations.id, id))
+      .returning();
+    return updatedRecommendation;
+  }
+
+  async generateSessionRecommendations(clientId: string, therapistId: string): Promise<SessionRecommendation[]> {
+    // This would typically use AI to generate recommendations based on session history
+    // For now, return empty array as placeholder
+    return [];
+  }
+
+  // Assessment catalog methods
+  async getAssessmentCatalog(): Promise<AssessmentCatalog[]> {
+    return await db.select().from(assessmentCatalog).orderBy(assessmentCatalog.name);
+  }
+
+  async getAssessmentCatalogByCategory(category: string): Promise<AssessmentCatalog[]> {
+    return await db
+      .select()
+      .from(assessmentCatalog)
+      .where(eq(assessmentCatalog.category, category))
+      .orderBy(assessmentCatalog.name);
+  }
+
+  async getAssessmentCatalogItem(id: string): Promise<AssessmentCatalog | undefined> {
+    const [item] = await db.select().from(assessmentCatalog).where(eq(assessmentCatalog.id, id));
+    return item || undefined;
+  }
+
+  async createAssessmentCatalogItem(item: InsertAssessmentCatalog): Promise<AssessmentCatalog> {
+    const [newItem] = await db.insert(assessmentCatalog).values(item).returning();
+    return newItem;
+  }
+
+  async updateAssessmentCatalogItem(id: string, item: Partial<AssessmentCatalog>): Promise<AssessmentCatalog> {
+    const [updatedItem] = await db
+      .update(assessmentCatalog)
+      .set({ ...item, updatedAt: new Date() })
+      .where(eq(assessmentCatalog.id, id))
+      .returning();
+    return updatedItem;
+  }
+
+  // Client assessment methods
+  async getClientAssessments(clientId: string): Promise<ClientAssessment[]> {
+    return await db
+      .select()
+      .from(clientAssessments)
+      .where(eq(clientAssessments.clientId, clientId))
+      .orderBy(desc(clientAssessments.assignedDate));
+  }
+
+  async getTherapistAssignedAssessments(therapistId: string, status?: string): Promise<ClientAssessment[]> {
+    let query = db
+      .select()
+      .from(clientAssessments)
+      .where(eq(clientAssessments.therapistId, therapistId));
+    
+    if (status) {
+      query = query.where(eq(clientAssessments.status, status));
+    }
+    
+    return await query.orderBy(desc(clientAssessments.assignedDate));
+  }
+
+  async getClientAssessment(id: string): Promise<ClientAssessment | undefined> {
+    const [assessment] = await db.select().from(clientAssessments).where(eq(clientAssessments.id, id));
+    return assessment || undefined;
+  }
+
+  async assignAssessmentToClient(assignment: InsertClientAssessment): Promise<ClientAssessment> {
+    const [newAssignment] = await db.insert(clientAssessments).values(assignment).returning();
+    return newAssignment;
+  }
+
+  async updateClientAssessment(id: string, update: Partial<ClientAssessment>): Promise<ClientAssessment> {
+    const [updatedAssessment] = await db
+      .update(clientAssessments)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(clientAssessments.id, id))
+      .returning();
+    return updatedAssessment;
+  }
+
+  async startClientAssessment(id: string): Promise<ClientAssessment> {
+    const [updatedAssessment] = await db
+      .update(clientAssessments)
+      .set({ 
+        status: 'in_progress',
+        startedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(clientAssessments.id, id))
+      .returning();
+    return updatedAssessment;
+  }
+
+  async completeClientAssessment(id: string, completedDate: Date): Promise<ClientAssessment> {
+    const [updatedAssessment] = await db
+      .update(clientAssessments)
+      .set({ 
+        status: 'completed',
+        completedAt: completedDate,
+        updatedAt: new Date()
+      })
+      .where(eq(clientAssessments.id, id))
+      .returning();
+    return updatedAssessment;
+  }
+
+  async sendAssessmentReminder(id: string): Promise<ClientAssessment> {
+    const [updatedAssessment] = await db
+      .update(clientAssessments)
+      .set({ 
+        lastReminderSent: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(clientAssessments.id, id))
+      .returning();
+    return updatedAssessment;
+  }
+
+  // Assessment response methods
+  async getAssessmentResponses(clientAssessmentId: string): Promise<AssessmentResponse[]> {
+    return await db
+      .select()
+      .from(assessmentResponses)
+      .where(eq(assessmentResponses.clientAssessmentId, clientAssessmentId))
+      .orderBy(assessmentResponses.questionNumber);
+  }
+
+  async createAssessmentResponse(response: InsertAssessmentResponse): Promise<AssessmentResponse> {
+    const [newResponse] = await db.insert(assessmentResponses).values(response).returning();
+    return newResponse;
+  }
+
+  // Assessment score methods
+  async getAssessmentScores(clientAssessmentId: string): Promise<AssessmentScore[]> {
+    return await db
+      .select()
+      .from(assessmentScores)
+      .where(eq(assessmentScores.clientAssessmentId, clientAssessmentId));
+  }
+
+  async createAssessmentScore(score: InsertAssessmentScore): Promise<AssessmentScore> {
+    const [newScore] = await db.insert(assessmentScores).values(score).returning();
+    return newScore;
+  }
+
+  async validateAssessmentScore(id: string, validatedBy: string): Promise<AssessmentScore> {
+    const [updatedScore] = await db
+      .update(assessmentScores)
+      .set({ 
+        isValidated: true,
+        validatedBy: validatedBy,
+        validatedAt: new Date()
+      })
+      .where(eq(assessmentScores.id, id))
+      .returning();
+    return updatedScore;
+  }
+
+  // Assessment package methods
+  async getAssessmentPackages(): Promise<AssessmentPackage[]> {
+    return await db.select().from(assessmentPackages).orderBy(assessmentPackages.name);
+  }
+
+  async createAssessmentPackage(pkg: InsertAssessmentPackage): Promise<AssessmentPackage> {
+    const [newPackage] = await db.insert(assessmentPackages).values(pkg).returning();
+    return newPackage;
+  }
+
+  // Assessment audit methods
+  async getClientAssessmentAuditLogs(clientAssessmentId: string): Promise<AssessmentAuditLog[]> {
+    return await db
+      .select()
+      .from(assessmentAuditLog)
+      .where(eq(assessmentAuditLog.clientAssessmentId, clientAssessmentId))
+      .orderBy(desc(assessmentAuditLog.timestamp));
+  }
 }
 
 export const storage = new DatabaseStorage();
