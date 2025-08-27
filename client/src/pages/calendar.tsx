@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 import { ApiClient } from '@/lib/api';
 import { CalendarEvent, CalendarDay } from '../types/calendar';
+import { SessionNote } from '@/lib/api';
 import { getOfficeLocationByDay, getCalendarLocationDisplay } from '@/utils/locationUtils';
 import { getWeekStart, getWeekEnd, getWeekDays, addWeeks, isCurrentWeek, getWeekRangeString } from '../utils/dateUtils';
 import { exportCurrentWeeklyView } from '../utils/currentWeeklyExport';
@@ -20,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings, Search, Filter, MapPin, User, X, RefreshCw } from 'lucide-react';
+import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings, Search, Filter, MapPin, User, X, RefreshCw, FileText, Loader2 } from 'lucide-react';
 import CalendarSyncStatusIndicator from '@/components/calendar/CalendarSyncStatusIndicator';
 
 // Helper function to check if a date is today
@@ -48,6 +50,21 @@ export default function Calendar() {
     end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   });
   const [calendarTypeFilter, setCalendarTypeFilter] = useState<string[]>([]);
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch session notes for selected event
+  const { data: eventSessionNotes, isLoading: notesLoading } = useQuery({
+    queryKey: ['/api/session-notes/event', selectedEvent?.googleEventId],
+    queryFn: async (): Promise<SessionNote[]> => {
+      if (!selectedEvent?.googleEventId) return [];
+      const response = await fetch(`/api/session-notes/event/${selectedEvent.googleEventId}`);
+      if (!response.ok) throw new Error('Failed to fetch session notes');
+      return response.json();
+    },
+    enabled: !!selectedEvent?.googleEventId
+  });
 
   // Get week range
   const weekEnd = getWeekEnd(currentWeek);
@@ -449,8 +466,13 @@ export default function Calendar() {
   };
 
   const handleSessionNotes = (event: CalendarEvent) => {
-    // Navigate to session notes
-    console.log('Opening session notes for:', event.id);
+    // Navigate to session notes for the specific event
+    if (event.googleEventId) {
+      window.open(`/session-notes?eventId=${event.googleEventId}`, '_blank');
+    } else {
+      console.log('Opening session notes for:', event.id);
+      window.open('/session-notes', '_blank');
+    }
   };
 
   // Helper functions for calendar filtering
@@ -1031,10 +1053,66 @@ export default function Calendar() {
 
               {selectedEvent.notes && (
                 <div>
-                  <label className="text-sm font-medium text-therapy-text">Notes</label>
+                  <label className="text-sm font-medium text-therapy-text">Calendar Notes</label>
                   <p className="text-therapy-text/70">{selectedEvent.notes}</p>
                 </div>
               )}
+
+              {/* Session Notes Section */}
+              <div>
+                <label className="text-sm font-medium text-therapy-text flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Session Notes
+                  {notesLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+                </label>
+                {eventSessionNotes && eventSessionNotes.length > 0 ? (
+                  <div className="space-y-2 mt-2">
+                    {eventSessionNotes.map((note) => (
+                      <div key={note.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="text-sm font-medium text-therapy-text">
+                            {note.title || 'Session Note'}
+                          </h4>
+                          <span className="text-xs text-gray-500">
+                            {new Date(note.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        {note.content && (
+                          <p className="text-sm text-therapy-text/70 line-clamp-3">
+                            {note.content.length > 100 ? `${note.content.substring(0, 100)}...` : note.content}
+                          </p>
+                        )}
+                        {note.subjective && (
+                          <div className="mt-2">
+                            <span className="text-xs font-medium text-therapy-primary">Subjective:</span>
+                            <p className="text-xs text-therapy-text/70 line-clamp-2">{note.subjective}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : selectedEvent?.googleEventId && !notesLoading ? (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500 mb-2">No session notes found for this appointment.</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        // Navigate to create new session note for this event
+                        const noteUrl = `/session-notes/new?eventId=${selectedEvent.googleEventId}&clientName=${selectedEvent.clientName || ''}&eventDate=${selectedEvent.startTime}`;
+                        window.open(noteUrl, '_blank');
+                      }}
+                      className="text-xs"
+                      data-testid="button-create-note"
+                    >
+                      <FileText className="w-3 h-3 mr-1" />
+                      Add Session Note
+                    </Button>
+                  </div>
+                ) : !selectedEvent?.googleEventId ? (
+                  <p className="text-sm text-gray-500 mt-2">Calendar event ID not available for note linking.</p>
+                ) : null}
+              </div>
 
               <div className="flex gap-2 pt-4">
                 <Button 
