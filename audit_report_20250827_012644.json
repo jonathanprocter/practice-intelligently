@@ -1,0 +1,107 @@
+{
+  "timestamp": "2025-08-27T01:26:44.556406",
+  "duration": 22.455899238586426,
+  "summary": {
+    "total_tests": 17,
+    "passed_tests": 15,
+    "issues_found": 2,
+    "pass_rate": 88.23529411764706,
+    "critical_issues": 0,
+    "high_priority": 1,
+    "medium_priority": 0,
+    "low_priority": 1
+  },
+  "issues": [
+    {
+      "category": "Frontend",
+      "severity": "high",
+      "description": "TypeScript compilation failed with 0 errors",
+      "fix_suggestion": "Fix TypeScript errors shown in the output",
+      "timestamp": "2025-08-27T01:26:38.825092"
+    },
+    {
+      "category": "CodeQuality",
+      "severity": "low",
+      "description": "Found 18 code quality issues across TypeScript files",
+      "fix_suggestion": "Clean up console.log statements and improve typing",
+      "timestamp": "2025-08-27T01:26:44.554910"
+    }
+  ],
+  "passed_tests": [
+    {
+      "category": "Server",
+      "description": "Server is running and responding",
+      "timestamp": "2025-08-27T01:26:22.111031"
+    },
+    {
+      "category": "API",
+      "description": "Health check endpoint working",
+      "timestamp": "2025-08-27T01:26:22.114634"
+    },
+    {
+      "category": "API",
+      "description": "Dashboard stats endpoint working",
+      "timestamp": "2025-08-27T01:26:23.011512"
+    },
+    {
+      "category": "API",
+      "description": "Client list endpoint working",
+      "timestamp": "2025-08-27T01:26:23.060937"
+    },
+    {
+      "category": "API",
+      "description": "Today's appointments endpoint working",
+      "timestamp": "2025-08-27T01:26:23.088368"
+    },
+    {
+      "category": "API",
+      "description": "Session notes endpoint working",
+      "timestamp": "2025-08-27T01:26:23.116418"
+    },
+    {
+      "category": "API",
+      "description": "Document categories endpoint working",
+      "timestamp": "2025-08-27T01:26:23.134140"
+    },
+    {
+      "category": "Database",
+      "description": "Database connection working - found 68 clients",
+      "timestamp": "2025-08-27T01:26:23.165629"
+    },
+    {
+      "category": "FileStructure",
+      "description": "Server entry point exists",
+      "timestamp": "2025-08-27T01:26:23.166499"
+    },
+    {
+      "category": "FileStructure",
+      "description": "API routes exists",
+      "timestamp": "2025-08-27T01:26:23.166578"
+    },
+    {
+      "category": "FileStructure",
+      "description": "Database storage layer exists",
+      "timestamp": "2025-08-27T01:26:23.166713"
+    },
+    {
+      "category": "FileStructure",
+      "description": "Database schema exists",
+      "timestamp": "2025-08-27T01:26:23.166825"
+    },
+    {
+      "category": "FileStructure",
+      "description": "Frontend app exists",
+      "timestamp": "2025-08-27T01:26:23.167055"
+    },
+    {
+      "category": "FileStructure",
+      "description": "Package configuration exists",
+      "timestamp": "2025-08-27T01:26:23.167275"
+    },
+    {
+      "category": "Environment",
+      "description": "All critical dependencies present",
+      "timestamp": "2025-08-27T01:26:23.168035"
+    }
+  ]
+}
