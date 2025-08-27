@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { FileText, Upload, CheckCircle, AlertCircle, Loader2, Edit3, Brain, Brain } from "lucide-react";
+import { FileText, Upload, CheckCircle, AlertCircle, Loader2, Edit3, Brain } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import ManualMetadataReviewModal from '../ManualMetadataReviewModal';
 

@@ -3729,6 +3729,7 @@ Generate a comprehensive summary in the following JSON format:
       console.error('Error in getSessionNotesByEventId:', error);
       return [];
     }
+  }
 
   async getDocumentsByTherapist(therapistId: string): Promise<any[]> {
     try {
@@ -3760,8 +3761,6 @@ Generate a comprehensive summary in the following JSON format:
       console.error('Error creating document:', error);
       throw error;
     }
-  }
-
   }
 }
 
