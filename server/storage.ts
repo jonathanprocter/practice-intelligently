@@ -3718,7 +3718,7 @@ Generate a comprehensive summary in the following JSON format:
       const query = `
         SELECT sn.*, c.first_name, c.last_name
         FROM session_notes sn
-        LEFT JOIN clients c ON sn.client_id = c.id
+        LEFT JOIN clients c ON sn.client_id = c.id::text
         WHERE sn.event_id = $1
         ORDER BY sn.created_at DESC
       `;

@@ -1941,7 +1941,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a new session note
   app.post("/api/session-notes", async (req, res) => {
     try {
-      const { clientId, therapistId, content, appointmentId, aiTags, source } = req.body;
+      const { clientId, therapistId, content, appointmentId, aiTags, source, eventId, title, subjective, objective, assessment, plan } = req.body;
 
       if (!clientId || !therapistId || !content) {
         return res.status(400).json({ error: "clientId, therapistId, and content are required" });
@@ -1952,6 +1952,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         therapistId,
         content,
         appointmentId: appointmentId || null,
+        eventId: eventId || null,
+        title: title || null,
+        subjective: subjective || null,
+        objective: objective || null,
+        assessment: assessment || null,
+        plan: plan || null,
         aiTags: aiTags || [],
         createdAt: new Date()
       });
