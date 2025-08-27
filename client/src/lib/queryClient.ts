@@ -12,6 +12,8 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  console.log(`API Request: ${method} ${url}`);
+
   const res = await fetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
@@ -19,7 +21,11 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  await throwIfResNotOk(res);
+  if (!res.ok) {
+    console.error(`API Error: ${method} ${url} - ${res.status} ${res.statusText}`);
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+
   return res;
 }
 
