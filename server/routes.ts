@@ -1138,17 +1138,22 @@ export async function registerRoutes(app: Express, wss: WebSocket.Server): Promi
 
   // Health check
   app.get("/api/health", async (req, res) => {
-    res.json({
-      status: "ok",
-      timestamp: new Date().toISOString(),
-      integrations: {
-        openai: !!process.env.OPENAI_API_KEY,
-        anthropic: !!process.env.ANTHROPIC_API_KEY,
-        gemini: !!process.env.GEMINI_API_KEY,
-        perplexity: !!process.env.PERPLEXITY_API_KEY,
-        database: !!process.env.DATABASE_URL,
-      }
-    });
+    try {
+      res.json({
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        integrations: {
+          openai: !!process.env.OPENAI_API_KEY,
+          anthropic: !!process.env.ANTHROPIC_API_KEY,
+          gemini: !!process.env.GEMINI_API_KEY,
+          perplexity: !!process.env.PERPLEXITY_API_KEY,
+          database: !!process.env.DATABASE_URL,
+        }
+      });
+    } catch (error) {
+      console.error('Health check error:', error);
+      res.status(500).json({ status: "error", message: "Health check failed" });
+    }
   });
 
   // User/Settings endpoints

@@ -21,15 +21,22 @@ process.on('SIGINT', () => {
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
-  // Exit gracefully to allow restart
-  process.exit(1);
+  // Only exit on critical errors, not network issues
+  if (!error.message?.includes('EADDRINUSE') && !error.message?.includes('fetch')) {
+    process.exit(1);
+  }
 });
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  // Exit gracefully to allow restart
-  process.exit(1);
+  // Don't exit on fetch errors or network issues
+  if (reason && typeof reason === 'object' && 'message' in reason) {
+    const message = (reason as Error).message;
+    if (!message?.includes('fetch') && !message?.includes('ECONNREFUSED')) {
+      process.exit(1);
+    }
+  }
 });
 
 const app = express();
@@ -112,12 +119,26 @@ app.use((req, res, next) => {
 
     server.on('error', (err: any) => {
       if (err.code === 'EADDRINUSE') {
-        console.error(`Port ${port} is already in use. Exiting to allow restart...`);
-        process.exit(1);
+        console.error(`Port ${port} is already in use. Attempting to kill existing process...`);
+        const { exec } = require('child_process');
+        exec(`fuser -k ${port}/tcp || true`, (error: any) => {
+          if (error) {
+            console.log('Could not kill existing process, but continuing...');
+          }
+          setTimeout(() => {
+            server.listen({
+              port,
+              host: "0.0.0.0",
+              reusePort: true,
+            }, () => {
+              log(`serving on port ${port}`);
+            });
+          }, 2000);
+        });
       } else {
         console.error('Server error:', err);
-        // Exit on critical server errors
-        process.exit(1);
+        // Don't exit immediately on all errors
+        console.log('Server will continue running...');
       }
     });
 

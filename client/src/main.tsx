@@ -43,9 +43,20 @@ import ErrorBoundary from "./components/ErrorBoundary";
 
 // Global error handler for network issues
 window.addEventListener('unhandledrejection', (event) => {
-  if (event.reason?.message?.includes('Failed to fetch')) {
+  if (event.reason?.message?.includes('Failed to fetch') || 
+      event.reason?.message?.includes('fetch') ||
+      event.reason?.message?.includes('NetworkError')) {
     console.warn('Network request failed, but continuing...', event.reason);
     event.preventDefault(); // Prevent the error from showing in console
+  }
+});
+
+// Handle runtime errors gracefully
+window.addEventListener('error', (event) => {
+  if (event.error?.message?.includes('fetch') || 
+      event.error?.message?.includes('Network')) {
+    console.warn('Network error caught, continuing...', event.error);
+    event.preventDefault();
   }
 });
 
@@ -54,14 +65,32 @@ const queryClient = new QueryClient({
     queries: {
       retry: (failureCount, error: any) => {
         // Don't retry network errors more than once
-        if (error?.message?.includes('Failed to fetch')) {
+        if (error?.message?.includes('Failed to fetch') || 
+            error?.message?.includes('fetch') ||
+            error?.message?.includes('NetworkError')) {
           return failureCount < 1;
         }
         return failureCount < 3;
       },
       staleTime: 5 * 60 * 1000, // 5 minutes
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      onError: (error: any) => {
+        // Silently handle network errors
+        if (error?.message?.includes('fetch') || 
+            error?.message?.includes('Network')) {
+          console.warn('Query network error (handled):', error.message);
+        }
+      }
     },
+    mutations: {
+      onError: (error: any) => {
+        // Silently handle network errors in mutations too
+        if (error?.message?.includes('fetch') || 
+            error?.message?.includes('Network')) {
+          console.warn('Mutation network error (handled):', error.message);
+        }
+      }
+    }
   },
 });
 
