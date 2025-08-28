@@ -24,7 +24,7 @@ import path from 'path';
 import { uploadSingle, uploadMultiple } from './upload';
 
 // Added for WebSocket support
-import WebSocket from 'ws';
+import WebSocket, { WebSocketServer } from 'ws';
 
 // Configure multer for in-memory storage
 const uploadToMemory = multer({ 
@@ -1132,7 +1132,7 @@ async function syncCalendarEvents(): Promise<any> {
 }
 
 
-export async function registerRoutes(app: Express, wss: WebSocket.Server): Promise<Server> {
+export async function registerRoutes(app: Express, wss?: WebSocketServer): Promise<Server> {
   // Set the WebSocket server on app locals for access in routes
   app.locals.wss = wss;
 
@@ -1786,11 +1786,13 @@ export async function registerRoutes(app: Express, wss: WebSocket.Server): Promi
 
       let result = {
         metadata: finalMetadata,
-        sessionNote: null,
+        sessionNote: null as any,
         analysis: {
           originalExtraction: originalMetadata,
           manualOverrides: manualOverrides,
-          finalMetadata: finalMetadata
+          finalMetadata: finalMetadata,
+          warning: undefined as string | undefined,
+          error: undefined as string | undefined
         }
       };
 
@@ -1839,7 +1841,7 @@ export async function registerRoutes(app: Express, wss: WebSocket.Server): Promi
           }
         } catch (noteCreationError) {
           console.error('Error creating progress note:', noteCreationError);
-          result.analysis.error = 'Failed to create progress note: ' + noteCreationError.message;
+          result.analysis.error = 'Failed to create progress note: ' + (noteCreationError instanceof Error ? noteCreationError.message : String(noteCreationError));
         }
       }
 

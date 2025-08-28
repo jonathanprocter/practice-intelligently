@@ -24,7 +24,7 @@ interface ProgressNote {
   createdAt: string;
 }
 
-export function ProgressNotesPage() {
+function ProgressNotesPage() {
   const [selectedNote, setSelectedNote] = useState<ProgressNote | null>(null);
   const [showUpload, setShowUpload] = useState(false);
 
@@ -303,3 +303,5 @@ export function ProgressNotesPage() {
     </div>
   );
 }
+
+export default ProgressNotesPage;

@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from 'http';
+import { exec } from 'child_process';
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupWebSocketServer } from './websocket/websocket.server';
@@ -119,22 +120,8 @@ app.use((req, res, next) => {
 
     server.on('error', (err: any) => {
       if (err.code === 'EADDRINUSE') {
-        console.error(`Port ${port} is already in use. Attempting to kill existing process...`);
-        const { exec } = require('child_process');
-        exec(`fuser -k ${port}/tcp || true`, (error: any) => {
-          if (error) {
-            console.log('Could not kill existing process, but continuing...');
-          }
-          setTimeout(() => {
-            server.listen({
-              port,
-              host: "0.0.0.0",
-              reusePort: true,
-            }, () => {
-              log(`serving on port ${port}`);
-            });
-          }, 2000);
-        });
+        console.error(`Port ${port} is already in use. Server will exit.`);
+        process.exit(1);
       } else {
         console.error('Server error:', err);
         // Don't exit immediately on all errors
