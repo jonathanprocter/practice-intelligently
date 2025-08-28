@@ -14,19 +14,36 @@ export async function apiRequest(
 ): Promise<Response> {
   console.log(`API Request: ${method} ${url}`);
 
-  const res = await fetch(url, {
+  const options: RequestInit = {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+    headers: {
+      "Content-Type": "application/json",
+    },
+    // Add timeout and retry logic
+    signal: AbortSignal.timeout(30000), // 30 second timeout
+  };
 
-  if (!res.ok) {
-    console.error(`API Error: ${method} ${url} - ${res.status} ${res.statusText}`);
-    throw new Error(`HTTP error! status: ${res.status}`);
+  if (data) {
+    options.body = JSON.stringify(data);
   }
 
-  return res;
+  try {
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+      console.error(`API Error: ${method} ${url} - ${response.status} ${response.statusText}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response;
+  } catch (error: any) {
+    // Handle specific network errors gracefully
+    if (error.name === 'AbortError' || error.message?.includes('Failed to fetch')) {
+      console.warn(`Network request failed for ${url}:`, error.message);
+      throw new Error('Network request failed - please check your connection');
+    }
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

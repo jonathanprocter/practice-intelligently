@@ -8,24 +8,39 @@ import App from "./App.tsx";
 import { Toaster } from "./components/ui/toaster";
 import ErrorBoundary from "./components/ErrorBoundary";
 
-// Global error handler for network issues
+// Enhanced global error handler for network issues and HMR
 window.addEventListener('unhandledrejection', (event) => {
-  if (event.reason?.message?.includes('Failed to fetch') || 
-      event.reason?.message?.includes('fetch') ||
-      event.reason?.message?.includes('NetworkError')) {
-    console.warn('Network request failed, but continuing...', event.reason);
+  const errorMessage = event.reason?.message || '';
+  const isNetworkError = errorMessage.includes('Failed to fetch') || 
+                        errorMessage.includes('fetch') ||
+                        errorMessage.includes('NetworkError') ||
+                        errorMessage.includes('HMR') ||
+                        errorMessage.includes('WebSocket');
+  
+  if (isNetworkError) {
+    console.warn('Network/HMR request failed, but continuing...', event.reason);
     event.preventDefault(); // Prevent the error from showing in console
   }
 });
 
-// Handle runtime errors gracefully
+// Handle runtime errors gracefully including HMR errors
 window.addEventListener('error', (event) => {
-  if (event.error?.message?.includes('fetch') || 
-      event.error?.message?.includes('Network')) {
-    console.warn('Network error caught, continuing...', event.error);
+  const errorMessage = event.error?.message || '';
+  const isNetworkError = errorMessage.includes('fetch') || 
+                        errorMessage.includes('Network') ||
+                        errorMessage.includes('HMR') ||
+                        errorMessage.includes('WebSocket');
+  
+  if (isNetworkError) {
+    console.warn('Network/HMR error caught, continuing...', event.error);
     event.preventDefault();
   }
 });
+
+// Disable HMR overlay for development
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  window.__vite_plugin_react_preamble_installed__ = true;
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
