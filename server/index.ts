@@ -21,13 +21,15 @@ process.on('SIGINT', () => {
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
-  // Don't exit immediately, let the process continue
+  // Exit gracefully to allow restart
+  process.exit(1);
 });
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  // Don't exit the process, just log the error
+  // Exit gracefully to allow restart
+  process.exit(1);
 });
 
 const app = express();
@@ -110,11 +112,12 @@ app.use((req, res, next) => {
 
     server.on('error', (err: any) => {
       if (err.code === 'EADDRINUSE') {
-        console.error(`Port ${port} is already in use. Trying to kill existing process...`);
+        console.error(`Port ${port} is already in use. Exiting to allow restart...`);
         process.exit(1);
       } else {
         console.error('Server error:', err);
-        // Don't throw here, just log and continue
+        // Exit on critical server errors
+        process.exit(1);
       }
     });
 

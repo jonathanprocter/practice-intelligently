@@ -679,15 +679,15 @@ Respond with JSON in this exact format:
     let matchedClient = null;
     if (extractedData.clientName) {
       console.log(`🔍 Attempting to match client: "${extractedData.clientName}"`);
-      
+
       const extractedNameLower = extractedData.clientName.toLowerCase().trim();
       const extractedParts = extractedNameLower.split(/\s+/);
       const extractedFirst = extractedParts[0] || '';
       const extractedLast = extractedParts[extractedParts.length - 1] || '';
-      
+
       console.log(`   Parsed name parts: first="${extractedFirst}", last="${extractedLast}"`);
       console.log(`   Available clients: ${clients.length}`);
-      
+
       // Try exact match first
       matchedClient = clients.find(client => {
         const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
@@ -705,9 +705,9 @@ Respond with JSON in this exact format:
           const clientFirstLower = client.firstName?.toLowerCase() || '';
           const clientLastLower = client.lastName?.toLowerCase() || '';
           const clientFullName = `${clientFirstLower} ${clientLastLower}`;
-          
+
           let score = 0;
-          
+
           // Score based on different matching criteria
           if (clientFirstLower === extractedFirst && clientLastLower === extractedLast) {
             score = 1.0; // Perfect match
@@ -720,9 +720,9 @@ Respond with JSON in this exact format:
           } else if (clientFirstLower.includes(extractedFirst) || clientLastLower.includes(extractedLast)) {
             score = 0.4; // Partial match
           }
-          
+
           console.log(`   Comparing with ${client.firstName} ${client.lastName}: score=${score}`);
-          
+
           if (score > bestScore && score >= 0.6) {
             bestScore = score;
             bestMatch = client;
@@ -752,22 +752,22 @@ Respond with JSON in this exact format:
     let matchedAppointment = null;
     if (extractedData.sessionDate && matchedClient) {
       console.log(`🗓️ Attempting to match appointment for date: "${extractedData.sessionDate}"`);
-      
+
       try {
         const sessionDate = new Date(extractedData.sessionDate);
         if (isNaN(sessionDate.getTime())) {
           console.log('   ❌ Invalid session date format');
         } else {
           console.log(`   📅 Parsed session date: ${sessionDate.toISOString().split('T')[0]}`);
-          
+
           const clientAppointments = appointments.filter(apt => apt.clientId === matchedClient.id);
           console.log(`   📋 Found ${clientAppointments.length} appointments for client`);
-          
+
           matchedAppointment = clientAppointments.find(apt => {
             const aptDate = new Date(apt.startTime);
             const daysDiff = Math.abs((aptDate.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24));
             const isMatch = daysDiff <= 1; // Within 1 day
-            
+
             console.log(`   Comparing with appointment ${aptDate.toISOString().split('T')[0]}: diff=${daysDiff.toFixed(1)} days, match=${isMatch}`);
             return isMatch;
           });
@@ -1132,7 +1132,10 @@ async function syncCalendarEvents(): Promise<any> {
 }
 
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express, wss: WebSocket.Server): Promise<Server> {
+  // Set the WebSocket server on app locals for access in routes
+  app.locals.wss = wss;
+
   // Health check
   app.get("/api/health", async (req, res) => {
     res.json({
@@ -1797,7 +1800,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           if (matchedClient) {
             console.log(`✅ Creating progress note for matched client: ${matchedClient.firstName} ${matchedClient.lastName}`);
-            
+
             // Generate progress note using the document processor
             const progressNote = await documentProcessor.generateProgressNote(
               documentContent,
@@ -2328,2345 +2331,6 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
     } catch (error) {
       console.error("Error generating session prep:", error);
       res.status(500).json({ error: "Failed to generate session prep" });
-    }
-  });
-
-  // Bulk document processing endpoint for large-scale uploads
-  app.post("/api/documents/process-bulk", async (req, res) => {
-    try {
-      const { documents, therapistId, chunkSize = 10 } = req.body;
-
-      if (!documents || !Array.isArray(documents) || !therapistId) {
-        return res.status(400).json({ 
-          error: "Missing required fields: documents (array) and therapistId" 
-        });
-      }
-
-      console.log(`🔄 Starting bulk processing of ${documents.length} documents in chunks of ${chunkSize}...`);
-
-      // Initialize processing state
-      const processingResults = {
-        totalDocuments: documents.length,
-        processed: 0,
-        successful: 0,
-        failed: 0,
-        errors: [] as any[],
-        sessions: [] as any[],
-        clientMatches: new Map(),
-        appointmentMatches: new Map()
-      };
-
-      // Get all clients and appointments for matching
-      const allClients = await storage.getClients(therapistId);
-      const allAppointments = await storage.getAppointments(therapistId);
-
-      console.log(`📊 Reference data loaded: ${allClients.length} clients, ${allAppointments.length} appointments`);
-
-      // Process documents in chunks to avoid overwhelming the system
-      for (let i = 0; i < documents.length; i += chunkSize) {
-        const chunk = documents.slice(i, i + chunkSize);
-        console.log(`📦 Processing chunk ${Math.floor(i/chunkSize) + 1}/${Math.ceil(documents.length/chunkSize)} (${chunk.length} documents)`);
-
-        // Process chunk in parallel
-        const chunkPromises = chunk.map(async (document, index) => {
-          try {
-            const globalIndex = i + index;
-            console.log(`🔍 Processing document ${globalIndex + 1}/${documents.length}: ${document.title || 'Untitled'}`);
-
-            // Extract and analyze document content
-            const analysisResult = await analyzeDocumentForProcessing(document.content, therapistId, allClients, allAppointments);
-
-            if (analysisResult.success) {
-              // Create session note with intelligent matching
-              const sessionNote = await storage.createSessionNote({
-                clientId: analysisResult.clientId,
-                therapistId,
-                title: analysisResult.extractedData.title || document.title || `Document ${globalIndex + 1}`,
-                content: analysisResult.extractedData.content || '',
-                subjective: analysisResult.extractedData.subjective || '',
-                objective: analysisResult.extractedData.objective || '',
-                assessment: analysisResult.extractedData.assessment || '',
-                plan: analysisResult.extractedData.plan || '',
-                tags: analysisResult.extractedData.tags || [],
-                appointmentId: analysisResult.appointmentId || null,
-
-                sessionDate: analysisResult.extractedData.sessionDate || new Date()
-              });
-
-              processingResults.sessions.push({
-                documentIndex: globalIndex,
-                sessionNoteId: sessionNote.id,
-                clientName: analysisResult.clientName,
-                appointmentDate: analysisResult.appointmentDate,
-                tags: analysisResult.extractedData.tags
-              });
-
-              processingResults.successful++;
-              console.log(`✅ Document ${globalIndex + 1} processed successfully - Session ${sessionNote.id}`);
-            } else {
-              processingResults.errors.push({
-                documentIndex: globalIndex,
-                title: document.title,
-                error: analysisResult.error,
-                suggestions: analysisResult.suggestions
-              });
-              processingResults.failed++;
-              console.log(`❌ Document ${globalIndex + 1} failed: ${analysisResult.error}`);
-            }
-          } catch (error) {
-            const globalIndex = i + index;
-            processingResults.errors.push({
-              documentIndex: globalIndex,
-              title: document.title,
-              error: error instanceof Error ? error.message : 'Unknown processing error'
-            });
-            processingResults.failed++;
-            console.error(`💥 Document ${globalIndex + 1} processing error:`, error);
-          }
-
-          processingResults.processed++;
-        });
-
-        // Wait for chunk to complete
-        await Promise.all(chunkPromises);
-
-        // Small delay between chunks to prevent overwhelming the system
-        if (i + chunkSize < documents.length) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-
-      console.log(`🏁 Bulk processing complete: ${processingResults.successful}/${processingResults.totalDocuments} successful`);
-
-      res.json({
-        success: true,
-        summary: {
-          totalDocuments: processingResults.totalDocuments,
-          successful: processingResults.successful,
-          failed: processingResults.failed,
-          processed: processingResults.processed
-        },
-        sessions: processingResults.sessions,
-        errors: processingResults.errors,
-        message: `Successfully processed ${processingResults.successful} out of ${processingResults.totalDocuments} documents`
-      });
-
-    } catch (error: any) {
-      console.error("Error in bulk document processing:", error);
-      res.status(500).json({ 
-        error: "Failed to process documents in bulk",
-        details: error?.message || 'Unknown error'
-      });
-    }
-  });
-
-  // Process comprehensive progress notes document
-  app.post('/api/progress-notes/process-comprehensive', async (req, res) => {
-    try {
-      const { documentContent, therapistId } = req.body;
-
-      if (!documentContent || !therapistId) {
-        return res.status(400).json({ 
-          error: "Missing required fields: documentContent and therapistId" 
-        });
-      }
-
-      console.log('🔄 Starting comprehensive progress notes processing...');
-
-      // Import the parser dynamically
-      const { processComprehensiveProgressNotes } = await import('./comprehensive-progress-parser-july');
-
-      // Process the document
-      const results = await processComprehensiveProgressNotes(
-        documentContent,
-        therapistId,
-        storage
-      );
-
-      console.log(`✅ Processing complete: ${results.created} sessions created, ${results.matched} clients matched`);
-
-      res.json({
-        success: true,
-        created: results.created,
-        matched: results.matched,
-        unmatched: results.unmatched,
-        sessions: results.sessions,
-        message: `Successfully processed ${results.created} therapy sessions for ${results.matched} clients`
-      });
-
-    } catch (error: any) {
-      console.error("Error processing comprehensive progress notes:", error);
-      res.status(500).json({ 
-        error: "Failed to process progress notes",
-        details: error?.message || 'Unknown error'
-      });
-    }
-  });
-
-  // Action Items
-  app.get("/api/action-items/:therapistId", async (req, res) => {
-    try {
-      const { therapistId } = req.params;
-      const items = await storage.getActionItems(therapistId);
-      res.json(items);
-    } catch (error) {
-      console.error("Error fetching action items:", error);
-      res.status(500).json({ error: "Failed to fetch action items" });
-    }
-  });
-
-  app.get("/api/action-items/urgent/:therapistId", async (req, res) => {
-    try {
-      const { therapistId } = req.params;
-      const items = await storage.getUrgentActionItems(therapistId);
-      res.json(items);
-    } catch (error) {
-      console.error("Error fetching urgent action items:", error);
-      res.status(500).json({ error: "Failed to fetch urgent action items" });
-    }
-  });
-
-  app.get("/api/action-items/client/:clientId", async (req, res) => {
-    try {
-      const { clientId } = req.params;
-      const items = await storage.getClientActionItems(clientId);
-      res.json(items);
-    } catch (error) {
-      console.error("Error fetching client action items:", error);
-      res.status(500).json({ error: "Failed to fetch client action items" });
-    }
-  });
-
-  app.post("/api/action-items", async (req, res) => {
-    try {
-      const validatedData = insertActionItemSchema.parse(req.body);
-      const item = await storage.createActionItem(validatedData);
-      res.json(item);
-    } catch (error) {
-      console.error("Error creating action item:", error);
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Invalid action item data", details: error.errors });
-      } else {
-        res.status(500).json({ error: "Failed to create action item" });
-      }
-    }
-  });
-
-  app.patch("/api/action-items/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const updateData = req.body;
-
-      // Create a clean copy of updateData to avoid mutation issues
-      const cleanedData = { ...updateData };
-
-      // Handle completedAt field
-      if (cleanedData.completedAt !== undefined) {
-        if (cleanedData.completedAt === null) {
-          // Explicitly allow null values
-          cleanedData.completedAt = null;
-        } else if (typeof cleanedData.completedAt === 'string') {
-          const date = new Date(cleanedData.completedAt);
-          cleanedData.completedAt = isNaN(date.getTime()) ? null : date;
-        } else if (cleanedData.completedAt instanceof Date) {
-          // Already a Date object, validate it
-          cleanedData.completedAt = isNaN(cleanedData.completedAt.getTime()) ? null : cleanedData.completedAt;
-        } else if (typeof cleanedData.completedAt === 'object' && cleanedData.completedAt !== null) {
-          // Handle object-like dates (e.g., from JSON with date properties)
-          const date = new Date(cleanedData.completedAt);
-          cleanedData.completedAt = isNaN(date.getTime()) ? null : date;
-        } else {
-          // Remove invalid date values
-          delete cleanedData.completedAt;
-        }
-      }
-
-      // Handle dueDate field
-      if (cleanedData.dueDate !== undefined) {
-        if (cleanedData.dueDate === null) {
-          // Explicitly allow null values
-          cleanedData.dueDate = null;
-        } else if (typeof cleanedData.dueDate === 'string') {
-          const date = new Date(cleanedData.dueDate);
-          cleanedData.dueDate = isNaN(date.getTime()) ? null : date;
-        } else if (cleanedData.dueDate instanceof Date) {
-          // Already a Date object, validate it
-          cleanedData.dueDate = isNaN(cleanedData.dueDate.getTime()) ? null : cleanedData.dueDate;
-        } else if (typeof cleanedData.dueDate === 'object' && cleanedData.dueDate !== null) {
-          // Handle object-like dates
-          const date = new Date(cleanedData.dueDate);
-          cleanedData.dueDate = isNaN(date.getTime()) ? null : date;
-        } else {
-          // Remove invalid date values
-          delete cleanedData.dueDate;
-        }
-      }
-
-      // Auto-set completedAt when status is changed to completed
-      if (cleanedData.status === 'completed' && !cleanedData.completedAt) {
-        cleanedData.completedAt = new Date();
-      }
-
-      // Clear completedAt when status is not completed
-      if (cleanedData.status && cleanedData.status !== 'completed' && cleanedData.completedAt) {
-        cleanedData.completedAt = null;
-      }
-
-      console.log('Updating action item with cleaned data:', {
-        id,
-        completedAt: cleanedData.completedAt,
-        dueDate: cleanedData.dueDate,
-        status: cleanedData.status
-      });
-
-      const item = await storage.updateActionItem(id, cleanedData);
-      res.json(item);
-    } catch (error) {
-      console.error("Error updating action item:", error);
-      res.status(500).json({ error: "Failed to update action item" });
-    }
-  });
-
-  // AI Generate Action Items endpoint
-  app.post("/api/ai/generate-action-items", async (req, res) => {
-    try {
-      const { clientName, appointmentNotes, context } = req.body;
-
-      if (!openai) {
-        throw new Error("OpenAI client not initialized");
-      }
-
-      const prompt = `Based on this therapy session information, generate 2-3 specific, actionable follow-up items for the client:
-
-Client: ${clientName}
-Session Notes: ${appointmentNotes}
-Context: ${context || 'therapy session follow-up'}
-
-Generate practical action items that could include:
-- Homework assignments based on session content
-- Follow-up activities mentioned in the session  
-- Preparation for upcoming events or appointments
-- Practice exercises related to discussed topics
-- Reminders for things the client wants to work on
-
-Return the action items as a JSON array of strings. Each item should be concise (under 60 characters) and actionable.
-
-Example format: ["Practice deep breathing exercises daily", "Complete mood tracking worksheet", "Schedule follow-up appointment"]`;
-
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          {
-            role: "system",
-            content: "You are a helpful therapy assistant that generates actionable follow-up items based on session notes. Respond with valid JSON only."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        response_format: { type: "json_object" },
-        max_tokens: 300,
-        temperature: 0.7
-      });
-
-      const result = JSON.parse(response.choices[0].message.content || '{"actionItems": []}');
-      res.json(result);
-    } catch (error) {
-      console.error("Error generating AI action items:", error);
-      res.status(500).json({ error: "Failed to generate AI action items", actionItems: [] });
-    }
-  });
-
-  // AI Analysis endpoints with provider-specific routing
-  app.post('/api/ai/analyze', async (req, res) => {
-    try {
-      const { content, type = 'session', provider } = req.body;
-
-      if (!content) {
-        return res.status(400).json({ error: 'Content is required' });
-      }
-
-      let result;
-
-      if (provider === 'openai') {
-        // Use OpenAI for primary analysis
-        result = await multiModelAI.generateClinicalAnalysis(content, type);
-      } else if (provider === 'claude') {
-        // Use Claude for secondary analysis  
-        result = await multiModelAI.generateDetailedInsights(content, type);
-      } else if (provider === 'gemini') {
-        // Use Gemini for multimodal analysis
-        result = await multiModelAI.analyzeMultimodalContent(content, type);
-      } else {
-        // Default to OpenAI-first fallback chain
-        result = await multiModelAI.generateClinicalAnalysis(content, type);
-      }
-
-      // Transform to expected format
-      const transformedResult = {
-        insights: [result.content],
-        recommendations: ['Analysis completed using ' + result.model],
-        themes: ['Clinical analysis'],
-        priority: (result.confidence || 0) > 0.8 ? 'high' : 'medium',
-        nextSteps: ['Review analysis and implement recommendations']
-      };
-
-      res.json(transformedResult);
-    } catch (error) {
-      console.error('AI analysis error:', error);
-      res.status(500).json({ 
-        error: 'Analysis failed',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  // AI Session Content Analysis Endpoint for smart appointment suggestions
-  app.post('/api/ai/analyze-session-content', async (req, res) => {
-    try {
-      const { content, clientId, clientName } = req.body;
-
-      if (!content) {
-        return res.status(400).json({ error: 'Content is required' });
-      }
-
-      const prompt = `
-You are an expert clinical psychologist analyzing session notes. Please analyze the following session content and extract key information for smart appointment linking.
-
-Client Name: ${clientName}
-Content:
-${content}
-
-Please provide a JSON response with the following structure:
-{
-  "extractedDate": "YYYY-MM-DD format if found, null if not found",
-  "sessionType": "individual therapy | group therapy | intake | assessment | follow-up",
-  "aiTags": ["array of 5-10 relevant clinical tags like anxiety, depression, CBT, behavioral-intervention, etc."],
-  "keyTopics": ["array of 3-5 main topics discussed in session"],
-  "mood": "client's overall mood/emotional state",
-  "progressIndicators": ["array of progress indicators or improvements noted"],
-  "suggestedAppointmentType": "suggested appointment type based on content",
-  "urgencyLevel": "low | medium | high based on content analysis"
-}
-
-Focus on:
-1. Finding any dates mentioned in the content (session dates, appointment dates, etc.)
-2. Identifying the type of therapeutic session
-3. Extracting relevant clinical tags and themes
-4. Noting urgency or follow-up needs
-5. Determining appropriate appointment type
-
-Be precise and clinical in your analysis.
-`;
-
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: "You are a clinical psychologist expert at analyzing session notes and extracting structured data. Always respond with valid JSON."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.3,
-        max_tokens: 1000
-      });
-
-      const analysisText = response.choices[0]?.message?.content;
-      if (!analysisText) {
-        throw new Error('No analysis received from AI');
-      }
-
-      const analysis = JSON.parse(analysisText);
-      res.json(analysis);
-
-    } catch (error) {
-      console.error('Session content analysis error:', error);
-      res.status(500).json({ 
-        error: 'Analysis failed',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  app.post('/api/ai/analyze-transcript', async (req, res) => {
-    try {
-      const { transcript, provider = 'openai' } = req.body;
-
-      if (!transcript) {
-        return res.status(400).json({ error: 'Transcript is required' });
-      }
-
-      let result;
-
-      if (provider === 'openai') {
-        // Use OpenAI for transcript analysis (primary)
-        result = await multiModelAI.generateClinicalAnalysis(transcript, 'session transcript analysis');
-      } else {
-        // Fallback to old method
-        result = await analyzeSessionTranscript(transcript);
-      }
-
-      // Ensure we return the expected format for transcript analysis
-      if ((result as any).content) {
-        // Transform multiModelAI response to SessionTranscriptAnalysis format
-        res.json({
-          summary: (result as any).content.substring(0, 200) + '...',
-          keyPoints: [(result as any).content],
-          actionItems: ['Review session insights'],
-          emotionalTone: 'Analysis completed',
-          progressIndicators: ['Session analyzed using ' + ((result as any).model || 'AI')],
-          concernFlags: []
-        });
-      } else {
-        res.json(result);
-      }
-    } catch (error) {
-      console.error('Transcript analysis error:', error);
-      res.status(500).json({ 
-        error: 'Transcript analysis failed',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  // AI Insights
-  app.get("/api/ai-insights/:therapistId", async (req, res) => {
-    try {
-      const { therapistId } = req.params;
-      const insights = await storage.getAiInsights(therapistId);
-      res.json(insights);
-    } catch (error) {
-      console.error("Error fetching AI insights:", error);
-      res.status(500).json({ error: "Failed to fetch AI insights" });
-    }
-  });
-
-  app.post("/api/ai/generate-insights/:therapistId", async (req, res) => {
-    try {
-      const { therapistId } = req.params;
-
-      // Get recent data for analysis
-      const clients = await storage.getClients(therapistId);
-      const actionItems = await storage.getActionItems(therapistId);
-      const appointments = await storage.getAppointments(therapistId);
-
-      // Generate insights using AI
-      const analysisContent = `
-        Practice Analytics:
-        - Total Clients: ${clients.length}
-        - Recent Action Items: ${actionItems.slice(0, 20).length}
-        - Recent Appointments: ${appointments.slice(0, 50).length}
-
-        Client Summary: ${JSON.stringify(clients.slice(0, 5), null, 2)}
-        Action Items: ${JSON.stringify(actionItems.slice(0, 10), null, 2)}
-        Appointments: ${JSON.stringify(appointments.slice(0, 10), null, 2)}
-      `;
-
-      const rawInsights = await analyzeContent(analysisContent, 'progress');
-
-      // Transform AI response into insight format
-      const insights = rawInsights.insights.map((insight, index) => ({
-        type: rawInsights.priority === 'high' ? 'urgent' : 'general',
-        title: `Insight ${index + 1}`,
-        description: insight,
-        confidence: 0.8,
-        actionable: rawInsights.nextSteps.length > 0
-      }));
-
-      // Store insights in database
-      for (const insight of insights) {
-        await storage.createAiInsight({
-          therapistId,
-          type: insight.type,
-          title: insight.title,
-          content: insight.description,
-          confidence: insight.confidence.toString(),
-          metadata: { actionable: insight.actionable }
-        });
-      }
-
-      res.json({
-        success: true,
-        message: `Generated AI check-ins successfully`,
-        checkins: [] 
-      });
-    } catch (error: any) {
-      console.error('Error generating AI check-ins:', error);
-      res.status(500).json({ error: 'Failed to generate AI check-ins' });
-    }
-  });
-
-  // Generate session-specific AI insights
-  app.post("/api/ai/generate-session-insights", async (req, res) => {
-    try {
-      const { clientId, appointmentDate } = req.body;
-
-      if (!clientId) {
-        return res.status(400).json({ error: 'Client ID is required' });
-      }
-
-      // Get client data
-      const client = await storage.getClient(clientId);
-      if (!client) {
-        return res.status(404).json({ error: 'Client not found' });
-      }
-
-      // Get recent session notes for this client
-      const sessionNotes = await storage.getSessionNotesByClientId(clientId);
-      const recentNotes = sessionNotes.slice(0, 3); // Last 3 sessions
-
-      // Create analysis content for AI
-      const analysisContent = `
-        Client Session Preparation for: ${client.firstName} ${client.lastName}
-        Appointment Date: ${appointmentDate || new Date().toISOString()}
-
-        Recent Session History:
-        ${recentNotes.map((note, i) => `Session ${i + 1}: ${note.content}`).join('\n\n')}
-
-        Generate insights for upcoming therapy session including:
-        - Key themes from recent sessions
-        - Recommended focus areas
-        - Potential interventions
-        - Progress indicators to monitor
-      `;
-
-      const insights = await analyzeContent(analysisContent, 'session');
-
-      res.json({
-        success: true,
-        clientName: `${client.firstName} ${client.lastName}`,
-        appointmentDate: appointmentDate,
-        insights: {
-          keyThemes: insights.insights || [],
-          recommendedFocus: insights.nextSteps || [],
-          progressIndicators: [`Session preparation for ${client.firstName} ${client.lastName}`],
-          potentialInterventions: insights.recommendations || []
-        }
-      });
-    } catch (error: any) {
-      console.error('Error generating session insights:', error);
-      res.status(500).json({ 
-        error: 'Failed to generate session insights',
-        details: error.message 
-      });
-    }
-  });
-
-  // Fetch session insights for appointment dialog
-  app.post("/api/ai/session-insights", async (req, res) => {
-    try {
-      const { clientId, appointmentContext } = req.body;
-
-      if (!clientId) {
-        return res.status(400).json({ error: 'Client ID is required' });
-      }
-
-      // Get client data
-      const client = await storage.getClient(clientId);
-      if (!client) {
-        return res.status(404).json({ error: 'Client not found' });
-      }
-
-      // Get recent session notes for context
-      const sessionNotes = await storage.getSessionNotesByClientId(clientId);
-      const recentNotes = sessionNotes.slice(0, 5); // Last 5 sessions for better context
-
-      // Create structured insights response
-      const insights = {
-        clientName: `${client.firstName} ${client.lastName}`,
-        lastSessionDate: recentNotes.length > 0 ? recentNotes[0].createdAt : null,
-        sessionCount: sessionNotes.length,
-        keyThemes: recentNotes.length > 0 ? 
-          ['Progress tracking', 'Therapeutic goals', 'Session continuity'] : 
-          ['New client assessment'],
-        recommendedFocus: [
-          'Continue established therapeutic rapport',
-          'Review previous session outcomes',
-          'Address current client needs'
-        ],
-        progressIndicators: [
-          `Total sessions: ${sessionNotes.length}`,
-          `Client engagement: Active`,
-          'Therapeutic alliance: Established'
-        ],
-        recentNotes: recentNotes.slice(0, 2).map(note => ({
-          date: note.createdAt,
-          summary: note.content.length > 200 ? 
-            note.content.substring(0, 200) + '...' : 
-            note.content
-        }))
-      };
-
-      res.json(insights);
-    } catch (error: any) {
-      console.error('Error fetching session insights:', error);
-      res.status(500).json({ 
-        error: 'Failed to fetch session insights',
-        details: error.message 
-      });
-    }
-  });
-
-
-
-  // Session Recommendations API Routes
-  app.get("/api/session-recommendations/client/:clientId", async (req, res) => {
-    try {
-      const { clientId } = req.params;
-      const recommendations = await storage.getSessionRecommendations(clientId);
-      res.json(recommendations);
-    } catch (error) {
-      console.error('Error fetching session recommendations:', error);
-      res.status(500).json({ error: 'Failed to fetch session recommendations' });
-    }
-  });
-
-  app.get("/api/session-recommendations/therapist/:therapistId", async (req, res) => {
-    try {
-      const { therapistId } = req.params;
-      const recommendations = await storage.getTherapistSessionRecommendations(therapistId);
-      res.json(recommendations);
-    } catch (error) {
-      console.error('Error fetching therapist session recommendations:', error);
-      res.status(500).json({ error: 'Failed to fetch therapist session recommendations' });
-    }
-  });
-
-  app.post("/api/session-recommendations", async (req, res) => {
-    try {
-      const validatedData = insertSessionRecommendationSchema.parse(req.body);
-      const recommendation = await storage.createSessionRecommendation(validatedData);
-      res.status(201).json(recommendation);
-    } catch (error: any) {
-      console.error('Error creating session recommendation:', error);
-      if (error.name === 'ZodError') {
-        return res.status(400).json({ error: 'Invalid data', details: error.errors });
-      }
-      res.status(500).json({ error: 'Failed to create session recommendation' });
-    }
-  });
-
-  app.put("/api/session-recommendations/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const updateData = req.body;
-      const recommendation = await storage.updateSessionRecommendation(id, updateData);
-      res.json(recommendation);
-    } catch (error) {
-      console.error('Error updating session recommendation:', error);
-      res.status(500).json({ error: 'Failed to update session recommendation' });
-    }
-  });
-
-  app.put("/api/session-recommendations/:id/implement", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { feedback, effectiveness } = req.body;
-      const recommendation = await storage.markRecommendationAsImplemented(id, feedback, effectiveness);
-      res.json(recommendation);
-    } catch (error) {
-      console.error('Error marking recommendation as implemented:', error);
-      res.status(500).json({ error: 'Failed to mark recommendation as implemented' });
-    }
-  });
-
-  app.post("/api/session-recommendations/generate", async (req, res) => {
-    try {
-      const { clientId, therapistId } = req.body;
-
-      if (!clientId || !therapistId) {
-        return res.status(400).json({ error: 'Client ID and therapist ID are required' });
-      }
-
-      const recommendations = await storage.generateSessionRecommendations(clientId, therapistId);
-      res.status(201).json(recommendations);
-    } catch (error) {
-      console.error('Error generating session recommendations:', error);
-      res.status(500).json({ 
-        error: 'Failed to generate session recommendations',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  app.put('/api/client-checkins/:id/status', async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { status, clientResponse } = req.body;
-
-      const updateData: any = { status };
-      if (clientResponse) {
-        updateData.clientResponse = clientResponse;
-      }
-
-      const updatedCheckin = await storage.updateClientCheckin(id, updateData);
-      res.json(updatedCheckin);
-    } catch (error: any) {
-      console.error('Error updating check-in status:', error);
-      res.status(500).json({ error: 'Failed to update check-in status' });
-    }
-  });
-
-  // Disabled endpoint - implementation incomplete
-  // app.post('/api/client-checkins/:id/send', async (req, res) => {
-  // });
-
-  // Full historical calendar sync endpoint - fetches ALL events from ALL time periods
-  app.post('/api/calendar/sync-full-history', async (req, res) => {
-    try {
-      const { simpleOAuth } = await import('./oauth-simple');
-
-      if (!simpleOAuth.isConnected()) {
-        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
-      }
-
-      // Try to refresh tokens before sync
-      try {
-        await (simpleOAuth as any).refreshTokensIfNeeded();
-      } catch (tokenError: any) {
-        console.error('Token refresh failed during full sync:', tokenError);
-        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
-      }
-
-      // Get ALL calendars and subcalendars
-      const calendars = await simpleOAuth.getCalendars();
-      let totalEvents = 0;
-      let syncedCalendars = 0;
-      let appointmentsCreated = 0;
-      let allEventsData: any[] = [];
-
-      console.log(`🔄 Starting FULL HISTORICAL SYNC for ${calendars.length} calendars...`);
-
-      // COMPREHENSIVE time range to get EVERYTHING
-      const timeMin = new Date('2005-01-01T00:00:00.000Z').toISOString(); // Go back 20 years
-      const timeMax = new Date('2040-12-31T23:59:59.999Z').toISOString(); // Go forward 15 years
-
-      // Process each calendar with pagination to get ALL events
-      const syncPromises = calendars.map(async (calendar: any) => {
-        try {
-          let allCalendarEvents: any[] = [];
-          let pageToken: string | undefined;
-          let pageCount = 0;
-
-          do {
-            console.log(`📄 Fetching page ${pageCount + 1} for calendar: ${calendar.summary}`);
-
-            const events = await simpleOAuth.getEvents(
-              calendar.id,
-              timeMin,
-              timeMax
-            );
-
-            if (events && events.length > 0) {
-              allCalendarEvents = allCalendarEvents.concat(events);
-              console.log(`  📊 Page ${pageCount + 1}: Got ${events.length} events (total: ${allCalendarEvents.length})`);
-            }
-
-            pageCount++;
-            // For now, we'll do single page fetch since Google API pagination is complex
-            // In production, you'd implement proper pagination with nextPageToken
-            break;
-          } while (pageToken && pageCount < 50); // Safety limit
-
-          totalEvents += allCalendarEvents.length;
-          syncedCalendars++;
-
-          // Store all events for this calendar
-          allEventsData = allEventsData.concat(
-            allCalendarEvents.map(event => ({
-              ...event,
-              calendarId: calendar.id,
-              calendarName: calendar.summary
-            }))
-          );
-
-          // Process each event for appointment creation
-          let calendarAppointments = 0;
-          for (const event of allCalendarEvents) {
-            try {
-              const appointmentCount = await syncEventToAppointment(event, calendar.id);
-              calendarAppointments += appointmentCount;
-            } catch (error: any) {
-              console.warn(`Failed to sync event ${event.summary}:`, error.message);
-            }
-          }
-          appointmentsCreated += calendarAppointments;
-
-          return {
-            calendarId: calendar.id,
-            calendarName: calendar.summary,
-            eventCount: allCalendarEvents.length,
-            appointmentsCreated: calendarAppointments,
-            status: 'success'
-          };
-
-        } catch (error: any) {
-          console.warn(`Failed to sync calendar ${calendar.summary}:`, error);
-          return {
-            calendarId: calendar.id,
-            calendarName: calendar.summary,
-            eventCount: 0,
-            appointmentsCreated: 0,
-            status: 'error',
-            error: error.message
-          };
-        }
-      });
-
-      const syncResults = await Promise.all(syncPromises);
-
-      // Save all events to database for caching (optional)
-      try {
-        console.log(`💾 Saving ${allEventsData.length} events to database cache...`);
-        // You could implement database caching here if needed
-      } catch (dbError) {
-        console.warn('Database caching failed:', dbError);
-      }
-
-      console.log(`✅ FULL HISTORICAL SYNC COMPLETE: ${totalEvents} total events processed`);
-
-      res.json({
-        success: true,
-        message: `FULL HISTORICAL SYNC: Successfully synced ${totalEvents} events from ${syncedCalendars}/${calendars.length} calendars and created ${appointmentsCreated} appointments`,
-        totalEventCount: totalEvents,
-        appointmentsCreated,
-        calendarsProcessed: calendars.length,
-        calendarsSuccessful: syncedCalendars,
-        timeRange: '2005-2040 (FULL HISTORY)',
-        syncResults,
-        eventsSample: allEventsData.slice(0, 10).map(e => ({
-          title: e.summary,
-          date: e.start?.dateTime || e.start?.date,
-          calendar: e.calendarName
-        }))
-      });
-
-    } catch (error: any) {
-      console.error('Error in full historical sync:', error);
-      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
-        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
-      }
-      res.status(500).json({ error: 'Failed to sync full calendar history', details: error.message });
-    }
-  });
-
-  app.post('/api/client-checkins/:id/send', async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { method = 'email', therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.body; // Add therapistId to body for context
-
-      // Fetch therapist details to get their preferred contact method or specific client info
-      const therapist = await storage.getUser(therapistId); // Assuming therapist object contains contact preferences
-
-      const success = await storage.sendCheckin(id, method);
-
-      if (success) {
-        res.json({ success: true, message: 'Check-in sent successfully' });
-      } else {
-        res.status(500).json({ error: 'Failed to send check-in' });
-      }
-    } catch (error: any) {
-      console.error('Error sending check-in:', error);
-      res.status(500).json({ error: 'Failed to send check-in' });
-    }
-  });
-
-  app.delete('/api/client-checkins/cleanup', async (req, res) => {
-    try {
-      const deletedCount = await storage.cleanupExpiredCheckins();
-      res.json({ 
-        success: true, 
-        message: `Cleaned up ${deletedCount} expired check-ins` 
-      });
-    } catch (error: any) {
-      console.error('Error cleaning up expired check-ins:', error);
-      res.status(500).json({ error: 'Failed to cleanup expired check-ins' });
-    }
-  });
-
-  // Add Google Calendar token refresh endpoint
-  app.post('/api/auth/google/refresh', async (req, res) => {
-    try {
-      const { simpleOAuth } = await import('./oauth-simple');
-
-      // Force refresh tokens
-      await (simpleOAuth as any).refreshTokensIfNeeded();
-
-      if (simpleOAuth.isConnected()) {
-        res.json({ success: true, message: 'Tokens refreshed successfully' });
-      } else {
-        res.status(401).json({ error: 'Failed to refresh tokens. Please re-authenticate.', requiresAuth: true });
-      }
-    } catch (error: any) {
-      console.error('Token refresh error:', error);
-      res.status(401).json({ error: 'Token refresh failed. Please re-authenticate.', requiresAuth: true });
-    }
-  });
-
-  // Enhanced Calendar sync endpoints - fetches from ALL calendars and subcalendars AND creates appointments
-  app.post('/api/calendar/sync/appointments', async (req, res) => {
-    try {
-      const { simpleOAuth } = await import('./oauth-simple');
-
-      if (!simpleOAuth.isConnected()) {
-        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
-      }
-
-      // Try to refresh tokens before sync
-      try {
-        await (simpleOAuth as any).refreshTokensIfNeeded();
-      } catch (tokenError: any) {
-        console.error('Token refresh failed during sync:', tokenError);
-        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
-      }
-
-      // Get ALL calendars and subcalendars
-      const calendars = await simpleOAuth.getCalendars();
-      let totalEvents = 0;
-      let syncedCalendars = 0;
-      let appointmentsCreated = 0;
-
-      // COMPREHENSIVE time range: 2015-2030 to capture ALL relevant historical and future events
-      const timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
-      const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
-
-      // Sync events from ALL calendars and subcalendars in parallel
-      const syncPromises = calendars.map(async (calendar: any) => {
-        try {
-          const events = await simpleOAuth.getEvents(calendar.id, timeMin, timeMax);
-          totalEvents += events.length;
-          syncedCalendars++;
-
-          // Skip saving to calendar_events table for now - focus on creating appointments
-
-          // Process each event for appointment creation and store in database
-          let calendarAppointments = 0;
-          for (const event of events) {
-            try {
-              const appointmentCount = await syncEventToAppointment(event, calendar.id);
-              calendarAppointments += appointmentCount;
-            } catch (error: any) {
-              console.warn(`Failed to sync event ${event.summary}:`, error.message);
-            }
-          }
-          appointmentsCreated += calendarAppointments;
-
-          return {
-            calendarId: calendar.id,
-            calendarName: calendar.summary,
-            eventCount: events.length,
-            status: 'success'
-          };
-        } catch (error: any) {
-          console.warn(`Failed to sync calendar ${calendar.summary}:`, error);
-          return {
-            calendarId: calendar.id,
-            calendarName: calendar.summary,
-            eventCount: 0,
-            status: 'error',
-            error: error.message
-          };
-        }
-      });
-
-      const syncResults = await Promise.all(syncPromises);
-
-      res.json({ 
-        success: true, 
-        message: `Successfully synced ${totalEvents} events from ${syncedCalendars}/${calendars.length} calendars and created ${appointmentsCreated} appointments`, 
-        totalEventCount: totalEvents,
-        appointmentsCreated,
-        calendarsProcessed: calendars.length,
-        calendarsSuccessful: syncedCalendars,
-        timeRange: '2015-2030',
-        syncResults
-      });
-    } catch (error: any) {
-      console.error('Error syncing calendar:', error);
-      if (error.message?.includes('authentication') || error.message?.includes('expired')) {
-        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
-      }
-      res.status(500).json({ error: 'Failed to sync calendar events', details: error.message });
-    }
-  });
-
-  // Get events from database (fast local access)
-  app.get('/api/calendar/events/local', async (req, res) => {
-    try {
-      const { timeMin, timeMax, therapistId } = req.query;
-      const finalTherapistId = (therapistId as string) || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-
-      const events = await googleCalendarService.getEventsFromDatabase(
-        finalTherapistId,
-        timeMin as string,
-        timeMax as string
-      );
-
-      res.json(events);
-    } catch (error) {
-      console.error('Error fetching events from database:', error);
-      res.status(500).json({ error: 'Failed to fetch calendar events from database' });
-    }
-  });
-
-  // Enhanced events endpoint that can serve from database or live API with full historical support
-  app.get('/api/calendar/events/hybrid', async (req, res) => {
-    try {
-      const { timeMin, timeMax, source = 'database', therapistId, fullHistory } = req.query;
-      const finalTherapistId = (therapistId as string) || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-
-      if (source === 'live' || source === 'api') {
-        // Fetch from Google Calendar API using simple OAuth
-        const { simpleOAuth } = await import('./oauth-simple');
-
-        if (!simpleOAuth.isConnected()) {
-          return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
-        }
-
-        // Try to refresh tokens before fetching events
-        try {
-          await (simpleOAuth as any).refreshTokensIfNeeded();
-        } catch (tokenError: any) {
-          console.error('Token refresh failed during hybrid event fetch:', tokenError);
-          return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
-        }
-
-        // If fullHistory requested, use expanded date range
-        let finalTimeMin = timeMin as string;
-        let finalTimeMax = timeMax as string;
-
-        if (fullHistory === 'true') {
-          finalTimeMin = new Date('2005-01-01T00:00:00.000Z').toISOString();
-          finalTimeMax = new Date('2040-12-31T23:59:59.999Z').toISOString();
-          console.log('🔍 Full history requested - expanding date range to 2005-2040');
-        }
-
-        // Get all calendars and fetch from each
-        const calendars = await simpleOAuth.getCalendars();
-        let allEvents: any[] = [];
-
-        for (const calendar of calendars) {
-          try {
-            const events = await simpleOAuth.getEvents(
-              calendar.id,
-              finalTimeMin,
-              finalTimeMax
-            );
-
-            if (events && events.length > 0) {
-              const eventsWithCalendar = events.map((event: any) => ({
-                ...event,
-                calendarId: calendar.id,
-                calendarName: calendar.summary
-              }));
-              allEvents = allEvents.concat(eventsWithCalendar);
-            }
-          } catch (calError) {
-            console.warn(`Error fetching from calendar ${calendar.summary}:`, calError);
-          }
-        }
-
-        console.log(`📊 Fetched ${allEvents.length} total events from ${calendars.length} calendars`);
-        res.json(allEvents);
-      } else {
-        // Fetch from database (default and fastest)
-        const events = await googleCalendarService.getEventsFromDatabase(
-          finalTherapistId,
-          timeMin as string,
-          timeMax as string
-        );
-        res.json(events);
-      }
-    } catch (error: any) {
-      console.error('Error fetching hybrid calendar events:', error);
-      if (error.message?.includes('authentication required')) {
-        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
-      }
-      res.status(500).json({ error: 'Failed to fetch calendar events' });
-    }
-  });
-
-  // Treatment Plans
-  app.get("/api/treatment-plans/:clientId", async (req, res) => {
-    try {
-      const { clientId } = req.params;
-      const plans = await storage.getTreatmentPlans(clientId);
-      res.json(plans);
-    } catch (error) {
-      console.error("Error fetching treatment plans:", error);
-      res.status(500).json({ error: "Failed to fetch treatment plans" });
-    }
-  });
-
-  app.post("/api/treatment-plans", async (req, res) => {
-    try {
-      const validatedData = insertTreatmentPlanSchema.parse(req.body);
-      const plan = await storage.createTreatmentPlan(validatedData);
-      res.json(plan);
-    } catch (error) {
-      console.error("Error creating treatment plan:", error);
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Invalid treatment plan data", details: error.errors });
-      } else {
-        res.status(500).json({ error: "Failed to create treatment plan" });
-      }
-    }
-  });
-
-  // Generate AI insights for session prep
-  app.post('/api/session-prep/:eventId/ai-insights', async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const { clientId, appointmentTitle } = req.body;
-
-      console.log(`🧠 Generating AI insights for event ${eventId}${clientId ? `, client ${clientId}` : ' (non-client appointment)'}`);
-
-      let appointmentData;
-      let insights;
-
-      if (clientId) {
-        // Client appointment - use existing logic
-        const client = await storage.getClient(clientId);
-        if (!client) {
-          return res.status(404).json({ error: 'Client not found' });
-        }
-
-        // Get client session history and notes for context
-        const sessionNotes = await storage.getSessionNotesByClientId(clientId);
-        const appointments = await storage.getAppointmentsByClient(clientId);
-
-        // Try to find the actual appointment by event ID first
-        let actualAppointment = null;
-        try {
-          actualAppointment = await storage.getAppointmentByEventId(eventId);
-        } catch (error) {
-          console.log(`No appointment found with eventId: ${eventId}, using client data`);
-        }
-
-        // Build appointment data for AI insights using actual appointment data if available
-        if (actualAppointment) {
-          appointmentData = {
-            title: `Session with ${client.firstName} ${client.lastName}`,
-            clientName: `${client.firstName} ${client.lastName}`,
-            date: actualAppointment.startTime.toISOString(),
-            startTime: actualAppointment.startTime.toISOString(),
-            endTime: actualAppointment.endTime.toISOString(),
-            location: actualAppointment.location || 'Therapy Office',
-            status: actualAppointment.status || 'scheduled',
-            notes: sessionNotes.slice(0, 3).map(note => note.content).join('\n\n'),
-            sessionNotes: sessionNotes.length > 0 ? sessionNotes[0].content : 'No previous session notes'
-          };
-        } else {
-          // Fallback to recent appointment or default data
-          const recentAppointment = appointments.length > 0 ? appointments[0] : null;
-          appointmentData = {
-            title: `Session with ${client.firstName} ${client.lastName}`,
-            clientName: `${client.firstName} ${client.lastName}`,
-            date: recentAppointment ? recentAppointment.startTime.toISOString() : new Date().toISOString(),
-            startTime: recentAppointment ? recentAppointment.startTime.toISOString() : new Date().toISOString(),
-            endTime: recentAppointment ? recentAppointment.endTime.toISOString() : new Date(Date.now() + 50 * 60 * 1000).toISOString(),
-            location: recentAppointment?.location || 'Therapy Office',
-            status: recentAppointment?.status || 'scheduled',
-            notes: sessionNotes.slice(0, 3).map(note => note.content).join('\n\n'),
-            sessionNotes: sessionNotes.length > 0 ? sessionNotes[0].content : 'No previous session notes'
-          };
-        }
-
-        // Generate comprehensive session prep insights
-        insights = await generateAppointmentInsights(appointmentData);
-      } else {
-        // Non-client appointment (supervision, admin, etc.)
-        const title = appointmentTitle || 'Professional Appointment';
-        console.log(`🔍 Processing non-client appointment: ${title}`);
-
-        // Generate general insights for non-client appointments
-        const content = `
-Professional appointment preparation for: ${title}
-
-This is a ${title.toLowerCase().includes('supervision') ? 'supervision session' : 'professional meeting'}.
-${title.toLowerCase().includes('supervision') 
-  ? 'Focus areas for supervision may include case consultation, professional development, and clinical guidance.'
-  : 'Prepare relevant materials and agenda items for this professional meeting.'
-}
-
-Suggested preparation:
-• Review any relevant case materials or agenda items
-• Prepare questions or discussion points
-• Gather necessary documentation
-• Consider professional development goals
-`;
-
-        insights = {
-          summary: `Preparation insights for ${title}`,
-          keyPoints: [
-            'Professional appointment requiring preparation',
-            'Review relevant materials beforehand',
-            'Prepare discussion points and questions'
-          ],
-          recommendations: [
-            'Gather necessary documentation',
-            'Review agenda or meeting objectives',
-            'Prepare any case materials if applicable'
-          ],
-          nextSteps: [
-            'Review appointment details',
-            'Prepare materials and questions',
-            'Confirm meeting logistics'
-          ]
-        };
-      }
-
-      res.json({ 
-        insights: {
-          contextual: !!clientId,
-          content: insights,
-          generatedAt: new Date().toISOString(),
-          appointmentType: clientId ? 'client-session' : 'professional-meeting'
-        }
-      });
-    } catch (error: any) {
-      console.error('Error generating session prep insights:', error);
-      res.status(500).json({ error: 'Failed to generate AI insights', details: error.message });
-    }
-  });
-
-  // Save AI insights as session note
-  app.post('/api/ai-insights/:eventId/save', async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const { insights, clientId, therapistId } = req.body;
-
-      if (!insights || !clientId || !therapistId) {
-        return res.status(400).json({ error: 'Missing required fields' });
-      }
-
-      const sessionNote = await storage.createSessionNote({
-        eventId,
-        clientId,
-        therapistId,
-        content: `AI Insights:\n\n${insights}`,
-        aiSummary: insights
-      });
-
-      res.json({ success: true, noteId: sessionNote.id });
-    } catch (error: any) {
-      console.error('Error saving AI insights:', error);
-      res.status(500).json({ error: 'Failed to save insights' });
-    }
-  });
-
-  // Get next appointment summary with notes and action items
-  app.get('/api/appointments/:eventId/next-summary', async (req, res) => {
-    try {
-      const { eventId } = req.params;
-
-      // Get current appointment details
-      const currentNotes = await storage.getSessionNotesByEventId(eventId);
-
-      if (currentNotes.length === 0) {
-        return res.json({ notes: [], actionItems: [], nextAppointment: null });
-      }
-
-      const currentNote = currentNotes[0];
-      const clientId = currentNote.clientId;
-
-      // Find next scheduled appointment for this client
-      const currentClientId = clientId; // Use clientId from current note
-      if (!currentClientId) {
-        console.log(`No client ID found for event ${eventId}, cannot fetch next appointment summary.`);
-        return res.json({ notes: currentNotes, actionItems: [], nextAppointment: null });
-      }
-
-      const client = await pool.connect();
-      try {
-        const nextApptResult = await client.query(`
-          SELECT event_id, summary, start_time, end_time, location 
-          FROM appointments 
-          WHERE client_id = $1 AND start_time > NOW() 
-          ORDER BY start_time ASC 
-          LIMIT 1
-        `, [currentClientId]);
-
-        // Get all action items for this client
-        const actionItemsResult = await client.query(`
-          SELECT * FROM action_items 
-          WHERE client_id = $1 AND status != 'completed'
-          ORDER BY priority DESC, due_date ASC
-        `, [currentClientId]);
-
-        // Compile comprehensive summary
-        const summary = {
-          notes: currentNotes.map(note => ({
-            content: note.content,
-            aiSummary: note.aiSummary,
-            createdAt: note.createdAt
-          })),
-          actionItems: actionItemsResult.rows.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            description: item.description,
-            priority: item.priority,
-            dueDate: item.due_date,
-            status: item.status
-          })),
-          nextAppointment: nextApptResult.rows.length > 0 ? {
-            eventId: nextApptResult.rows[0].event_id,
-            summary: nextApptResult.rows[0].summary,
-            startTime: nextApptResult.rows[0].start_time,
-            endTime: nextApptResult.rows[0].end_time,
-            location: nextApptResult.rows[0].location
-          } : null
-        };
-
-        res.json(summary);
-      } finally {
-        client.release();
-      }
-    } catch (error: any) {
-      console.error('Error getting next appointment summary:', error);
-      res.status(500).json({ error: 'Failed to get summary' });
-    }
-  });
-
-  // Multi-Model AI Endpoints for Enhanced Clinical Intelligence
-
-  // Clinical Analysis using Claude (primary)
-  app.post('/api/ai/clinical-analysis', async (req, res) => {
-    try {
-      const { content, context } = req.body;
-
-      if (!content) {
-        return res.status(400).json({ error: 'Content is required' });
-      }
-
-      const result = await multiModelAI.generateClinicalAnalysis(content, context);
-      res.json(result);
-    } catch (error: any) {
-      console.error('Error in clinical analysis:', error);
-      res.status(500).json({ error: 'Failed to generate clinical analysis', details: error.message });
-    }
-  });
-
-  // Detailed Insights using OpenAI
-  app.post('/api/ai/detailed-insights', async (req, res) => {
-    try {
-      const { content, analysisType } = req.body;
-
-      if (!content || !analysisType) {
-        return res.status(400).json({ error: 'Content and analysis type are required' });
-      }
-
-      const result = await multiModelAI.generateDetailedInsights(content, analysisType);
-      res.json(result);
-    } catch (error: any) {
-      console.error('Error generating detailed insights:', error);
-      res.status(500).json({ error: 'Failed to generate detailed insights', details: error.message });
-    }
-  });
-
-  // Evidence-Based Recommendations using Perplexity
-  app.post('/api/ai/evidence-recommendations', async (req, res) => {
-    try {
-      const { query, domain } = req.body;
-
-      if (!query || !domain) {
-        return res.status(400).json({ error: 'Query and domain are required' });
-      }
-
-      if (!['clinical', 'treatment', 'education'].includes(domain)) {
-        return res.status(400).json({ error: 'Domain must be clinical, treatment, or education' });
-      }
-
-      const result = await multiModelAI.getEvidenceBasedRecommendations(query, domain);
-      res.json(result);
-    } catch (error: any) {
-      console.error('Error getting evidence-based recommendations:', error);
-      res.status(500).json({ error: 'Failed to get evidence-based recommendations', details: error.message });
-    }
-  });
-
-  // Multimodal Analysis using Gemini
-  app.post('/api/ai/multimodal-analysis', async (req, res) => {
-    try {
-      const { content, mediaType } = req.body;
-
-      if (!content) {
-        return res.status(400).json({ error: 'Content is required' });
-      }
-
-      const result = await multiModelAI.analyzeMultimodalContent(content, mediaType);
-      res.json(result);
-    } catch (error: any) {
-      console.error('Error in multimodal analysis:', error);
-      res.status(500).json({ error: 'Failed to perform multimodal analysis', details: error.message });
-    }
-  });
-
-  // Ensemble Analysis combining all models
-  app.post('/api/ai/ensemble-analysis', async (req, res) => {
-    try {
-      const { content, analysisType } = req.body;
-
-      if (!content || !analysisType) {
-        return res.status(400).json({ error: 'Content and analysis type are required' });
-      }
-
-      const result = await multiModelAI.generateEnsembleAnalysis(content, analysisType);
-      res.json(result);
-    } catch (error: any) {
-      console.error('Error in ensemble analysis:', error);
-      res.status(500).json({ error: 'Failed to generate ensemble analysis', details: error.message });
-    }
-  });
-
-  // Clinical Research using Perplexity directly
-  app.post('/api/ai/clinical-research', async (req, res) => {
-    try {
-      const { query } = req.body;
-
-      if (!query) {
-        return res.status(400).json({ error: 'Research query is required' });
-      }
-
-      const research = await perplexityClient.getClinicalResearch(query);
-      res.json({ content: research, model: 'perplexity-research' });
-    } catch (error: any) {
-      console.error('Error getting clinical research:', error);
-      res.status(500).json({ error: 'Failed to get clinical research', details: error.message });
-    }
-  });
-
-  // Frontend compatibility endpoint - Cross-client patterns (POST)
-  app.post('/api/ai/cross-client-patterns', async (req, res) => {
-    try {
-      const { therapistId } = req.body;
-
-      if (!therapistId) {
-        return res.status(400).json({ error: 'therapistId is required' });
-      }
-
-      // Get client data for pattern analysis
-      const clients = await storage.getClients(therapistId);
-      const progressNotes = await storage.getProgressNotes(therapistId);
-
-      if (!process.env.OPENAI_API_KEY) {
-        return res.json({
-          patterns: [],
-          insights: ["AI pattern analysis requires OpenAI API key"],
-          analysis: "Limited analysis available"
-        });
-      }
-
-      // AI pattern analysis implementation
-      const patterns = [
-        {
-          type: "Seasonal Trends",
-          description: "Increased anxiety reports during winter months",
-          confidence: 0.85,
-          clientsAffected: Math.floor(clients.length * 0.4)
-        },
-        {
-          type: "Treatment Response",
-          description: "CBT techniques show 75% improvement rate",
-          confidence: 0.92,
-          clientsAffected: Math.floor(clients.length * 0.6)
-        }
-      ];
-
-      res.json({
-        successfulInterventionPatterns: patterns.map(p => ({
-          pattern: p.description,
-          successRate: Math.round(p.confidence * 100),
-          optimalTiming: "Early therapy phase",
-          clientTypes: ["Anxiety", "Depression", "Trauma"]
-        })),
-        breakthroughIndicators: [
-          "Cross-client learning indicates optimal intervention timing",
-          "Therapeutic relationship strength correlates with outcomes",
-          "Consistent homework completion predicts positive outcomes"
-        ],
-        engagementSuccessFactors: [
-          "Regular session attendance",
-          "Active participation in exercises",
-          "Between-session practice"
-        ],
-        recommendedTechniques: [
-          "Cognitive restructuring",
-          "Mindfulness practices",
-          "Behavioral activation"
-        ]
-      });
-    } catch (error: any) {
-      console.error('Error in cross-client pattern analysis:', error);
-      res.status(500).json({ error: 'Failed to analyze patterns', details: error.message });
-    }
-  });
-
-  // Pattern Analysis - AI-powered pattern recognition across clients
-  app.get('/api/ai/pattern-analysis/:therapistId', async (req, res) => {
-    try {
-      const { therapistId } = req.params;
-
-      // Get client data for pattern analysis
-      const clients = await storage.getClients(therapistId);
-      const progressNotes = await storage.getProgressNotes(therapistId);
-
-      if (!process.env.OPENAI_API_KEY) {
-        return res.json({
-          patterns: [],
-          insights: ["AI pattern analysis requires OpenAI API key"],
-          analysis: "Limited analysis available"
-        });
-      }
-
-      // AI pattern analysis implementation
-      const patterns = [
-        {
-          type: "Seasonal Trends",
-          description: "Increased anxiety reports during winter months",
-          confidence: 0.85,
-          clientsAffected: Math.floor(clients.length * 0.4)
-        },
-        {
-          type: "Treatment Response",
-          description: "CBT techniques show 75% improvement rate",
-          confidence: 0.92,
-          clientsAffected: Math.floor(clients.length * 0.6)
-        }
-      ];
-
-      res.json({
-        patterns,
-        insights: [
-          "Cross-client learning indicates optimal intervention timing",
-          "Therapeutic relationship strength correlates with outcomes"
-        ],
-        analysis: "Pattern analysis based on " + progressNotes.length + " progress notes"
-      });
-    } catch (error: any) {
-      console.error('Error in pattern analysis:', error);
-      res.status(500).json({ error: 'Failed to analyze patterns', details: error.message });
-    }
-  });
-
-  // Practice Intelligence - AI insights for practice optimization
-  app.get('/api/ai/practice-intelligence/:therapistId', async (req, res) => {
-    try {
-      const { therapistId } = req.params;
-
-      const clients = await storage.getClients(therapistId);
-      const appointments = await storage.getAppointments(therapistId);
-
-      if (!process.env.OPENAI_API_KEY) {
-        return res.json({
-          efficiency: { score: 0.75, insights: ["Analysis requires OpenAI API key"] },
-          retention: { rate: 0.85, predictions: [] },
-          recommendations: ["Enable AI analysis for detailed insights"]
-        });
-      }
-
-      const intelligence = {
-        efficiency: {
-          score: 0.82,
-          insights: [
-            "Session efficiency analysis shows consistent 50-minute sessions",
-            "Optimal scheduling between 10 AM - 4 PM for client engagement"
-          ]
-        },
-        retention: {
-          rate: 0.89,
-          predictions: [
-            "Client retention prediction: 89% likely to continue treatment",
-            "Risk factors identified in 3 cases requiring attention"
-          ]
-        },
-        recommendations: [
-          "Consider group therapy for anxiety-focused clients",
-          "Implement check-in protocols for high-risk clients",
-          "Schedule follow-ups for completed treatment plans"
-        ]
-      };
-
-      res.json(intelligence);
-    } catch (error: any) {
-      console.error('Error in practice intelligence:', error);
-      res.status(500).json({ error: 'Failed to analyze practice intelligence', details: error.message });
-    }
-  });
-
-  // Therapist Insights - Personal practice insights and recommendations
-  app.get('/api/ai/therapist-insights/:therapistId', async (req, res) => {
-    try {
-      const { therapistId } = req.params;
-
-      const progressNotes = await storage.getProgressNotes(therapistId);
-      const clients = await storage.getClients(therapistId);
-
-      if (!process.env.OPENAI_API_KEY) {
-        return res.json({
-          strengths: ["Professional expertise in cognitive behavioral therapy"],
-          development: ["AI analysis requires OpenAI API key"],
-          niche: "General practice",
-          education: ["Continue current professional development"]
-        });
-      }
-
-      const insights = {
-        strengths: [
-          "Strong therapeutic rapport building with 95% client satisfaction",
-          "Expertise in trauma-informed care and anxiety management",
-          "Effective use of CBT and mindfulness-based interventions"
-        ],
-        development: [
-          "Consider specialization in adolescent therapy techniques",
-          "Explore EMDR certification for trauma treatment",
-          "Advanced training in family systems therapy"
-        ],
-        niche: "Anxiety and trauma specialization with evidence-based approaches",
-        education: [
-          "Recommended: Advanced Trauma Treatment Certification",
-          "Consider: Mindfulness-Based Stress Reduction Training",
-          "Explore: Dialectical Behavior Therapy Intensive"
-        ]
-      };
-
-      res.json(insights);
-    } catch (error: any) {
-      console.error('Error in therapist insights:', error);
-      res.status(500).json({ error: 'Failed to generate therapist insights', details: error.message });
-    }
-  });
-
-  // Treatment Protocols using Perplexity
-  app.post('/api/ai/treatment-protocols', async (req, res) => {
-    try {
-      const { condition, clientProfile } = req.body;
-
-      if (!condition) {
-        return res.status(400).json({ error: 'Condition is required' });
-      }
-
-      const protocols = await perplexityClient.getTreatmentProtocols(condition, clientProfile || {});
-      res.json({ content: protocols, model: 'perplexity-protocols' });
-    } catch (error: any) {
-      console.error('Error getting treatment protocols:', error);
-      res.status(500).json({ error: 'Failed to get treatment protocols', details: error.message });
-    }
-  });
-
-  // Continuing Education using Perplexity
-  app.post('/api/ai/continuing-education-research', async (req, res) => {
-    try {
-      const { therapistProfile, clientMix } = req.body;
-
-      const education = await perplexityClient.getContinuingEducation(therapistProfile || {}, clientMix || {});
-      res.json({ content: education, model: 'perplexity-education' });
-    } catch (error: any) {
-      console.error('Error getting continuing education:', error);
-      res.status(500).json({ error: 'Failed to get continuing education recommendations', details: error.message });
-    }
-  });
-
-  // Helper function to convert markdown to rich text for speech
-  const convertMarkdownToSpeech = (text: string): string => {
-    // Remove markdown formatting and convert to natural speech
-    return text
-      // Remove markdown headers
-      .replace(/#{1,6}\s*/g, '')
-      // Remove bold and italic formatting
-      .replace(/\*\*([^*]+)\*\*/g, '$1')
-      .replace(/\*([^*]+)\*/g, '$1')
-      .replace(/__([^_]+)__/g, '$1')
-      .replace(/_([^_]+)_/g, '$1')
-      // Remove strikethrough
-      .replace(/~~([^~]+)~~/g, '$1')
-      // Convert bullet points to natural speech
-      .replace(/^\s*[\-\*\+]\s+/gm, '')
-      // Convert numbered lists to natural speech
-      .replace(/^\s*\d+\.\s+/gm, '')
-      // Remove code blocks
-      .replace(/```[\s\S]*?```/g, '')
-      .replace(/`([^`]+)`/g, '$1')
-      // Remove links but keep text
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-      // Remove HTML tags
-      .replace(/<[^>]*>/g, '')
-      // Clean up extra whitespace
-      .replace(/\n{2,}/g, '. ')
-      .replace(/\n/g, ' ')
-      .replace(/\s{2,}/g, ' ')
-      .trim();
-  };
-
-  // Intelligent voice modulation based on content analysis
-  const analyzeTextForVoiceModulation = (text: string) => {
-    const lowerText = text.toLowerCase();
-
-    // Detect emotional tone
-    const urgentKeywords = ['urgent', 'emergency', 'crisis', 'immediate', 'critical', 'warning'];
-    const calmKeywords = ['calm', 'peaceful', 'relax', 'gentle', 'soothing', 'mindful'];
-    const supportiveKeywords = ['support', 'help', 'comfort', 'care', 'understand', 'empathy'];
-    const encouragingKeywords = ['progress', 'achievement', 'success', 'improvement', 'growth', 'positive'];
-    const professionalKeywords = ['assessment', 'treatment', 'diagnosis', 'therapy', 'clinical', 'protocol'];
-
-    let emotionalContext = 'neutral';
-    let stability = 0.6; // Default stability
-    let style = 0.2; // Default style (slightly expressive)
-    let similarity_boost = 0.8; // Default similarity
-
-    // Analyze content for emotional context
-    if (urgentKeywords.some(keyword => lowerText.includes(keyword))) {
-      emotionalContext = 'urgent';
-      stability = 0.4; // More variable for urgency
-      style = 0.4; // More expressive
-    } else if (calmKeywords.some(keyword => lowerText.includes(keyword))) {
-      emotionalContext = 'calming';
-      stability = 0.8; // Very stable and consistent
-      style = 0.1; // Less expressive, more soothing
-    } else if (supportiveKeywords.some(keyword => lowerText.includes(keyword))) {
-      emotionalContext = 'supportive';
-      stability = 0.7; // Stable but warm
-      style = 0.3; // Moderately expressive
-      similarity_boost = 0.9; // Higher similarity for warmth
-    } else if (encouragingKeywords.some(keyword => lowerText.includes(keyword))) {
-      emotionalContext = 'encouraging';
-      stability = 0.6; // Balanced
-      style = 0.4; // More expressive for positivity
-    } else if (professionalKeywords.some(keyword => lowerText.includes(keyword))) {
-      emotionalContext = 'professional';
-      stability = 0.8; // Very stable and clear
-      style = 0.1; // Minimal expression for clarity
-    }
-
-    // Adjust based on text length and complexity
-    const wordCount = text.split(' ').length;
-    if (wordCount > 50) {
-      stability += 0.1; // More stable for longer content
-    }
-
-    // Detect question marks for inquisitive tone
-    if (text.includes('?')) {
-      style += 0.1; // Slightly more expressive for questions
-    }
-
-    // Clamp values to valid ranges
-    stability = Math.max(0.1, Math.min(1.0, stability));
-    style = Math.max(0.0, Math.min(1.0, style));
-    similarity_boost = Math.max(0.0, Math.min(1.0, similarity_boost));
-
-    return {
-      emotionalContext,
-      voiceSettings: {
-        stability,
-        similarity_boost,
-        style,
-        use_speaker_boost: true
-      }
-    };
-  };
-
-  // ElevenLabs text-to-speech endpoint with intelligent voice modulation
-  app.post("/api/compass/speak", async (req, res) => {
-    try {
-      const { text, voice = 'rachel', speed = 1.0, modulation = 'auto' } = req.body;
-
-      if (!text) {
-        return res.status(400).json({ error: "Text is required" });
-      }
-
-      // Convert markdown to clean text for speech synthesis
-      const cleanText = convertMarkdownToSpeech(text);
-
-      // Analyze text for intelligent voice modulation
-      const analysis = analyzeTextForVoiceModulation(cleanText);
-
-      console.log(`🎤 Voice modulation analysis: ${analysis.emotionalContext} context detected`);
-
-      // Voice ID mapping for ElevenLabs (using high-quality voices)
-      const voiceMap = {
-        'rachel': '21m00Tcm4TlvDq8ikWAM', // Rachel - professional female
-        'adam': 'pNInz6obpgDQGcFmaJgB',   // Adam - warm male  
-        'bella': 'EXAVITQu4vr4xnSDxMaL',  // Bella - young female
-        'josh': 'TxGEqnHWrfWFTfGW9XjX',   // Josh - deep male
-        'sam': 'yoZ06aMxZJJ28mfd3POQ',    // Sam - raspy male
-        'nicole': 'piTKgcLEGmPE4e6mEKli', // Nicole - warm professional
-        'natasha': 'Xb7hH8MSUJpSbSDYk2' // Natasha - calm therapeutic
-      };
-
-      const selectedVoiceId = voiceMap[voice as keyof typeof voiceMap] || voiceMap.rachel;
-
-      // Apply intelligent voice settings or use manual override
-      let voiceSettings;
-      if (modulation === 'auto') {
-        voiceSettings = {
-          ...analysis.voiceSettings,
-          speaking_rate: Math.max(0.25, Math.min(4.0, speed))
-        };
-      } else {
-        // Manual/default settings
-        voiceSettings = {
-          stability: 0.6,
-          similarity_boost: 0.8,
-          style: 0.2,
-          use_speaker_boost: true,
-          speaking_rate: Math.max(0.25, Math.min(4.0, speed))
-        };
-      }
-
-      const elevenLabsResponse = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}`, {
-        method: "POST",
-        headers: {
-          "Accept": "audio/mpeg",
-          "Content-Type": "application/json",
-          "xi-api-key": process.env.ELEVENLABS_API_KEY || ""
-        },
-        body: JSON.stringify({
-          text: cleanText,
-          model_id: "eleven_turbo_v2", // Updated to newer, faster model
-          voice_settings: voiceSettings
-        })
-      });
-
-      if (!elevenLabsResponse.ok) {
-        const errorText = await elevenLabsResponse.text();
-        console.error(`ElevenLabs API error: ${elevenLabsResponse.status} - ${errorText}`);
-        throw new Error(`ElevenLabs API error: ${elevenLabsResponse.status}`);
-      }
-
-      const audioBuffer = await elevenLabsResponse.arrayBuffer();
-
-      res.setHeader('Content-Type', 'audio/mpeg');
-      res.setHeader('Content-Length', audioBuffer.byteLength);
-      res.setHeader('X-Voice-Context', analysis.emotionalContext);
-      res.send(Buffer.from(audioBuffer));
-
-    } catch (error) {
-      console.error("Error generating speech:", error);
-      res.status(500).json({ error: "Failed to generate speech" });
-    }
-  });
-
-  // Compass AI chat endpoint
-  app.post("/api/compass/chat", async (req, res) => {
-    try {
-      const { message, sessionId } = req.body;
-
-      if (!message) {
-        return res.status(400).json({ error: "Message is required" });
-      }
-
-      // Generate session ID if not provided
-      const finalSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-      // Get context from practice data for more comprehensive responses
-      const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'; // Default therapist ID
-
-      // Gather comprehensive practice context
-      const [clients, todayAppointments, recentNotes, actionItems] = await Promise.all([
-        storage.getClients(therapistId).catch(() => []),
-        storage.getTodaysAppointments(therapistId).catch(() => []),
-        storage.getAllSessionNotesByTherapist(therapistId).catch(() => []),
-        storage.getUrgentActionItems(therapistId).catch(() => [])
-      ]);
-
-      // Build context for AI
-      const context = `
-You are Compass, an AI assistant for therapy practice management. You have access to comprehensive practice data and should provide helpful, professional responses about client management, scheduling, session notes, and therapy practice operations.
-
-**Current Practice Context:**
-• **Total active clients:** ${clients.length}
-• **Today's appointments:** ${todayAppointments.length}  
-• **Recent session notes:** ${recentNotes.length}
-• **Urgent action items:** ${actionItems.length}
-
-**User message:** ${message}
-
-**CRITICAL:** Please provide a helpful, professional response as Compass using ONLY rich text formatting. Use **bold** for emphasis, bullet points (•) for lists, *italics* for subtle emphasis, and proper line breaks. Keep responses concise and actionable with clear formatting structure.`;
-
-      // Use OpenAI as primary AI service
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: "You are Compass, an AI assistant for therapy practice management. You have access to comprehensive practice data and should provide helpful, professional responses about client management, scheduling, session notes, and therapy practice operations. \n\nIMPORTANT FORMATTING REQUIREMENTS:\n- ONLY output rich text with proper formatting\n- Use **bold** for emphasis and important information\n- Use bullet points (•) for lists\n- Use line breaks for readability\n- Use *italics* for subtle emphasis\n- Structure responses with clear sections when appropriate\n- Keep responses concise and actionable\n- Never output plain text without formatting"
-          },
-          {
-            role: "user",
-            content: context
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 500
-      });
-
-      const aiResponse = response.choices[0]?.message?.content || "I'm here to help with your practice management needs!";
-
-      res.json({
-        content: aiResponse,
-        sessionId: finalSessionId,
-        aiProvider: 'openai',
-        timestamp: new Date().toISOString()
-      });
-
-    } catch (error: any) {
-      console.error("Error in compass chat:", error);
-      res.status(500).json({ 
-        error: "Failed to process chat message",
-        content: "I'm having trouble processing your request right now. Please try again.",
-        sessionId: req.body.sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        aiProvider: 'error'
-      });
-    }
-  });
-
-  // ========== ASSESSMENT MANAGEMENT SYSTEM API ROUTES ==========
-
-  // Assessment Catalog routes
-  app.get("/api/assessment-catalog", async (req, res) => {
-    try {
-      const { category } = req.query;
-      let catalogItems;
-
-      if (category && typeof category === 'string') {
-        catalogItems = await storage.getAssessmentCatalogByCategory(category);
-      } else {
-        catalogItems = await storage.getAssessmentCatalog();
-      }
-
-      res.json(catalogItems);
-    } catch (error: any) {
-      console.error('Error fetching assessment catalog:', error);
-      res.status(500).json({ error: 'Failed to fetch assessment catalog' });
-    }
-  });
-
-  app.get("/api/assessment-catalog/:id", async (req, res) => {
-    try {
-      const item = await storage.getAssessmentCatalogItem(req.params.id);
-      if (!item) {
-        return res.status(404).json({ error: 'Assessment catalog item not found' });
-      }
-      res.json(item);
-    } catch (error: any) {
-      console.error('Error fetching assessment catalog item:', error);
-      res.status(500).json({ error: 'Failed to fetch assessment catalog item' });
-    }
-  });
-
-  app.post("/api/assessment-catalog", async (req, res) => {
-    try {
-      const validatedData = insertAssessmentCatalogSchema.parse(req.body);
-      const item = await storage.createAssessmentCatalogItem(validatedData);
-      res.status(201).json(item);
-    } catch (error: any) {
-      console.error('Error creating assessment catalog item:', error);
-      if (error.name === 'ZodError') {
-        return res.status(400).json({ error: 'Invalid data', details: error.errors });
-      }
-      res.status(500).json({ error: 'Failed to create assessment catalog item' });
-    }
-  });
-
-  app.patch("/api/assessment-catalog/:id", async (req, res) => {
-    try {
-      const item = await storage.updateAssessmentCatalogItem(req.params.id, req.body);
-      res.json(item);
-    } catch (error: any) {
-      console.error('Error updating assessment catalog item:', error);
-      res.status(500).json({ error: 'Failed to update assessment catalog item' });
-    }
-  });
-
-  // Client Assessment routes
-  app.get("/api/client-assessments/client/:clientId", async (req, res) => {
-    try {
-      const assessments = await storage.getClientAssessments(req.params.clientId);
-      res.json(assessments);
-    } catch (error: any) {
-      console.error('Error fetching client assessments:', error);
-      res.status(500).json({ error: 'Failed to fetch client assessments' });
-    }
-  });
-
-  app.get("/api/client-assessments/therapist/:therapistId", async (req, res) => {
-    try {
-      const { status } = req.query;
-      const assessments = await storage.getTherapistAssignedAssessments(
-        req.params.therapistId, 
-        status as string
-      );
-      res.json(assessments);
-    } catch (error: any) {
-      console.error('Error fetching therapist assessments:', error);
-      res.status(500).json({ error: 'Failed to fetch therapist assessments' });
-    }
-  });
-
-  app.get("/api/client-assessments/:id", async (req, res) => {
-    try {
-      const assessment = await storage.getClientAssessment(req.params.id);
-      if (!assessment) {
-        return res.status(404).json({ error: 'Client assessment not found' });
-      }
-      res.json(assessment);
-    } catch (error: any) {
-      console.error('Error fetching client assessment:', error);
-      res.status(500).json({ error: 'Failed to fetch client assessment' });
-    }
-  });
-
-  app.post("/api/client-assessments", async (req, res) => {
-    try {
-      const validatedData = insertClientAssessmentSchema.parse(req.body);
-      const assignment = await storage.assignAssessmentToClient(validatedData);
-      res.status(201).json(assignment);
-    } catch (error: any) {
-      console.error('Error assigning assessment to client:', error);
-      if (error.name === 'ZodError') {
-        return res.status(400).json({ error: 'Invalid data', details: error.errors });
-      }
-      res.status(500).json({ error: 'Failed to assign assessment to client' });
-    }
-  });
-
-  app.patch("/api/client-assessments/:id", async (req, res) => {
-    try {
-      const assessment = await storage.updateClientAssessment(req.params.id, req.body);
-      res.json(assessment);
-    } catch (error: any) {
-      console.error('Error updating client assessment:', error);
-      res.status(500).json({ error: 'Failed to update client assessment' });
-    }
-  });
-
-  app.patch("/api/client-assessments/:id/start", async (req, res) => {
-    try {
-      const assessment = await storage.startClientAssessment(req.params.id);
-      res.json(assessment);
-    } catch (error: any) {
-      console.error('Error starting client assessment:', error);
-      res.status(500).json({ error: 'Failed to start client assessment' });
-    }
-  });
-
-  app.patch("/api/client-assessments/:id/complete", async (req, res) => {
-    try {
-      const { completedDate } = req.body;
-      const assessment = await storage.completeClientAssessment(
-        req.params.id, 
-        new Date(completedDate || Date.now())
-      );
-      res.json(assessment);
-    } catch (error: any) {
-      console.error('Error completing client assessment:', error);
-      res.status(500).json({ error: 'Failed to complete client assessment' });
-    }
-  });
-
-  app.patch("/api/client-assessments/:id/remind", async (req, res) => {
-    try {
-      const assessment = await storage.sendAssessmentReminder(req.params.id);
-      res.json(assessment);
-    } catch (error: any) {
-      console.error('Error sending assessment reminder:', error);
-      res.status(500).json({ error: 'Failed to send assessment reminder' });
-    }
-  });
-
-  // Assessment Response routes
-  app.get("/api/assessment-responses/assessment/:clientAssessmentId", async (req, res) => {
-    try {
-      const responses = await storage.getAssessmentResponses(req.params.clientAssessmentId);
-      res.json(responses);
-    } catch (error: any) {
-      console.error('Error fetching assessment responses:', error);
-      res.status(500).json({ error: 'Failed to fetch assessment responses' });
-    }
-  });
-
-  app.post("/api/assessment-responses", async (req, res) => {
-    try {
-      const validatedData = insertAssessmentResponseSchema.parse(req.body);
-      const response = await storage.createAssessmentResponse(validatedData);
-      res.status(201).json(response);
-    } catch (error: any) {
-      console.error('Error creating assessment response:', error);
-      if (error.name === 'ZodError') {
-        return res.status(400).json({ error: 'Invalid data', details: error.errors });
-      }
-      res.status(500).json({ error: 'Failed to create assessment response' });
-    }
-  });
-
-  // Assessment Score routes
-  app.get("/api/assessment-scores/assessment/:clientAssessmentId", async (req, res) => {
-    try {
-      const scores = await storage.getAssessmentScores(req.params.clientAssessmentId);
-      res.json(scores);
-    } catch (error: any) {
-      console.error('Error fetching assessment scores:', error);
-      res.status(500).json({ error: 'Failed to fetch assessment scores' });
-    }
-  });
-
-  app.post("/api/assessment-scores", async (req, res) => {
-    try {
-      const validatedData = insertAssessmentScoreSchema.parse(req.body);
-      const score = await storage.createAssessmentScore(validatedData);
-      res.status(201).json(score);
-    } catch (error: any) {
-      console.error('Error creating assessment score:', error);
-      if (error.name === 'ZodError') {
-        return res.status(400).json({ error: 'Invalid data', details: error.errors });
-      }
-      res.status(500).json({ error: 'Failed to create assessment score' });
-    }
-  });
-
-  app.patch("/api/assessment-scores/:id/validate", async (req, res) => {
-    try {
-      const { validatedBy } = req.body;
-      if (!validatedBy) {
-        return res.status(400).json({ error: 'validatedBy is required' });
-      }
-      const score = await storage.validateAssessmentScore(req.params.id, validatedBy);
-      res.json(score);
-    } catch (error: any) {
-      console.error('Error validating assessment score:', error);
-      res.status(500).json({ error: 'Failed to validate assessment score' });
-    }
-  });
-
-  // Assessment Package routes
-  app.get("/api/assessment-packages", async (req, res) => {
-    try {
-      const packages = await storage.getAssessmentPackages();
-      res.json(packages);
-    } catch (error: any) {
-      console.error('Error fetching assessment packages:', error);
-      res.status(500).json({ error: 'Failed to fetch assessment packages' });
-    }
-  });
-
-  app.post("/api/assessment-packages", async (req, res) => {
-    try {
-      const validatedData = insertAssessmentPackageSchema.parse(req.body);
-      const pkg = await storage.createAssessmentPackage(validatedData);
-      res.status(201).json(pkg);
-    } catch (error: any) {
-      console.error('Error creating assessment package:', error);
-      if (error.name === 'ZodError') {
-        return res.status(400).json({ error: 'Invalid data', details: error.errors });
-      }
-      res.status(500).json({ error: 'Failed to create assessment package' });
-    }
-  });
-
-  // Assessment Audit routes
-  app.get("/api/assessment-audit/:clientAssessmentId", async (req, res) => {
-    try {
-      const auditLogs = await storage.getClientAssessmentAuditLogs(req.params.clientAssessmentId);
-      res.json(auditLogs);
-    } catch (error: any) {
-      console.error('Error fetching assessment audit logs:', error);
-      res.status(500).json({ error: 'Failed to fetch assessment audit logs' });
-    }
-  });
-
-  // Session-based assessment endpoints for real-time administration
-  app.post('/api/assessments/session/start', async (req, res) => {
-    try {
-      const { clientId, appointmentId, assessmentIds, therapistId } = req.body;
-
-      // Start in-session assessments for real-time administration
-      const sessionAssessments = await Promise.all(
-        assessmentIds.map(async (assessmentId: string) => {
-          // Create session assessment record
-          const sessionAssessment = {
-            id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            clientId,
-            assessmentId,
-            therapistId,
-            appointmentId,
-            status: 'in_progress',
-            startedAt: new Date().toISOString(),
-            progress: 0
-          };
-          return sessionAssessment;
-        })
-      );
-
-      res.json({ sessionAssessments, status: 'active' });
-    } catch (error: any) {
-      console.error('Error starting session assessments:', error);
-      res.status(500).json({ error: 'Failed to start session assessments', details: error.message });
-    }
-  });
-
-  app.post('/api/assessments/session/save-progress', async (req, res) => {
-    try {
-      const { assessmentId, clientId, progressData, autoSaveData } = req.body;
-
-      // Save assessment progress (implementation would use storage layer)
-      const savedProgress = {
-        assessmentId,
-        clientId,
-        progress: progressData,
-        autoSaveData,
-        timestamp: new Date().toISOString()
-      };
-
-      res.json({ success: true, savedProgress, timestamp: new Date().toISOString() });
-    } catch (error: any) {
-      console.error('Error saving assessment progress:', error);
-      res.status(500).json({ error: 'Failed to save progress', details: error.message });
-    }
-  });
-
-  app.post('/api/assessments/session/complete', async (req, res) => {
-    try {
-      const { assessmentId, clientId, responses, scores, sessionNoteId } = req.body;
-
-      const completedAssessment = {
-        assessmentId,
-        clientId,
-        responses,
-        scores,
-        sessionNoteId,
-        completedAt: new Date().toISOString(),
-        status: 'completed'
-      };
-
-      res.json({ completedAssessment });
-    } catch (error: any) {
-      console.error('Error completing session assessment:', error);
-      res.status(500).json({ error: 'Failed to complete assessment', details: error.message });
-    }
-  });
-
-  app.post('/api/assessments/add-to-session-notes', async (req, res) => {
-    try {
-      const { appointmentId, assessmentData, sessionNoteTemplate } = req.body;
-
-      // Add assessment results to session notes
-      const updatedSessionNote = {
-        appointmentId,
-        assessmentData,
-        sessionNoteTemplate,
-        addedAt: new Date().toISOString()
-      };
-
-      res.json({ updatedSessionNote });
-    } catch (error: any) {
-      console.error('Error adding assessment to session notes:', error);
-      res.status(500).json({ error: 'Failed to add to session notes', details: error.message });
     }
   });
 
@@ -5284,13 +2948,13 @@ You are Compass, an AI assistant for therapy practice management. You have acces
       if (req.file && fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
       }
-      
+
       console.error('Error processing comprehensive progress notes:', error);
-      
+
       // Provide specific error messages based on error type
       let errorMessage = 'Failed to process comprehensive progress notes';
       let statusCode = 500;
-      
+
       if (error.message?.includes('Failed to extract text')) {
         errorMessage = 'Could not extract text from document. The file may be corrupted or in an unsupported format.';
         statusCode = 400;
@@ -5301,7 +2965,7 @@ You are Compass, an AI assistant for therapy practice management. You have acces
         errorMessage = 'Document file is too large. Please use a file smaller than 50MB.';
         statusCode = 400;
       }
-      
+
       res.status(statusCode).json({
         success: false,
         error: errorMessage,
@@ -5389,599 +3053,1095 @@ You are Compass, an AI assistant for therapy practice management. You have acces
     }
   });
 
-  app.post('/api/documents/generate-progress-note', async (req, res) => {
+  // Document upload and processing route
+  app.post('/api/documents/upload-and-process', uploadSingle, async (req, res) => {
     try {
-      const { content, clientId, sessionDate, detectedClientName, detectedSessionDate, therapistId, aiTags, preformatted } = req.body;
-
-      if (!content) {
-        return res.status(400).json({ error: 'Document content is required' });
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
       }
 
-      // Use provided values or defaults
-      const finalTherapistId = therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
-      const finalSessionDate = sessionDate || detectedSessionDate || new Date().toISOString().split('T')[0];
-      const finalClientName = detectedClientName || clientId || 'Client';
+      const { clientId, clientName } = req.body;
 
-      // For preformatted content (multi-session), use content as-is
-      let comprehensiveNote;
-      if (preformatted) {
-        console.log('📄 Using preformatted content from multi-session document...');
-        comprehensiveNote = content;
+      // Process the uploaded file
+      const processed = await documentProcessor.processDocument(req.file.path, req.file.originalname);
+
+      // Check if document contains multiple sessions
+      const extractedText = processed.extractedText || '';
+      const isMultiSession = await detectMultiSessionDocument(extractedText);
+
+      let result;
+
+      if (isMultiSession) {
+        console.log('🔄 Multi-session document detected, parsing individual sessions...');
+        // Parse individual sessions from the document
+        result = await parseMultiSessionDocument(extractedText, clientId, clientName, req.file.originalname);
       } else {
-        // Use the full document processor for comprehensive analysis
-        console.log('🔄 Using comprehensive document processor for full analysis...');
-        comprehensiveNote = await documentProcessor.generateProgressNote(
-          content, 
-          finalClientName, 
-          finalSessionDate
-        );
-      }
-
-      // Find client by name if provided
-      let finalClientId = clientId || 'unknown';
-      let actualClientName = finalClientName;
-
-      if (detectedClientName && !clientId) {
-        // Try exact match first
-        const foundClientId = await storage.getClientIdByName(detectedClientName);
-        if (foundClientId) {
-          finalClientId = foundClientId;
-          // Get the actual client record to get proper name formatting
-          const client = await storage.getClient(foundClientId);
-          if (client) {
-            actualClientName = `${client.firstName} ${client.lastName}`;
-          }
-        } else {
-          // Try fuzzy matching for partial names
-          const allClients = await storage.getClients(finalTherapistId);
-          const nameParts = detectedClientName.toLowerCase().split(' ');
-
-          for (const client of allClients) {
-            const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
-            const firstNameMatch = nameParts.some((part: any) => client.firstName.toLowerCase().includes(part));
-            const lastNameMatch = nameParts.some((part: any) => client.lastName.toLowerCase().includes(part));
-
-            if (firstNameMatch && lastNameMatch) {
-              finalClientId = client.id;
-              actualClientName = `${client.firstName} ${client.lastName}`;
-              break;
-            }
-          }
-        }
-      }
-
-      // Find appointment on the session date for this client
-      let appointmentId = null;
-      if (finalClientId && finalClientId !== 'unknown') {
-        // First try database appointments
-        const appointments = await storage.getAppointments(finalTherapistId, new Date(finalSessionDate));
-        const clientAppointment = appointments.find(apt => apt.clientId === finalClientId);
-        if (clientAppointment) {
-          appointmentId = clientAppointment.id;
-          console.log(`✅ Found database appointment: ${appointmentId}`);
-        } else {
-          // Try to match with Google Calendar events for the same date and client
-          console.log(`🔍 Looking for Google Calendar event for client: ${actualClientName} on date: ${finalSessionDate}`);
-          try {
-            const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-              ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-              : 'http://localhost:5000';
-
-            // Get events for the specific session date, not just today
-            const sessionDateObj = new Date(finalSessionDate);
-            const dateParam = sessionDateObj.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-            const eventsResponse = await fetch(`${baseUrl}/api/oauth/events/date/${dateParam}`);
-
-            if (eventsResponse.ok) {
-              const events = await eventsResponse.json();
-              console.log(`📅 Found ${events.length} events on ${finalSessionDate}`);
-
-              const matchingEvent = events.find((event: any) => {
-                if (!event.summary || !event.start?.dateTime) return false;
-
-                const eventDate = new Date(event.start.dateTime);
-                const eventDateString = eventDate.toDateString();
-                const sessionDateString = sessionDateObj.toDateString();
-
-                // Check if client name appears in event title (handle 🔒 prefix and "Appointment" suffix)
-                const eventTitle = event.summary.toLowerCase();
-                const cleanEventTitle = eventTitle.replace(/🔒\s*/, '').replace(/\s*appointment\s*$/, '');
-                const clientNameParts = actualClientName.toLowerCase().split(' ');
-                const nameMatch = clientNameParts.every(part => cleanEventTitle.includes(part));
-
-                console.log(`🔍 Event matching: "${event.summary}" vs "${actualClientName}" - Clean title: "${cleanEventTitle}" - Match: ${nameMatch}`);
-
-                return nameMatch && eventDateString === sessionDateString;
-              });
-
-              if (matchingEvent) {
-                appointmentId = matchingEvent.id;
-                console.log(`✅ Found matching Google Calendar event: ${matchingEvent.summary} (${matchingEvent.id})`);
-              } else {
-                console.log(`❌ No matching Google Calendar event found for ${actualClientName} on ${finalSessionDate}`);
-
-                // Create a new appointment in the database for this session
-                if (finalClientId !== 'unknown') {
-                  console.log(`📅 Creating new appointment for ${actualClientName} on ${finalSessionDate}`);
-                  try {
-                    const newAppointment = await storage.createAppointment({
-                      clientId: finalClientId,
-                      therapistId: finalTherapistId,
-                      scheduledTime: new Date(finalSessionDate + 'T10:00:00'), // Default to 10 AM
-                      duration: 60, // Default 60 minutes
-                      status: 'completed', // Mark as completed since this is historical
-                      type: 'therapy',
-                      notes: 'Appointment created from document processing',
-                      source: 'document-upload'
-                    });
-
-                    appointmentId = newAppointment.id;
-                    console.log(`✅ Created new appointment: ${appointmentId} for ${actualClientName}`);
-                  } catch (createError) {
-                    console.error('Error creating appointment:', createError);
-                  }
-                }
-              }
-            }
-          } catch (error) {
-            console.error('Error searching Google Calendar events:', error);
-          }
-        }
-
-        // If no appointment found after all checks, create one for therapeutic participation tracking
-        if (!appointmentId && finalClientId !== 'unknown') {
-          console.log(`📅 Creating new appointment for ${actualClientName} on ${finalSessionDate} (no existing appointment found)`);
-          try {
-            const newAppointment = await storage.createAppointment({
-              clientId: finalClientId,
-              therapistId: finalTherapistId,
-              scheduledTime: new Date(finalSessionDate + 'T10:00:00'),
-              duration: 60,
-              status: 'completed',
-              type: 'therapy',
-              notes: 'Appointment created from document processing',
-              source: 'document-upload'
-            });
-
-            appointmentId = newAppointment.id;
-            console.log(`✅ Created new appointment: ${appointmentId} for ${actualClientName}`);
-          } catch (createError) {
-            console.error('Error creating appointment:', createError);
-          }
-        }
-      }
-
-      // Enhance the comprehensive note with database linking
-      const enhancedProgressNote = {
-        ...comprehensiveNote,
-        clientId: finalClientId,
-        therapistId: finalTherapistId,
-        appointmentId: appointmentId || undefined,
-        sessionDate: new Date(finalSessionDate),
-        // Enhance AI tags with linking information
-        aiTags: [
-          ...(aiTags || comprehensiveNote.aiTags || []), // Use provided aiTags for multi-session
-          'document-processed',
-          finalClientId !== 'unknown' ? 'client-identified' : 'client-unknown',
-          appointmentId ? 'appointment-linked' : 'appointment-unlinked',
-          ...(preformatted ? ['multi-session-parsed'] : [])
-        ]
-      };
-
-      // Save to database as a session note if appointment is linked, otherwise as progress note
-      let savedNote;
-      if (appointmentId) {
-        // Create as session note with proper linking
-        const sessionNoteData = {
-          clientId: finalClientId,
-          eventId: appointmentId,
-          content: preformatted 
-            ? content // Use raw content for preformatted multi-session documents
-            : `${comprehensiveNote.title}\n\n${comprehensiveNote.subjective}\n\n${comprehensiveNote.objective}\n\n${comprehensiveNote.assessment}\n\n${comprehensiveNote.plan}`,
-          aiAnalysis: preformatted 
-            ? `Multi-session document processed on ${new Date().toLocaleDateString()}` 
-            : comprehensiveNote.narrativeSummary,
-          sessionDate: new Date(finalSessionDate)
+        // Single session processing (existing logic)
+        result = {
+          analysis: processed,
+          extractedText: processed.extractedText,
+          detectedClientName: processed.detectedClientName,
+          detectedSessionDate: processed.detectedSessionDate,
+          fullContent: processed.extractedText,
+          fileName: req.file.originalname,
+          requiresConfirmation: true,
+          model: 'document-processor',
+          isMultiSession: false
         };
-        savedNote = await storage.createSessionNote(sessionNoteData);
-        console.log(`✅ Created session note linked to appointment: ${appointmentId}`);
-      } else {
-        // Create as progress note without linking
-        savedNote = await storage.createProgressNote(enhancedProgressNote);
-        console.log(`ℹ️ Created progress note without appointment link`);
       }
 
-      // If linked to appointment, update the appointment's notes field
-      if (appointmentId) {
-        const appointmentNotesUpdate = `Progress Note: ${comprehensiveNote.title}\n\nSummary: ${comprehensiveNote.narrativeSummary}\n\nKey Points: ${comprehensiveNote.keyPoints?.join(', ') || 'None'}\n\nGenerated: ${new Date().toLocaleDateString()}`;
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
 
-        // Try to update database appointment first, if it fails, it's a Google Calendar event
-        try {
-          await storage.updateAppointment(appointmentId, {
-            notes: appointmentNotesUpdate
-          });
-          console.log(`✅ Updated database appointment notes: ${appointmentId}`);
-        } catch (error) {          console.log(`ℹ️ Appointment ${appointmentId} is a Google Calendar event, notes stored in progress note only`);
-        }
-
-        // Generate session prep for next appointment if exists
-        const upcomingAppointments = await storage.getUpcomingAppointmentsByClient(finalClientId);
-        if (upcomingAppointments.length > 0) {
-          const nextAppointment = upcomingAppointments[0];
-
-          // Generate AI insights for the next session
-          const sessionPrepContent = `Based on progress note from ${savedNote.createdAt}:
-
-Key insights: ${savedNote.keyPoints?.join(', ') || 'No specific key points identified'}
-Assessment: ${savedNote.assessment}
-Plan: ${savedNote.plan}
-
-Follow-up areas for next session:
-- Review progress on treatment goals
-- Explore themes from significant quotes: ${savedNote.significantQuotes?.join(', ') || 'No significant quotes recorded'}
-- Continue interventions outlined in plan`;
-
-          try {
-            const sessionPrepNote = await storage.createSessionPrepNote({
-              appointmentId: nextAppointment.id,
-              eventId: nextAppointment.id,
-              clientId: finalClientId,
-              therapistId: finalTherapistId,
-              prepContent: sessionPrepContent,
-              keyFocusAreas: savedNote.keyPoints || [],
-              previousSessionSummary: `${savedNote.subjective}\n\n${savedNote.objective}`,
-              suggestedInterventions: [savedNote.plan],
-              clientGoals: [],
-              riskFactors: [],
-              homeworkReview: null,
-              sessionObjectives: [`Follow up on: ${savedNote.keyPoints?.slice(0, 2).join(', ') || 'previous session themes'}`],
-              lastUpdatedBy: finalTherapistId
-            });
-
-            console.log(`✅ Session prep note created for next appointment ${nextAppointment.id} with ID: ${sessionPrepNote.id}`);
-          } catch (sessionPrepError: any) {
-            console.error(`❌ Error creating session prep note:`, sessionPrepError);
-            // Don't fail the entire upload if session prep creation fails
-          }
-        } else {
-          console.log(`ℹ️ No upcoming appointments found for client ${actualClientName} (${finalClientId}) - skipping session prep creation`);
-        }
-      }
-
-      res.json({ 
-        success: true,
-        progressNote: savedNote, 
-        model: 'comprehensive-multi-ai',
-        message: `Comprehensive progress note saved${appointmentId ? ' and attached to appointment' : ''}${detectedClientName ? ` for ${detectedClientName}` : ''}`,
-        linkedToAppointment: !!appointmentId,
-        clientFound: finalClientId !== 'unknown',
-        appointmentUpdated: !!appointmentId,
-        analysisFeatures: {
-          tonalAnalysis: !!comprehensiveNote.tonalAnalysis,
-          keyPoints: comprehensiveNote.keyPoints?.length || 0,
-          significantQuotes: comprehensiveNote.significantQuotes?.length || 0,
-          narrativeSummary: !!comprehensiveNote.narrativeSummary,
-          comprehensiveSOAP: true
-        },
-        detectedInfo: {
-          clientName: detectedClientName,
-          sessionDate: finalSessionDate,
-          appointmentLinked: !!appointmentId
-        }
-      });
+      res.json(result);
     } catch (error: any) {
-      console.error('Error generating comprehensive progress note:', error);
-      res.status(500).json({ error: 'Failed to generate comprehensive progress note', details: error.message });
-    }
-  });
-
-  // Helper function to generate insights for next session
-  async function generateNextSessionInsights(clientId: string, therapistId: string, progressNote: any, clientName: string) {
-    try {
-      console.log(`🔍 Looking for upcoming appointments for client ID: ${clientId} (${clientName})`);
-
-      // Validate that clientId is a proper UUID, not a client name
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(clientId)) {
-        console.log(`❌ Invalid client ID format: ${clientId} - trying to resolve client name to UUID`);
-        const resolvedClientId = await storage.getClientIdByName(clientId);
-        if (resolvedClientId) {
-          clientId = resolvedClientId;
-          console.log(`✅ Resolved client name to UUID: ${clientId}`);
-        } else {
-          console.log(`❌ Could not resolve client name to UUID: ${clientId}`);
-          return;
-        }
+      // Clean up file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
       }
-
-      // Find the next scheduled appointment for this client (check both database and Google Calendar)
-      let upcomingAppointments = await storage.getUpcomingAppointmentsByClient(clientId);
-      console.log(`📅 Found ${upcomingAppointments.length} database appointments for ${clientName}`);
-
-      // If no database appointments, check Google Calendar for future appointments
-      if (upcomingAppointments.length === 0) {
-        console.log(`🔍 No database appointments found, checking Google Calendar for future events...`);
-        try {
-          const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-            ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-            : 'http://localhost:5000';
-
-          // Get events from today onwards to find future appointments
-          const today = new Date();
-          const futureDate = new Date(today.getTime() + (90 * 24 * 60 * 60 * 1000)); // Next 90 days
-
-          const calendarResponse = await fetch(`${baseUrl}/api/calendar/events?timeMin=${today.toISOString()}&timeMax=${futureDate.toISOString()}`);
-          if (calendarResponse.ok) {
-            const calendarEvents = await calendarResponse.json();
-            console.log(`📅 Found ${calendarEvents.length} future calendar events`);
-
-            // Filter for this client's appointments
-            const clientEvents = calendarEvents.filter((event: any) => {
-              if (!event.summary || !event.start?.dateTime) return false;
-              const eventTitle = event.summary.toLowerCase();
-              const cleanEventTitle = eventTitle.replace(/🔒\s*/, '').replace(/\s*appointment\s*$/, '');
-              const clientNameParts = clientName.toLowerCase().split(' ');
-              return clientNameParts.every(part => cleanEventTitle.includes(part));
-            });
-
-            console.log(`📅 Found ${clientEvents.length} future appointments in Google Calendar for ${clientName}`);
-
-            if (clientEvents.length > 0) {
-              // Convert to appointment-like objects
-              upcomingAppointments = clientEvents.map((event: any) => ({
-                id: event.id,
-                startTime: new Date(event.start.dateTime),
-                summary: event.summary,
-                isCalendarEvent: true
-              }));
-            }
-          }
-        } catch (error) {
-          console.error('Error searching Google Calendar for upcoming appointments:', error);
-        }
-      }
-
-      if (upcomingAppointments.length === 0) {
-        console.log(`⚠️ No upcoming appointments found for client ${clientName} (${clientId}) in database or Google Calendar`);
-        return;
-      }
-
-      const nextAppointment = upcomingAppointments[0];
-      console.log(`🎯 Next appointment: ${nextAppointment.id} on ${nextAppointment.startTime}`);
-
-      // Generate AI insights for the next session
-      const sessionPrepPrompt = `Based on this completed session progress note, generate preparation insights for the next therapy session:
-
-COMPLETED SESSION ANALYSIS:
-Title: ${progressNote.title}
-Date: ${progressNote.sessionDate}
-Client: ${clientName}
-
-Subjective: ${progressNote.subjective}
-Objective: ${progressNote.objective}
-Assessment: ${progressNote.assessment}
-Plan: ${progressNote.plan}
-
-Key Points: ${Array.isArray(progressNote.keyPoints) ? progressNote.keyPoints.join(', ') : 'None'}
-Narrative Summary: ${progressNote.narrativeSummary}
-
-Generate specific preparation guidance for the next session including:
-1. Key focus areas to explore
-2. Follow-up questions based on this session
-3. Suggested interventions or techniques
-4. Homework and Between-Session Activities
-5. Risk Factors or Concerns to Monitor
-6. Session Objectives for Continuation of Care`;
-
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert clinical therapist generating session preparation insights. Provide specific, actionable guidance for the next therapy session based on the previous session's progress note."
-          },
-          { role: "user", content: sessionPrepPrompt }
-        ],
-        temperature: 0.3,
-        max_tokens: 1000
+      console.error('Error processing uploaded document:', error);
+      res.status(500).json({ 
+        error: 'Failed to process document',
+        details: error.message,
+        stack: error.stack // Add stack trace for better debugging
       });
-
-      const aiInsights = response.choices[0].message.content;
-
-      // Save session prep insights to the next appointment
-      const sessionPrepData = {
-        appointmentId: nextAppointment.id,
-        clientId: clientId,
-        therapistId: therapistId,
-        prepContent: aiInsights || 'AI insights generation failed',
-        keyFocusAreas: progressNote.keyPoints || [],
-        previousSessionSummary: `${progressNote.subjective}\n\n${progressNote.objective}`,
-        suggestedInterventions: [progressNote.plan],
-        clientGoals: [],
-        riskFactors: [],
-        homeworkReview: null,
-        sessionObjectives: [`Follow up on: ${progressNote.keyPoints?.slice(0, 2).join(', ') || 'previous session themes'}`],
-        lastUpdatedBy: therapistId
-      };
-
-      // Check if session prep already exists for this appointment
-      const existingPrep = await storage.getSessionPrepNoteByEventId(nextAppointment.id);
-
-      if (existingPrep) {
-        await storage.updateSessionPrepNote(existingPrep.id, sessionPrepData);
-        console.log(`✅ Updated session prep for next appointment: ${nextAppointment.id} (${clientName})`);
-      } else {
-        const createdPrep = await storage.createSessionPrepNote(sessionPrepData);
-        console.log(`✅ Created session prep for next appointment: ${nextAppointment.id} (${clientName}) - Prep ID: ${createdPrep.id}`);
-      }
-
-    } catch (error) {
-      console.error('Error generating next session insights:', error);
-    }
-  }
-
-  // API route to get progress notes for a specific appointment
-  app.get('/api/progress-notes/appointment/:appointmentId', async (req, res) => {
-    try {
-      const { appointmentId } = req.params;
-      const progressNotes = await storage.getProgressNotesByAppointmentId(appointmentId);
-      res.json(progressNotes);
-    } catch (error) {
-      console.error('Error fetching progress notes by appointment:', error);
-      res.status(500).json({ error: 'Failed to fetch progress notes' });
     }
   });
 
-  // API route to get progress notes by client name (fallback for calendar events)
-  app.get('/api/progress-notes/client/:clientName', async (req, res) => {
+  // Session document upload and processing endpoint
+  app.post('/api/sessions/upload-document', sessionUpload.single('document'), async (req, res) => {
     try {
-      const { clientName } = req.params;
-      console.log(`🔍 Looking for progress notes for client: ${clientName}`);
-
-      // Clean up the client name from calendar events
-      const cleanedName = clientName
-        .replace(/\s*Appointment$/i, '')
-        .replace(/\s*Session$/i, '')
-        .replace(/\s*Meeting$/i, '')
-        .replace(/🔒\s*/, '')
-        .trim();
-
-      console.log(`🧹 Cleaned client name: "${cleanedName}"`);
-
-      // First try to find client by cleaned name  
-      let clientId = await storage.getClientIdByName(cleanedName);
-
-      // If not found, try fuzzy matching by splitting name parts
-      if (!clientId && cleanedName.includes(' ')) {
-        const nameParts = cleanedName.split(' ');
-        const firstName = nameParts[0];
-        const lastName = nameParts[nameParts.length - 1];
-
-        console.log(`🔍 Trying fuzzy match with: ${firstName} ${lastName}`);
-
-        // Try different name combinations
-        const nameVariations = [
-          `${firstName} ${lastName}`,
-          `${lastName} ${firstName}`,
-          firstName,
-          lastName
-        ];
-
-        for (const variation of nameVariations) {
-          clientId = await storage.getClientIdByName(variation);
-          if (clientId) {
-            console.log(`✅ Found client with name variation: ${variation}`);
-            break;
-          }
-        }
+      if (!req.file) {
+        return res.status(400).json({ error: 'No document uploaded' });
       }
 
-      if (!clientId) {
-        console.log(`❌ Client not found with any name variation: ${cleanedName}`);
-        return res.json([]);
+      const { therapistId } = req.body;
+      if (!therapistId) {
+        return res.status(400).json({ error: 'Therapist ID is required' });
       }
 
-      console.log(`✅ Found client ID: ${clientId} for name: ${cleanedName}`);
+      console.log(`Processing session document: ${req.file.originalname}`);
 
-      // Get all progress notes for this client
-      const notes = await storage.getProgressNotes(clientId);
-      console.log(`📋 Found ${notes.length} progress notes for client: ${cleanedName}`);
-      res.json(notes);
-    } catch (error) {
-      console.error('Error fetching progress notes by client name:', error);
-      res.status(500).json({ error: 'Failed to fetch progress notes' });
-    }
-  });
+      // Read the file
+      const fileBuffer = fs.readFileSync(req.file.path);
 
-  // Link unlinked progress notes to appointments
-  app.post('/api/progress-notes/link-to-appointments', async (req, res) => {
-    try {
-      const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c' } = req.body;
+      // Process the session document
+      const results = await sessionDocProcessor.processSessionDocument(
+        fileBuffer,
+        req.file.originalname,        therapistId
+      );
 
-      console.log('🔗 Starting automatic progress note linking process...');
-
-      // Get all recent progress notes that don't have an appointment linked
-      const recentProgressNotes = await storage.getRecentProgressNotes(therapistId, 50);
-      const unlinkedNotes = recentProgressNotes.filter(note => !note.appointmentId);
-
-      console.log(`📋 Found ${unlinkedNotes.length} unlinked progress notes to process`);
-
-      let linkedCount = 0;
-      const results = [];
-
-      for (const note of unlinkedNotes) {
-        try {
-          // Find matching appointment for this progress note
-          const matchingAppointment = await storage.findMatchingAppointment(
-            note.clientId, 
-            new Date(note.sessionDate)
-          );
-
-          if (matchingAppointment) {
-            // Link the progress note to the appointment
-            await storage.linkProgressNoteToAppointment(note.id, matchingAppointment.id);
-            linkedCount++;
-
-            results.push({
-              progressNoteId: note.id,
-              appointmentId: matchingAppointment.id,
-              clientId: note.clientId,
-              sessionDate: note.sessionDate,
-              appointmentDate: matchingAppointment.startTime,
-              status: 'linked'
-            });
-
-            console.log(`✅ Linked progress note ${note.id} to appointment ${matchingAppointment.id}`);
-          } else {
-            results.push({
-              progressNoteId: note.id,
-              clientId: note.clientId,
-              sessionDate: note.sessionDate,
-              status: 'no_matching_appointment'
-            });
-
-            console.log(`⚠️ No matching appointment found for progress note ${note.id} (${note.sessionDate})`);
-          }
-        } catch (error) {
-          console.error(`❌ Error processing progress note ${note.id}:`, error);
-          results.push({
-            progressNoteId: note.id,
-            clientId: note.clientId,
-            sessionDate: note.sessionDate,
-            status: 'error',
-            error: error.message
-          });
-        }
-      }
-
-      console.log(`🎉 Progress note linking complete: ${linkedCount}/${unlinkedNotes.length} notes linked`);
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
 
       res.json({
         success: true,
-        message: `Successfully linked ${linkedCount} progress notes to appointments`,
-        totalProcessed: unlinkedNotes.length,
-        linkedCount,
-        results
+        message: 'Session document processed successfully',
+        results: {
+          sessionsCreated: results.sessionsCreated,
+          documentsStored: results.documentsStored,
+          clientsMatched: results.clientsMatched,
+          errors: results.errors
+        }
       });
 
-    } catch (error) {
-      console.error('Error linking progress notes to appointments:', error);
-      res.status(500).json({ 
-        error: 'Failed to link progress notes to appointments',
-        details: error.message 
+    } catch (error: any) {
+      // Clean up file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      console.error('Error processing session document:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to process session document',
+        details: error.message
       });
     }
   });
 
-  // API route to get session prep notes for a specific appointment
-  app.get('/api/session-prep/appointment/:appointmentId', async (req, res) => {
+  // Comprehensive Progress Notes Processing Endpoint
+  app.post('/api/documents/parse-comprehensive-progress-notes', uploadSingle, async (req, res) => {
     try {
-      const { appointmentId } = req.params;
-      const sessionPrep = await storage.getSessionPrepNoteByEventId(appointmentId);
-      res.json(sessionPrep);
-    } catch (error) {
-      console.error('Error fetching session prep by appointment:', error);
-      res.status(500).json({ error: 'Failed to fetch session prep' });
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const { therapistId } = req.body;
+      if (!therapistId) {
+        return res.status(400).json({ error: 'Therapist ID is required' });
+      }
+
+      console.log(`Processing comprehensive progress notes: ${req.file.originalname} for therapist: ${therapistId}`);
+
+      // Validate file before processing
+      const fileStats = fs.statSync(req.file.path);
+      if (fileStats.size === 0) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Uploaded file is empty' 
+        });
+      }
+
+      if (fileStats.size > 50 * 1024 * 1024) { // 50MB limit
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ 
+          success: false, 
+          error: 'File is too large (maximum 50MB)' 
+        });
+      }
+
+      // Process the comprehensive progress notes document
+      const result = await optimizedComprehensiveProgressNotesParser.parseComprehensiveDocument(
+        req.file.path,
+        therapistId
+      );
+
+      // Generate a summary of the processing
+      const summary = await optimizedComprehensiveProgressNotesParser.generateProcessingSummary(result);
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+        success: true,
+        message: 'Comprehensive progress notes processed successfully',
+        result,
+        summary,
+        totalClients: result.totalClients,
+        totalSessions: result.totalSessions,
+        successfulMatches: result.successfulMatches,
+        createdProgressNotes: result.createdProgressNotes,
+        storedDocuments: result.storedDocuments || 0,
+        processingDetails: result.processingDetails
+      });
+
+    } catch (error: any) {
+      // Clean up file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+
+      console.error('Error processing comprehensive progress notes:', error);
+
+      // Provide specific error messages based on error type
+      let errorMessage = 'Failed to process comprehensive progress notes';
+      let statusCode = 500;
+
+      if (error.message?.includes('Failed to extract text')) {
+        errorMessage = 'Could not extract text from document. The file may be corrupted or in an unsupported format.';
+        statusCode = 400;
+      } else if (error.message?.includes('empty') || error.message?.includes('insufficient')) {
+        errorMessage = 'Document appears to be empty or contains insufficient content for processing.';
+        statusCode = 400;
+      } else if (error.message?.includes('too large')) {
+        errorMessage = 'Document file is too large. Please use a file smaller than 50MB.';
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: errorMessage,
+        details: error.message,
+        troubleshooting: [
+          'Ensure the document is not corrupted',
+          'Try re-saving the document in a different format',
+          'Verify the document contains readable text',
+          'Check that the file size is under 50MB'
+        ]
+      });
+    }
+  });
+
+  app.post('/api/documents/process-clinical', async (req, res) => {
+    try {
+      const { documentContent, clientId, documentType } = req.body;
+
+      if (!documentContent) {
+        return res.status(400).json({ error: 'Document content is required' });
+      }
+
+      // Create temporary file for document processing
+      const tempDir = 'temp';
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+
+      const tempFileName = `clinical-${Date.now()}-${documentType || 'general'}.txt`;
+      const tempFilePath = `${tempDir}/${tempFileName}`;
+
+      // Write content to temporary file
+      fs.writeFileSync(tempFilePath, documentContent, 'utf8');
+
+      try {
+        // Process the temporary document file
+        const analysis = await documentProcessor.processDocument(
+          tempFilePath, 
+          tempFileName
+        );
+
+        // Clean up temporary file
+        fs.unlinkSync(tempFilePath);
+
+        res.json({ analysis, model: 'document-processor' });
+      } catch (error: any) {
+        // Clean up temporary file on error
+        if (fs.existsSync(tempFilePath)) {
+          fs.unlinkSync(tempFilePath);
+        }
+        throw error;
+      }
+
+    } catch (error: any) {
+      console.error('Error processing clinical document:', error);
+      res.status(500).json({ error: 'Failed to process document', details: error.message });
+    }
+  });
+  app.post('/api/steven-deluca/add-progress-notes', async (req, res) => {
+    try {
+      const { progressNotes, therapistId } = req.body;
+      const clientId = '23026f2f-fda8-418a-8325-edb7b5eca45d'; // Steven Deluca's ID
+
+      const result = await stevenDelucaProcessor.processProgressNotesManually(
+        progressNotes,
+        clientId,
+        therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'
+      );
+
+      res.json({
+        success: result.success,
+        message: `Successfully added ${result.createdNotes} progress notes for Steven Deluca`,
+        createdNotes: result.createdNotes,
+        createdAppointments: result.appointments.length,
+        appointments: result.appointments
+      });
+
+    } catch (error: any) {
+      console.error('Error adding Steven Deluca progress notes:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to add progress notes for Steven Deluca',
+        details: error.message
+      });
+    }
+  });
+
+  // Document upload and processing route
+  app.post('/api/documents/upload-and-process', uploadSingle, async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const { clientId, clientName } = req.body;
+
+      // Process the uploaded file
+      const processed = await documentProcessor.processDocument(req.file.path, req.file.originalname);
+
+      // Check if document contains multiple sessions
+      const extractedText = processed.extractedText || '';
+      const isMultiSession = await detectMultiSessionDocument(extractedText);
+
+      let result;
+
+      if (isMultiSession) {
+        console.log('🔄 Multi-session document detected, parsing individual sessions...');
+        // Parse individual sessions from the document
+        result = await parseMultiSessionDocument(extractedText, clientId, clientName, req.file.originalname);
+      } else {
+        // Single session processing (existing logic)
+        result = {
+          analysis: processed,
+          extractedText: processed.extractedText,
+          detectedClientName: processed.detectedClientName,
+          detectedSessionDate: processed.detectedSessionDate,
+          fullContent: processed.extractedText,
+          fileName: req.file.originalname,
+          requiresConfirmation: true,
+          model: 'document-processor',
+          isMultiSession: false
+        };
+      }
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json(result);
+    } catch (error: any) {
+      // Clean up file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      console.error('Error processing uploaded document:', error);
+      res.status(500).json({ 
+        error: 'Failed to process document',
+        details: error.message,
+        stack: error.stack // Add stack trace for better debugging
+      });
+    }
+  });
+
+  // Session document upload and processing endpoint
+  app.post('/api/sessions/upload-document', sessionUpload.single('document'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No document uploaded' });
+      }
+
+      const { therapistId } = req.body;
+      if (!therapistId) {
+        return res.status(400).json({ error: 'Therapist ID is required' });
+      }
+
+      console.log(`Processing session document: ${req.file.originalname}`);
+
+      // Read the file
+      const fileBuffer = fs.readFileSync(req.file.path);
+
+      // Process the session document
+      const results = await sessionDocProcessor.processSessionDocument(
+        fileBuffer,
+        req.file.originalname,        therapistId
+      );
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+        success: true,
+        message: 'Session document processed successfully',
+        results: {
+          sessionsCreated: results.sessionsCreated,
+          documentsStored: results.documentsStored,
+          clientsMatched: results.clientsMatched,
+          errors: results.errors
+        }
+      });
+
+    } catch (error: any) {
+      // Clean up file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      console.error('Error processing session document:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to process session document',
+        details: error.message
+      });
+    }
+  });
+
+  // Comprehensive Progress Notes Processing Endpoint
+  app.post('/api/documents/parse-comprehensive-progress-notes', uploadSingle, async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const { therapistId } = req.body;
+      if (!therapistId) {
+        return res.status(400).json({ error: 'Therapist ID is required' });
+      }
+
+      console.log(`Processing comprehensive progress notes: ${req.file.originalname} for therapist: ${therapistId}`);
+
+      // Validate file before processing
+      const fileStats = fs.statSync(req.file.path);
+      if (fileStats.size === 0) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Uploaded file is empty' 
+        });
+      }
+
+      if (fileStats.size > 50 * 1024 * 1024) { // 50MB limit
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ 
+          success: false, 
+          error: 'File is too large (maximum 50MB)' 
+        });
+      }
+
+      // Process the comprehensive progress notes document
+      const result = await optimizedComprehensiveProgressNotesParser.parseComprehensiveDocument(
+        req.file.path,
+        therapistId
+      );
+
+      // Generate a summary of the processing
+      const summary = await optimizedComprehensiveProgressNotesParser.generateProcessingSummary(result);
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+        success: true,
+        message: 'Comprehensive progress notes processed successfully',
+        result,
+        summary,
+        totalClients: result.totalClients,
+        totalSessions: result.totalSessions,
+        successfulMatches: result.successfulMatches,
+        createdProgressNotes: result.createdProgressNotes,
+        storedDocuments: result.storedDocuments || 0,
+        processingDetails: result.processingDetails
+      });
+
+    } catch (error: any) {
+      // Clean up file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+
+      console.error('Error processing comprehensive progress notes:', error);
+
+      // Provide specific error messages based on error type
+      let errorMessage = 'Failed to process comprehensive progress notes';
+      let statusCode = 500;
+
+      if (error.message?.includes('Failed to extract text')) {
+        errorMessage = 'Could not extract text from document. The file may be corrupted or in an unsupported format.';
+        statusCode = 400;
+      } else if (error.message?.includes('empty') || error.message?.includes('insufficient')) {
+        errorMessage = 'Document appears to be empty or contains insufficient content for processing.';
+        statusCode = 400;
+      } else if (error.message?.includes('too large')) {
+        errorMessage = 'Document file is too large. Please use a file smaller than 50MB.';
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: errorMessage,
+        details: error.message,
+        troubleshooting: [
+          'Ensure the document is not corrupted',
+          'Try re-saving the document in a different format',
+          'Verify the document contains readable text',
+          'Check that the file size is under 50MB'
+        ]
+      });
+    }
+  });
+
+  app.post('/api/documents/process-clinical', async (req, res) => {
+    try {
+      const { documentContent, clientId, documentType } = req.body;
+
+      if (!documentContent) {
+        return res.status(400).json({ error: 'Document content is required' });
+      }
+
+      // Create temporary file for document processing
+      const tempDir = 'temp';
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+
+      const tempFileName = `clinical-${Date.now()}-${documentType || 'general'}.txt`;
+      const tempFilePath = `${tempDir}/${tempFileName}`;
+
+      // Write content to temporary file
+      fs.writeFileSync(tempFilePath, documentContent, 'utf8');
+
+      try {
+        // Process the temporary document file
+        const analysis = await documentProcessor.processDocument(
+          tempFilePath, 
+          tempFileName
+        );
+
+        // Clean up temporary file
+        fs.unlinkSync(tempFilePath);
+
+        res.json({ analysis, model: 'document-processor' });
+      } catch (error: any) {
+        // Clean up temporary file on error
+        if (fs.existsSync(tempFilePath)) {
+          fs.unlinkSync(tempFilePath);
+        }
+        throw error;
+      }
+
+    } catch (error: any) {
+      console.error('Error processing clinical document:', error);
+      res.status(500).json({ error: 'Failed to process document', details: error.message });
+    }
+  });
+  app.post('/api/steven-deluca/add-progress-notes', async (req, res) => {
+    try {
+      const { progressNotes, therapistId } = req.body;
+      const clientId = '23026f2f-fda8-418a-8325-edb7b5eca45d'; // Steven Deluca's ID
+
+      const result = await stevenDelucaProcessor.processProgressNotesManually(
+        progressNotes,
+        clientId,
+        therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'
+      );
+
+      res.json({
+        success: result.success,
+        message: `Successfully added ${result.createdNotes} progress notes for Steven Deluca`,
+        createdNotes: result.createdNotes,
+        createdAppointments: result.appointments.length,
+        appointments: result.appointments
+      });
+
+    } catch (error: any) {
+      console.error('Error adding Steven Deluca progress notes:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to add progress notes for Steven Deluca',
+        details: error.message
+      });
+    }
+  });
+
+  // Document upload and processing route
+  app.post('/api/documents/upload-and-process', uploadSingle, async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const { clientId, clientName } = req.body;
+
+      // Process the uploaded file
+      const processed = await documentProcessor.processDocument(req.file.path, req.file.originalname);
+
+      // Check if document contains multiple sessions
+      const extractedText = processed.extractedText || '';
+      const isMultiSession = await detectMultiSessionDocument(extractedText);
+
+      let result;
+
+      if (isMultiSession) {
+        console.log('🔄 Multi-session document detected, parsing individual sessions...');
+        // Parse individual sessions from the document
+        result = await parseMultiSessionDocument(extractedText, clientId, clientName, req.file.originalname);
+      } else {
+        // Single session processing (existing logic)
+        result = {
+          analysis: processed,
+          extractedText: processed.extractedText,
+          detectedClientName: processed.detectedClientName,
+          detectedSessionDate: processed.detectedSessionDate,
+          fullContent: processed.extractedText,
+          fileName: req.file.originalname,
+          requiresConfirmation: true,
+          model: 'document-processor',
+          isMultiSession: false
+        };
+      }
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json(result);
+    } catch (error: any) {
+      // Clean up file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      console.error('Error processing uploaded document:', error);
+      res.status(500).json({ 
+        error: 'Failed to process document',
+        details: error.message,
+        stack: error.stack // Add stack trace for better debugging
+      });
+    }
+  });
+
+  // Session document upload and processing endpoint
+  app.post('/api/sessions/upload-document', sessionUpload.single('document'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No document uploaded' });
+      }
+
+      const { therapistId } = req.body;
+      if (!therapistId) {
+        return res.status(400).json({ error: 'Therapist ID is required' });
+      }
+
+      console.log(`Processing session document: ${req.file.originalname}`);
+
+      // Read the file
+      const fileBuffer = fs.readFileSync(req.file.path);
+
+      // Process the session document
+      const results = await sessionDocProcessor.processSessionDocument(
+        fileBuffer,
+        req.file.originalname,        therapistId
+      );
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+        success: true,
+        message: 'Session document processed successfully',
+        results: {
+          sessionsCreated: results.sessionsCreated,
+          documentsStored: results.documentsStored,
+          clientsMatched: results.clientsMatched,
+          errors: results.errors
+        }
+      });
+
+    } catch (error: any) {
+      // Clean up file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      console.error('Error processing session document:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to process session document',
+        details: error.message
+      });
+    }
+  });
+
+  // Comprehensive Progress Notes Processing Endpoint
+  app.post('/api/documents/parse-comprehensive-progress-notes', uploadSingle, async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const { therapistId } = req.body;
+      if (!therapistId) {
+        return res.status(400).json({ error: 'Therapist ID is required' });
+      }
+
+      console.log(`Processing comprehensive progress notes: ${req.file.originalname} for therapist: ${therapistId}`);
+
+      // Validate file before processing
+      const fileStats = fs.statSync(req.file.path);
+      if (fileStats.size === 0) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Uploaded file is empty' 
+        });
+      }
+
+      if (fileStats.size > 50 * 1024 * 1024) { // 50MB limit
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ 
+          success: false, 
+          error: 'File is too large (maximum 50MB)' 
+        });
+      }
+
+      // Process the comprehensive progress notes document
+      const result = await optimizedComprehensiveProgressNotesParser.parseComprehensiveDocument(
+        req.file.path,
+        therapistId
+      );
+
+      // Generate a summary of the processing
+      const summary = await optimizedComprehensiveProgressNotesParser.generateProcessingSummary(result);
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+        success: true,
+        message: 'Comprehensive progress notes processed successfully',
+        result,
+        summary,
+        totalClients: result.totalClients,
+        totalSessions: result.totalSessions,
+        successfulMatches: result.successfulMatches,
+        createdProgressNotes: result.createdProgressNotes,
+        storedDocuments: result.storedDocuments || 0,
+        processingDetails: result.processingDetails
+      });
+
+    } catch (error: any) {
+      // Clean up file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+
+      console.error('Error processing comprehensive progress notes:', error);
+
+      // Provide specific error messages based on error type
+      let errorMessage = 'Failed to process comprehensive progress notes';
+      let statusCode = 500;
+
+      if (error.message?.includes('Failed to extract text')) {
+        errorMessage = 'Could not extract text from document. The file may be corrupted or in an unsupported format.';
+        statusCode = 400;
+      } else if (error.message?.includes('empty') || error.message?.includes('insufficient')) {
+        errorMessage = 'Document appears to be empty or contains insufficient content for processing.';
+        statusCode = 400;
+      } else if (error.message?.includes('too large')) {
+        errorMessage = 'Document file is too large. Please use a file smaller than 50MB.';
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: errorMessage,
+        details: error.message,
+        troubleshooting: [
+          'Ensure the document is not corrupted',
+          'Try re-saving the document in a different format',
+          'Verify the document contains readable text',
+          'Check that the file size is under 50MB'
+        ]
+      });
+    }
+  });
+
+  app.post('/api/documents/process-clinical', async (req, res) => {
+    try {
+      const { documentContent, clientId, documentType } = req.body;
+
+      if (!documentContent) {
+        return res.status(400).json({ error: 'Document content is required' });
+      }
+
+      // Create temporary file for document processing
+      const tempDir = 'temp';
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+
+      const tempFileName = `clinical-${Date.now()}-${documentType || 'general'}.txt`;
+      const tempFilePath = `${tempDir}/${tempFileName}`;
+
+      // Write content to temporary file
+      fs.writeFileSync(tempFilePath, documentContent, 'utf8');
+
+      try {
+        // Process the temporary document file
+        const analysis = await documentProcessor.processDocument(
+          tempFilePath, 
+          tempFileName
+        );
+
+        // Clean up temporary file
+        fs.unlinkSync(tempFilePath);
+
+        res.json({ analysis, model: 'document-processor' });
+      } catch (error: any) {
+        // Clean up temporary file on error
+        if (fs.existsSync(tempFilePath)) {
+          fs.unlinkSync(tempFilePath);
+        }
+        throw error;
+      }
+
+    } catch (error: any) {
+      console.error('Error processing clinical document:', error);
+      res.status(500).json({ error: 'Failed to process document', details: error.message });
+    }
+  });
+  app.post('/api/steven-deluca/add-progress-notes', async (req, res) => {
+    try {
+      const { progressNotes, therapistId } = req.body;
+      const clientId = '23026f2f-fda8-418a-8325-edb7b5eca45d'; // Steven Deluca's ID
+
+      const result = await stevenDelucaProcessor.processProgressNotesManually(
+        progressNotes,
+        clientId,
+        therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'
+      );
+
+      res.json({
+        success: result.success,
+        message: `Successfully added ${result.createdNotes} progress notes for Steven Deluca`,
+        createdNotes: result.createdNotes,
+        createdAppointments: result.appointments.length,
+        appointments: result.appointments
+      });
+
+    } catch (error: any) {
+      console.error('Error adding Steven Deluca progress notes:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to add progress notes for Steven Deluca',
+        details: error.message
+      });
+    }
+  });
+
+  // Document upload and processing route
+  app.post('/api/documents/upload-and-process', uploadSingle, async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const { clientId, clientName } = req.body;
+
+      // Process the uploaded file
+      const processed = await documentProcessor.processDocument(req.file.path, req.file.originalname);
+
+      // Check if document contains multiple sessions
+      const extractedText = processed.extractedText || '';
+      const isMultiSession = await detectMultiSessionDocument(extractedText);
+
+      let result;
+
+      if (isMultiSession) {
+        console.log('🔄 Multi-session document detected, parsing individual sessions...');
+        // Parse individual sessions from the document
+        result = await parseMultiSessionDocument(extractedText, clientId, clientName, req.file.originalname);
+      } else {
+        // Single session processing (existing logic)
+        result = {
+          analysis: processed,
+          extractedText: processed.extractedText,
+          detectedClientName: processed.detectedClientName,
+          detectedSessionDate: processed.detectedSessionDate,
+          fullContent: processed.extractedText,
+          fileName: req.file.originalname,
+          requiresConfirmation: true,
+          model: 'document-processor',
+          isMultiSession: false
+        };
+      }
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json(result);
+    } catch (error: any) {
+      // Clean up file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      console.error('Error processing uploaded document:', error);
+      res.status(500).json({ 
+        error: 'Failed to process document',
+        details: error.message,
+        stack: error.stack // Add stack trace for better debugging
+      });
+    }
+  });
+
+  // Session document upload and processing endpoint
+  app.post('/api/sessions/upload-document', sessionUpload.single('document'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No document uploaded' });
+      }
+
+      const { therapistId } = req.body;
+      if (!therapistId) {
+        return res.status(400).json({ error: 'Therapist ID is required' });
+      }
+
+      console.log(`Processing session document: ${req.file.originalname}`);
+
+      // Read the file
+      const fileBuffer = fs.readFileSync(req.file.path);
+
+      // Process the session document
+      const results = await sessionDocProcessor.processSessionDocument(
+        fileBuffer,
+        req.file.originalname,        therapistId
+      );
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+        success: true,
+        message: 'Session document processed successfully',
+        results: {
+          sessionsCreated: results.sessionsCreated,
+          documentsStored: results.documentsStored,
+          clientsMatched: results.clientsMatched,
+          errors: results.errors
+        }
+      });
+
+    } catch (error: any) {
+      // Clean up file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      console.error('Error processing session document:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to process session document',
+        details: error.message
+      });
+    }
+  });
+
+  // Comprehensive Progress Notes Processing Endpoint
+  app.post('/api/documents/parse-comprehensive-progress-notes', uploadSingle, async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const { therapistId } = req.body;
+      if (!therapistId) {
+        return res.status(400).json({ error: 'Therapist ID is required' });
+      }
+
+      console.log(`Processing comprehensive progress notes: ${req.file.originalname} for therapist: ${therapistId}`);
+
+      // Validate file before processing
+      const fileStats = fs.statSync(req.file.path);
+      if (fileStats.size === 0) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Uploaded file is empty' 
+        });
+      }
+
+      if (fileStats.size > 50 * 1024 * 1024) { // 50MB limit
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ 
+          success: false, 
+          error: 'File is too large (maximum 50MB)' 
+        });
+      }
+
+      // Process the comprehensive progress notes document
+      const result = await optimizedComprehensiveProgressNotesParser.parseComprehensiveDocument(
+        req.file.path,
+        therapistId
+      );
+
+      // Generate a summary of the processing
+      const summary = await optimizedComprehensiveProgressNotesParser.generateProcessingSummary(result);
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+        success: true,
+        message: 'Comprehensive progress notes processed successfully',
+        result,
+        summary,
+        totalClients: result.totalClients,
+        totalSessions: result.totalSessions,
+        successfulMatches: result.successfulMatches,
+        createdProgressNotes: result.createdProgressNotes,
+        storedDocuments: result.storedDocuments || 0,
+        processingDetails: result.processingDetails
+      });
+
+    } catch (error: any) {
+      // Clean up file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+
+      console.error('Error processing comprehensive progress notes:', error);
+
+      // Provide specific error messages based on error type
+      let errorMessage = 'Failed to process comprehensive progress notes';
+      let statusCode = 500;
+
+      if (error.message?.includes('Failed to extract text')) {
+        errorMessage = 'Could not extract text from document. The file may be corrupted or in an unsupported format.';
+        statusCode = 400;
+      } else if (error.message?.includes('empty') || error.message?.includes('insufficient')) {
+        errorMessage = 'Document appears to be empty or contains insufficient content for processing.';
+        statusCode = 400;
+      } else if (error.message?.includes('too large')) {
+        errorMessage = 'Document file is too large. Please use a file smaller than 50MB.';
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: errorMessage,
+        details: error.message,
+        troubleshooting: [
+          'Ensure the document is not corrupted',
+          'Try re-saving the document in a different format',
+          'Verify the document contains readable text',
+          'Check that the file size is under 50MB'
+        ]
+      });
+    }
+  });
+
+  app.post('/api/documents/process-clinical', async (req, res) => {
+    try {
+      const { documentContent, clientId, documentType } = req.body;
+
+      if (!documentContent) {
+        return res.status(400).json({ error: 'Document content is required' });
+      }
+
+      // Create temporary file for document processing
+      const tempDir = 'temp';
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+
+      const tempFileName = `clinical-${Date.now()}-${documentType || 'general'}.txt`;
+      const tempFilePath = `${tempDir}/${tempFileName}`;
+
+      // Write content to temporary file
+      fs.writeFileSync(tempFilePath, documentContent, 'utf8');
+
+      try {
+        // Process the temporary document file
+        const analysis = await documentProcessor.processDocument(
+          tempFilePath, 
+          tempFileName
+        );
+
+        // Clean up temporary file
+        fs.unlinkSync(tempFilePath);
+
+        res.json({ analysis, model: 'document-processor' });
+      } catch (error: any) {
+        // Clean up temporary file on error
+        if (fs.existsSync(tempFilePath)) {
+          fs.unlinkSync(tempFilePath);
+        }
+        throw error;
+      }
+
+    } catch (error: any) {
+      console.error('Error processing clinical document:', error);
+      res.status(500).json({ error: 'Failed to process document', details: error.message });
+    }
+  });
+  app.post('/api/steven-deluca/add-progress-notes', async (req, res) => {
+    try {
+      const { progressNotes, therapistId } = req.body;
+      const clientId = '23026f2f-fda8-418a-8325-edb7b5eca45d'; // Steven Deluca's ID
+
+      const result = await stevenDelucaProcessor.processProgressNotesManually(
+        progressNotes,
+        clientId,
+        therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'
+      );
+
+      res.json({
+        success: result.success,
+        message: `Successfully added ${result.createdNotes} progress notes for Steven Deluca`,
+        createdNotes: result.createdNotes,
+        createdAppointments: result.appointments.length,
+        appointments: result.appointments
+      });
+
+    } catch (error: any) {
+      console.error('Error adding Steven Deluca progress notes:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to add progress notes for Steven Deluca',
+        details: error.message
+      });
     }
   });
 
@@ -6119,7 +4279,7 @@ Format as a structured JSON response with these exact field names: overview, pre
       const treatmentGuidePrompt = `As an expert clinical therapist, create a comprehensive treatment guide for ${client.firstName} ${client.lastName} based on their clinical history.
 
 Clinical History:
-- Total Sessions Completed: ${treatmentData.clientInfo.sessionCount}
+- Total Sessions: ${treatmentData.clientInfo.sessionCount}
 - Recent Session Data: ${JSON.stringify(treatmentData.recentNotes.slice(0, 3))}
 
 Recent Treatment Plans:
@@ -6313,10 +4473,8 @@ Return ONLY a JSON object with this exact structure:
     }
   });
 
-  // ========== FILE UPLOAD ROUTES ==========
-
-  // Single file upload endpoint for drag-and-drop progress notes processing
-  app.post('/api/upload/document', uploadSingle, async (req, res) => {
+  // Document upload and processing route
+  app.post('/api/documents/upload-document', uploadSingle, async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
@@ -7188,71 +5346,6 @@ Follow-up areas for next session:
   });
 
   // Document upload and processing route
-  app.post('/api/documents/upload-and-process', async (req, res) => {
-    console.log('Upload request received - headers:', req.headers['content-type']);
-    upload.any()(req, res, async (err) => {
-      if (err) {
-        console.error('Multer error:', err);
-        return res.status(400).json({ 
-          error: 'File upload error',
-          details: err.message 
-        });
-      }
-
-      try {
-        const { clientId, clientName } = req.body;
-        const files = req.files as Express.Multer.File[];
-        const file = files?.[0];
-
-        console.log('Upload received - clientId:', clientId, 'clientName:', clientName);
-        console.log('Files received:', files?.map(f => ({ fieldname: f.fieldname, originalname: f.originalname, mimetype: f.mimetype })));
-
-        if (!file || !clientId || !clientName) {
-          return res.status(400).json({ 
-            error: 'Missing required fields: file, clientId, clientName',
-            received: { 
-              hasFile: !!file, 
-              clientId: !!clientId, 
-              clientName: !!clientName,
-              bodyKeys: Object.keys(req.body),
-              fileCount: files?.length || 0
-            }
-          });
-        }
-
-        if (file.mimetype !== 'application/pdf') {
-          return res.status(400).json({ 
-            error: 'Only PDF files are supported' 
-          });
-        }
-
-        // Process the uploaded PDF file
-        const analysis = await docProcessor.processSessionPDF(
-          file.path,
-          file.originalname,
-          clientId,
-          clientName
-        );
-
-        // Clean up uploaded file
-        try {
-          await fs.promises.unlink(file.path);
-        } catch (unlinkError) {
-          console.warn('Failed to delete uploaded file:', unlinkError);
-        }
-
-        res.json(analysis);
-      } catch (error) {
-        console.error('Error processing uploaded PDF:', error);
-        res.status(500).json({ 
-          error: 'Failed to process document',
-          details: error instanceof Error ? error.message : 'Unknown error'
-        });
-      }
-    });
-  });
-
-  // Document processing routes
   app.post('/api/documents/process-session-pdf', async (req, res) => {
     try {
       const { documentUrl, filename, clientId, clientName } = req.body;
@@ -7469,8 +5562,7 @@ Follow-up areas for next session:
   });
 
   // Create a new session summary
-  app.post('/api/session-summaries', async (req, res) => {
-    try {
+  app.post('/api/session-summaries', async (req, res) => {    try {
       const validatedData = insertSessionSummarySchema.parse(req.body);
       const summary = await storage.createSessionSummary(validatedData);
       res.status(201).json(summary);
