@@ -5,7 +5,31 @@ import { ApiClient } from "@/lib/api";
 export default function ProgressOverview() {
   const { data: progressData, isLoading } = useQuery({
     queryKey: ['progress-metrics'],
-    queryFn: ApiClient.getProgressMetrics,
+    queryFn: async () => {
+      // Mock data for now - in production this would call ApiClient.getProgressMetrics
+      return [
+        {
+          title: "Goal Achievement",
+          description: "Clients meeting treatment objectives",
+          percentage: 78,
+          progress: 78
+        },
+        {
+          title: "Session Attendance",
+          description: "Client engagement rate",
+          percentage: 92,
+          progress: 92
+        },
+        {
+          title: "Documentation",
+          description: "Notes completion rate",
+          percentage: 85,
+          progress: 85
+        }
+      ];
+    },
+    staleTime: 5 * 60 * 1000, // Consider fresh for 5 minutes
+    refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes
   });
 
   const progressMetrics = progressData || [

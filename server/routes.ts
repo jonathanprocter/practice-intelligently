@@ -2210,7 +2210,7 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
       const eventsWithNotes = new Set(existingNotes.map(note => note.eventId).filter(Boolean));
 
       const eventsWithoutNotes = events.filter(event => 
-        !eventsWithNotes.has(event.googleEventId)
+        !eventsWithNotes.has(event.id)
       );
 
       res.json(eventsWithoutNotes);
@@ -2410,10 +2410,21 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
 
       // Try to refresh tokens before fetching events
       try {
-        await (simpleOAuth as any).refreshTokensIfNeeded();
+        await simpleOAuth.refreshTokensIfNeeded();
+        
+        // Double-check connection after refresh attempt
+        if (!simpleOAuth.isConnected()) {
+          return res.status(401).json({ 
+            error: 'Authentication expired. Please re-authenticate.', 
+            requiresAuth: true 
+          });
+        }
       } catch (tokenError: any) {
         console.error('Token refresh failed during event fetch:', tokenError);
-        return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
+        return res.status(401).json({ 
+          error: 'Authentication expired. Please re-authenticate.', 
+          requiresAuth: true 
+        });
       }
 
       let allEvents: any[] = [];
@@ -2427,8 +2438,8 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
           try {
             const events = await simpleOAuth.getEvents(
               calendar.id,
-              timeMin as string,
-              timeMax as string
+              timeMin as string || undefined,
+              timeMax as string || undefined
             );
 
             if (events && events.length > 0) {
@@ -2501,8 +2512,8 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
           try {
             const events = await simpleOAuth.getEvents(
               calendar.id,
-              timeMin as string,
-              timeMax as string
+              timeMin as string || undefined,
+              timeMax as string || undefined
             );
 
             if (events && events.length > 0) {

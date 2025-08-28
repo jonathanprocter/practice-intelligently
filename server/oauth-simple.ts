@@ -128,9 +128,10 @@ class SimpleOAuth {
       return false;
     }
     
-    // Check if tokens are expired
-    if (this.tokens.expiry_date && this.tokens.expiry_date <= Date.now()) {
-      console.log('OAuth tokens have expired');
+    // Check if tokens are expired (with some tolerance)
+    const now = Date.now();
+    if (this.tokens.expiry_date && this.tokens.expiry_date <= now + 60000) { // 1 minute buffer
+      console.log('OAuth tokens have expired or will expire very soon');
       return false;
     }
     
@@ -169,11 +170,21 @@ class SimpleOAuth {
       return;
     }
 
-    // Check if token is expired or will expire soon (within 5 minutes)
+    // Check if token is expired or will expire soon (within 10 minutes)
     const now = Date.now();
-    if (this.tokens.expiry_date && this.tokens.expiry_date > now + 5 * 60 * 1000) {
-      // Token is still valid for more than 5 minutes
+    const bufferTime = 10 * 60 * 1000; // 10 minutes buffer
+    
+    if (this.tokens.expiry_date && this.tokens.expiry_date > now + bufferTime) {
+      // Token is still valid for more than 10 minutes
+      console.log('Token still valid, no refresh needed');
       return;
+    }
+
+    // If we don't have expiry_date or token is close to expiring, refresh it
+    if (!this.tokens.expiry_date) {
+      console.log('No expiry date found, refreshing tokens as precaution');
+    } else {
+      console.log('Token will expire soon, refreshing preemptively');
     }
 
     try {
