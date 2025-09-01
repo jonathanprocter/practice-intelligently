@@ -1783,3 +1783,32 @@
 2025-09-01T03:55:13: 11:55:13 PM [express] GET /api/documents/search 500 in 19ms :: {"error":"Failed to fetch document","d…
 2025-09-01T03:55:52: 11:55:52 PM [express] GET /api/documents/search 404 in 4ms :: {"error":"Document not found"}
 2025-09-01T03:56:02: 11:56:02 PM [express] GET /api/documents 200 in 38ms
+2025-09-01T03:56:42: 11:56:42 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","timestamp":"2025-09-01T03:56:42.9…
+2025-09-01T03:56:42: 11:56:42 PM [express] GET /api/health 200 in 1ms :: {"status":"ok","timestamp":"2025-09-01T03:56:42.9…
+2025-09-01T03:56:42: 11:56:42 PM [express] GET /api/clients 200 in 3ms :: []
+2025-09-01T03:56:42: 11:56:42 PM [express] GET /api/appointments 200 in 14ms
+2025-09-01T03:56:42: 11:56:42 PM [express] GET /api/documents/search 404 in 3ms :: {"error":"Document not found"}
+2025-09-01T05:11:34: SIGINT received, shutting down gracefully
+2025-09-01T05:11:39: [dotenv@17.2.1] injecting env (10) from .env -- tip: 📡 version env with Radar: https://dotenvx.com/radar
+2025-09-01T05:11:39: DATABASE_URL not configured or invalid, using SQLite fallback
+2025-09-01T05:11:39: Using SQLite database at: /home/user/webapp/data/therapy.db
+2025-09-01T05:11:39: Database tables initialized successfully
+2025-09-01T05:11:40: GEMINI_API_KEY not configured
+2025-09-01T05:11:44: ✅ Fixed document routes registered successfully
+2025-09-01T05:11:45: 1:11:44 AM [express] serving on port 3000
+2025-09-01T05:11:46: 1:11:46 AM [express] GET /api/documents/search 404 in 21ms :: {"error":"Document not found"}
+2025-09-01T05:12:03: 📄 Fetching documents with filters: { therapistId: undefined, clientId: undefined, category: undefined }
+2025-09-01T05:12:03: ✅ Found 3 documents (total: 3)
+2025-09-01T05:12:03: 1:12:03 AM [express] GET /api/documents 200 in 12ms :: {"documents":[{"id":"4c50f10a9311261e4e7f2b76…
+2025-09-01T05:12:11: 1:12:11 AM [express] GET /api/documents/search 404 in 5ms :: {"error":"Document not found"}
+2025-09-01T05:13:17: SIGINT received, shutting down gracefully
+2025-09-01T05:13:20: [dotenv@17.2.1] injecting env (10) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+2025-09-01T05:13:20: DATABASE_URL not configured or invalid, using SQLite fallback
+2025-09-01T05:13:20: Using SQLite database at: /home/user/webapp/data/therapy.db
+2025-09-01T05:13:20: Database tables initialized successfully
+2025-09-01T05:13:21: GEMINI_API_KEY not configured
+2025-09-01T05:13:24: ✅ Fixed document routes registered successfully
+2025-09-01T05:13:24: 1:13:24 AM [express] serving on port 3000
+2025-09-01T05:13:36: 🔍 Searching documents for query: "john"
+2025-09-01T05:13:36: ✅ Found 2 results for query: "john"
+2025-09-01T05:13:36: 1:13:36 AM [express] GET /api/documents/search 200 in 23ms :: {"results":[{"id":"4c50f10a9311261e4e7…

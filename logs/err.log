@@ -1643,3 +1643,5 @@
 2025-09-01T03:55:13:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
 2025-09-01T03:55:13:   code: 'SQLITE_ERROR'
 2025-09-01T03:55:13: }
+2025-09-01T05:11:40: GEMINI_API_KEY not configured
+2025-09-01T05:13:21: GEMINI_API_KEY not configured

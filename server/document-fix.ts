@@ -43,6 +43,70 @@ export function registerDocumentRoutes(app: Express) {
   // ============= RETRIEVAL ENDPOINTS =============
   
   /**
+   * Search documents - MUST BE REGISTERED BEFORE :documentId ROUTE
+   */
+  app.get('/api/documents/search', async (req, res) => {
+    try {
+      const { therapistId, query, category } = req.query;
+      
+      // Make therapistId optional for better flexibility
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ error: 'Search query is required' });
+      }
+      
+      console.log(`🔍 Searching documents for query: "${query}"`);
+      const searchPattern = `%${query}%`;
+      
+      // Build search conditions
+      const conditions = [];
+      
+      if (therapistId && typeof therapistId === 'string') {
+        conditions.push(eq(documents.therapistId, therapistId));
+      }
+      
+      if (category && typeof category === 'string') {
+        conditions.push(eq(documents.category, category));
+      }
+      
+      // Add search condition
+      const searchCondition = or(
+        like(documents.fileName, searchPattern),
+        like(documents.originalName, searchPattern),
+        like(documents.contentSummary, searchPattern),
+        like(documents.extractedText, searchPattern),
+        like(documents.description, searchPattern)
+      );
+      
+      if (searchCondition) {
+        conditions.push(searchCondition);
+      }
+      
+      // Search documents
+      const searchResults = await db
+        .select()
+        .from(documents)
+        .where(conditions.length > 0 ? and(...conditions) : searchCondition)
+        .orderBy(desc(documents.createdAt))
+        .limit(100);
+      
+      console.log(`✅ Found ${searchResults.length} results for query: "${query}"`);
+      
+      res.json({
+        results: searchResults,
+        query,
+        count: searchResults.length
+      });
+      
+    } catch (error) {
+      console.error('Error searching documents:', error);
+      res.status(500).json({ 
+        error: 'Failed to search documents',
+        details: error.message 
+      });
+    }
+  });
+  
+  /**
    * Get all documents for a specific client
    */
   app.get('/api/documents/client/:clientId', async (req, res) => {
@@ -177,61 +241,7 @@ export function registerDocumentRoutes(app: Express) {
     }
   });
   
-  /**
-   * Search documents across all clients for a therapist
-   */
-  app.get('/api/documents/search', async (req, res) => {
-    try {
-      const { therapistId, query, category } = req.query;
-      
-      if (!therapistId || typeof therapistId !== 'string') {
-        return res.status(400).json({ error: 'Therapist ID is required' });
-      }
-      
-      if (!query || typeof query !== 'string') {
-        return res.status(400).json({ error: 'Search query is required' });
-      }
-      
-      const searchPattern = `%${query}%`;
-      
-      // Build search conditions
-      const conditions = [
-        eq(documents.therapistId, therapistId),
-        or(
-          like(documents.fileName, searchPattern),
-          like(documents.originalName, searchPattern),
-          like(documents.contentSummary, searchPattern),
-          like(documents.extractedText, searchPattern),
-          like(documents.description, searchPattern)
-        )
-      ];
-      
-      if (category && typeof category === 'string') {
-        conditions.push(eq(documents.category, category));
-      }
-      
-      // Search documents
-      const searchResults = await db
-        .select()
-        .from(documents)
-        .where(and(...conditions))
-        .orderBy(desc(documents.createdAt))
-        .limit(100);
-      
-      res.json({
-        results: searchResults,
-        query,
-        count: searchResults.length
-      });
-      
-    } catch (error) {
-      console.error('Error searching documents:', error);
-      res.status(500).json({ 
-        error: 'Failed to search documents',
-        details: error.message 
-      });
-    }
-  });
+  // Search route moved to the beginning of the file to avoid route matching issues
   
   // ============= UPLOAD & PROCESSING ENDPOINTS =============
   

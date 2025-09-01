@@ -5750,6 +5750,10 @@ Follow-up areas for next session:
   // Register comprehensive document fix routes
   const { registerDocumentRoutes } = await import('./document-fix');
   registerDocumentRoutes(app);
+  
+  // Register additional fixed document routes for better compatibility
+  const { registerFixedDocumentRoutes } = await import('./document-routes-fix');
+  registerFixedDocumentRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;
