@@ -1,4 +1,4 @@
-modules = ["web", "postgresql-16", "python-3.11", "python3", "nodejs-18"]
+modules = ["web", "postgresql-16", "python-3.11", "python3", "nodejs-20"]
 run = "bash replit-init.sh"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
