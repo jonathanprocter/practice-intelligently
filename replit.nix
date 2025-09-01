@@ -1,7 +1,8 @@
 { pkgs }: {
   deps = [
+    pkgs.nano
     pkgs.lsof
-    pkgs.nodejs_20
+    pkgs.nodejs_18  # Changed from nodejs_20 to nodejs_18
     pkgs.postgresql_16
     pkgs.git
     pkgs.openssl
@@ -18,14 +19,14 @@
     pkgs.imagemagick
     pkgs.poppler_utils
   ];
-  
+
   env = {
     LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
       pkgs.openssl
       pkgs.systemd
     ];
-    
+
     NODE_ENV = "development";
-    PATH = "${pkgs.nodejs_20}/bin:${pkgs.yarn}/bin:${pkgs.git}/bin:$PATH";
+    PATH = "${pkgs.nodejs_18}/bin:${pkgs.yarn}/bin:${pkgs.git}/bin:$PATH";  # Updated to nodejs_18
   };
 }

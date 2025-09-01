@@ -1,4 +1,4 @@
-modules = ["web", "postgresql-16", "python-3.11", "python3", "nodejs-22"]
+modules = ["web", "postgresql-16", "python-3.11", "python3", "nodejs-18"]
 run = "bash replit-init.sh"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
@@ -13,6 +13,7 @@ run = ["npm", "run", "start"]
 
 [env]
 PORT = "3000"
+PATH = "/nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin:$PATH"
 
 [workflows]
 runButton = "Clean Start Server"
@@ -42,7 +43,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "/nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin/npm run dev"
 
 [[workflows.workflow]]
 name = "Development Server"
@@ -51,7 +52,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "/nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin/npm run dev"
 
 [[workflows.workflow]]
 name = "Start App"
@@ -60,7 +61,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "/nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin/npm run dev"
 
 [[workflows.workflow]]
 name = "Restart Server"
@@ -77,7 +78,7 @@ args = "sleep 2"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "/nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin/npm run dev"
 
 [[workflows.workflow]]
 name = "Clean Start Server"
@@ -90,11 +91,15 @@ args = "fuser -k 5000/tcp || true"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
+args = "fuser -k 3000/tcp || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
 args = "sleep 3"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "/nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin/npm run dev"
 
 [[ports]]
 localPort = 3000
@@ -105,3 +110,4 @@ localPort = 5000
 externalPort = 5000
 
 [agent]
+integrations = ["javascript_database==1.0.0", "javascript_sendgrid==1.0.0", "javascript_anthropic==1.0.0", "javascript_log_in_with_replit==1.0.0", "javascript_openai==1.0.0", "javascript_websocket==1.0.0", "perplexity_v0==1.0.0", "javascript_gemini==1.0.0", "javascript_notion==1.0.0", "javascript_object_storage==1.0.0"]
