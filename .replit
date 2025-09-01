@@ -1,5 +1,5 @@
 modules = ["nodejs-20", "web", "postgresql-16", "python-3.11", "python3"]
-run = "npm run dev"
+run = "bash replit-init.sh"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
@@ -12,7 +12,7 @@ build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
 
 [env]
-PORT = "5000"
+PORT = "3000"
 
 [workflows]
 runButton = "Clean Start Server"
@@ -32,8 +32,8 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
-waitForPort = 5000
+args = "bash replit-init.sh"
+waitForPort = 3000
 
 [[workflows.workflow]]
 name = "Start Development Server"
@@ -97,7 +97,7 @@ task = "shell.exec"
 args = "npm run dev"
 
 [[ports]]
-localPort = 5000
+localPort = 3000
 externalPort = 80
 
 [agent]

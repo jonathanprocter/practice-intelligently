@@ -165,3 +165,10 @@
 2025-09-01T05:13:36: 🔍 Searching documents for query: "john"
 2025-09-01T05:13:36: ✅ Found 2 results for query: "john"
 2025-09-01T05:13:36: 1:13:36 AM [express] GET /api/documents/search 200 in 23ms :: {"results":[{"id":"4c50f10a9311261e4e7…
+2025-09-01T05:15:00: 1:15:00 AM [express] GET /api/health 200 in 2ms :: {"status":"ok","timestamp":"2025-09-01T05:15:00.6…
+2025-09-01T05:15:00: 1:15:00 AM [express] GET /api/health 200 in 2ms :: {"status":"ok","timestamp":"2025-09-01T05:15:00.6…
+2025-09-01T05:15:00: 1:15:00 AM [express] GET /api/clients 200 in 4ms :: []
+2025-09-01T05:15:00: 1:15:00 AM [express] GET /api/appointments 200 in 84ms
+2025-09-01T05:15:00: 🔍 Searching documents for query: "test"
+2025-09-01T05:15:00: ✅ Found 0 results for query: "test"
+2025-09-01T05:15:00: 1:15:00 AM [express] GET /api/documents/search 200 in 4ms :: {"results":[],"query":"test","count":0}
