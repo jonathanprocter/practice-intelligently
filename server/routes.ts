@@ -38,6 +38,7 @@ import { generateUSHolidays, getHolidaysForYear, getHolidaysInRange, isUSHoliday
 import { SessionDocumentProcessor } from './session-document-processor';
 import { optimizedComprehensiveProgressNotesParser } from './comprehensiveProgressNotesParser-optimized';
 import { stevenDelucaProcessor } from './steven-deluca-processor';
+import { registerEnhancedChartRoutes } from './routes/enhanced-chart-routes';
 import OpenAI from 'openai';
 
 // Initialize OpenAI client
@@ -5742,6 +5743,9 @@ Follow-up areas for next session:
       });
     }
   });
+
+  // Register enhanced chart and document processing routes
+  registerEnhancedChartRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;
