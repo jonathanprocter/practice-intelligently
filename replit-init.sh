@@ -81,7 +81,7 @@ echo ""
 echo -e "${GREEN}✨ Starting development server with preview...${NC}"
 echo ""
 
-# Set environment variables and start the development server in foreground
+# Set environment variables and start the production server instead
 export PORT=3000
-export NODE_ENV=development
-npx tsx server/index.ts
+export NODE_ENV=production
+node dist/index.js

@@ -3878,23 +3878,6 @@ Generate a comprehensive summary in the following JSON format:
     }
   }
 
-  async createDocument(documentData: any): Promise<any> {
-    try {
-      const [document] = await db.insert(documents)
-        .values({
-          ...documentData,
-          id: randomUUID(),
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
-      
-      return document;
-    } catch (error) {
-      console.error('Error creating document:', error);
-      throw error;
-    }
-  }
 
   // Session recommendation methods
   async getSessionRecommendations(clientId: string): Promise<SessionRecommendation[]> {
