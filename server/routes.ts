@@ -39,6 +39,10 @@ import { SessionDocumentProcessor } from './session-document-processor';
 import { optimizedComprehensiveProgressNotesParser } from './comprehensiveProgressNotesParser-optimized';
 import { stevenDelucaProcessor } from './steven-deluca-processor';
 import { registerEnhancedChartRoutes } from './routes/enhanced-chart-routes';
+import { registerTimelineRoutes } from './routes/timeline-routes';
+import { registerEnhancedTimelineRoutes } from './routes/enhanced-timeline-routes';
+import { registerCriticalFixes } from './fixes/critical-bugs-and-improvements';
+import { registerAIEnhancedRoutes } from './routes/ai-enhanced-routes';
 import OpenAI from 'openai';
 
 // Initialize OpenAI client
@@ -5785,6 +5789,12 @@ Follow-up areas for next session:
   // Register enhanced chart and document processing routes
   registerEnhancedChartRoutes(app);
   
+  // Register timeline routes for unified progress notes view
+  registerTimelineRoutes(app);
+  
+  // Register ENHANCED timeline routes for comprehensive progress notes handling
+  registerEnhancedTimelineRoutes(app);
+  
   // Register comprehensive document fix routes
   const { registerDocumentRoutes } = await import('./document-fix');
   registerDocumentRoutes(app);
@@ -5792,6 +5802,12 @@ Follow-up areas for next session:
   // Register additional fixed document routes for better compatibility
   const { registerFixedDocumentRoutes } = await import('./document-routes-fix');
   registerFixedDocumentRoutes(app);
+
+  // Register critical bug fixes and performance improvements
+  registerCriticalFixes(app);
+
+  // Register AI-enhanced features with intelligent load balancing
+  registerAIEnhancedRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;

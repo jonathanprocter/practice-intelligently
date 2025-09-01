@@ -48,6 +48,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { EnhancedClinicalTimeline } from '@/components/EnhancedClinicalTimeline';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -1445,68 +1446,16 @@ function ClientChartInner() {
               )}
             </div>
 
-            {/* Main timeline */}
+            {/* Main timeline - Enhanced with comprehensive progress notes */}
             <div className="lg:col-span-3">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Clinical Timeline</CardTitle>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Clock className="w-4 h-4" />
-                      {timelineData.length} total events
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {timelineData.length === 0 ? (
-                    <div className="text-center py-8">
-                      <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        {searchTerm ? 'No results found' : 'No clinical history found'}
-                      </h3>
-                      <p className="text-gray-600 mb-4">
-                        {searchTerm 
-                          ? 'Try adjusting your search or filters'
-                          : 'Start by creating a session note or scheduling an appointment.'}
-                      </p>
-                      {!searchTerm && (
-                        <Button onClick={() => setIsCreateNoteModalOpen(true)}>
-                          <FileText className="w-4 h-4 mr-2" />
-                          Create First Session Note
-                        </Button>
-                      )}
-                    </div>
-                  ) : (
-                    // Regular rendering
-                    <div className="space-y-6">
-                      {groupedTimelineData.map(({ month, items }) => (
-                        <div key={month}>
-                          <h3 className="text-sm font-semibold text-gray-600 mb-3 sticky top-0 bg-white py-2 z-10">
-                            {month}
-                          </h3>
-                          <div className="space-y-4">
-                            {items.map((item, index) => (
-                              <TimelineItemComponent
-                                key={`${item.type}-${(item.data as any).id}`}
-                                item={item}
-                                index={index}
-                                isSelected={selectedNotes.has((item.data as any).id)}
-                                onSelect={handleSelectNote}
-                                onDelete={handleDeleteSessionNote}
-                                onAddNote={(apt) => {
-                                  setSelectedAppointment(apt);
-                                  setIsCreateNoteModalOpen(true);
-                                }}
-                                showLine={index < items.length - 1}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <EnhancedClinicalTimeline
+                clientId={clientId}
+                therapistId="e66b8b8e-e7a2-40b9-ae74-00c93ffe503c"
+                dateRange={{
+                  start: startOfMonth(new Date()),
+                  end: endOfMonth(new Date())
+                }}
+              />
             </div>
           </div>
         </TabsContent>
