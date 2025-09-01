@@ -1967,11 +1967,9 @@ export class DatabaseStorage implements IStorage {
         homeworkReview: row.homework_review,
         sessionObjectives: row.session_objectives || [],
         aiGeneratedInsights: row.ai_generated_insights,
-        followUpQuestions: row.follow_up_questions || [],
-        psychoeducationalMaterials: row.psychoeducational_materials || [],
+        followUpQuestions: this.safeParseJSON(row.follow_up_questions, []),
+        psychoeducationalMaterials: this.safeParseJSON(row.psychoeducational_materials, []),
         lastUpdatedBy: row.last_updated_by,
-      followUpQuestions: this.safeParseJSON(row.follow_up_questions, []),
-      psychoeducationalMaterials: this.safeParseJSON(row.psychoeducational_materials, []),
         createdAt: new Date(row.created_at || new Date()),
         updatedAt: new Date(row.updated_at || new Date())
       }));
@@ -2043,11 +2041,9 @@ export class DatabaseStorage implements IStorage {
         homeworkReview: row.homework_review,
         sessionObjectives: row.session_objectives || [],
         aiGeneratedInsights: row.ai_generated_insights,
-        followUpQuestions: row.follow_up_questions || [],
-        psychoeducationalMaterials: row.psychoeducational_materials || [],
+        followUpQuestions: this.safeParseJSON(row.follow_up_questions, []),
+        psychoeducationalMaterials: this.safeParseJSON(row.psychoeducational_materials, []),
         lastUpdatedBy: row.last_updated_by,
-      followUpQuestions: this.safeParseJSON(row.follow_up_questions, []),
-      psychoeducationalMaterials: this.safeParseJSON(row.psychoeducational_materials, []),
         createdAt: new Date(row.created_at || new Date()),
         updatedAt: new Date(row.updated_at || new Date())
       };
@@ -2079,11 +2075,9 @@ export class DatabaseStorage implements IStorage {
         homeworkReview: row.homework_review,
         sessionObjectives: row.session_objectives || [],
         aiGeneratedInsights: row.ai_generated_insights,
-        followUpQuestions: row.follow_up_questions || [],
-        psychoeducationalMaterials: row.psychoeducational_materials || [],
+        followUpQuestions: this.safeParseJSON(row.follow_up_questions, []),
+        psychoeducationalMaterials: this.safeParseJSON(row.psychoeducational_materials, []),
         lastUpdatedBy: row.last_updated_by,
-      followUpQuestions: this.safeParseJSON(row.follow_up_questions, []),
-      psychoeducationalMaterials: this.safeParseJSON(row.psychoeducational_materials, []),
         createdAt: new Date(row.created_at || new Date()),
         updatedAt: new Date(row.updated_at || new Date())
       }));
