@@ -437,7 +437,8 @@ export class DatabaseStorage implements IStorage {
     const [firstName, ...lastNameParts] = fullName.split(' ');
     const lastName = lastNameParts.join(' ');
 
-    const [client] = await db
+    // First try exact match
+    const [exactClient] = await db
       .select({ id: clients.id })
       .from(clients)
       .where(
@@ -447,7 +448,90 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    return client?.id || null;
+    if (exactClient) {
+      return exactClient.id;
+    }
+
+    // If no exact match, try nickname variations
+    const nameVariations = this.getNameVariations(firstName);
+    
+    for (const variation of nameVariations) {
+      const [client] = await db
+        .select({ id: clients.id })
+        .from(clients)
+        .where(
+          and(
+            eq(clients.firstName, variation),
+            eq(clients.lastName, lastName)
+          )
+        );
+      
+      if (client) {
+        return client.id;
+      }
+    }
+
+    return null;
+  }
+
+  private getNameVariations(firstName: string): string[] {
+    const variations: string[] = [];
+    const name = firstName.toLowerCase();
+
+    // Common nickname mappings
+    const nicknameMap: { [key: string]: string[] } = {
+      'chris': ['christopher', 'christian', 'christine', 'christina'],
+      'christopher': ['chris'],
+      'christian': ['chris'],
+      'christine': ['chris', 'christina'],
+      'christina': ['chris', 'christine'],
+      'mike': ['michael'],
+      'michael': ['mike'],
+      'dave': ['david'],
+      'david': ['dave'],
+      'bob': ['robert'],
+      'robert': ['bob', 'rob'],
+      'rob': ['robert'],
+      'bill': ['william'],
+      'william': ['bill', 'will'],
+      'will': ['william'],
+      'dick': ['richard'],
+      'richard': ['dick', 'rick'],
+      'rick': ['richard'],
+      'jim': ['james'],
+      'james': ['jim'],
+      'joe': ['joseph'],
+      'joseph': ['joe'],
+      'dan': ['daniel'],
+      'daniel': ['dan'],
+      'matt': ['matthew'],
+      'matthew': ['matt'],
+      'nick': ['nicholas'],
+      'nicholas': ['nick'],
+      'tom': ['thomas'],
+      'thomas': ['tom'],
+      'tony': ['anthony'],
+      'anthony': ['tony'],
+      'steve': ['steven', 'stephen'],
+      'steven': ['steve'],
+      'stephen': ['steve'],
+      'ben': ['benjamin'],
+      'benjamin': ['ben'],
+      'sam': ['samuel'],
+      'samuel': ['sam'],
+      'alex': ['alexander', 'alexandra'],
+      'alexander': ['alex'],
+      'alexandra': ['alex']
+    };
+
+    if (nicknameMap[name]) {
+      variations.push(...nicknameMap[name]);
+    }
+
+    // Also add the original name capitalized properly
+    variations.push(firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase());
+
+    return [...new Set(variations)]; // Remove duplicates
   }
 
   async getAppointmentsByClientAndDate(clientId: string, sessionDate: Date): Promise<Appointment[]> {
