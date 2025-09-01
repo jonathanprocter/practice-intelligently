@@ -127,6 +127,7 @@ const loadComponent = (importFn: () => Promise<any>, fallback?: React.ComponentT
 // Import components - these will use the actual components if they exist
 // For now, import them normally to avoid issues
 import { DocumentProcessor } from '@/components/documents/DocumentProcessor';
+import { DocumentsView } from '@/components/DocumentsView';
 import { SessionNoteLinkingModal } from '@/components/SessionNoteLinkingModal';
 import { SessionRecommendations } from '@/components/SessionRecommendations';
 import { CreateSessionNoteModal } from '@/components/CreateSessionNoteModal';
@@ -1854,17 +1855,29 @@ function ClientChartInner() {
         {/* Documents Tab */}
         <TabsContent value={TABS.DOCS} className="space-y-6">
           <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-2">Document Upload & Processing</h2>
+            <h2 className="text-lg font-semibold mb-2">Client Documents</h2>
             <p className="text-sm text-gray-600">
-              Upload clinical documents for AI processing and automatic session note generation.
+              View uploaded documents and upload new clinical documents for AI processing.
             </p>
           </div>
 
-          <DocumentProcessor
+          <DocumentsView
             clientId={clientId}
+            therapistId="e66b8b8e-e7a2-40b9-ae74-00c93ffe503c"
             clientName={clientName}
-            onDocumentProcessed={handleDocumentProcessed}
           />
+
+          <div className="mt-8 pt-6 border-t">
+            <h3 className="text-lg font-semibold mb-2">Upload New Documents</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Upload clinical documents for AI processing and automatic session note generation.
+            </p>
+            <DocumentProcessor
+              clientId={clientId}
+              clientName={clientName}
+              onDocumentProcessed={handleDocumentProcessed}
+            />
+          </div>
         </TabsContent>
 
         {/* AI Insights Tab */}
