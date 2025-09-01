@@ -97,6 +97,10 @@ export default function Calendar() {
 
           timeMin = dayStart.toISOString();
           timeMax = dayEnd.toISOString();
+        } else if (activeTab === 'historical') {
+          // For historical view, fetch comprehensive data from 2015-2030
+          timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
+          timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
         } else {
           // For week view or appointments view, fetch current week's events
           const startOfWeek = new Date(currentWeek);

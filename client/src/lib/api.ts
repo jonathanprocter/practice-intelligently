@@ -380,6 +380,121 @@ export class ApiClient {
     }
   }
 
+  // New method for comprehensive historical calendar events (2015-2030)  
+  static async getHistoricalCalendarEvents(): Promise<any[]> {
+    try {
+      // Request comprehensive historical data from 2015-2030
+      const timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
+      const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
+      
+      const calendarResponse = await apiRequest('GET', `/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}`);
+      return await calendarResponse.json();
+    } catch (error) {
+      console.error('Error fetching historical calendar events:', error);
+      return [];
+    }
+  }
+
+  // Method for getting appointments with custom date range (supports historical analysis)
+  static async getAppointmentsInRange(timeMin?: string, timeMax?: string): Promise<Appointment[]> {
+    const therapistId = ApiClient.getTherapistId();
+    
+    try {
+      let dbAppointments: Appointment[] = [];
+      let calendarEvents: any[] = [];
+
+      // If no time range specified, default to today
+      if (!timeMin || !timeMax) {
+        return ApiClient.getTodaysAppointments();
+      }
+
+      // Fetch database appointments for the range
+      try {
+        const dbResponse = await apiRequest('GET', `/api/appointments/${therapistId}`);
+        const allDbAppointments = await dbResponse.json();
+        
+        // Filter by date range
+        dbAppointments = allDbAppointments.filter((apt: Appointment) => {
+          const aptTime = new Date(apt.startTime).getTime();
+          const minTime = new Date(timeMin).getTime();
+          const maxTime = new Date(timeMax).getTime();
+          return aptTime >= minTime && aptTime <= maxTime;
+        });
+      } catch (dbError) {}
+
+      // Fetch calendar events for the range
+      try {
+        const calendarResponse = await apiRequest('GET', `/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}`);
+        calendarEvents = await calendarResponse.json();
+      } catch (calendarError) {}
+
+      // Process and combine as in getTodaysAppointments method
+      const calendarAppointments: Appointment[] = calendarEvents
+        .filter((event: any) => {
+          const summary = event.summary || '';
+          const lowerSummary = summary.toLowerCase();
+          const isAppointment = lowerSummary.includes('appointment') || 
+                               lowerSummary.includes('session') || 
+                               lowerSummary.includes('therapy');
+          const isProfessionalMeeting = lowerSummary.includes('meeting with') ||
+                                       lowerSummary.includes('call with') ||
+                                       lowerSummary.includes('coffee with');
+          const isExcluded = lowerSummary.includes('birthday') ||
+                            lowerSummary.includes('holiday') ||
+                            lowerSummary.includes('vacation') ||
+                            lowerSummary.includes('flight');
+          return (isAppointment || isProfessionalMeeting) && !isExcluded;
+        })
+        .map((event: any) => {
+          const summary = event.summary || '';
+          let clientName = summary;
+          if (summary.toLowerCase().includes('appointment')) {
+            clientName = summary.replace(/\s+appointment$/i, '').trim();
+          } else if (summary.toLowerCase().match(/(coffee|call|meeting)\s+with\s+(.+)/i)) {
+            const match = summary.match(/(coffee|call|meeting)\s+with\s+(.+)/i);
+            clientName = match ? match[2].trim() : summary;
+          }
+          return {
+            id: event.id || `calendar-${event.summary}-${event.start?.dateTime}`,
+            clientId: `calendar-${clientName.replace(/\s+/g, '-').toLowerCase()}`,
+            clientName: clientName,
+            therapistId: therapistId,
+            startTime: new Date(event.start?.dateTime || event.start?.date).toISOString(),
+            endTime: new Date(event.end?.dateTime || event.end?.date).toISOString(),
+            type: 'therapy',
+            status: 'confirmed' as const,
+            notes: event.description || '',
+            location: event.location || '',
+            isCalendarEvent: true,
+            googleEventId: event.id
+          } as any;
+        });
+
+      // Combine and deduplicate
+      const combinedAppointments = [...dbAppointments];
+      for (const calendarAppt of calendarAppointments) {
+        const isDuplicate = dbAppointments.some(dbAppt => {
+          const dbTime = new Date(dbAppt.startTime).getTime();
+          const calTime = new Date(calendarAppt.startTime).getTime();
+          const timeDiff = Math.abs(dbTime - calTime);
+          return timeDiff < 60000 && 
+                 (dbAppt.clientName?.toLowerCase() === calendarAppt.clientName?.toLowerCase() ||
+                  (dbAppt as any).googleEventId === (calendarAppt as any).googleEventId);
+        });
+        if (!isDuplicate) {
+          combinedAppointments.push(calendarAppt);
+        }
+      }
+
+      return combinedAppointments.sort((a, b) => 
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+      );
+    } catch (error) {
+      console.error('Error fetching appointments in range:', error);
+      return [];
+    }
+  }
+
   static async getAppointments(date?: string): Promise<Appointment[]> {
     const today = new Date().toISOString().split('T')[0];
     if (date === today) {
