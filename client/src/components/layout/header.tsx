@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import IntegrationStatus from "@/components/ui/integration-status";
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient } from "@/lib/api";
-// Temporarily using a placeholder for profile image until asset is available
-const profileImage = 'data:image/svg+xml,%3csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"%3e%3ccircle cx="20" cy="20" r="20" fill="%23ddd"/%3e%3ctext x="20" y="25" text-anchor="middle" fill="%23666" font-size="14"%3eJP%3c/text%3e%3c/svg%3e';
+// Replaced problematic image import with placeholder
+// Original: import profileImage from '@assets/image_1754410832108.png';
 
 export default function Header() {
   const currentDate = new Date().toLocaleDateString('en-US', {
@@ -58,7 +58,7 @@ export default function Header() {
           
           <div className="flex items-center space-x-2 xs:space-x-3">
             <img 
-              src={profileImage} 
+              src="https://api.dicebear.com/7.x/initials/svg?seed=JP" 
               alt="Dr. Jonathan Procter" 
               className="w-10 h-10 xs:w-8 xs:h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-white shadow-sm"
             />

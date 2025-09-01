@@ -36,3 +36,6 @@
 2025-09-01T21:34:39: 5:34:39 PM [express] GET /api/health 200 in 8ms :: {"status":"ok","timestamp":"2025-09-01T21:34:39.8…
 2025-09-01T21:37:11: ⚠️ Using fallback therapist ID - implement proper authentication
 2025-09-01T21:37:11: 5:37:11 PM [express] GET /api/ai/health 200 in 12ms :: {"status":"healthy","providers":[{"name":"Ope…
+2025-09-01T22:34:17: 🧹 Starting file cleanup service...
+2025-09-01T22:34:17: ✅ File cleanup completed
+2025-09-01T23:33:47: SIGINT received, shutting down gracefully
