@@ -130,3 +130,1516 @@
 2025-09-01T02:20:13:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
 2025-09-01T02:20:13: 
 2025-09-01T02:20:13: Node.js v20.19.3
+2025-09-01T03:28:28: /home/user/webapp/server/db.ts:9
+2025-09-01T03:28:28:   throw new Error(
+2025-09-01T03:28:28:         ^
+2025-09-01T03:28:28: 
+2025-09-01T03:28:28: 
+2025-09-01T03:28:28: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:28:28:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:28:28:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:28:28:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:28:28:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:28:28: 
+2025-09-01T03:28:28: Node.js v20.19.3
+2025-09-01T03:28:34: /home/user/webapp/server/db.ts:9
+2025-09-01T03:28:34:   throw new Error(
+2025-09-01T03:28:34:         ^
+2025-09-01T03:28:34: 
+2025-09-01T03:28:34: 
+2025-09-01T03:28:34: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:28:34:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:28:34:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:28:34:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:28:34:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:28:34: 
+2025-09-01T03:28:34: Node.js v20.19.3
+2025-09-01T03:28:41: /home/user/webapp/server/db.ts:9
+2025-09-01T03:28:41:   throw new Error(
+2025-09-01T03:28:41:         ^
+2025-09-01T03:28:41: 
+2025-09-01T03:28:41: 
+2025-09-01T03:28:41: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:28:41:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:28:41:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:28:41:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:28:41:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:28:41: 
+2025-09-01T03:28:41: Node.js v20.19.3
+2025-09-01T03:28:47: /home/user/webapp/server/db.ts:9
+2025-09-01T03:28:47:   throw new Error(
+2025-09-01T03:28:47:         ^
+2025-09-01T03:28:47: 
+2025-09-01T03:28:47: 
+2025-09-01T03:28:47: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:28:47:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:28:47:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:28:47:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:28:47:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:28:47: 
+2025-09-01T03:28:47: Node.js v20.19.3
+2025-09-01T03:28:55: /home/user/webapp/server/db.ts:9
+2025-09-01T03:28:55:   throw new Error(
+2025-09-01T03:28:55:         ^
+2025-09-01T03:28:55: 
+2025-09-01T03:28:55: 
+2025-09-01T03:28:55: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:28:55:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:28:55:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:28:55:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:28:55:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:28:55: 
+2025-09-01T03:28:55: Node.js v20.19.3
+2025-09-01T03:29:04: /home/user/webapp/server/db.ts:9
+2025-09-01T03:29:04:   throw new Error(
+2025-09-01T03:29:04:         ^
+2025-09-01T03:29:04: 
+2025-09-01T03:29:04: 
+2025-09-01T03:29:04: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:29:04:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:29:04:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:29:04:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:29:04:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:29:04: 
+2025-09-01T03:29:04: Node.js v20.19.3
+2025-09-01T03:29:12: /home/user/webapp/server/db.ts:9
+2025-09-01T03:29:12:   throw new Error(
+2025-09-01T03:29:12:         ^
+2025-09-01T03:29:12: 
+2025-09-01T03:29:12: 
+2025-09-01T03:29:12: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:29:12:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:29:12:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:29:12:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:29:12:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:29:12: 
+2025-09-01T03:29:12: Node.js v20.19.3
+2025-09-01T03:29:17: /home/user/webapp/server/db.ts:9
+2025-09-01T03:29:17:   throw new Error(
+2025-09-01T03:29:17:         ^
+2025-09-01T03:29:17: 
+2025-09-01T03:29:17: 
+2025-09-01T03:29:17: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:29:17:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:29:17:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:29:17:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:29:17:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:29:17: 
+2025-09-01T03:29:17: Node.js v20.19.3
+2025-09-01T03:29:22: /home/user/webapp/server/db.ts:9
+2025-09-01T03:29:22:   throw new Error(
+2025-09-01T03:29:22:         ^
+2025-09-01T03:29:22: 
+2025-09-01T03:29:22: 
+2025-09-01T03:29:22: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:29:22:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:29:22:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:29:22:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:29:22:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:29:22: 
+2025-09-01T03:29:22: Node.js v20.19.3
+2025-09-01T03:29:27: /home/user/webapp/server/db.ts:9
+2025-09-01T03:29:27:   throw new Error(
+2025-09-01T03:29:27:         ^
+2025-09-01T03:29:27: 
+2025-09-01T03:29:27: 
+2025-09-01T03:29:27: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:29:27:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:29:27:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:29:27:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:29:27:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:29:27: 
+2025-09-01T03:29:27: Node.js v20.19.3
+2025-09-01T03:29:33: /home/user/webapp/server/db.ts:9
+2025-09-01T03:29:33:   throw new Error(
+2025-09-01T03:29:33:         ^
+2025-09-01T03:29:33: 
+2025-09-01T03:29:33: 
+2025-09-01T03:29:33: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:29:33:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:29:33:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:29:33:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:29:33:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:29:33: 
+2025-09-01T03:29:33: Node.js v20.19.3
+2025-09-01T03:29:40: /home/user/webapp/server/db.ts:9
+2025-09-01T03:29:40:   throw new Error(
+2025-09-01T03:29:40:         ^
+2025-09-01T03:29:40: 
+2025-09-01T03:29:40: 
+2025-09-01T03:29:40: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:29:40:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:29:40:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:29:40:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:29:40:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:29:40: 
+2025-09-01T03:29:40: Node.js v20.19.3
+2025-09-01T03:29:45: /home/user/webapp/server/db.ts:9
+2025-09-01T03:29:45:   throw new Error(
+2025-09-01T03:29:45:         ^
+2025-09-01T03:29:45: 
+2025-09-01T03:29:45: 
+2025-09-01T03:29:45: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:29:45:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:29:45:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:29:45:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:29:45:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:29:45: 
+2025-09-01T03:29:45: Node.js v20.19.3
+2025-09-01T03:29:51: /home/user/webapp/server/db.ts:9
+2025-09-01T03:29:51:   throw new Error(
+2025-09-01T03:29:51:         ^
+2025-09-01T03:29:51: 
+2025-09-01T03:29:51: 
+2025-09-01T03:29:51: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:29:51:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:29:51:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:29:51:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:29:51:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:29:51: 
+2025-09-01T03:29:51: Node.js v20.19.3
+2025-09-01T03:29:57: /home/user/webapp/server/db.ts:9
+2025-09-01T03:29:57:   throw new Error(
+2025-09-01T03:29:57:         ^
+2025-09-01T03:29:57: 
+2025-09-01T03:29:57: 
+2025-09-01T03:29:57: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:29:57:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:29:57:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:29:57:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:29:57:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:29:57: 
+2025-09-01T03:29:57: Node.js v20.19.3
+2025-09-01T03:30:05: /home/user/webapp/server/db.ts:9
+2025-09-01T03:30:05:   throw new Error(
+2025-09-01T03:30:05:         ^
+2025-09-01T03:30:05: 
+2025-09-01T03:30:05: 
+2025-09-01T03:30:05: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:30:05:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:30:05:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:30:05:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:30:05:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:30:05: 
+2025-09-01T03:30:05: Node.js v20.19.3
+2025-09-01T03:30:12: /home/user/webapp/server/db.ts:9
+2025-09-01T03:30:12:   throw new Error(
+2025-09-01T03:30:12:         ^
+2025-09-01T03:30:12: 
+2025-09-01T03:30:12: 
+2025-09-01T03:30:12: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:30:12:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:30:12:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:30:12:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:30:12:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:30:12: 
+2025-09-01T03:30:12: Node.js v20.19.3
+2025-09-01T03:30:18: /home/user/webapp/server/db.ts:9
+2025-09-01T03:30:18:   throw new Error(
+2025-09-01T03:30:18:         ^
+2025-09-01T03:30:18: 
+2025-09-01T03:30:18: 
+2025-09-01T03:30:18: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:30:18:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:30:18:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:30:18:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:30:18:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:30:18: 
+2025-09-01T03:30:18: Node.js v20.19.3
+2025-09-01T03:30:25: /home/user/webapp/server/db.ts:9
+2025-09-01T03:30:25:   throw new Error(
+2025-09-01T03:30:25:         ^
+2025-09-01T03:30:25: 
+2025-09-01T03:30:25: 
+2025-09-01T03:30:25: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:30:25:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:30:25:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:30:25:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:30:25:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:30:25: 
+2025-09-01T03:30:25: Node.js v20.19.3
+2025-09-01T03:30:31: /home/user/webapp/server/db.ts:9
+2025-09-01T03:30:31:   throw new Error(
+2025-09-01T03:30:31:         ^
+2025-09-01T03:30:31: 
+2025-09-01T03:30:31: 
+2025-09-01T03:30:31: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:30:31:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:30:31:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:30:31:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:30:31:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:30:31: 
+2025-09-01T03:30:31: Node.js v20.19.3
+2025-09-01T03:30:36: /home/user/webapp/server/db.ts:9
+2025-09-01T03:30:36:   throw new Error(
+2025-09-01T03:30:36:         ^
+2025-09-01T03:30:36: 
+2025-09-01T03:30:36: 
+2025-09-01T03:30:36: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:30:36:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:30:36:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:30:36:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:30:36:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:30:36: 
+2025-09-01T03:30:36: Node.js v20.19.3
+2025-09-01T03:30:41: /home/user/webapp/server/db.ts:9
+2025-09-01T03:30:41:   throw new Error(
+2025-09-01T03:30:41:         ^
+2025-09-01T03:30:41: 
+2025-09-01T03:30:41: 
+2025-09-01T03:30:41: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:30:41:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:30:41:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:30:41:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:30:41:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:30:41: 
+2025-09-01T03:30:41: Node.js v20.19.3
+2025-09-01T03:30:46: /home/user/webapp/server/db.ts:9
+2025-09-01T03:30:46:   throw new Error(
+2025-09-01T03:30:46:         ^
+2025-09-01T03:30:46: 
+2025-09-01T03:30:46: 
+2025-09-01T03:30:46: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:30:46:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:30:46:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:30:46:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:30:46:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:30:46: 
+2025-09-01T03:30:46: Node.js v20.19.3
+2025-09-01T03:30:50: /home/user/webapp/server/db.ts:9
+2025-09-01T03:30:50:   throw new Error(
+2025-09-01T03:30:50:         ^
+2025-09-01T03:30:50: 
+2025-09-01T03:30:50: 
+2025-09-01T03:30:50: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:30:50:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:30:50:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:30:50:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:30:50:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:30:50: 
+2025-09-01T03:30:50: Node.js v20.19.3
+2025-09-01T03:30:56: /home/user/webapp/server/db.ts:9
+2025-09-01T03:30:56:   throw new Error(
+2025-09-01T03:30:56:         ^
+2025-09-01T03:30:56: 
+2025-09-01T03:30:56: 
+2025-09-01T03:30:56: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:30:56:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:30:56:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:30:56:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:30:56:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:30:56: 
+2025-09-01T03:30:56: Node.js v20.19.3
+2025-09-01T03:31:01: /home/user/webapp/server/db.ts:9
+2025-09-01T03:31:01:   throw new Error(
+2025-09-01T03:31:01:         ^
+2025-09-01T03:31:01: 
+2025-09-01T03:31:01: 
+2025-09-01T03:31:01: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:31:01:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:31:01:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:31:01:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:31:01:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:31:01: 
+2025-09-01T03:31:01: Node.js v20.19.3
+2025-09-01T03:31:06: /home/user/webapp/server/db.ts:9
+2025-09-01T03:31:06:   throw new Error(
+2025-09-01T03:31:06:         ^
+2025-09-01T03:31:06: 
+2025-09-01T03:31:06: 
+2025-09-01T03:31:06: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:31:06:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:31:06:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:31:06:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:31:06:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:31:06: 
+2025-09-01T03:31:06: Node.js v20.19.3
+2025-09-01T03:31:10: /home/user/webapp/server/db.ts:9
+2025-09-01T03:31:10:   throw new Error(
+2025-09-01T03:31:10:         ^
+2025-09-01T03:31:10: 
+2025-09-01T03:31:10: 
+2025-09-01T03:31:10: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:31:10:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:31:10:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:31:10:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:31:10:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:31:10: 
+2025-09-01T03:31:10: Node.js v20.19.3
+2025-09-01T03:31:17: /home/user/webapp/server/db.ts:9
+2025-09-01T03:31:17:   throw new Error(
+2025-09-01T03:31:17:         ^
+2025-09-01T03:31:17: 
+2025-09-01T03:31:17: 
+2025-09-01T03:31:17: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:31:17:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:31:17:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:31:17:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:31:17:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:31:17: 
+2025-09-01T03:31:17: Node.js v20.19.3
+2025-09-01T03:31:22: /home/user/webapp/server/db.ts:9
+2025-09-01T03:31:22:   throw new Error(
+2025-09-01T03:31:22:         ^
+2025-09-01T03:31:22: 
+2025-09-01T03:31:22: 
+2025-09-01T03:31:22: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:31:22:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:31:22:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:31:22:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:31:22:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:31:22: 
+2025-09-01T03:31:22: Node.js v20.19.3
+2025-09-01T03:31:27: /home/user/webapp/server/db.ts:9
+2025-09-01T03:31:27:   throw new Error(
+2025-09-01T03:31:27:         ^
+2025-09-01T03:31:27: 
+2025-09-01T03:31:27: 
+2025-09-01T03:31:27: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T03:31:27:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T03:31:27:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:31:27:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:31:27:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:31:27: 
+2025-09-01T03:31:27: Node.js v20.19.3
+2025-09-01T03:31:35: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:31:35: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:31:35:       throw new Errors.OpenAIError(
+2025-09-01T03:31:35:             ^
+2025-09-01T03:31:35: 
+2025-09-01T03:31:35: 
+2025-09-01T03:31:35: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:31:35:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:31:35:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:31:35:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:31:35:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:31:35:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:31:35: 
+2025-09-01T03:31:35: Node.js v20.19.3
+2025-09-01T03:31:43: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:31:44: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:31:44:       throw new Errors.OpenAIError(
+2025-09-01T03:31:44:             ^
+2025-09-01T03:31:44: 
+2025-09-01T03:31:44: 
+2025-09-01T03:31:44: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:31:44:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:31:44:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:31:44:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:31:44:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:31:44:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:31:44: 
+2025-09-01T03:31:44: Node.js v20.19.3
+2025-09-01T03:31:49: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:31:49: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:31:49:       throw new Errors.OpenAIError(
+2025-09-01T03:31:49:             ^
+2025-09-01T03:31:49: 
+2025-09-01T03:31:49: 
+2025-09-01T03:31:49: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:31:49:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:31:49:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:31:49:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:31:49:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:31:49:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:31:49: 
+2025-09-01T03:31:49: Node.js v20.19.3
+2025-09-01T03:31:55: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:31:55: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:31:55:       throw new Errors.OpenAIError(
+2025-09-01T03:31:55:             ^
+2025-09-01T03:31:55: 
+2025-09-01T03:31:55: 
+2025-09-01T03:31:55: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:31:55:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:31:55:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:31:55:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:31:55:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:31:55:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:31:55: 
+2025-09-01T03:31:55: Node.js v20.19.3
+2025-09-01T03:32:02: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:32:02: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:32:02:       throw new Errors.OpenAIError(
+2025-09-01T03:32:02:             ^
+2025-09-01T03:32:02: 
+2025-09-01T03:32:02: 
+2025-09-01T03:32:02: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:32:02:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:32:02:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:32:02:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:32:02:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:32:02:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:32:02: 
+2025-09-01T03:32:02: Node.js v20.19.3
+2025-09-01T03:32:09: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:32:09: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:32:09:       throw new Errors.OpenAIError(
+2025-09-01T03:32:09:             ^
+2025-09-01T03:32:09: 
+2025-09-01T03:32:09: 
+2025-09-01T03:32:09: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:32:09:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:32:09:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:32:09:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:32:09:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:32:09:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:32:09: 
+2025-09-01T03:32:09: Node.js v20.19.3
+2025-09-01T03:32:15: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:32:15: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:32:15:       throw new Errors.OpenAIError(
+2025-09-01T03:32:15:             ^
+2025-09-01T03:32:15: 
+2025-09-01T03:32:15: 
+2025-09-01T03:32:15: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:32:15:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:32:15:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:32:15:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:32:15:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:32:15:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:32:15: 
+2025-09-01T03:32:15: Node.js v20.19.3
+2025-09-01T03:32:19: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:32:19: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:32:19:       throw new Errors.OpenAIError(
+2025-09-01T03:32:19:             ^
+2025-09-01T03:32:19: 
+2025-09-01T03:32:19: 
+2025-09-01T03:32:19: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:32:19:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:32:19:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:32:19:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:32:19:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:32:19:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:32:20: 
+2025-09-01T03:32:20: Node.js v20.19.3
+2025-09-01T03:32:25: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:32:25: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:32:25:       throw new Errors.OpenAIError(
+2025-09-01T03:32:25:             ^
+2025-09-01T03:32:25: 
+2025-09-01T03:32:25: 
+2025-09-01T03:32:25: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:32:25:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:32:25:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:32:25:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:32:25:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:32:25:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:32:25: 
+2025-09-01T03:32:25: Node.js v20.19.3
+2025-09-01T03:32:29: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:32:29: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:32:29:       throw new Errors.OpenAIError(
+2025-09-01T03:32:29:             ^
+2025-09-01T03:32:29: 
+2025-09-01T03:32:29: 
+2025-09-01T03:32:29: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:32:29:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:32:29:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:32:29:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:32:29:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:32:29:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:32:29: 
+2025-09-01T03:32:29: Node.js v20.19.3
+2025-09-01T03:32:34: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:32:34: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:32:34:       throw new Errors.OpenAIError(
+2025-09-01T03:32:34:             ^
+2025-09-01T03:32:34: 
+2025-09-01T03:32:34: 
+2025-09-01T03:32:34: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:32:34:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:32:34:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:32:34:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:32:34:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:32:34:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:32:34: 
+2025-09-01T03:32:34: Node.js v20.19.3
+2025-09-01T03:32:38: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:32:38: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:32:38:       throw new Errors.OpenAIError(
+2025-09-01T03:32:38:             ^
+2025-09-01T03:32:38: 
+2025-09-01T03:32:38: 
+2025-09-01T03:32:38: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:32:38:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:32:38:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:32:38:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:32:38:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:32:38:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:32:38: 
+2025-09-01T03:32:38: Node.js v20.19.3
+2025-09-01T03:32:42: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:32:42: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:32:42:       throw new Errors.OpenAIError(
+2025-09-01T03:32:42:             ^
+2025-09-01T03:32:42: 
+2025-09-01T03:32:42: 
+2025-09-01T03:32:42: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:32:42:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:32:42:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:32:42:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:32:42:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:32:42:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:32:42: 
+2025-09-01T03:32:42: Node.js v20.19.3
+2025-09-01T03:32:47: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:32:47: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:32:47:       throw new Errors.OpenAIError(
+2025-09-01T03:32:47:             ^
+2025-09-01T03:32:47: 
+2025-09-01T03:32:47: 
+2025-09-01T03:32:47: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:32:47:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:32:47:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:32:47:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:32:47:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:32:47:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:32:47: 
+2025-09-01T03:32:47: Node.js v20.19.3
+2025-09-01T03:32:51: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:32:51: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:32:51:       throw new Errors.OpenAIError(
+2025-09-01T03:32:51:             ^
+2025-09-01T03:32:51: 
+2025-09-01T03:32:51: 
+2025-09-01T03:32:51: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:32:51:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:32:51:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:32:51:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:32:51:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:32:51:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:32:51: 
+2025-09-01T03:32:51: Node.js v20.19.3
+2025-09-01T03:32:55: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:32:55: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:32:55:       throw new Errors.OpenAIError(
+2025-09-01T03:32:55:             ^
+2025-09-01T03:32:55: 
+2025-09-01T03:32:55: 
+2025-09-01T03:32:55: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:32:55:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:32:55:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:32:55:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:32:55:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:32:55:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:32:55: 
+2025-09-01T03:32:55: Node.js v20.19.3
+2025-09-01T03:32:59: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:32:59: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:32:59:       throw new Errors.OpenAIError(
+2025-09-01T03:32:59:             ^
+2025-09-01T03:32:59: 
+2025-09-01T03:32:59: 
+2025-09-01T03:32:59: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:32:59:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:32:59:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:32:59:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:32:59:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:32:59:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:32:59: 
+2025-09-01T03:32:59: Node.js v20.19.3
+2025-09-01T03:33:03: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:33:03: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:33:03:       throw new Errors.OpenAIError(
+2025-09-01T03:33:03:             ^
+2025-09-01T03:33:03: 
+2025-09-01T03:33:03: 
+2025-09-01T03:33:03: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:33:03:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:33:03:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:33:03:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:33:03:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:33:03:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:33:03: 
+2025-09-01T03:33:03: Node.js v20.19.3
+2025-09-01T03:33:07: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:33:07: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:33:07:       throw new Errors.OpenAIError(
+2025-09-01T03:33:07:             ^
+2025-09-01T03:33:07: 
+2025-09-01T03:33:07: 
+2025-09-01T03:33:07: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:33:07:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:33:07:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:33:07:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:33:07:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:33:07:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:33:07: 
+2025-09-01T03:33:07: Node.js v20.19.3
+2025-09-01T03:33:12: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:33:12: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:33:12:       throw new Errors.OpenAIError(
+2025-09-01T03:33:12:             ^
+2025-09-01T03:33:12: 
+2025-09-01T03:33:12: 
+2025-09-01T03:33:12: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:33:12:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:33:12:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:33:12:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:33:12:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:33:12:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:33:12: 
+2025-09-01T03:33:12: Node.js v20.19.3
+2025-09-01T03:33:16: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:33:16: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:33:16:       throw new Errors.OpenAIError(
+2025-09-01T03:33:16:             ^
+2025-09-01T03:33:16: 
+2025-09-01T03:33:16: 
+2025-09-01T03:33:16: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:33:16:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:33:16:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:33:16:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:33:16:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:33:16:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:33:16: 
+2025-09-01T03:33:16: Node.js v20.19.3
+2025-09-01T03:33:20: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:33:20: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:33:20:       throw new Errors.OpenAIError(
+2025-09-01T03:33:20:             ^
+2025-09-01T03:33:20: 
+2025-09-01T03:33:20: 
+2025-09-01T03:33:20: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:33:20:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:33:20:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:33:20:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:33:20:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:33:20:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:33:20: 
+2025-09-01T03:33:20: Node.js v20.19.3
+2025-09-01T03:33:25: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:33:25: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:33:25:       throw new Errors.OpenAIError(
+2025-09-01T03:33:25:             ^
+2025-09-01T03:33:25: 
+2025-09-01T03:33:25: 
+2025-09-01T03:33:25: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:33:25:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:33:25:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:33:25:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:33:25:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:33:25:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:33:25: 
+2025-09-01T03:33:25: Node.js v20.19.3
+2025-09-01T03:33:29: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:33:29: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:33:29:       throw new Errors.OpenAIError(
+2025-09-01T03:33:29:             ^
+2025-09-01T03:33:29: 
+2025-09-01T03:33:29: 
+2025-09-01T03:33:29: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:33:29:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:33:29:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:33:29:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:33:29:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:33:29:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:33:29: 
+2025-09-01T03:33:29: Node.js v20.19.3
+2025-09-01T03:33:33: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:33:33: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:33:33:       throw new Errors.OpenAIError(
+2025-09-01T03:33:33:             ^
+2025-09-01T03:33:33: 
+2025-09-01T03:33:33: 
+2025-09-01T03:33:33: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:33:33:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:33:33:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:33:33:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:33:33:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:33:33:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:33:33: 
+2025-09-01T03:33:33: Node.js v20.19.3
+2025-09-01T03:33:37: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:33:37: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:33:37:       throw new Errors.OpenAIError(
+2025-09-01T03:33:37:             ^
+2025-09-01T03:33:37: 
+2025-09-01T03:33:37: 
+2025-09-01T03:33:37: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:33:37:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:33:37:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:33:37:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:33:37:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:33:37:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:33:37: 
+2025-09-01T03:33:37: Node.js v20.19.3
+2025-09-01T03:33:41: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:33:41: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:33:41:       throw new Errors.OpenAIError(
+2025-09-01T03:33:41:             ^
+2025-09-01T03:33:41: 
+2025-09-01T03:33:41: 
+2025-09-01T03:33:41: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:33:41:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:33:41:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:33:41:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:33:41:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:33:41:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:33:41: 
+2025-09-01T03:33:41: Node.js v20.19.3
+2025-09-01T03:33:45: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:33:45: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:33:45:       throw new Errors.OpenAIError(
+2025-09-01T03:33:45:             ^
+2025-09-01T03:33:45: 
+2025-09-01T03:33:45: 
+2025-09-01T03:33:45: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:33:45:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:33:45:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:33:45:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:33:45:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:33:45:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:33:45: 
+2025-09-01T03:33:45: Node.js v20.19.3
+2025-09-01T03:33:49: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:33:49: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:33:49:       throw new Errors.OpenAIError(
+2025-09-01T03:33:49:             ^
+2025-09-01T03:33:49: 
+2025-09-01T03:33:49: 
+2025-09-01T03:33:49: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:33:49:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:33:49:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:33:49:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:33:49:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:33:49:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:33:49: 
+2025-09-01T03:33:49: Node.js v20.19.3
+2025-09-01T03:33:54: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:33:54: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:33:54:       throw new Errors.OpenAIError(
+2025-09-01T03:33:54:             ^
+2025-09-01T03:33:54: 
+2025-09-01T03:33:54: 
+2025-09-01T03:33:54: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:33:54:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:33:54:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:33:54:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:33:54:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:33:54:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:33:54: 
+2025-09-01T03:33:54: Node.js v20.19.3
+2025-09-01T03:33:58: WARNING: DATABASE_URL not set, using fallback. This will not work in production.
+2025-09-01T03:33:59: /home/user/webapp/node_modules/openai/src/client.ts:343
+2025-09-01T03:33:59:       throw new Errors.OpenAIError(
+2025-09-01T03:33:59:             ^
+2025-09-01T03:33:59: 
+2025-09-01T03:33:59: 
+2025-09-01T03:33:59: OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).
+2025-09-01T03:33:59:     at new OpenAI (/home/user/webapp/node_modules/openai/src/client.ts:343:13)
+2025-09-01T03:33:59:     at <anonymous> (/home/user/webapp/server/storage.ts:26:16)
+2025-09-01T03:33:59:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:33:59:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:33:59:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:33:59: 
+2025-09-01T03:33:59: Node.js v20.19.3
+2025-09-01T03:34:04: /home/user/webapp/server/db.ts:53
+2025-09-01T03:34:04:   const Database = require('better-sqlite3');
+2025-09-01T03:34:04:                    ^
+2025-09-01T03:34:04: 
+2025-09-01T03:34:04: 
+2025-09-01T03:34:04: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:34:04:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:34:04:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:34:04:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:34:04:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:34:04: 
+2025-09-01T03:34:04: Node.js v20.19.3
+2025-09-01T03:34:09: /home/user/webapp/server/db.ts:53
+2025-09-01T03:34:09:   const Database = require('better-sqlite3');
+2025-09-01T03:34:09:                    ^
+2025-09-01T03:34:09: 
+2025-09-01T03:34:09: 
+2025-09-01T03:34:09: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:34:09:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:34:09:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:34:09:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:34:09:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:34:09: 
+2025-09-01T03:34:09: Node.js v20.19.3
+2025-09-01T03:34:15: /home/user/webapp/server/db.ts:53
+2025-09-01T03:34:15:   const Database = require('better-sqlite3');
+2025-09-01T03:34:15:                    ^
+2025-09-01T03:34:15: 
+2025-09-01T03:34:15: 
+2025-09-01T03:34:15: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:34:15:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:34:15:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:34:15:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:34:15:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:34:15: 
+2025-09-01T03:34:15: Node.js v20.19.3
+2025-09-01T03:34:20: /home/user/webapp/server/db.ts:53
+2025-09-01T03:34:20:   const Database = require('better-sqlite3');
+2025-09-01T03:34:20:                    ^
+2025-09-01T03:34:20: 
+2025-09-01T03:34:20: 
+2025-09-01T03:34:20: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:34:20:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:34:20:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:34:20:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:34:20:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:34:20: 
+2025-09-01T03:34:20: Node.js v20.19.3
+2025-09-01T03:34:23: /home/user/webapp/server/db.ts:53
+2025-09-01T03:34:23:   const Database = require('better-sqlite3');
+2025-09-01T03:34:23:                    ^
+2025-09-01T03:34:23: 
+2025-09-01T03:34:23: 
+2025-09-01T03:34:23: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:34:23:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:34:23:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:34:23:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:34:23:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:34:23: 
+2025-09-01T03:34:23: Node.js v20.19.3
+2025-09-01T03:34:28: /home/user/webapp/server/db.ts:53
+2025-09-01T03:34:28:   const Database = require('better-sqlite3');
+2025-09-01T03:34:28:                    ^
+2025-09-01T03:34:28: 
+2025-09-01T03:34:28: 
+2025-09-01T03:34:28: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:34:28:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:34:28:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:34:28:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:34:28:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:34:28: 
+2025-09-01T03:34:28: Node.js v20.19.3
+2025-09-01T03:34:35: /home/user/webapp/server/db.ts:53
+2025-09-01T03:34:35:   const Database = require('better-sqlite3');
+2025-09-01T03:34:35:                    ^
+2025-09-01T03:34:35: 
+2025-09-01T03:34:35: 
+2025-09-01T03:34:35: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:34:35:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:34:35:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:34:35:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:34:35:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:34:35: 
+2025-09-01T03:34:35: Node.js v20.19.3
+2025-09-01T03:34:43: /home/user/webapp/server/db.ts:53
+2025-09-01T03:34:43:   const Database = require('better-sqlite3');
+2025-09-01T03:34:43:                    ^
+2025-09-01T03:34:43: 
+2025-09-01T03:34:43: 
+2025-09-01T03:34:43: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:34:43:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:34:43:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:34:43:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:34:43:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:34:43: 
+2025-09-01T03:34:43: Node.js v20.19.3
+2025-09-01T03:34:50: /home/user/webapp/server/db.ts:53
+2025-09-01T03:34:50:   const Database = require('better-sqlite3');
+2025-09-01T03:34:50:                    ^
+2025-09-01T03:34:50: 
+2025-09-01T03:34:50: 
+2025-09-01T03:34:50: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:34:50:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:34:50:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:34:50:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:34:50:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:34:50: 
+2025-09-01T03:34:50: Node.js v20.19.3
+2025-09-01T03:34:57: /home/user/webapp/server/db.ts:53
+2025-09-01T03:34:57:   const Database = require('better-sqlite3');
+2025-09-01T03:34:57:                    ^
+2025-09-01T03:34:57: 
+2025-09-01T03:34:57: 
+2025-09-01T03:34:57: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:34:57:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:34:57:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:34:57:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:34:57:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:34:57: 
+2025-09-01T03:34:57: Node.js v20.19.3
+2025-09-01T03:36:28: /home/user/webapp/server/db.ts:53
+2025-09-01T03:36:28:   const Database = require('better-sqlite3');
+2025-09-01T03:36:28:                    ^
+2025-09-01T03:36:28: 
+2025-09-01T03:36:28: 
+2025-09-01T03:36:28: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:36:28:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:36:28:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:36:28:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:36:28:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:36:28: 
+2025-09-01T03:36:28: Node.js v20.19.3
+2025-09-01T03:36:35: /home/user/webapp/server/db.ts:53
+2025-09-01T03:36:35:   const Database = require('better-sqlite3');
+2025-09-01T03:36:35:                    ^
+2025-09-01T03:36:35: 
+2025-09-01T03:36:35: 
+2025-09-01T03:36:35: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:36:35:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:36:35:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:36:35:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:36:35:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:36:35: 
+2025-09-01T03:36:35: Node.js v20.19.3
+2025-09-01T03:36:41: /home/user/webapp/server/db.ts:53
+2025-09-01T03:36:41:   const Database = require('better-sqlite3');
+2025-09-01T03:36:41:                    ^
+2025-09-01T03:36:41: 
+2025-09-01T03:36:41: 
+2025-09-01T03:36:41: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:36:41:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:36:41:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:36:41:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:36:41:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:36:41: 
+2025-09-01T03:36:41: Node.js v20.19.3
+2025-09-01T03:36:48: /home/user/webapp/server/db.ts:53
+2025-09-01T03:36:48:   const Database = require('better-sqlite3');
+2025-09-01T03:36:48:                    ^
+2025-09-01T03:36:48: 
+2025-09-01T03:36:48: 
+2025-09-01T03:36:48: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:36:48:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:36:48:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:36:48:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:36:48:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:36:48: 
+2025-09-01T03:36:48: Node.js v20.19.3
+2025-09-01T03:36:53: /home/user/webapp/server/db.ts:53
+2025-09-01T03:36:53:   const Database = require('better-sqlite3');
+2025-09-01T03:36:53:                    ^
+2025-09-01T03:36:53: 
+2025-09-01T03:36:53: 
+2025-09-01T03:36:53: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:36:53:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:36:53:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:36:53:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:36:53:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:36:53: 
+2025-09-01T03:36:53: Node.js v20.19.3
+2025-09-01T03:36:58: /home/user/webapp/server/db.ts:53
+2025-09-01T03:36:58:   const Database = require('better-sqlite3');
+2025-09-01T03:36:58:                    ^
+2025-09-01T03:36:58: 
+2025-09-01T03:36:58: 
+2025-09-01T03:36:58: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:36:58:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:36:58:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:36:58:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:36:58:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:36:58: 
+2025-09-01T03:36:58: Node.js v20.19.3
+2025-09-01T03:37:06: /home/user/webapp/server/db.ts:53
+2025-09-01T03:37:06:   const Database = require('better-sqlite3');
+2025-09-01T03:37:06:                    ^
+2025-09-01T03:37:06: 
+2025-09-01T03:37:06: 
+2025-09-01T03:37:06: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:37:06:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:37:06:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:37:06:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:37:06:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:37:06: 
+2025-09-01T03:37:06: Node.js v20.19.3
+2025-09-01T03:37:13: /home/user/webapp/server/db.ts:53
+2025-09-01T03:37:13:   const Database = require('better-sqlite3');
+2025-09-01T03:37:13:                    ^
+2025-09-01T03:37:13: 
+2025-09-01T03:37:13: 
+2025-09-01T03:37:13: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:37:13:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:37:13:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:37:13:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:37:13:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:37:13: 
+2025-09-01T03:37:13: Node.js v20.19.3
+2025-09-01T03:37:19: /home/user/webapp/server/db.ts:53
+2025-09-01T03:37:19:   const Database = require('better-sqlite3');
+2025-09-01T03:37:19:                    ^
+2025-09-01T03:37:19: 
+2025-09-01T03:37:19: 
+2025-09-01T03:37:19: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:37:19:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:37:19:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:37:19:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:37:19:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:37:19: 
+2025-09-01T03:37:19: Node.js v20.19.3
+2025-09-01T03:37:23: /home/user/webapp/server/db.ts:53
+2025-09-01T03:37:23:   const Database = require('better-sqlite3');
+2025-09-01T03:37:23:                    ^
+2025-09-01T03:37:23: 
+2025-09-01T03:37:23: 
+2025-09-01T03:37:23: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:37:23:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:37:23:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:37:23:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:37:23:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:37:23: 
+2025-09-01T03:37:23: Node.js v20.19.3
+2025-09-01T03:37:29: /home/user/webapp/server/db.ts:53
+2025-09-01T03:37:29:   const Database = require('better-sqlite3');
+2025-09-01T03:37:29:                    ^
+2025-09-01T03:37:29: 
+2025-09-01T03:37:29: 
+2025-09-01T03:37:29: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:37:29:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:37:29:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:37:29:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:37:29:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:37:29: 
+2025-09-01T03:37:29: Node.js v20.19.3
+2025-09-01T03:37:33: /home/user/webapp/server/db.ts:53
+2025-09-01T03:37:33:   const Database = require('better-sqlite3');
+2025-09-01T03:37:33:                    ^
+2025-09-01T03:37:33: 
+2025-09-01T03:37:33: 
+2025-09-01T03:37:33: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:37:33:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:37:33:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:37:33:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:37:33:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:37:33: 
+2025-09-01T03:37:33: Node.js v20.19.3
+2025-09-01T03:37:41: /home/user/webapp/server/db.ts:53
+2025-09-01T03:37:41:   const Database = require('better-sqlite3');
+2025-09-01T03:37:41:                    ^
+2025-09-01T03:37:41: 
+2025-09-01T03:37:41: 
+2025-09-01T03:37:41: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:37:41:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:37:41:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:37:41:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:37:41:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:37:41: 
+2025-09-01T03:37:41: Node.js v20.19.3
+2025-09-01T03:37:45: /home/user/webapp/server/db.ts:53
+2025-09-01T03:37:45:   const Database = require('better-sqlite3');
+2025-09-01T03:37:45:                    ^
+2025-09-01T03:37:45: 
+2025-09-01T03:37:45: 
+2025-09-01T03:37:45: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:37:45:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:37:45:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:37:45:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:37:45:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:37:45: 
+2025-09-01T03:37:45: Node.js v20.19.3
+2025-09-01T03:37:50: /home/user/webapp/server/db.ts:53
+2025-09-01T03:37:50:   const Database = require('better-sqlite3');
+2025-09-01T03:37:50:                    ^
+2025-09-01T03:37:50: 
+2025-09-01T03:37:50: 
+2025-09-01T03:37:50: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:37:50:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:37:50:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:37:50:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:37:50:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:37:50: 
+2025-09-01T03:37:50: Node.js v20.19.3
+2025-09-01T03:37:56: /home/user/webapp/server/db.ts:53
+2025-09-01T03:37:56:   const Database = require('better-sqlite3');
+2025-09-01T03:37:56:                    ^
+2025-09-01T03:37:56: 
+2025-09-01T03:37:56: 
+2025-09-01T03:37:56: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:37:56:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:37:56:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:37:56:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:37:56:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:37:56: 
+2025-09-01T03:37:56: Node.js v20.19.3
+2025-09-01T03:38:00: /home/user/webapp/server/db.ts:53
+2025-09-01T03:38:00:   const Database = require('better-sqlite3');
+2025-09-01T03:38:00:                    ^
+2025-09-01T03:38:00: 
+2025-09-01T03:38:00: 
+2025-09-01T03:38:00: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:38:00:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:38:00:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:38:00:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:38:00:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:38:00: 
+2025-09-01T03:38:00: Node.js v20.19.3
+2025-09-01T03:38:04: /home/user/webapp/server/db.ts:53
+2025-09-01T03:38:04:   const Database = require('better-sqlite3');
+2025-09-01T03:38:04:                    ^
+2025-09-01T03:38:04: 
+2025-09-01T03:38:04: 
+2025-09-01T03:38:04: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:38:04:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:38:04:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:38:04:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:38:04:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:38:04: 
+2025-09-01T03:38:04: Node.js v20.19.3
+2025-09-01T03:38:07: /home/user/webapp/server/db.ts:53
+2025-09-01T03:38:07:   const Database = require('better-sqlite3');
+2025-09-01T03:38:07:                    ^
+2025-09-01T03:38:07: 
+2025-09-01T03:38:07: 
+2025-09-01T03:38:07: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:38:07:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:38:07:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:38:07:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:38:07:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:38:07: 
+2025-09-01T03:38:07: Node.js v20.19.3
+2025-09-01T03:38:11: /home/user/webapp/server/db.ts:53
+2025-09-01T03:38:11:   const Database = require('better-sqlite3');
+2025-09-01T03:38:11:                    ^
+2025-09-01T03:38:11: 
+2025-09-01T03:38:11: 
+2025-09-01T03:38:11: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:38:11:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:38:11:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:38:11:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:38:11:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:38:11: 
+2025-09-01T03:38:11: Node.js v20.19.3
+2025-09-01T03:38:15: /home/user/webapp/server/db.ts:53
+2025-09-01T03:38:15:   const Database = require('better-sqlite3');
+2025-09-01T03:38:15:                    ^
+2025-09-01T03:38:15: 
+2025-09-01T03:38:15: 
+2025-09-01T03:38:15: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:38:15:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:38:15:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:38:15:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:38:15:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:38:15: 
+2025-09-01T03:38:15: Node.js v20.19.3
+2025-09-01T03:38:19: /home/user/webapp/server/db.ts:53
+2025-09-01T03:38:19:   const Database = require('better-sqlite3');
+2025-09-01T03:38:19:                    ^
+2025-09-01T03:38:19: 
+2025-09-01T03:38:19: 
+2025-09-01T03:38:19: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:38:19:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:38:19:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:38:19:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:38:19:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:38:19: 
+2025-09-01T03:38:19: Node.js v20.19.3
+2025-09-01T03:38:23: /home/user/webapp/server/db.ts:53
+2025-09-01T03:38:23:   const Database = require('better-sqlite3');
+2025-09-01T03:38:23:                    ^
+2025-09-01T03:38:23: 
+2025-09-01T03:38:23: 
+2025-09-01T03:38:23: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:38:23:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:38:23:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:38:23:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:38:23:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:38:23: 
+2025-09-01T03:38:23: Node.js v20.19.3
+2025-09-01T03:38:28: /home/user/webapp/server/db.ts:53
+2025-09-01T03:38:28:   const Database = require('better-sqlite3');
+2025-09-01T03:38:28:                    ^
+2025-09-01T03:38:28: 
+2025-09-01T03:38:28: 
+2025-09-01T03:38:28: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:38:28:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:38:28:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:38:28:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:38:28:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:38:28: 
+2025-09-01T03:38:28: Node.js v20.19.3
+2025-09-01T03:38:31: /home/user/webapp/server/db.ts:53
+2025-09-01T03:38:31:   const Database = require('better-sqlite3');
+2025-09-01T03:38:31:                    ^
+2025-09-01T03:38:31: 
+2025-09-01T03:38:31: 
+2025-09-01T03:38:31: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:38:31:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:38:31:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:38:31:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:38:31:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:38:31: 
+2025-09-01T03:38:31: Node.js v20.19.3
+2025-09-01T03:38:35: /home/user/webapp/server/db.ts:53
+2025-09-01T03:38:35:   const Database = require('better-sqlite3');
+2025-09-01T03:38:35:                    ^
+2025-09-01T03:38:35: 
+2025-09-01T03:38:35: 
+2025-09-01T03:38:35: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:38:35:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:38:35:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:38:35:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:38:35:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:38:35: 
+2025-09-01T03:38:35: Node.js v20.19.3
+2025-09-01T03:38:39: /home/user/webapp/server/db.ts:53
+2025-09-01T03:38:39:   const Database = require('better-sqlite3');
+2025-09-01T03:38:39:                    ^
+2025-09-01T03:38:39: 
+2025-09-01T03:38:39: 
+2025-09-01T03:38:39: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:38:39:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:38:39:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:38:39:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:38:39:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:38:39: 
+2025-09-01T03:38:39: Node.js v20.19.3
+2025-09-01T03:38:43: /home/user/webapp/server/db.ts:53
+2025-09-01T03:38:43:   const Database = require('better-sqlite3');
+2025-09-01T03:38:43:                    ^
+2025-09-01T03:38:43: 
+2025-09-01T03:38:43: 
+2025-09-01T03:38:43: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:38:43:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:38:43:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:38:43:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:38:43:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:38:43: 
+2025-09-01T03:38:43: Node.js v20.19.3
+2025-09-01T03:38:46: /home/user/webapp/server/db.ts:53
+2025-09-01T03:38:46:   const Database = require('better-sqlite3');
+2025-09-01T03:38:46:                    ^
+2025-09-01T03:38:46: 
+2025-09-01T03:38:46: 
+2025-09-01T03:38:46: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:38:46:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:38:46:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:38:46:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:38:46:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:38:46: 
+2025-09-01T03:38:46: Node.js v20.19.3
+2025-09-01T03:38:50: /home/user/webapp/server/db.ts:53
+2025-09-01T03:38:50:   const Database = require('better-sqlite3');
+2025-09-01T03:38:50:                    ^
+2025-09-01T03:38:50: 
+2025-09-01T03:38:50: 
+2025-09-01T03:38:50: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:38:50:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:38:50:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:38:50:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:38:50:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:38:50: 
+2025-09-01T03:38:50: Node.js v20.19.3
+2025-09-01T03:38:55: /home/user/webapp/server/db.ts:53
+2025-09-01T03:38:55:   const Database = require('better-sqlite3');
+2025-09-01T03:38:55:                    ^
+2025-09-01T03:38:55: 
+2025-09-01T03:38:55: 
+2025-09-01T03:38:55: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:38:55:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:38:55:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:38:55:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:38:55:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:38:55: 
+2025-09-01T03:38:55: Node.js v20.19.3
+2025-09-01T03:38:59: /home/user/webapp/server/db.ts:53
+2025-09-01T03:38:59:   const Database = require('better-sqlite3');
+2025-09-01T03:38:59:                    ^
+2025-09-01T03:38:59: 
+2025-09-01T03:38:59: 
+2025-09-01T03:38:59: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:38:59:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:38:59:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:38:59:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:38:59:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:38:59: 
+2025-09-01T03:38:59: Node.js v20.19.3
+2025-09-01T03:39:02: /home/user/webapp/server/db.ts:53
+2025-09-01T03:39:02:   const Database = require('better-sqlite3');
+2025-09-01T03:39:02:                    ^
+2025-09-01T03:39:02: 
+2025-09-01T03:39:02: 
+2025-09-01T03:39:02: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:39:02:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:39:02:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:39:02:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:39:02:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:39:02: 
+2025-09-01T03:39:02: Node.js v20.19.3
+2025-09-01T03:39:06: /home/user/webapp/server/db.ts:53
+2025-09-01T03:39:06:   const Database = require('better-sqlite3');
+2025-09-01T03:39:06:                    ^
+2025-09-01T03:39:06: 
+2025-09-01T03:39:06: 
+2025-09-01T03:39:06: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:39:06:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:39:06:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:39:06:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:39:06:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:39:06: 
+2025-09-01T03:39:06: Node.js v20.19.3
+2025-09-01T03:39:09: /home/user/webapp/server/db.ts:53
+2025-09-01T03:39:09:   const Database = require('better-sqlite3');
+2025-09-01T03:39:09:                    ^
+2025-09-01T03:39:09: 
+2025-09-01T03:39:09: 
+2025-09-01T03:39:09: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:39:09:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:39:09:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:39:09:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:39:09:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:39:09: 
+2025-09-01T03:39:09: Node.js v20.19.3
+2025-09-01T03:39:13: /home/user/webapp/server/db.ts:53
+2025-09-01T03:39:13:   const Database = require('better-sqlite3');
+2025-09-01T03:39:13:                    ^
+2025-09-01T03:39:13: 
+2025-09-01T03:39:13: 
+2025-09-01T03:39:13: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:39:13:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:39:13:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:39:13:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:39:13:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:39:13: 
+2025-09-01T03:39:13: Node.js v20.19.3
+2025-09-01T03:39:16: /home/user/webapp/server/db.ts:53
+2025-09-01T03:39:16:   const Database = require('better-sqlite3');
+2025-09-01T03:39:16:                    ^
+2025-09-01T03:39:16: 
+2025-09-01T03:39:16: 
+2025-09-01T03:39:16: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:39:16:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:39:16:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:39:16:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:39:16:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:39:16: 
+2025-09-01T03:39:16: Node.js v20.19.3
+2025-09-01T03:39:20: /home/user/webapp/server/db.ts:53
+2025-09-01T03:39:20:   const Database = require('better-sqlite3');
+2025-09-01T03:39:20:                    ^
+2025-09-01T03:39:20: 
+2025-09-01T03:39:20: 
+2025-09-01T03:39:20: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:39:20:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:39:20:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:39:20:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:39:20:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:39:20: 
+2025-09-01T03:39:20: Node.js v20.19.3
+2025-09-01T03:39:24: /home/user/webapp/server/db.ts:53
+2025-09-01T03:39:24:   const Database = require('better-sqlite3');
+2025-09-01T03:39:24:                    ^
+2025-09-01T03:39:24: 
+2025-09-01T03:39:24: 
+2025-09-01T03:39:24: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:39:24:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:39:24:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:39:24:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:39:24:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:39:24: 
+2025-09-01T03:39:24: Node.js v20.19.3
+2025-09-01T03:39:28: /home/user/webapp/server/db.ts:53
+2025-09-01T03:39:28:   const Database = require('better-sqlite3');
+2025-09-01T03:39:28:                    ^
+2025-09-01T03:39:28: 
+2025-09-01T03:39:28: 
+2025-09-01T03:39:28: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:39:28:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:39:28:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:39:28:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:39:28:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:39:28: 
+2025-09-01T03:39:28: Node.js v20.19.3
+2025-09-01T03:39:31: /home/user/webapp/server/db.ts:53
+2025-09-01T03:39:31:   const Database = require('better-sqlite3');
+2025-09-01T03:39:31:                    ^
+2025-09-01T03:39:31: 
+2025-09-01T03:39:31: 
+2025-09-01T03:39:31: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:39:31:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:39:31:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:39:31:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:39:31:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:39:31: 
+2025-09-01T03:39:31: Node.js v20.19.3
+2025-09-01T03:39:35: /home/user/webapp/server/db.ts:53
+2025-09-01T03:39:35:   const Database = require('better-sqlite3');
+2025-09-01T03:39:35:                    ^
+2025-09-01T03:39:35: 
+2025-09-01T03:39:35: 
+2025-09-01T03:39:35: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:39:35:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:39:35:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:39:35:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:39:35:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:39:35: 
+2025-09-01T03:39:35: Node.js v20.19.3
+2025-09-01T03:39:39: /home/user/webapp/server/db.ts:53
+2025-09-01T03:39:39:   const Database = require('better-sqlite3');
+2025-09-01T03:39:39:                    ^
+2025-09-01T03:39:39: 
+2025-09-01T03:39:39: 
+2025-09-01T03:39:39: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:39:39:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:39:39:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:39:39:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:39:39:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:39:39: 
+2025-09-01T03:39:39: Node.js v20.19.3
+2025-09-01T03:39:42: /home/user/webapp/server/db.ts:53
+2025-09-01T03:39:42:   const Database = require('better-sqlite3');
+2025-09-01T03:39:42:                    ^
+2025-09-01T03:39:42: 
+2025-09-01T03:39:42: 
+2025-09-01T03:39:42: ReferenceError: require is not defined in ES module scope, you can use import instead
+2025-09-01T03:39:42:     at <anonymous> (/home/user/webapp/server/db.ts:53:20)
+2025-09-01T03:39:42:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T03:39:42:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T03:39:42:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T03:39:42: 
+2025-09-01T03:39:42: Node.js v20.19.3
+2025-09-01T03:39:48: GEMINI_API_KEY not configured
+2025-09-01T03:39:57: GEMINI_API_KEY not configured
+2025-09-01T03:40:59: Unhandled Rejection at: Promise {
+2025-09-01T03:40:59:   <rejected> Error: The service was stopped
+2025-09-01T03:40:59:       at /home/user/webapp/node_modules/esbuild/lib/main.js:974:26
+2025-09-01T03:40:59:       at responseCallbacks.<computed> (/home/user/webapp/node_modules/esbuild/lib/main.js:603:9)
+2025-09-01T03:40:59:       at Socket.afterClose (/home/user/webapp/node_modules/esbuild/lib/main.js:594:28)
+2025-09-01T03:40:59:       at Socket.emit (node:events:536:35)
+2025-09-01T03:40:59:       at endReadableNT (node:internal/streams/readable:1698:12)
+2025-09-01T03:40:59:       at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+2025-09-01T03:40:59: } reason: Error: The service was stopped
+2025-09-01T03:40:59:     at /home/user/webapp/node_modules/esbuild/lib/main.js:974:26
+2025-09-01T03:40:59:     at responseCallbacks.<computed> (/home/user/webapp/node_modules/esbuild/lib/main.js:603:9)
+2025-09-01T03:40:59:     at Socket.afterClose (/home/user/webapp/node_modules/esbuild/lib/main.js:594:28)
+2025-09-01T03:40:59:     at Socket.emit (node:events:536:35)
+2025-09-01T03:40:59:     at endReadableNT (node:internal/streams/readable:1698:12)
+2025-09-01T03:40:59:     at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+2025-09-01T03:41:06: GEMINI_API_KEY not configured
+2025-09-01T03:47:01: Unhandled Rejection at: Promise {
+2025-09-01T03:47:01:   <rejected> Error: The service was stopped: write EPIPE
+2025-09-01T03:47:01:       at /home/user/webapp/node_modules/esbuild/lib/main.js:974:26
+2025-09-01T03:47:01:       at responseCallbacks.<computed> (/home/user/webapp/node_modules/esbuild/lib/main.js:603:9)
+2025-09-01T03:47:01:       at afterClose (/home/user/webapp/node_modules/esbuild/lib/main.js:594:28)
+2025-09-01T03:47:01:       at /home/user/webapp/node_modules/esbuild/lib/main.js:1986:18
+2025-09-01T03:47:01:       at onwriteError (node:internal/streams/writable:605:3)
+2025-09-01T03:47:01:       at process.processTicksAndRejections (node:internal/process/task_queues:84:21)
+2025-09-01T03:47:01: } reason: Error: The service was stopped: write EPIPE
+2025-09-01T03:47:01:     at /home/user/webapp/node_modules/esbuild/lib/main.js:974:26
+2025-09-01T03:47:01:     at responseCallbacks.<computed> (/home/user/webapp/node_modules/esbuild/lib/main.js:603:9)
+2025-09-01T03:47:01:     at afterClose (/home/user/webapp/node_modules/esbuild/lib/main.js:594:28)
+2025-09-01T03:47:01:     at /home/user/webapp/node_modules/esbuild/lib/main.js:1986:18
+2025-09-01T03:47:01:     at onwriteError (node:internal/streams/writable:605:3)
+2025-09-01T03:47:01:     at process.processTicksAndRejections (node:internal/process/task_queues:84:21)
+2025-09-01T03:49:45: GEMINI_API_KEY not configured
+2025-09-01T03:51:27: Error fetching document: SqliteError: no such column: "document_type" - should this be a string literal in single-quotes?
+2025-09-01T03:51:27:     at Database.prepare (/home/user/webapp/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+2025-09-01T03:51:27:     at BetterSQLiteSession.prepareQuery (/home/user/webapp/node_modules/src/better-sqlite3/session.ts:50:28)
+2025-09-01T03:51:27:     at BetterSQLiteSession.prepareOneTimeQuery (/home/user/webapp/node_modules/src/sqlite-core/session.ts:135:15)
+2025-09-01T03:51:27:     at SQLiteSelectBase._prepare (/home/user/webapp/node_modules/src/sqlite-core/query-builders/select.ts:865:85)
+2025-09-01T03:51:27:     at SQLiteSelectBase.all (/home/user/webapp/node_modules/src/sqlite-core/query-builders/select.ts:884:15)
+2025-09-01T03:51:27:     at SQLiteSelectBase.execute (/home/user/webapp/node_modules/src/sqlite-core/query-builders/select.ts:896:15)
+2025-09-01T03:51:27:     at SQLiteSelectBase.then (/home/user/webapp/node_modules/src/query-promise.ts:31:15)
+2025-09-01T03:51:27:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+2025-09-01T03:51:27:   code: 'SQLITE_ERROR'
+2025-09-01T03:51:27: }
+2025-09-01T03:51:30: Browserslist: browsers data (caniuse-lite) is 10 months old. Please run:
+2025-09-01T03:51:30:   npx update-browserslist-db@latest
+2025-09-01T03:51:30:   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+2025-09-01T03:55:13: Error fetching document: SqliteError: no such column: "ai_tags" - should this be a string literal in single-quotes?
+2025-09-01T03:55:13:     at Database.prepare (/home/user/webapp/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+2025-09-01T03:55:13:     at BetterSQLiteSession.prepareQuery (/home/user/webapp/node_modules/src/better-sqlite3/session.ts:50:28)
+2025-09-01T03:55:13:     at BetterSQLiteSession.prepareOneTimeQuery (/home/user/webapp/node_modules/src/sqlite-core/session.ts:135:15)
+2025-09-01T03:55:13:     at SQLiteSelectBase._prepare (/home/user/webapp/node_modules/src/sqlite-core/query-builders/select.ts:865:85)
+2025-09-01T03:55:13:     at SQLiteSelectBase.all (/home/user/webapp/node_modules/src/sqlite-core/query-builders/select.ts:884:15)
+2025-09-01T03:55:13:     at SQLiteSelectBase.execute (/home/user/webapp/node_modules/src/sqlite-core/query-builders/select.ts:896:15)
+2025-09-01T03:55:13:     at SQLiteSelectBase.then (/home/user/webapp/node_modules/src/query-promise.ts:31:15)
+2025-09-01T03:55:13:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+2025-09-01T03:55:13:   code: 'SQLITE_ERROR'
+2025-09-01T03:55:13: }

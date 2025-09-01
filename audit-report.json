@@ -1,0 +1,35 @@
+{
+  "timestamp": "2025-09-01T03:51:28.003Z",
+  "passed": 11,
+  "warnings": 7,
+  "failed": 3,
+  "details": {
+    "passed": [
+      "Database connection successful",
+      "API health check passed",
+      "Upload directory exists",
+      "Temp uploads directory exists",
+      "Health Check endpoint works",
+      "List Clients endpoint works",
+      "List Appointments endpoint works",
+      "File system write permissions OK",
+      "No orphaned documents",
+      "No orphaned appointments",
+      "Memory usage normal"
+    ],
+    "failed": [
+      "OPENAI_API_KEY not configured",
+      "ANTHROPIC_API_KEY not configured",
+      "SESSION_SECRET not configured"
+    ],
+    "warnings": [
+      "gemini integration not configured",
+      "Document Search returned 500",
+      "GOOGLE_GEMINI_API_KEY not configured (optional)",
+      "PERPLEXITY_API_KEY not configured (optional)",
+      "SENDGRID_API_KEY not configured (optional)",
+      "GOOGLE_CLIENT_ID not configured (optional)",
+      "GOOGLE_CLIENT_SECRET not configured (optional)"
+    ]
+  }
+}
