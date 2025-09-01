@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import IntegrationStatus from "@/components/ui/integration-status";
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient } from "@/lib/api";
-import profileImage from '@assets/image_1754410832108.png';
+// Temporarily using a placeholder for profile image until asset is available
+const profileImage = 'data:image/svg+xml,%3csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"%3e%3ccircle cx="20" cy="20" r="20" fill="%23ddd"/%3e%3ctext x="20" y="25" text-anchor="middle" fill="%23666" font-size="14"%3eJP%3c/text%3e%3c/svg%3e';
 
 export default function Header() {
   const currentDate = new Date().toLocaleDateString('en-US', {

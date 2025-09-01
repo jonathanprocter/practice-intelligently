@@ -1,6 +1,10 @@
-// Polyfill for import.meta.dirname in Node.js 18
+// Polyfill for import.meta.dirname and __dirname in Node.js 18
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+
+// Define __dirname globally for compatibility with CJS modules
+globalThis.__dirname = dirname(fileURLToPath(import.meta.url));
+
 if (typeof import.meta.dirname === 'undefined') {
   Object.defineProperty(import.meta, 'dirname', {
     get() { return dirname(fileURLToPath(import.meta.url)); },
