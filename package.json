@@ -5,8 +5,10 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
-    "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build": "./scripts/simple-build.sh",
+    "build:vite": "NODE_OPTIONS='--max-old-space-size=2048' vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
+    "start:prod": "./scripts/start-production.sh",
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit generate && drizzle-kit migrate",
@@ -155,6 +157,7 @@
     "pm2": "^6.0.9",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.17",
+    "terser": "^5.43.1",
     "tsx": "^4.19.1",
     "typescript": "5.6.3",
     "vite": "^6.3.5"

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { User, Bell, Calendar, Shield, Palette, Download } from "lucide-react";
 import { ApiClient } from "@/lib/api";
-import drProctorAvatar from "@assets/generated-image (1)_1753977205405.png";
+// import drProctorAvatar from "@assets/generated-image (1)_1753977205405.png";
 
 interface UserProfile {
   id: string;
@@ -186,7 +186,7 @@ export default function Settings() {
             <CardHeader>
               <div className="flex items-center space-x-4">
                 <img 
-                  src={drProctorAvatar}
+                  src="https://api.dicebear.com/7.x/initials/svg?seed=JP"
                   alt="Dr. Jonathan Procter"
                   className="w-20 h-20 rounded-full object-cover border-4 border-therapy-primary"
                 />
