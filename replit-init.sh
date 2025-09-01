@@ -65,7 +65,10 @@ echo -e "${GREEN}✓ Process cleanup complete${NC}"
 
 # Step 10: Start the application
 echo -e "${YELLOW}Starting the application...${NC}"
-npx pm2 start ecosystem.config.cjs
+export PORT=5000
+export NODE_ENV=development
+nohup npx tsx server/index.ts > server.log 2>&1 &
+sleep 3
 echo -e "${GREEN}✓ Application started${NC}"
 
 # Step 11: Display status
@@ -75,12 +78,16 @@ echo -e "🎉 Practice Intelligence is ready!"
 echo -e "=============================================="
 echo -e "${NC}"
 echo "📊 System Status:"
-npx pm2 status
+if curl -s http://localhost:5000/api/health > /dev/null; then
+  echo "✓ Server is running on port 5000"
+else
+  echo "⚠ Server may not be fully started yet"
+fi
 
 echo ""
 echo "🔗 Access Information:"
-echo "   - Local URL: http://localhost:3000"
-echo "   - Health Check: http://localhost:3000/api/health"
+echo "   - Local URL: http://localhost:5000"
+echo "   - Health Check: http://localhost:5000/api/health"
 echo ""
 echo "👤 Default Login:"
 echo "   - Username: admin"

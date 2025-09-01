@@ -1,5 +1,6 @@
 { pkgs }: {
   deps = [
+    pkgs.lsof
     pkgs.nodejs_20
     pkgs.postgresql_16
     pkgs.git
