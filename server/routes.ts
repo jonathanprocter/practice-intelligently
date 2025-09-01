@@ -42,6 +42,7 @@ import { registerEnhancedChartRoutes } from './routes/enhanced-chart-routes';
 import { registerTimelineRoutes } from './routes/timeline-routes';
 import { registerEnhancedTimelineRoutes } from './routes/enhanced-timeline-routes';
 import { registerCriticalFixes } from './fixes/critical-bugs-and-improvements';
+import { registerAIEnhancedRoutes } from './routes/ai-enhanced-routes';
 import OpenAI from 'openai';
 
 // Initialize OpenAI client
@@ -5766,6 +5767,9 @@ Follow-up areas for next session:
 
   // Register critical bug fixes and performance improvements
   registerCriticalFixes(app);
+
+  // Register AI-enhanced features with intelligent load balancing
+  registerAIEnhancedRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;
