@@ -15,7 +15,8 @@ window.addEventListener('unhandledrejection', (event) => {
                         errorMessage.includes('fetch') ||
                         errorMessage.includes('NetworkError') ||
                         errorMessage.includes('HMR') ||
-                        errorMessage.includes('WebSocket');
+                        errorMessage.includes('WebSocket') ||
+                        errorMessage.includes('Connection failed');
   
   if (isNetworkError) {
     console.warn('Network/HMR request failed, but continuing...', event.reason);
@@ -29,7 +30,8 @@ window.addEventListener('error', (event) => {
   const isNetworkError = errorMessage.includes('fetch') || 
                         errorMessage.includes('Network') ||
                         errorMessage.includes('HMR') ||
-                        errorMessage.includes('WebSocket');
+                        errorMessage.includes('WebSocket') ||
+                        errorMessage.includes('Connection');
   
   if (isNetworkError) {
     console.warn('Network/HMR error caught, continuing...', event.error);
@@ -37,9 +39,29 @@ window.addEventListener('error', (event) => {
   }
 });
 
-// Disable HMR overlay for development
+// Disable HMR overlay for development and handle connection issues
 if (import.meta.env.DEV && typeof window !== 'undefined') {
   window.__vite_plugin_react_preamble_installed__ = true;
+  
+  // Add HMR connection retry logic
+  if (import.meta.hot) {
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    
+    import.meta.hot.on('vite:beforeUpdate', () => {
+      reconnectAttempts = 0; // Reset on successful update
+    });
+    
+    import.meta.hot.on('vite:error', (err) => {
+      if (reconnectAttempts < maxReconnectAttempts) {
+        reconnectAttempts++;
+        console.warn(`HMR connection issue (attempt ${reconnectAttempts}/${maxReconnectAttempts}), retrying...`);
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000 * reconnectAttempts);
+      }
+    });
+  }
 }
 
 const queryClient = new QueryClient({
