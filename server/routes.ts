@@ -39,6 +39,8 @@ import { SessionDocumentProcessor } from './session-document-processor';
 import { optimizedComprehensiveProgressNotesParser } from './comprehensiveProgressNotesParser-optimized';
 import { stevenDelucaProcessor } from './steven-deluca-processor';
 import { registerEnhancedChartRoutes } from './routes/enhanced-chart-routes';
+import { registerTimelineRoutes } from './routes/timeline-routes';
+import { registerEnhancedTimelineRoutes } from './routes/enhanced-timeline-routes';
 import OpenAI from 'openai';
 
 // Initialize OpenAI client
@@ -5746,6 +5748,12 @@ Follow-up areas for next session:
 
   // Register enhanced chart and document processing routes
   registerEnhancedChartRoutes(app);
+  
+  // Register timeline routes for unified progress notes view
+  registerTimelineRoutes(app);
+  
+  // Register ENHANCED timeline routes for comprehensive progress notes handling
+  registerEnhancedTimelineRoutes(app);
   
   // Register comprehensive document fix routes
   const { registerDocumentRoutes } = await import('./document-fix');
