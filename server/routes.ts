@@ -5725,6 +5725,44 @@ Follow-up areas for next session:
     }
   });
 
+  // Document statistics endpoint for charts
+  app.get("/api/documents/statistics/:therapistId", async (req, res) => {
+    try {
+      const { therapistId } = req.params;
+      const documents = await storage.getDocumentsByTherapist(therapistId);
+      
+      // Calculate category counts
+      const categoryCounts = {};
+      const sensitivityCounts = {};
+      
+      documents.forEach(doc => {
+        const category = doc.category || 'uncategorized';
+        const sensitivity = doc.sensitivity_level || 'standard';
+        
+        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+        sensitivityCounts[sensitivity] = (sensitivityCounts[sensitivity] || 0) + 1;
+      });
+      
+      res.json({
+        categoryCounts: Object.entries(categoryCounts).map(([category, count]) => ({
+          category,
+          count
+        })),
+        sensitivityCounts: Object.entries(sensitivityCounts).map(([level, count]) => ({
+          level, 
+          count
+        })),
+        totalDocuments: documents.length
+      });
+    } catch (error) {
+      console.error('Error fetching document statistics:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch document statistics',
+        details: error?.message || 'Unknown error'
+      });
+    }
+  });
+
   app.get("/api/documents/categories", async (req, res) => {
     try {
       const { DocumentTagger } = await import('./documentTagger');

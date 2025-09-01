@@ -33,9 +33,11 @@ const DocumentAnalyticsDashboard: React.FC<DocumentAnalyticsDashboardProps> = ({
   const [timeRange, setTimeRange] = useState<string>('all');
 
   // Fetch document statistics
-  const { data: statistics, isLoading: statsLoading, refetch } = useQuery({
+  const { data: statistics, isLoading: statsLoading, refetch, error: statsError } = useQuery({
     queryKey: ['document-statistics', therapistId],
     queryFn: () => apiRequest('GET', `/api/documents/statistics/${therapistId}`),
+    retry: 1,
+    retryOnMount: false,
   });
 
   // Fetch available categories
@@ -53,21 +55,25 @@ const DocumentAnalyticsDashboard: React.FC<DocumentAnalyticsDashboardProps> = ({
     enabled: selectedCategory !== 'all',
   });
 
-  const stats = statistics?.statistics;
+  const stats = statistics || { categoryCounts: [], sensitivityCounts: [], totalDocuments: 0 };
   const categories = categoriesData?.categories || [];
 
-  // Transform data for charts
-  const categoryChartData = stats?.categoryCounts.map((item, index) => ({
+  // Transform data for charts - handle both nested and direct structure
+  const categoryCounts = stats?.categoryCounts || stats?.statistics?.categoryCounts || [];
+  const categoryChartData = categoryCounts.map((item, index) => ({
     ...item,
-    category: item.category.replace('-', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+    category: item.category ? item.category.replace('-', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) : 'Unknown',
+    count: item.count || 0,
     fill: COLORS.categories[index % COLORS.categories.length]
-  })) || [];
+  }));
 
-  const sensitivityChartData = stats?.sensitivityCounts.map(item => ({
+  const sensitivityCounts = stats?.sensitivityCounts || stats?.statistics?.sensitivityCounts || [];
+  const sensitivityChartData = sensitivityCounts.map(item => ({
     ...item,
-    level: item.level.charAt(0).toUpperCase() + item.level.slice(1),
+    level: item.level ? item.level.charAt(0).toUpperCase() + item.level.slice(1) : 'Unknown',
+    count: item.count || 0,
     fill: COLORS.sensitivity[item.level as keyof typeof COLORS.sensitivity] || '#6b7280'
-  })) || [];
+  }));
 
   // Sample trend data (would come from API in real implementation)
   const trendData = [
