@@ -71,8 +71,8 @@ echo -e "🎉 Practice Intelligence is ready!"
 echo -e "=============================================="
 echo -e "${NC}"
 echo "🔗 Access Information:"
-echo "   - Local URL: http://localhost:5000"
-echo "   - Health Check: http://localhost:5000/api/health"
+echo "   - Local URL: http://localhost:3000"
+echo "   - Health Check: http://localhost:3000/api/health"
 echo ""
 echo "👤 Default Login:"
 echo "   - Username: admin"
@@ -82,6 +82,6 @@ echo -e "${GREEN}✨ Starting development server with preview...${NC}"
 echo ""
 
 # Set environment variables and start the development server in foreground
-export PORT=5000
+export PORT=3000
 export NODE_ENV=development
 npx tsx server/index.ts

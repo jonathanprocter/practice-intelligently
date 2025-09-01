@@ -4,8 +4,17 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { useDocuments } from '../hooks/useDocuments';
-import { format } from 'date-fns';
+import { useDocuments } from '@/hooks/useDocuments';
+// import { format } from 'date-fns';
+
+// Fallback format function since date-fns might not be available
+const format = (date: Date | string, formatStr: string) => {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (formatStr === 'MMM dd, yyyy') {
+    return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+  }
+  return d.toLocaleDateString();
+};
 import { 
   FileText, Upload, Download, Trash2, Eye, Tag, 
   AlertCircle, CheckCircle, Clock, Search, Filter 

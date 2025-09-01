@@ -568,6 +568,13 @@ export class ApiClient {
     return response.json();
   }
 
+  // Progress metrics method
+  static async getProgressMetrics(): Promise<any[]> {
+    const therapistId = ApiClient.getTherapistId();
+    const response = await apiRequest('GET', `/api/progress-metrics/${therapistId}`);
+    return response.json();
+  }
+
   // Session methods
   static async createSessionNote(note: {
     appointmentId: string;
