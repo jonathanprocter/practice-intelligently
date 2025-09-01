@@ -434,10 +434,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getClientIdByName(fullName: string): Promise<string | null> {
-    const [firstName, ...lastNameParts] = fullName.split(' ');
-    const lastName = lastNameParts.join(' ');
+    if (!fullName || typeof fullName !== 'string') {
+      return null;
+    }
 
-    // First try exact match
+    const nameParts = fullName.trim().split(' ').filter(part => part.length > 0);
+    if (nameParts.length < 2) {
+      return null; // Need at least first and last name
+    }
+
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ');
+
+    // Try exact match first
     const [exactClient] = await db
       .select({ id: clients.id })
       .from(clients)
@@ -452,26 +461,72 @@ export class DatabaseStorage implements IStorage {
       return exactClient.id;
     }
 
-    // If no exact match, try nickname variations
-    const nameVariations = this.getNameVariations(firstName);
+    // Try using the existing client search logic
+    const searchTerm = fullName.toLowerCase().trim();
+    const allClients = await this.getClients('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c');
     
-    for (const variation of nameVariations) {
-      const [client] = await db
-        .select({ id: clients.id })
-        .from(clients)
-        .where(
-          and(
-            eq(clients.firstName, variation),
-            eq(clients.lastName, lastName)
-          )
-        );
-      
-      if (client) {
-        return client.id;
-      }
-    }
+    // Common nickname mappings for better matching
+    const nicknameMap: Record<string, string[]> = {
+      'chris': ['christopher', 'christian', 'christin'],
+      'christopher': ['chris'],
+      'mike': ['michael'],
+      'michael': ['mike'],
+      'bob': ['robert'],
+      'robert': ['bob'],
+      'bill': ['william'],
+      'william': ['bill'],
+      'tom': ['thomas'],
+      'thomas': ['tom'],
+      'steve': ['steven', 'stephen'],
+      'steven': ['steve'],
+      'stephen': ['steve'],
+      'dave': ['david'],
+      'david': ['dave'],
+      'jim': ['james'],
+      'james': ['jim'],
+      'joe': ['joseph'],
+      'joseph': ['joe'],
+      'dan': ['daniel'],
+      'daniel': ['dan'],
+      'matt': ['matthew'],
+      'matthew': ['matt'],
+      'max': ['maximilian', 'maxwell']
+    };
 
-    return null;
+    // Search for clients by name (first name, last name, or full name) including nicknames
+    const matchingClients = allClients.filter(client => {
+      const fullClientName = `${client.firstName} ${client.lastName}`.toLowerCase();
+      const clientFirstName = client.firstName?.toLowerCase() || '';
+      const clientLastName = client.lastName?.toLowerCase() || '';
+
+      // Direct matching
+      if (fullClientName.includes(searchTerm) || 
+          clientFirstName.includes(searchTerm) || 
+          clientLastName.includes(searchTerm)) {
+        return true;
+      }
+
+      // Split search term to handle "Chris Balabanick" type searches
+      const searchWords = searchTerm.split(' ').filter(word => word.length > 0);
+
+      // Check if all search words match (with nickname support)
+      const allWordsMatch = searchWords.every(word => {
+        // Check direct word match
+        if (fullClientName.includes(word) || clientFirstName.includes(word) || clientLastName.includes(word)) {
+          return true;
+        }
+
+        // Check nickname match for this word
+        const possibleNicknames = nicknameMap[word] || [];
+        return possibleNicknames.some(nickname => 
+          clientFirstName.includes(nickname) || fullClientName.includes(nickname)
+        );
+      });
+
+      return allWordsMatch;
+    });
+
+    return matchingClients.length > 0 ? matchingClients[0].id : null;
   }
 
   private getNameVariations(firstName: string): string[] {
