@@ -5746,6 +5746,10 @@ Follow-up areas for next session:
 
   // Register enhanced chart and document processing routes
   registerEnhancedChartRoutes(app);
+  
+  // Register comprehensive document fix routes
+  const { registerDocumentRoutes } = await import('./document-fix');
+  registerDocumentRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;

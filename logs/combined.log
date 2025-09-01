@@ -1,0 +1,132 @@
+2025-09-01T02:19:42: /home/user/webapp/server/db.ts:9
+2025-09-01T02:19:42:   throw new Error(
+2025-09-01T02:19:42:         ^
+2025-09-01T02:19:42: 
+2025-09-01T02:19:42: 
+2025-09-01T02:19:42: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T02:19:42:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T02:19:42:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T02:19:42:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T02:19:42:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T02:19:42: 
+2025-09-01T02:19:42: Node.js v20.19.3
+2025-09-01T02:19:45: /home/user/webapp/server/db.ts:9
+2025-09-01T02:19:45:   throw new Error(
+2025-09-01T02:19:45:         ^
+2025-09-01T02:19:45: 
+2025-09-01T02:19:45: 
+2025-09-01T02:19:45: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T02:19:45:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T02:19:45:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T02:19:45:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T02:19:45:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T02:19:45: 
+2025-09-01T02:19:45: Node.js v20.19.3
+2025-09-01T02:19:48: /home/user/webapp/server/db.ts:9
+2025-09-01T02:19:48:   throw new Error(
+2025-09-01T02:19:48:         ^
+2025-09-01T02:19:48: 
+2025-09-01T02:19:48: 
+2025-09-01T02:19:48: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T02:19:48:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T02:19:48:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T02:19:48:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T02:19:48:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T02:19:48: 
+2025-09-01T02:19:48: Node.js v20.19.3
+2025-09-01T02:19:51: /home/user/webapp/server/db.ts:9
+2025-09-01T02:19:51:   throw new Error(
+2025-09-01T02:19:51:         ^
+2025-09-01T02:19:51: 
+2025-09-01T02:19:51: 
+2025-09-01T02:19:51: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T02:19:51:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T02:19:51:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T02:19:51:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T02:19:51:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T02:19:51: 
+2025-09-01T02:19:51: Node.js v20.19.3
+2025-09-01T02:19:54: /home/user/webapp/server/db.ts:9
+2025-09-01T02:19:54:   throw new Error(
+2025-09-01T02:19:54:         ^
+2025-09-01T02:19:54: 
+2025-09-01T02:19:54: 
+2025-09-01T02:19:54: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T02:19:54:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T02:19:54:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T02:19:54:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T02:19:54:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T02:19:54: 
+2025-09-01T02:19:54: Node.js v20.19.3
+2025-09-01T02:19:57: /home/user/webapp/server/db.ts:9
+2025-09-01T02:19:57:   throw new Error(
+2025-09-01T02:19:57:         ^
+2025-09-01T02:19:57: 
+2025-09-01T02:19:57: 
+2025-09-01T02:19:57: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T02:19:57:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T02:19:57:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T02:19:57:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T02:19:57:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T02:19:57: 
+2025-09-01T02:19:57: Node.js v20.19.3
+2025-09-01T02:20:01: /home/user/webapp/server/db.ts:9
+2025-09-01T02:20:01:   throw new Error(
+2025-09-01T02:20:01:         ^
+2025-09-01T02:20:01: 
+2025-09-01T02:20:01: 
+2025-09-01T02:20:01: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T02:20:01:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T02:20:01:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T02:20:01:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T02:20:01:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T02:20:01: 
+2025-09-01T02:20:01: Node.js v20.19.3
+2025-09-01T02:20:04: /home/user/webapp/server/db.ts:9
+2025-09-01T02:20:04:   throw new Error(
+2025-09-01T02:20:04:         ^
+2025-09-01T02:20:04: 
+2025-09-01T02:20:04: 
+2025-09-01T02:20:04: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T02:20:04:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T02:20:04:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T02:20:04:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T02:20:04:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T02:20:04: 
+2025-09-01T02:20:04: Node.js v20.19.3
+2025-09-01T02:20:07: /home/user/webapp/server/db.ts:9
+2025-09-01T02:20:07:   throw new Error(
+2025-09-01T02:20:07:         ^
+2025-09-01T02:20:07: 
+2025-09-01T02:20:07: 
+2025-09-01T02:20:07: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T02:20:07:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T02:20:07:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T02:20:07:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T02:20:07:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T02:20:07: 
+2025-09-01T02:20:07: Node.js v20.19.3
+2025-09-01T02:20:10: /home/user/webapp/server/db.ts:9
+2025-09-01T02:20:10:   throw new Error(
+2025-09-01T02:20:10:         ^
+2025-09-01T02:20:10: 
+2025-09-01T02:20:10: 
+2025-09-01T02:20:10: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T02:20:10:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T02:20:10:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T02:20:10:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T02:20:10:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T02:20:10: 
+2025-09-01T02:20:10: Node.js v20.19.3
+2025-09-01T02:20:13: /home/user/webapp/server/db.ts:9
+2025-09-01T02:20:13:   throw new Error(
+2025-09-01T02:20:13:         ^
+2025-09-01T02:20:13: 
+2025-09-01T02:20:13: 
+2025-09-01T02:20:13: Error: DATABASE_URL must be set. Did you forget to provision a database?
+2025-09-01T02:20:13:     at <anonymous> (/home/user/webapp/server/db.ts:9:9)
+2025-09-01T02:20:13:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
+2025-09-01T02:20:13:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
+2025-09-01T02:20:13:     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2025-09-01T02:20:13: 
+2025-09-01T02:20:13: Node.js v20.19.3
