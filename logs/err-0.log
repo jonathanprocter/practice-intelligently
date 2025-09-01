@@ -1,0 +1,19 @@
+2025-09-01T21:33:22: 
+2025-09-01T21:33:22: node:internal/modules/run_main:123
+2025-09-01T21:33:22:     triggerUncaughtException(
+2025-09-01T21:33:22:     ^
+2025-09-01T21:33:22: Error [TransformError]: Transform failed with 1 error:
+2025-09-01T21:33:22: /home/user/webapp/server/routes/timeline-routes.ts:315:29: ERROR: "await" can only be used inside an "async" function
+2025-09-01T21:33:22:     at failureErrorWithLog (/home/user/webapp/node_modules/esbuild/lib/main.js:1467:15)
+2025-09-01T21:33:22:     at /home/user/webapp/node_modules/esbuild/lib/main.js:736:50
+2025-09-01T21:33:22:     at responseCallbacks.<computed> (/home/user/webapp/node_modules/esbuild/lib/main.js:603:9)
+2025-09-01T21:33:22:     at handleIncomingPacket (/home/user/webapp/node_modules/esbuild/lib/main.js:658:12)
+2025-09-01T21:33:22:     at Socket.readFromStdout (/home/user/webapp/node_modules/esbuild/lib/main.js:581:7)
+2025-09-01T21:33:22:     at Socket.emit (node:events:524:28)
+2025-09-01T21:33:22:     at addChunk (node:internal/streams/readable:561:12)
+2025-09-01T21:33:22:     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+2025-09-01T21:33:22:     at Readable.push (node:internal/streams/readable:392:5)
+2025-09-01T21:33:22:     at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+2025-09-01T21:33:22: 
+2025-09-01T21:33:22: Node.js v20.19.3
+2025-09-01T21:34:14: GEMINI_API_KEY not configured

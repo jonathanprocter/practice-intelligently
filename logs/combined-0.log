@@ -1,0 +1,36 @@
+2025-09-01T21:32:47: Unknown command: "run dev"
+2025-09-01T21:32:47: 
+2025-09-01T21:32:47: To see a list of supported npm commands, run:
+2025-09-01T21:32:47:   npm help
+2025-09-01T21:33:22: 
+2025-09-01T21:33:22: node:internal/modules/run_main:123
+2025-09-01T21:33:22:     triggerUncaughtException(
+2025-09-01T21:33:22:     ^
+2025-09-01T21:33:22: Error [TransformError]: Transform failed with 1 error:
+2025-09-01T21:33:22: /home/user/webapp/server/routes/timeline-routes.ts:315:29: ERROR: "await" can only be used inside an "async" function
+2025-09-01T21:33:22:     at failureErrorWithLog (/home/user/webapp/node_modules/esbuild/lib/main.js:1467:15)
+2025-09-01T21:33:22:     at /home/user/webapp/node_modules/esbuild/lib/main.js:736:50
+2025-09-01T21:33:22:     at responseCallbacks.<computed> (/home/user/webapp/node_modules/esbuild/lib/main.js:603:9)
+2025-09-01T21:33:22:     at handleIncomingPacket (/home/user/webapp/node_modules/esbuild/lib/main.js:658:12)
+2025-09-01T21:33:22:     at Socket.readFromStdout (/home/user/webapp/node_modules/esbuild/lib/main.js:581:7)
+2025-09-01T21:33:22:     at Socket.emit (node:events:524:28)
+2025-09-01T21:33:22:     at addChunk (node:internal/streams/readable:561:12)
+2025-09-01T21:33:22:     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+2025-09-01T21:33:22:     at Readable.push (node:internal/streams/readable:392:5)
+2025-09-01T21:33:22:     at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
+2025-09-01T21:33:22: 
+2025-09-01T21:33:22: Node.js v20.19.3
+2025-09-01T21:34:14: [dotenv@17.2.1] injecting env (9) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+2025-09-01T21:34:14: DATABASE_URL not configured or invalid, using SQLite fallback
+2025-09-01T21:34:14: Using SQLite database at: /home/user/webapp/data/therapy.db
+2025-09-01T21:34:14: Database tables initialized successfully
+2025-09-01T21:34:14: GEMINI_API_KEY not configured
+2025-09-01T21:34:17: ✅ Fixed document routes registered successfully
+2025-09-01T21:34:17: 🧹 Starting file cleanup service...
+2025-09-01T21:34:17: [36m[INFO][0m ✅ Critical fixes and improvements registered 
+2025-09-01T21:34:17: 5:34:17 PM [vite] (client) Re-optimizing dependencies because lockfile has changed
+2025-09-01T21:34:17: 🗑️ Deleted old file: David Grossman - Appointment - 08132025.pdf
+2025-09-01T21:34:17: 🗑️ Deleted old file: John_Best_2025-02-07_Progress_Note.docx
+2025-09-01T21:34:17: ✅ File cleanup completed
+2025-09-01T21:34:17: 5:34:17 PM [express] serving on port 5000
+2025-09-01T21:34:39: 5:34:39 PM [express] GET /api/health 200 in 8ms :: {"status":"ok","timestamp":"2025-09-01T21:34:39.8…
