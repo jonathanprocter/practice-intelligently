@@ -41,6 +41,7 @@ import { stevenDelucaProcessor } from './steven-deluca-processor';
 import { registerEnhancedChartRoutes } from './routes/enhanced-chart-routes';
 import { registerTimelineRoutes } from './routes/timeline-routes';
 import { registerEnhancedTimelineRoutes } from './routes/enhanced-timeline-routes';
+import { registerCriticalFixes } from './fixes/critical-bugs-and-improvements';
 import OpenAI from 'openai';
 
 // Initialize OpenAI client
@@ -5762,6 +5763,9 @@ Follow-up areas for next session:
   // Register additional fixed document routes for better compatibility
   const { registerFixedDocumentRoutes } = await import('./document-routes-fix');
   registerFixedDocumentRoutes(app);
+
+  // Register critical bug fixes and performance improvements
+  registerCriticalFixes(app);
 
   const httpServer = createServer(app);
   return httpServer;
