@@ -1,7 +1,7 @@
 {
-  "timestamp": "2025-09-01T03:56:42.962Z",
-  "passed": 11,
-  "warnings": 7,
+  "timestamp": "2025-09-01T05:15:00.786Z",
+  "passed": 12,
+  "warnings": 6,
   "failed": 3,
   "details": {
     "passed": [
@@ -12,6 +12,7 @@
       "Health Check endpoint works",
       "List Clients endpoint works",
       "List Appointments endpoint works",
+      "Document Search endpoint works",
       "File system write permissions OK",
       "No orphaned documents",
       "No orphaned appointments",
@@ -24,7 +25,6 @@
     ],
     "warnings": [
       "gemini integration not configured",
-      "Document Search returned 404",
       "GOOGLE_GEMINI_API_KEY not configured (optional)",
       "PERPLEXITY_API_KEY not configured (optional)",
       "SENDGRID_API_KEY not configured (optional)",
