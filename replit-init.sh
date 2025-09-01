@@ -64,39 +64,24 @@ npx pm2 delete all 2>/dev/null || true
 echo -e "${GREEN}✓ Process cleanup complete${NC}"
 
 # Step 10: Start the application
-echo -e "${YELLOW}Starting the application...${NC}"
-export PORT=5000
-export NODE_ENV=development
-nohup npx tsx server/index.ts > server.log 2>&1 &
-sleep 3
-echo -e "${GREEN}✓ Application started${NC}"
-
-# Step 11: Display status
+echo -e "${YELLOW}Starting the development server...${NC}"
 echo ""
 echo -e "${GREEN}=============================================="
 echo -e "🎉 Practice Intelligence is ready!"
 echo -e "=============================================="
 echo -e "${NC}"
-echo "📊 System Status:"
-if curl -s http://localhost:5000/api/health > /dev/null; then
-  echo "✓ Server is running on port 5000"
-else
-  echo "⚠ Server may not be fully started yet"
-fi
-
-echo ""
 echo "🔗 Access Information:"
-echo "   - Local URL: http://localhost:5000"
-echo "   - Health Check: http://localhost:5000/api/health"
+echo "   - Local URL: http://localhost:3000"
+echo "   - Health Check: http://localhost:3000/api/health"
 echo ""
 echo "👤 Default Login:"
 echo "   - Username: admin"
 echo "   - Password: admin123"
 echo ""
-echo "📝 Useful Commands:"
-echo "   - View logs: npx pm2 logs --nostream"
-echo "   - Check status: npx pm2 status"
-echo "   - Run audit: node comprehensive-system-audit.js"
-echo "   - Stop server: npx pm2 stop all"
+echo -e "${GREEN}✨ Starting development server with preview...${NC}"
 echo ""
-echo -e "${GREEN}✨ Setup complete! The application is running.${NC}"
+
+# Set environment variables and start the development server in foreground
+export PORT=3000
+export NODE_ENV=development
+npx tsx server/index.ts
