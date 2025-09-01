@@ -127,7 +127,7 @@ const loadComponent = (importFn: () => Promise<any>, fallback?: React.ComponentT
 // Import components - these will use the actual components if they exist
 // For now, import them normally to avoid issues
 import { DocumentProcessor } from '@/components/documents/DocumentProcessor';
-import { DocumentsView } from '@/components/DocumentsView';
+import { SimpleDocumentsView } from '@/components/SimpleDocumentsView';
 import { SessionNoteLinkingModal } from '@/components/SessionNoteLinkingModal';
 import { SessionRecommendations } from '@/components/SessionRecommendations';
 import { CreateSessionNoteModal } from '@/components/CreateSessionNoteModal';
@@ -1861,7 +1861,7 @@ function ClientChartInner() {
             </p>
           </div>
 
-          <DocumentsView
+          <SimpleDocumentsView
             clientId={clientId}
             therapistId="e66b8b8e-e7a2-40b9-ae74-00c93ffe503c"
             clientName={clientName}
