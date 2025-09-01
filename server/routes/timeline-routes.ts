@@ -307,12 +307,12 @@ export function registerTimelineRoutes(app: Express) {
 
       for (const note of unlinkedNotes) {
         const noteDate = new Date(note.sessionDate || note.createdAt);
+        const clientName = await getClientName(note.clientId);
         
         // Find matching calendar event
         const matchingEvent = calendarEvents.find(event => {
           const eventDate = new Date(event.startTime);
           const eventClientName = extractClientNameFromEvent(event.summary);
-          const clientName = await getClientName(note.clientId);
           
           return eventDate.toDateString() === noteDate.toDateString() &&
                  eventClientName.toLowerCase().includes(clientName.toLowerCase());

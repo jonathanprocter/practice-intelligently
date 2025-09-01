@@ -8,7 +8,7 @@
  * - Performance monitoring
  */
 
-module.exports = {
+export default {
   apps: [{
     name: 'practice-intelligence',
     script: 'npm',

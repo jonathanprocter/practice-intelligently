@@ -1,0 +1,18 @@
+2025-09-01T21:32:47: Unknown command: "run dev"
+2025-09-01T21:32:47: 
+2025-09-01T21:32:47: To see a list of supported npm commands, run:
+2025-09-01T21:32:47:   npm help
+2025-09-01T21:34:14: [dotenv@17.2.1] injecting env (9) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+2025-09-01T21:34:14: DATABASE_URL not configured or invalid, using SQLite fallback
+2025-09-01T21:34:14: Using SQLite database at: /home/user/webapp/data/therapy.db
+2025-09-01T21:34:14: Database tables initialized successfully
+2025-09-01T21:34:17: ✅ Fixed document routes registered successfully
+2025-09-01T21:34:17: 🧹 Starting file cleanup service...
+2025-09-01T21:34:17: [36m[INFO][0m ✅ Critical fixes and improvements registered 
+2025-09-01T21:34:17: 5:34:17 PM [vite] (client) Re-optimizing dependencies because lockfile has changed
+2025-09-01T21:34:17: 🗑️ Deleted old file: David Grossman - Appointment - 08132025.pdf
+2025-09-01T21:34:17: 🗑️ Deleted old file: John_Best_2025-02-07_Progress_Note.docx
+2025-09-01T21:34:17: ✅ File cleanup completed
+2025-09-01T21:34:17: 5:34:17 PM [express] serving on port 5000
+2025-09-01T21:34:39: 5:34:39 PM [express] GET /api/health 200 in 8ms :: {"status":"ok","timestamp":"2025-09-01T21:34:39.8…
+2025-09-01T21:37:11: 5:37:11 PM [express] GET /api/ai/health 200 in 12ms :: {"status":"healthy","providers":[{"name":"Ope…
