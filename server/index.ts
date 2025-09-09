@@ -115,8 +115,8 @@ app.use((req, res, next) => {
       serveStatic(app);
     }
 
-    // Use port 3000 for main application (Replit's default forwarded port)
-    const port = parseInt(process.env.PORT || '3000', 10);
+    // Use port 5000 for frontend (Replit's expected preview port)
+    const port = parseInt(process.env.PORT || '5000', 10);
 
     server.on('error', (err: any) => {
       if (err.code === 'EADDRINUSE') {
