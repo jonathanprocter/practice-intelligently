@@ -11,9 +11,11 @@ export interface WebSocketManager {
 export function setupWebSocketServer(server: HTTPServer): WebSocketManager {
   const io = new SocketIOServer(server, {
     cors: {
-      origin: process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : true,
-      methods: ['GET', 'POST']
-    }
+      origin: process.env.NODE_ENV === 'development' ? ['http://localhost:5173', 'http://0.0.0.0:5000'] : true,
+      methods: ['GET', 'POST'],
+      credentials: true
+    },
+    transports: ['websocket', 'polling']
   });
 
   io.on('connection', (socket) => {
