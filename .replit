@@ -16,7 +16,7 @@ PORT = "3000"
 PATH = "/nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin:$PATH"
 
 [workflows]
-runButton = "Clean Restart"
+runButton = "Start Application"
 
 [[workflows.workflow]]
 name = "Project"
@@ -117,6 +117,35 @@ args = "pkill -f \"npm run dev\" || true"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "sleep 2"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Start Application"
+author = 37925715
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f \"tsx server/index.ts\" || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pkill -f \"npm run dev\" || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "fuser -k 3000/tcp || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "fuser -k 5173/tcp || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "sleep 3"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"

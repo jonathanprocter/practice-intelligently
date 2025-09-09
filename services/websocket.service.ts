@@ -65,9 +65,9 @@ class WebSocketService extends EventEmitter {
 
   private getWebSocketUrl(): string {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // In development, connect to the server port (5000), not the Vite dev server port (5173)
+    // In development, connect to the server port (3000)
     const host = process.env.NODE_ENV === 'development' 
-      ? window.location.hostname + ':5000'
+      ? window.location.hostname + ':3000'
       : window.location.host;
     return `${protocol}//${host}`;
   }
