@@ -57,7 +57,7 @@ cat > dist/public/index.html << 'EOF'
 </html>
 EOF
 
-# Build server with __dirname polyfill
+# Build server (server/index.ts already defines __dirname polyfill)
 echo "Building server..."
 npx esbuild server/index.ts \
   --platform=node \
@@ -65,9 +65,6 @@ npx esbuild server/index.ts \
   --bundle \
   --format=esm \
   --outdir=dist \
-  --define:__dirname=\"import.meta.dirname\" \
-  --define:__filename=\"import.meta.filename\" \
-  --banner:js="import { fileURLToPath } from 'url'; import { dirname } from 'path'; const __filename = fileURLToPath(import.meta.url); const __dirname = dirname(__filename);" \
   2>&1
 
 if [ $? -ne 0 ]; then
