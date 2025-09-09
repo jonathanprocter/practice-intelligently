@@ -5167,7 +5167,130 @@ Follow-up areas for next session:
               appointmentId: nextAppointment.id,
               eventId: nextAppointment.id,
               clientId: actualClientId,
-              therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93json')) {
+              therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+              prepContent: sessionPrepContent
+            });
+            console.log(`✅ Session prep note created for next appointment: ${nextAppointment.id}`);
+          } catch (sessionPrepError: any) {
+            console.error('Error creating session prep note:', sessionPrepError);
+          }
+        }
+
+        console.log(`✅ Document processed and saved successfully for client ${actualClientId}`);
+      }
+
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+
+      res.json({ 
+        success: true, 
+        progressNote: generatedNote, 
+        savedProgressNote,
+        model: 'document-processor' 
+      });
+
+    } catch (error: any) {
+      // Clean up file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      console.error('Error processing uploaded document:', error);
+      res.status(500).json({ 
+        error: 'Failed to process document', 
+        details: error.message 
+      });
+    }
+  });
+
+  // Multi-session document confirmation and processing
+  app.post("/api/documents/process-multi-session", async (req, res) => {
+    try {
+      const { documentContent, sessions, clientId, therapistId } = req.body;
+
+      if (!documentContent || !sessions || !Array.isArray(sessions)) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const processedSessions = [];
+      let createdCount = 0;
+
+      for (const session of sessions) {
+        try {
+          // Create session note for each session
+          const sessionNote = await storage.createSessionNote({
+            clientId: session.clientId || clientId,
+            therapistId: therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+            title: session.title,
+            content: session.content,
+            sessionDate: new Date(session.date),
+            tags: session.aiTags || []
+          });
+
+          processedSessions.push({
+            sessionId: sessionNote.id,
+            date: session.date,
+            title: session.title,
+            clientName: session.clientName
+          });
+
+          createdCount++;
+          console.log(`✅ Session note created: ${sessionNote.id} for ${session.clientName} on ${session.date}`);
+        } catch (sessionError: any) {
+          console.error(`❌ Error creating session note for ${session.clientName}:`, sessionError);
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Successfully processed ${createdCount} sessions`,
+        processedSessions,
+        totalProcessed: createdCount
+      });
+
+    } catch (error: any) {
+      console.error('Error processing multi-session document:', error);
+      res.status(500).json({ 
+        error: 'Failed to process multi-session document', 
+        details: error.message 
+      });
+    }
+  });
+
+function parseMultiSessionDocument(content: string, clientName?: string, fileName?: string) {
+  // Implementation would go here - this function appears to be referenced elsewhere
+  // Adding stub to prevent undefined reference errors
+  throw new Error('parseMultiSessionDocument not implemented');
+}
+
+// Document parsing utilities
+function detectProcessedProgressNote(content: string): boolean {
+  const progressNoteIndicators = [
+    'Subjective:',
+    'Objective:',
+    'Assessment:',
+    'Plan:',
+    'SOAP',
+    'Clinical Progress Note',
+    'Comprehensive Clinical Progress Note'
+  ];
+  
+  let indicatorCount = 0;
+  for (const indicator of progressNoteIndicators) {
+    if (content.includes(indicator)) {
+      indicatorCount++;
+    }
+  }
+  
+  // If we find 3 or more indicators, likely already processed
+  return indicatorCount >= 3;
+}
+
+// Continue with existing code...
+async function parseDocumentContent(content: string, clients: any[]) {
+  try {
+    // Check for JSON formatting markers
+    let rawResponse = content;
+    if (rawResponse.includes('```json')) {
       rawResponse = rawResponse.replace(/```json\s*/g, '').replace(/```\s*$/g, '');
     }
     if (rawResponse.includes('```')) {
@@ -5907,1029 +6030,16 @@ async function syncCalendarEvents(): Promise<any> {
 }
 
 
-export async function registerRoutes(app: Express, wss?: WebSocketServer): Promise<Server> {
-  // Set the WebSocket server on app locals for access in routes
-  app.locals.wss = wss;
 
-  // Health check
-  app.get("/api/health", async (req, res) => {
-    try {
-      res.json({
-        status: "ok",
-        timestamp: new Date().toISOString(),
-        integrations: {
-          openai: !!process.env.OPENAI_API_KEY,
-          anthropic: !!process.env.ANTHROPIC_API_KEY,
-          gemini: !!process.env.GEMINI_API_KEY,
-          perplexity: !!process.env.PERPLEXITY_API_KEY,
-          database: !!process.env.DATABASE_URL,
-        }
-      });
-    } catch (error) {
-      console.error('Health check error:', error);
-      res.status(500).json({ status: "error", message: "Health check failed" });
-    }
-  });
-
-  // User/Settings endpoints
-  app.get("/api/users/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const user = await storage.getUser(id);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-      // Don't return password
-      const { password, ...safeUser } = user;
-      res.json(safeUser);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ error: "Failed to fetch user" });
-    }
-  });
-
-  app.patch("/api/users/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const updateData = req.body;
-
-      // Remove password field if it's empty or undefined
-      if (!updateData.password) {
-        delete updateData.password;
-      }
-
-      const user = await storage.updateUser(id, updateData);
-      // Don't return password
-      const { password, ...safeUser } = user;
-      res.json(safeUser);
-    } catch (error) {
-      console.error("Error updating user:", error);
-      res.status(500).json({ error: "Failed to update user" });
-    }
-  });
-
-  // AI Services health check
-  app.get("/api/health/ai-services", async (req, res) => {
-    try {
-      const statuses = await getAllApiStatuses();
-      res.json(statuses);
-    } catch (error) {
-      console.error("Error checking AI service statuses:", error);
-      res.status(500).json({ error: "Failed to check AI service statuses" });
-    }
-  });
-
-  // Dashboard stats with Google Calendar integration
-  app.get("/api/dashboard/stats/:therapistId", async (req, res) => {
-    try {
-      const { therapistId } = req.params;
-
-      // Get base stats from database
-      const stats = await storage.getDashboardStats(therapistId);
-
-      // Try to add Google Calendar data for today's sessions
-      try {
-        const { simpleOAuth } = await import('./oauth-simple');
-
-        if (simpleOAuth.isConnected()) {
-          // Get today's events from Google Calendar for dashboard stats
-          const today = new Date();
-          const timeMin = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-          const timeMax = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
-
-          // Get events from all calendars, especially Simple Practice
-          const calendars = await simpleOAuth.getCalendars();
-          let allEvents: any[] = [];
-
-          for (const calendar of calendars) {
-            try {
-              const events = await simpleOAuth.getEvents(
-                calendar.id || '',
-                timeMin,
-                timeMax
-              );
-              // Filter events for today's dashboard stats
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              const tomorrow = new Date(today);
-              tomorrow.setDate(tomorrow.getDate() + 1);
-
-              const todaysEvents = events.filter(event => {
-                const eventStart = event.start?.dateTime || event.start?.date;
-                if (!eventStart) return false;
-
-                if (event.start?.date && !event.start?.dateTime) {
-                  // All-day event - only include if it's specifically for today
-                  const eventDateStr = event.start.date; // YYYY-MM-DD format
-                  const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-                  return eventDateStr === todayStr;
-                } else {
-                  // Timed event
-                  const eventDateTime = new Date(eventStart);
-                  return eventDateTime >= today && eventDateTime < tomorrow;
-                }
-              });
-
-              allEvents = allEvents.concat(todaysEvents);
-            } catch (calError: any) {
-              console.warn(`Could not fetch events from calendar ${calendar.summary}:`, calError?.message || calError);
-            }
-          }
-
-          // Add US holidays if today is a federal holiday
-          try {
-            const todayStr = new Date().toISOString().split('T')[0];
-            const todayHoliday = isUSHoliday(todayStr);
-            if (todayHoliday) {
-              const year = parseInt(todayStr.substring(0, 4));
-              const holidays = getHolidaysForYear(year);
-              const holiday = holidays.find(h => h.start.date === todayStr);
-
-              if (holiday) {
-                const holidayEvent = {
-                  id: holiday.id,
-                  summary: `🇺🇸 ${holiday.summary}`,
-                  start: { date: holiday.start.date },
-                  calendarName: 'US Federal Holidays'
-                };
-                allEvents.push(holidayEvent);
-                console.log(`🇺🇸 Added today's US federal holiday to dashboard: ${holiday.summary}`);
-              }
-            }
-          } catch (holidayError: any) {
-            console.warn('Could not check for US holidays in dashboard stats:', holidayError?.message || holidayError);
-          }
-
-          const events = allEvents;
-
-          // Replace database count with calendar events count since they're the same appointments
-          // Database only counts completed appointments, but dashboard should show all scheduled appointments
-          stats.todaysSessions = events.length;
-
-          // Add a flag to indicate calendar integration is active
-          (stats as any).calendarIntegrated = true;
-          (stats as any).calendarEvents = events.length;
-        } else {
-          (stats as any).calendarIntegrated = false;
-        }
-      } catch (calendarError: any) {
-        console.warn('Could not fetch calendar data for dashboard stats:', calendarError?.message || calendarError);
-        (stats as any).calendarIntegrated = false;
-      }
-
-      res.json(stats);
-    } catch (error: any) {
-      console.error("Error fetching dashboard stats:", error?.message || error);
-      res.status(500).json({ error: "Failed to fetch dashboard stats" });
-    }
-  });
-
-  // Search clients by name (put this BEFORE the therapistId route to avoid collision)
-  app.get("/api/clients/search", async (req, res) => {
-    try {
-      const { name } = req.query;
-      if (!name) {
-        return res.status(400).json({ error: "Name parameter is required" });
-      }
-
-      const clients = await storage.getClients('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c');
-      const searchTerm = (name as string).toLowerCase().trim();
-
-      // Common nickname mappings for better matching
-      const nicknameMap: Record<string, string[]> = {
-        'chris': ['christopher', 'christian', 'christin'],
-        'christopher': ['chris'],
-        'mike': ['michael'],
-        'michael': ['mike'],
-        'bob': ['robert'],
-        'robert': ['bob'],
-        'bill': ['william'],
-        'william': ['bill'],
-        'tom': ['thomas'],
-        'thomas': ['tom'],
-        'steve': ['steven', 'stephen'],
-        'steven': ['steve'],
-        'stephen': ['steve'],
-        'dave': ['david'],
-        'david': ['dave'],
-        'jim': ['james'],
-        'james': ['jim'],
-        'joe': ['joseph'],
-        'joseph': ['joe'],
-        'dan': ['daniel'],
-        'daniel': ['dan'],
-        'matt': ['matthew'],
-        'matthew': ['matt'],
-        'max': ['maximilian', 'maxwell']
-      };
-
-      // Search for clients by name (first name, last name, or full name) including nicknames
-      const matchingClients = clients.filter(client => {
-        const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
-        const firstName = client.firstName?.toLowerCase() || '';
-        const lastName = client.lastName?.toLowerCase() || '';
-
-        // Direct matching
-        if (fullName.includes(searchTerm) || 
-            firstName.includes(searchTerm) || 
-            lastName.includes(searchTerm)) {
-          return true;
-        }
-
-        // Split search term to handle "Chris Balabanick" type searches
-        const searchWords = searchTerm.split(' ').filter(word => word.length > 0);
-
-        // Check if all search words match (with nickname support)
-        const allWordsMatch = searchWords.every(word => {
-          // Check direct word match
-          if (fullName.includes(word) || firstName.includes(word) || lastName.includes(word)) {
-            return true;
-          }
-
-          // Check nickname match for this word
-          const possibleNicknames = nicknameMap[word] || [];
-          return possibleNicknames.some(nickname => 
-            firstName.includes(nickname) || fullName.includes(nickname)
-          );
-        });
-
-        return allWordsMatch;
-      });
-
-      res.json(matchingClients);
-    } catch (error) {
-      console.error("Error searching clients:", error);
-      res.status(500).json({ error: "Failed to search clients" });
-    }
-  });
-
-  // Debug endpoint to find specific calendar event
-  app.get("/api/calendar/event/:eventId", async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const { simpleOAuth } = await import('./oauth-simple');
-
-      if (!simpleOAuth.isConnected()) {
-        return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
-      }
-
-      // Search for the event across the date range
-      const response = await fetch(`http://localhost:5000/api/calendar/events?timeMin=2025-07-01T00:00:00.000Z&timeMax=2025-08-31T23:59:59.999Z&calendarId=79dfcb90ce59b1b0345b24f5c8d342bd308eac9521d063a684a8bbd377f2b822@group.calendar.google.com`);
-      const events = await response.json();
-
-      const event = events.find((e: any) => e.id === eventId);
-      if (event) {
-        res.json(event);
-      } else {
-        res.status(404).json({ error: "Event not found" });
-      }
-    } catch (error) {
-      console.error("Error finding calendar event:", error);
-      res.status(500).json({ error: "Failed to find calendar event" });
-    }
-  });
-
-  // Clients by therapist ID
-  app.get("/api/clients/:therapistId", async (req, res) => {
-    try {
-      const { therapistId } = req.params;
-      const clients = await storage.getClients(therapistId);
-      res.json(clients);
-    } catch (error) {
-      console.error("Error fetching clients:", error);
-      res.status(500).json({ error: "Failed to fetch clients" });
-    }
-  });
-
-  // Get all clients (for dropdowns and selections)
-  app.get("/api/clients", async (req, res) => {
-    try {
-      const clients = await storage.getClients('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'); // Default therapist UUID
-      res.json(clients);
-    } catch (error) {
-      console.error("Error fetching clients:", error);
-      res.status(500).json({ error: "Failed to fetch clients" });
-    }
-  });
-
-  // Progress Notes functionality merged into session notes - redirect to unified endpoints
-  app.get("/api/progress-notes/therapist/:therapistId", async (req, res) => {
-    try {
-      const { therapistId } = req.params;
-      // Get all session notes for this therapist, including those with SOAP fields (former progress notes)
-      const notes = await storage.getAllSessionNotesByTherapist(therapistId);
-      // Filter to include only notes with SOAP structure (title field indicates former progress notes)
-      const progressNotes = notes.filter(note => note.title !== null);
-      res.json(progressNotes);
-    } catch (error) {
-      console.error("Error fetching unified session notes with SOAP structure:", error);
-      res.status(500).json({ error: "Failed to fetch session notes with SOAP structure" });
-    }
-  });
-
-  // Progress Notes endpoints - by client (now unified with session notes)
-  app.get("/api/progress-notes/:clientId", async (req, res) => {
-    try {
-      const { clientId } = req.params;
-      // Get all session notes for this client, including those with SOAP fields (former progress notes)
-      const notes = await storage.getSessionNotesByClientId(clientId);
-      // Filter to include only notes with SOAP structure (title field indicates former progress notes)
-      const progressNotes = notes.filter(note => note.title !== null);
-      res.json(progressNotes);
-    } catch (error) {
-      console.error("Error fetching unified session notes with SOAP structure:", error);
-      res.status(500).json({ error: "Failed to fetch session notes with SOAP structure" });
-    }
-  });
-
-  app.post("/api/clients", async (req, res) => {
-    try {
-      const clientData = req.body;
-
-      // Convert date string fields to Date objects if they exist
-      const dateFields = ['dateOfBirth', 'hipaaSignedDate', 'lastContact'];
-      dateFields.forEach(field => {
-        if (clientData[field] && typeof clientData[field] === 'string') {
-          clientData[field] = new Date(clientData[field]);
-        }
-      });
-
-      const validatedData = insertClientSchema.parse(clientData);
-      const client = await storage.createClient(validatedData);
-      res.json(client);
-    } catch (error) {
-      console.error("Error creating client:", error);
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Invalid client data", details: error.errors });
-      } else {
-        res.status(500).json({ error: "Failed to create client" });
-      }
-    }
-  });
-
-  app.put("/api/clients/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const updates = req.body;
-
-      // Convert date string fields to Date objects if they exist
-      const processedUpdates = { ...updates };
-      const dateFields = ['dateOfBirth', 'hipaaSignedDate', 'lastContact'];
-
-      dateFields.forEach(field => {
-        if (processedUpdates[field] && typeof processedUpdates[field] === 'string') {
-          processedUpdates[field] = new Date(processedUpdates[field]);
-        }
-      });
-
-      const client = await storage.updateClient(id, processedUpdates);
-      res.json(client);
-    } catch (error) {
-      console.error("Error updating client:", error);
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Invalid client data", details: error.errors });
-      } else {
-        res.status(500).json({ error: "Failed to update client" });
-      }
-    }
-  });
-
-  // Delete client endpoint
-  app.delete("/api/clients/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-
-      await storage.deleteClient(id);
-      res.json({ success: true, message: "Client deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting client:", error);
-      res.status(500).json({ error: "Failed to delete client" });
-    }
-  });
-
-  // Bulk client creation endpoint
-  app.post("/api/clients/bulk", async (req, res) => {
-    try {
-      const { clients: clientsData } = req.body;
-
-      if (!Array.isArray(clientsData)) {
-        return res.status(400).json({ error: "Clients data must be an array" });
-      }
-
-      const createdClients = [];
-      const errors = [];
-
-      for (let i = 0; i < clientsData.length; i++) {
-        try {
-          const validatedData = insertClientSchema.parse(clientsData[i]);
-          const client = await storage.createClient(validatedData);
-          createdClients.push(client);
-        } catch (error) {
-          errors.push({ index: i, error: error instanceof Error ? error.message : 'Unknown error', data: clientsData[i] });
-        }
-      }
-
-      res.json({
-        success: true,
-        created: createdClients.length,
-        errors: errors.length,
-        clients: createdClients,
-        errorDetails: errors
-      });
-    } catch (error) {
-      console.error("Error in bulk client creation:", error);
-      res.status(500).json({ error: "Failed to create clients in bulk" });
-    }
-  });
-
-  app.get("/api/clients/detail/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const client = await storage.getClient(id);
-      if (!client) {
-        res.status(404).json({ error: "Client not found" });
-        return;
-      }
-      res.json(client);
-    } catch (error) {
-      console.error("Error fetching client:", error);
-      res.status(500).json({ error: "Failed to fetch client" });
-    }
-  });
-
-  // Appointments
-  app.get("/api/appointments/:therapistId", async (req, res) => {
-    try {
-      const { therapistId } = req.params;
-      const { date } = req.query;
-
-      // Validate therapistId is not undefined and is a valid UUID format
-      if (!therapistId || therapistId === 'undefined') {
-        return res.status(400).json({ error: 'Valid therapist ID is required' });
-      }
-
-      // Basic UUID format validation
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(therapistId)) {
-        return res.status(400).json({ error: 'Invalid therapist ID format' });
-      }
-
-      const appointments = date 
-        ? await storage.getAppointments(therapistId, new Date(date as string))
-        : await storage.getAppointments(therapistId);
-
-      res.json(appointments);
-    } catch (error) {
-      console.error("Error fetching appointments:", error);
-      res.status(500).json({ error: "Failed to fetch appointments" });
-    }
-  });
-
-  app.get("/api/appointments/today/:therapistId", async (req, res) => {
-    try {
-      const { therapistId } = req.params;
-      const appointments = await storage.getTodaysAppointments(therapistId);
-      res.json(appointments);
-    } catch (error) {
-      console.error("Error fetching today's appointments:", error);
-      res.status(500).json({ error: "Failed to fetch today's appointments" });
-    }
-  });
-
-  app.post("/api/appointments", async (req, res) => {
-    try {
-      // Convert date fields to proper Date objects if they're strings or numbers
-      const processedBody = { ...req.body };
-      const dateFields = ['startTime', 'endTime', 'lastGoogleSync', 'reminderSentAt', 'checkedInAt', 'completedAt'];
-
-      dateFields.forEach(field => {
-        if (processedBody[field] !== undefined && processedBody[field] !== null) {
-          if (typeof processedBody[field] === 'string' || typeof processedBody[field] === 'number') {
-            processedBody[field] = new Date(processedBody[field]);
-          }
-        }
-      });
-
-      const validatedData = insertAppointmentSchema.parse(processedBody);
-      const appointment = await storage.createAppointment(validatedData);
-      res.json(appointment);
-    } catch (error) {
-      console.error("Error creating appointment:", error);
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: "Invalid appointment data", details: error.errors });
-      } else {
-        res.status(500).json({ error: "Failed to create appointment" });
-      }
-    }
-  });
-
-  app.put("/api/appointments/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const updateData = req.body;
-
-      // Convert date string fields to Date objects if they exist
-      const processedUpdates = { ...updateData };
-      const dateFields = ['startTime', 'endTime', 'lastGoogleSync', 'reminderSentAt', 'checkedInAt', 'completedAt'];
-
-      dateFields.forEach(field => {
-        if (processedUpdates[field] && typeof processedUpdates[field] === 'string') {
-          processedUpdates[field] = new Date(processedUpdates[field]);
-        }
-      });
-
-      const appointment = await storage.updateAppointment(id, processedUpdates);
-      res.json(appointment);
-    } catch (error) {
-      console.error("Error updating appointment:", error);
-      res.status(500).json({ error: "Failed to update appointment" });
-    }
-  });
-
-  app.patch("/api/appointments/:id/status", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { status, reason } = req.body;
-
-      let updateData: any = { status };
-
-      if (status === 'cancelled' && reason) {
-        updateData.cancellationReason = reason;
-      } else if (status === 'no_show' && reason) {
-        updateData.noShowReason = reason;
-      } else if (status === 'completed') {
-        updateData.completedAt = new Date();
-      } else if (status === 'checked_in') {
-        updateData.checkedInAt = new Date();
-      }
-
-      const appointment = await storage.updateAppointment(id, updateData);
-      res.json(appointment);
-    } catch (error) {
-      console.error("Error updating appointment status:", error);
-      res.status(500).json({ error: "Failed to update appointment status" });
-    }
-  });
-
-  app.delete("/api/appointments/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { reason } = req.body;
-      const appointment = await storage.cancelAppointment(id, reason || 'Cancelled by user');
-      res.json(appointment);
-    } catch (error) {
-      console.error("Error cancelling appointment:", error);
-      res.status(500).json({ error: "Failed to cancel appointment" });
-    }
-  });
-
-  // Get appointments for a specific client
-  app.get("/api/appointments/client/:clientId", async (req, res) => {
-    try {
-      const { clientId } = req.params;
-      const appointments = await storage.getAppointmentsByClient(clientId);
-      res.json(appointments);
-    } catch (error) {
-      console.error("Error fetching client appointments:", error);
-      res.status(500).json({ error: "Failed to fetch client appointments" });
-    }
-  });
-
-  app.get("/api/appointments/detail/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const appointment = await storage.getAppointment(id);
-      if (!appointment) {
-        res.status(404).json({ error: "Appointment not found" });
-        return;
-      }
-      res.json(appointment);
-    } catch (error) {
-      console.error("Error fetching appointment:", error);
-      res.status(500).json({ error: "Failed to fetch appointment" });
-    }
-  });
-
-  // Session Notes by client ID (more specific route)
-  app.get("/api/session-notes/client/:clientId", async (req, res) => {
-    try {
-      const { clientId } = req.params;
-      const notes = await storage.getSessionNotesByClientId(clientId);
-      res.json(notes);
-    } catch (error) {
-      console.error("Error fetching session notes:", error);
-      res.status(500).json({ error: "Failed to fetch session notes" });
-    }
-  });
-
-  // Manual metadata override for document processing
-  app.post("/api/documents/manual-metadata-override", async (req, res) => {
-    try {
-      const { 
-        documentContent, 
-        originalMetadata, 
-        manualOverrides, 
-        therapistId,
-        createProgressNote = false 
-      } = req.body;
-
-      if (!documentContent || !therapistId) {
-        return res.status(400).json({ 
-          error: "Missing required fields: documentContent and therapistId" 
-        });
-      }
-
-      console.log('🔧 Processing manual metadata override...');
-      console.log('Original metadata:', originalMetadata);
-      console.log('Manual overrides:', manualOverrides);
-
-      // Combine original extraction with manual overrides
-      const finalMetadata = {
-        clientName: manualOverrides.clientName || originalMetadata?.clientName,
-        sessionDate: manualOverrides.sessionDate || originalMetadata?.sessionDate,
-        confidence: {
-          name: manualOverrides.clientName ? 1.0 : (originalMetadata?.confidence?.name || 0),
-          date: manualOverrides.sessionDate ? 1.0 : (originalMetadata?.confidence?.date || 0)
-        },
-        extractionMethods: [
-          ...(originalMetadata?.extractionMethods || []),
-          ...(manualOverrides.clientName ? ['Manual-Override-Name'] : []),
-          ...(manualOverrides.sessionDate ? ['Manual-Override-Date'] : [])
-        ],
-        manuallyReviewed: true
-      };
-
-      let result = {
-        metadata: finalMetadata,
-        sessionNote: null as any,
-        analysis: {
-          originalExtraction: originalMetadata,
-          manualOverrides: manualOverrides,
-          finalMetadata: finalMetadata,
-          warning: undefined as string | undefined,
-          error: undefined as string | undefined
-        }
-      };
-
-      // If requested, create a progress note with the corrected metadata
-      if (createProgressNote && finalMetadata.clientName && finalMetadata.sessionDate) {
-        try {
-          // Match client name to database
-          const clients = await storage.getClients(therapistId);
-          const matchedClient = clients.find(client => 
-            `${client.firstName} ${client.lastName}`.toLowerCase() === finalMetadata.clientName.toLowerCase()
-          );
-
-          if (matchedClient) {
-            console.log(`✅ Creating progress note for matched client: ${matchedClient.firstName} ${matchedClient.lastName}`);
-
-            // Generate progress note using the document processor
-            const progressNote = await documentProcessor.generateProgressNote(
-              documentContent,
-              matchedClient.id,
-              finalMetadata.sessionDate
-            );
-
-            // Create the session note in database
-            const sessionNote = await storage.createSessionNote({
-              clientId: matchedClient.id,
-              therapistId: therapistId,
-              title: progressNote.title,
-              content: documentContent,
-              subjective: progressNote.subjective,
-              objective: progressNote.objective,
-              assessment: progressNote.assessment,
-              plan: progressNote.plan,
-              tonalAnalysis: progressNote.tonalAnalysis,
-              keyPoints: progressNote.keyPoints,
-              significantQuotes: progressNote.significantQuotes,
-              narrativeSummary: progressNote.narrativeSummary,
-              tags: progressNote.aiTags,
-              sessionDate: new Date(finalMetadata.sessionDate)
-            });
-
-            result.sessionNote = sessionNote;
-            console.log(`✅ Created session note with ID: ${sessionNote.id}`);
-          } else {
-            console.log(`❌ No matching client found for: ${finalMetadata.clientName}`);
-            result.analysis.warning = `No matching client found for: ${finalMetadata.clientName}`;
-          }
-        } catch (noteCreationError) {
-          console.error('Error creating progress note:', noteCreationError);
-          result.analysis.error = 'Failed to create progress note: ' + (noteCreationError instanceof Error ? noteCreationError.message : String(noteCreationError));
-        }
-      }
-
-      res.json({
-        success: true,
-        ...result,
-        message: 'Manual metadata override processed successfully'
-      });
-
-    } catch (error: any) {
-      console.error("Error processing manual metadata override:", error);
-      res.status(500).json({ 
-        error: "Failed to process manual override",
-        details: error?.message || 'Unknown error'
-      });
-    }
-  });
-
-  app.get("/api/session-notes/today/:therapistId", async (req, res) => {
-    try {
-      const { therapistId } = req.params;
-      const notes = await storage.getTodaysSessionNotes(therapistId);
-      res.json(notes);
-    } catch (error) {
-      console.error("Error fetching today's session notes:", error);
-      res.status(500).json({ error: "Failed to fetch today's session notes" });
-    }
-  });
-
-  app.get("/api/session-notes/therapist/:therapistId", async (req, res) => {
-    try {
-      const { therapistId } = req.params;
-      const notes = await storage.getAllSessionNotesByTherapist(therapistId);
-      res.json(notes);
-    } catch (error) {
-      console.error("Error fetching session notes:", error);
-      res.status(500).json({ error: "Failed to fetch session notes" });
-    }
-  });
-
-  app.put("/api/session-notes/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const updates = req.body;
-      const updatedNote = await storage.updateSessionNote(id, updates);
-      res.json(updatedNote);
-    } catch (error) {
-      console.error("Error updating session note:", error);
-      res.status(500).json({ error: "Failed to update session note" });
-    }
-  });
-
-  // PATCH endpoint for partial updates (like title changes)
-  app.patch("/api/session-notes/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const updates = req.body;
-      const updatedNote = await storage.updateSessionNote(id, updates);
-      res.json(updatedNote);
-    } catch (error) {
-      console.error("Error updating session note:", error);
-      res.status(500).json({ error: "Failed to update session note" });
-    }
-  });
-
-  app.delete("/api/session-notes/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      await storage.deleteSessionNote(id);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting session note:", error);
-      res.status(500).json({ error: "Failed to delete session note" });
-    }
-  });
-
-  // Link session note to appointment
-  app.put("/api/session-notes/:id/link-appointment", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { appointmentId } = req.body;
-
-      // Update the session note with the appointment ID
-      const updatedNote = await storage.updateSessionNote(id, { appointmentId });
-      res.json(updatedNote);
-    } catch (error) {
-      console.error("Error linking session note to appointment:", error);
-      res.status(500).json({ error: "Failed to link session note to appointment" });
-    }
-  });
-
-  // Unlink session note from appointment
-  app.put("/api/session-notes/:id/unlink-appointment", async (req, res) => {
-    try {
-      const { id } = req.params;
-
-      // Update the session note to remove appointment ID
-      const updatedNote = await storage.updateSessionNote(id, { appointmentId: null });
-      res.json(updatedNote);
-    } catch (error) {
-      console.error("Error unlinking session note from appointment:", error);
-      res.status(500).json({ error: "Failed to unlink session note from appointment" });
-    }
-  });
-
-  // Create a new session note
-  app.post("/api/session-notes", async (req, res) => {
-    try {
-      const { clientId, therapistId, content, appointmentId, aiTags, source, eventId, title, subjective, objective, assessment, plan } = req.body;
-
-      if (!clientId || !therapistId || !content) {
-        return res.status(400).json({ error: "clientId, therapistId, and content are required" });
-      }
-
-      const sessionNote = await storage.createSessionNote({
-        clientId,
-        therapistId,
-        content,
-        appointmentId: appointmentId || null,
-        eventId: eventId || null,
-        title: title || null,
-        subjective: subjective || null,
-        objective: objective || null,
-        assessment: assessment || null,
-        plan: plan || null,
-        aiTags: aiTags || []
-      });
-
-      console.log(`✅ Created new session note with ID: ${sessionNote.id}`);
-      res.status(201).json(sessionNote);
-    } catch (error) {
-      console.error("Error creating session note:", error);
-      res.status(500).json({ error: "Failed to create session note" });
-    }
-  });
-
-  // AI-powered automatic linking of session notes to appointments
-  app.post("/api/session-notes/auto-link/:clientId", async (req, res) => {
-    try {
-      const { clientId } = req.params;
-
-      // Get all unlinked session notes for this client
-      const sessionNotes = await storage.getSessionNotesByClientId(clientId);
-      const unlinkedNotes = sessionNotes.filter(note => !note.appointmentId);
-
-      // Get all appointments for this client
-      const appointments = await storage.getAppointmentsByClient(clientId);
-
-      console.log(`Auto-linking debug for client ${clientId}:`);
-      console.log(`- Total session notes: ${sessionNotes.length}`);
-      console.log(`- Unlinked notes: ${unlinkedNotes.length}`);
-      console.log(`- Total appointments: ${appointments.length}`);
-
-      let linkedCount = 0;
-
-      for (const note of unlinkedNotes) {
-        try {
-          let candidateAppointments = [];
-
-          // First try to match by Google Event ID if available
-          if (note.eventId) {
-            const eventMatch = appointments.find(apt => apt.googleEventId === note.eventId);
-            if (eventMatch) {
-              await storage.updateSessionNote(note.id, { appointmentId: eventMatch.id });
-              linkedCount++;
-              continue;
-            }
-          }
-
-          // Use date-based matching
-          const noteDate = new Date(note.createdAt || new Date());
-
-          // Find appointments within a reasonable time range (same day ± 3 days)
-          candidateAppointments = appointments.filter(apt => {
-            const aptDate = new Date(apt.startTime);
-            const timeDiff = Math.abs(noteDate.getTime() - aptDate.getTime());
-            const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
-            return daysDiff <= 3; // Within 3 days
-          });
-
-          if (candidateAppointments.length === 1) {
-            // Exact match found
-            await storage.updateSessionNote(note.id, { appointmentId: candidateAppointments[0].id });
-            linkedCount++;
-          } else if (candidateAppointments.length > 1) {
-            // Multiple candidates - use AI to analyze content
-            const notePreview = note.content.substring(0, 300);
-            const prompt = `Based on this session note content and date, determine which appointment is most likely:
-
-Note created: ${noteDate.toDateString()} ${noteDate.toLocaleTimeString()}
-Note content preview: ${notePreview}...
-
-Available appointments:
-${candidateAppointments.map((apt, i) => {
-  const aptDate = new Date(apt.startTime);
-  return `${i + 1}. ${aptDate.toDateString()} at ${aptDate.toLocaleTimeString()} (${apt.type?.replace('_', ' ') || 'therapy session'})`;
-}).join('\n')}
-
-Respond with ONLY the number (1-${candidateAppointments.length}) of the most likely appointment, or "none" if uncertain.`;
-
-            try {
-              const response = await openai.chat.completions.create({
-                model: 'gpt-4o',
-                messages: [{ role: 'user', content: prompt }],
-                max_tokens: 10,
-                temperature: 0
-              });
-
-              const choice = response.choices[0]?.message?.content?.trim();
-              const choiceNum = parseInt(choice || '');
-
-              if (choiceNum >= 1 && choiceNum <= candidateAppointments.length) {
-                const selectedAppointment = candidateAppointments[choiceNum - 1];
-                await storage.updateSessionNote(note.id, { appointmentId: selectedAppointment.id });
-                linkedCount++;
-              }
-            } catch (aiError) {
-              console.error('AI analysis failed for note:', note.id, aiError);
-              // Fallback: link to closest appointment by date
-              if (candidateAppointments.length > 0) {
-                const closest = candidateAppointments.reduce((closest, current) => {
-                  const closestDiff = Math.abs(new Date(closest.startTime).getTime() - noteDate.getTime());
-                  const currentDiff = Math.abs(new Date(current.startTime).getTime() - noteDate.getTime());
-                  return currentDiff < closestDiff ? current : closest;
-                });
-                await storage.updateSessionNote(note.id, { appointmentId: closest.id });
-                linkedCount++;
-              }
-            }
-          } else if (candidateAppointments.length === 0) {
-            // No close appointments found - expand search to ±7 days
-            const widerCandidates = appointments.filter(apt => {
-              const aptDate = new Date(apt.startTime);
-              const timeDiff = Math.abs(noteDate.getTime() - aptDate.getTime());
-              const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
-              return daysDiff <= 7; // Within 1 week
-            });
-
-            if (widerCandidates.length === 1) {
-              await storage.updateSessionNote(note.id, { appointmentId: widerCandidates[0].id });
-              linkedCount++;
-            }
-          }
-        } catch (noteError) {
-          console.error('Error processing note:', note.id, noteError);
-        }
-      }
-
-      res.json({
-        message: `Linked ${linkedCount} session notes to appointments`,
-        linkedCount,
-        totalUnlinked: unlinkedNotes.length 
-      });
-    } catch (error) {
-      console.error("Error auto-linking session notes:", error);
-      res.status(500).json({ error: "Failed to auto-link session notes" });
-    }
-  });
-
-  // Get session notes by event/appointment ID (specific endpoint)
-  app.get("/api/session-notes/event/:eventId", async (req, res) => {
-    try {
-      const { eventId } = req.params;
-      const notes = await storage.getSessionNotesByEventId(eventId);
-      res.json(notes);
-    } catch (error) {
-      console.error("Error fetching session notes by event ID:", error);
-      res.status(500).json({ error: "Failed to fetch session notes" });
-    }
-  });
-
-  // Generate AI tags for session note
-  app.post("/api/session-notes/:id/generate-tags", async (req, res) => {
-    try {
-      const { id } = req.params;
-
-      // Get the session note
-      const sessionNote = await storage.getSessionNote(id);
-      if (!sessionNote) {
-        return res.status(404).json({ error: "Session note not found" });
-      }
-
-      // Prepare content for AI analysis (handle both traditional and SOAP format)
-      let contentForAnalysis = sessionNote.content;
-      if (sessionNote.title && (sessionNote.subjective || sessionNote.objective || sessionNote.assessment || sessionNote.plan)) {
-        // SOAP format - combine all sections
-        const soapSections = [
-          sessionNote.subjective && `Subjective: ${sessionNote.subjective}`,
-          sessionNote.objective && `Objective: ${sessionNote.objective}`,
-          sessionNote.assessment && `Assessment: ${sessionNote.assessment}`,
-          sessionNote.plan && `Plan: ${sessionNote.plan}`
-        ].filter(Boolean).join('\n\n');
-        contentForAnalysis = soapSections;
-      }
-
-      // Generate AI tags using OpenAI
-      const prompt = `Analyze this therapy session note and generate 3-5 relevant clinical tags. Focus on therapeutic approaches, client concerns, interventions, and progress indicators.
-
-Session content:
-${contentForAnalysis}
-
-Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework assigned", "progress noted"]`;
-
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 100,
-        temperature: 0.3
-      });
-
-      let tagsResponse = response.choices[0]?.message?.content?.trim() || '[]';
-      let aiTags: string[] = [];
-
-      // Clean up markdown formatting if present
-      if (tagsResponse.includes('```json')) {
-        tagsResponse = tagsResponse.replace(/```json\n?/g, '').replace(/
+  // Register additional route modules
+  registerCriticalFixes(app);
+  registerEnhancedChartRoutes(app);
+  registerTimelineRoutes(app);
+  registerEnhancedTimelineRoutes(app);
+  registerAIEnhancedRoutes(app);
+  app.use('/api/auth', authRoutes);
+
+  // Create and return server
+  const server = createServer(app);
+  return server;
+}
