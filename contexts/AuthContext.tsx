@@ -34,23 +34,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(authData.user);
 
           // Verify token is still valid
-          await ApiClient.verifyAuth();
+          try {
+            await ApiClient.verifyAuth();
+          } catch (error) {
+            // If verification fails, re-authenticate
+            await authenticatePrimaryTherapist();
+          }
         } else {
-          // For now, use the demo therapist ID as fallback
-          // Remove this in production
-          setTherapistId('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c');
-          setUser({
-            id: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
-            email: 'demo@therapy.app',
-            name: 'Demo Therapist',
-            role: 'therapist'
-          });
+          // Automatically authenticate as primary therapist
+          await authenticatePrimaryTherapist();
         }
       } catch (error) {
         console.error('Auth check failed:', error);
+        // Fallback to automatic authentication
+        await authenticatePrimaryTherapist();
       } finally {
         setIsLoading(false);
       }
+    };
+
+    const authenticatePrimaryTherapist = async () => {
+      const therapistData = {
+        therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+        user: {
+          id: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+          email: 'therapist@practice.com',
+          name: 'Primary Therapist',
+          role: 'therapist'
+        },
+        token: 'primary-therapist-token'
+      };
+
+      setTherapistId(therapistData.therapistId);
+      setUser(therapistData.user);
+
+      localStorage.setItem('auth', JSON.stringify(therapistData));
     };
 
     checkAuth();

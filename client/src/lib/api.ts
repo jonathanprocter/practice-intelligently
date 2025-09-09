@@ -386,7 +386,7 @@ export class ApiClient {
       // Request comprehensive historical data from 2015-2030
       const timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
       const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
-      
+
       const calendarResponse = await apiRequest('GET', `/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}`);
       return await calendarResponse.json();
     } catch (error) {
@@ -398,7 +398,7 @@ export class ApiClient {
   // Method for getting appointments with custom date range (supports historical analysis)
   static async getAppointmentsInRange(timeMin?: string, timeMax?: string): Promise<Appointment[]> {
     const therapistId = ApiClient.getTherapistId();
-    
+
     try {
       let dbAppointments: Appointment[] = [];
       let calendarEvents: any[] = [];
@@ -412,7 +412,7 @@ export class ApiClient {
       try {
         const dbResponse = await apiRequest('GET', `/api/appointments/${therapistId}`);
         const allDbAppointments = await dbResponse.json();
-        
+
         // Filter by date range
         dbAppointments = allDbAppointments.filter((apt: Appointment) => {
           const aptTime = new Date(apt.startTime).getTime();

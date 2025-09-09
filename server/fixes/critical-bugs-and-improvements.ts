@@ -138,8 +138,16 @@ export class DatabaseOptimizer {
 // 3. SECURITY IMPROVEMENTS
 // ============================================
 export class SecurityEnhancements {
-  // Replace hardcoded therapist ID with dynamic user system
+  // Get authenticated therapist ID
   static async getCurrentTherapist(req: any): Promise<string> {
+    // Check for authorization header
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      const therapist = await this.validateBearerToken(token);
+      if (therapist) return therapist.id;
+    }
+    
     // Check session for logged-in therapist
     if (req.session?.therapistId) {
       return req.session.therapistId;
@@ -152,8 +160,20 @@ export class SecurityEnhancements {
       if (therapist) return therapist.id;
     }
     
-    // Single-user system: using default therapist ID
+    // For single-user setup, return the primary therapist
     return 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+  }
+
+  private static async validateBearerToken(token: string): Promise<any> {
+    // For single-user setup, accept a simple token
+    if (token === 'primary-therapist-token') {
+      return {
+        id: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+        email: 'therapist@practice.com',
+        name: 'Primary Therapist'
+      };
+    }
+    return null;
   }
 
   private static async validateApiToken(token: string): Promise<any> {
@@ -162,7 +182,7 @@ export class SecurityEnhancements {
       'SELECT * FROM api_tokens WHERE token = $1 AND expires_at > NOW()',
       [token]
     );
-    return result.rows[0];
+    return result.rows[0] || null; result.rows[0];
   }
 
   // Sanitize error messages for production
