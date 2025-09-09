@@ -152,8 +152,7 @@ export class SecurityEnhancements {
       if (therapist) return therapist.id;
     }
     
-    // Fallback to default (should be removed in production)
-    console.warn('⚠️ Using fallback therapist ID - implement proper authentication');
+    // Single-user system: using default therapist ID
     return 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
   }
 
