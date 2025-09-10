@@ -1656,21 +1656,62 @@ export class DatabaseStorage implements IStorage {
     noShowRate: number;
     cancellationRate: number;
   }> {
-    const appointmentsList = await db
-      .select()
-      .from(appointments)
-      .where(eq(appointments.therapistId, therapistId));
+    // Use database aggregation for better performance
+    const [completedCount, noShowCount, cancelledCount, totalCount] = await Promise.all([
+      db
+        .select({ count: count() })
+        .from(appointments)
+        .where(
+          and(
+            eq(appointments.therapistId, therapistId),
+            eq(appointments.status, 'completed')
+          )
+        ),
+      db
+        .select({ count: count() })
+        .from(appointments)
+        .where(
+          and(
+            eq(appointments.therapistId, therapistId),
+            eq(appointments.status, 'no_show')
+          )
+        ),
+      db
+        .select({ count: count() })
+        .from(appointments)
+        .where(
+          and(
+            eq(appointments.therapistId, therapistId),
+            eq(appointments.status, 'cancelled')
+          )
+        ),
+      db
+        .select({ count: count() })
+        .from(appointments)
+        .where(eq(appointments.therapistId, therapistId))
+    ]);
 
-    const totalSessions = appointmentsList.filter(apt => apt.status === 'completed').length;
-    const noShows = appointmentsList.filter(apt => apt.status === 'no_show').length;
-    const cancelled = appointmentsList.filter(apt => apt.status === 'cancelled').length;
+    const totalSessions = completedCount[0]?.count || 0;
+    const noShows = noShowCount[0]?.count || 0;
+    const cancelled = cancelledCount[0]?.count || 0;
+    const totalAppointments = totalCount[0]?.count || 0;
 
-    const allClients = await this.getClients(therapistId);
-    const activeClients = allClients.filter(client => client.status === 'active').length;
+    // Get active clients count efficiently
+    const activeClientsCount = await db
+      .select({ count: count() })
+      .from(clients)
+      .where(
+        and(
+          eq(clients.therapistId, therapistId),
+          eq(clients.status, 'active')
+        )
+      );
+    
+    const activeClients = activeClientsCount[0]?.count || 0;
 
     const averageSessionsPerClient = activeClients > 0 ? totalSessions / activeClients : 0;
-    const noShowRate = appointmentsList.length > 0 ? (noShows / appointmentsList.length) * 100 : 0;
-    const cancellationRate = appointmentsList.length > 0 ? (cancelled / appointmentsList.length) * 100 : 0;
+    const noShowRate = totalAppointments > 0 ? (noShows / totalAppointments) * 100 : 0;
+    const cancellationRate = totalAppointments > 0 ? (cancelled / totalAppointments) * 100 : 0;
 
     return {
       totalSessions,
@@ -1686,41 +1727,62 @@ export class DatabaseStorage implements IStorage {
     pendingAmount: number;
     overdueAmount: number;
   }> {
-    let query = db
-      .select()
-      .from(billingRecords)
-      .where(eq(billingRecords.therapistId, therapistId));
-
+    // Build base conditions
+    const baseConditions = [eq(billingRecords.therapistId, therapistId)];
     if (startDate && endDate) {
-      query = (query as any).where(
-        and(
-          eq(billingRecords.therapistId, therapistId),
-          gte(billingRecords.serviceDate, startDate),
-          lte(billingRecords.serviceDate, endDate)
-        )
+      baseConditions.push(
+        gte(billingRecords.serviceDate, startDate),
+        lte(billingRecords.serviceDate, endDate)
       );
     }
 
-    const bills = await query;
-
-    const totalRevenue = bills.reduce((sum, bill) => sum + parseFloat(bill.totalAmount || '0'), 0);
-    const paidAmount = bills
-      .filter(bill => bill.status === 'paid')
-      .reduce((sum, bill) => sum + parseFloat(bill.totalAmount || '0'), 0);
-    const pendingAmount = bills
-      .filter(bill => bill.status === 'pending')
-      .reduce((sum, bill) => sum + parseFloat(bill.totalAmount || '0'), 0);
-
+    // Use database aggregation for better performance
     const now = new Date();
-    const overdueAmount = bills
-      .filter(bill => bill.status === 'pending' && bill.dueDate && new Date(bill.dueDate || new Date()) < now)
-      .reduce((sum, bill) => sum + parseFloat(bill.totalAmount || '0'), 0);
+    const [totalResult, paidResult, pendingResult, overdueResult] = await Promise.all([
+      // Total revenue
+      db
+        .select({
+          total: sql<number>`COALESCE(SUM(CAST(${billingRecords.totalAmount} AS DECIMAL)), 0)`
+        })
+        .from(billingRecords)
+        .where(and(...baseConditions)),
+      
+      // Paid amount
+      db
+        .select({
+          total: sql<number>`COALESCE(SUM(CAST(${billingRecords.totalAmount} AS DECIMAL)), 0)`
+        })
+        .from(billingRecords)
+        .where(and(...baseConditions, eq(billingRecords.status, 'paid'))),
+      
+      // Pending amount
+      db
+        .select({
+          total: sql<number>`COALESCE(SUM(CAST(${billingRecords.totalAmount} AS DECIMAL)), 0)`
+        })
+        .from(billingRecords)
+        .where(and(...baseConditions, eq(billingRecords.status, 'pending'))),
+      
+      // Overdue amount
+      db
+        .select({
+          total: sql<number>`COALESCE(SUM(CAST(${billingRecords.totalAmount} AS DECIMAL)), 0)`
+        })
+        .from(billingRecords)
+        .where(
+          and(
+            ...baseConditions,
+            eq(billingRecords.status, 'pending'),
+            lte(billingRecords.dueDate, now)
+          )
+        )
+    ]);
 
     return {
-      totalRevenue: Math.round(totalRevenue * 100) / 100,
-      paidAmount: Math.round(paidAmount * 100) / 100,
-      pendingAmount: Math.round(pendingAmount * 100) / 100,
-      overdueAmount: Math.round(overdueAmount * 100) / 100,
+      totalRevenue: Math.round(Number(totalResult[0]?.total || 0) * 100) / 100,
+      paidAmount: Math.round(Number(paidResult[0]?.total || 0) * 100) / 100,
+      pendingAmount: Math.round(Number(pendingResult[0]?.total || 0) * 100) / 100,
+      overdueAmount: Math.round(Number(overdueResult[0]?.total || 0) * 100) / 100,
     };
   }
 

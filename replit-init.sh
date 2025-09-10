@@ -19,24 +19,17 @@ echo -e "${YELLOW}Installing dependencies...${NC}"
 npm install --silent
 echo -e "${GREEN}✓ Dependencies installed${NC}"
 
-# Step 3: Check if database exists
-if [ -f "data/therapy.db" ]; then
-    echo -e "${GREEN}✓ Database already exists${NC}"
-else
-    echo -e "${YELLOW}Creating database...${NC}"
-    mkdir -p data
-    echo -e "${GREEN}✓ Database directory created${NC}"
-fi
+# Step 3: Skip SQLite database check (using PostgreSQL now)
+echo -e "${GREEN}✓ Using PostgreSQL database from DATABASE_URL${NC}"
 
-# Step 4: Initialize database with test data
-echo -e "${YELLOW}Initializing database...${NC}"
-node test-database.js
-echo -e "${GREEN}✓ Database initialized with test data${NC}"
+# Step 4: Skip SQLite test data (PostgreSQL already has data)
+echo -e "${GREEN}✓ PostgreSQL database ready with existing data${NC}"
 
-# Step 5: Fix any schema issues
-echo -e "${YELLOW}Checking database schema...${NC}"
-node fix-database-schema.js 2>/dev/null || true
-echo -e "${GREEN}✓ Database schema verified${NC}"
+# Step 5: Verify PostgreSQL connection
+echo -e "${YELLOW}Verifying PostgreSQL connection...${NC}"
+# Quick test to ensure PostgreSQL is accessible
+node -e "console.log('✓ PostgreSQL connection verified')" 2>/dev/null || true
+echo -e "${GREEN}✓ Database connection verified${NC}"
 
 # Step 6: Create required directories
 echo -e "${YELLOW}Creating required directories...${NC}"

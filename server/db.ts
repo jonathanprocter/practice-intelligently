@@ -18,10 +18,21 @@ let pool: any;
 // Check if we have a valid PostgreSQL URL
 const isValidPostgresUrl = (url: string | undefined): boolean => {
   if (!url) return false;
-  // Check if it's a real PostgreSQL URL (not the placeholder)
-  return url.startsWith('postgresql://') && 
-         !url.includes('localhost:5432') && 
-         !url.includes('user:password@');
+  // Check if it's a real PostgreSQL URL (Neon URLs contain specific patterns)
+  // Valid Neon URLs contain ep- (endpoint) or neondb_owner as user
+  const isNeonUrl = url.includes('neon.tech') || 
+                     url.includes('ep-') || 
+                     url.includes('neondb_owner');
+  const isValidPostgres = url.startsWith('postgresql://') || url.startsWith('postgres://');
+  
+  // If it's a Neon URL, it's valid
+  if (isNeonUrl && isValidPostgres) return true;
+  
+  // Otherwise, check it's not a placeholder URL
+  const isPlaceholder = url.includes('localhost:5432') || 
+                        url === 'postgresql://user:password@localhost:5432/dbname';
+  
+  return isValidPostgres && !isPlaceholder;
 };
 
 // Initialize database based on what's available
