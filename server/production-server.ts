@@ -214,32 +214,13 @@ app.use((req, res, next) => {
       // Serve index.html for all other routes (SPA routing)
       const indexPath = path.resolve(distPath, "index.html");
       
-      // Read and modify the index.html to fix the script reference
-      fs.readFile(indexPath, 'utf8', (err, html) => {
-        if (err) {
-          console.error('Error reading index.html:', err);
-          return res.status(500).send('Error loading application');
-        }
-        
-        // Replace the development script tag with production script tags
-        if (html.includes('/src/main.tsx')) {
-          html = html.replace(
-            '<script type="module" src="/src/main.tsx"></script>',
-            '<script src="/app.js"></script>'
-          );
-        }
-        
-        // Add the CSS link if not present
-        if (!html.includes('app.css')) {
-          html = html.replace(
-            '</head>',
-            '  <link rel="stylesheet" href="/app.css">\n  </head>'
-          );
-        }
-        
-        res.setHeader('Content-Type', 'text/html; charset=UTF-8');
-        res.send(html);
-      });
+      // Serve the index.html file as-is without any modifications
+      // Add no-cache headers to prevent caching issues
+      res.setHeader('Content-Type', 'text/html; charset=UTF-8');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.sendFile(indexPath);
     });
 
     // Use port 5000 for frontend (Replit's expected preview port)

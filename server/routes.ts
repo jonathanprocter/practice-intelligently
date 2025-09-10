@@ -1,5 +1,4 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { analyzeContent, analyzeSessionTranscript } from "./ai-services";
 import { multiModelAI } from './ai-multi-model';
@@ -92,7 +91,7 @@ const sessionUpload = multer({
   }
 });
 
-export async function registerRoutes(app: Express, wss?: WebSocketServer): Promise<Server> {
+export async function registerRoutes(app: Express, wss?: WebSocketServer): Promise<void> {
   // Set the WebSocket server on app locals for access in routes
   app.locals.wss = wss;
 
@@ -431,7 +430,4 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
   registerEnhancedTimelineRoutes(app);
   registerAIEnhancedRoutes(app);
   // Auth routes removed - single-user system
-
-  // Return empty server for compatibility
-  return {} as Server;
 }
