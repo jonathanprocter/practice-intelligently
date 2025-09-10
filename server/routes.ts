@@ -2808,7 +2808,7 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
 
       const { clientId, clientName } = req.body;
 
-      // Process the uploaded file
+      // Process the uploaded file - now includes auto-creation of session notes
       const processed = await documentProcessor.processDocument(req.file.path, req.file.originalname);
 
       // Check if document contains multiple sessions
@@ -2822,7 +2822,7 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
         // Parse individual sessions from the document
         result = await parseMultiSessionDocument(extractedText, clientId, clientName, req.file.originalname);
       } else {
-        // Single session processing (existing logic)
+        // Single session processing with enhanced features
         result = {
           analysis: processed,
           extractedText: processed.extractedText,
@@ -2832,7 +2832,14 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
           fileName: req.file.originalname,
           requiresConfirmation: true,
           model: 'document-processor',
-          isMultiSession: false
+          isMultiSession: false,
+          sessionNoteId: processed.sessionNoteId,
+          appointmentId: processed.appointmentId,
+          clientId: processed.clientId,
+          progressNote: processed.progressNote,
+          message: processed.sessionNoteId 
+            ? 'Document processed and session note created successfully' 
+            : 'Document processed successfully'
         };
       }
 
