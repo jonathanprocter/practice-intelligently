@@ -74,18 +74,14 @@ echo "🔗 Access Information:"
 echo "   - Local URL: http://localhost:3000"
 echo "   - Health Check: http://localhost:3000/api/health"
 echo ""
+echo "👤 Default Login:"
+echo "   - Username: admin"
+echo "   - Password: admin123"
+echo ""
 echo -e "${GREEN}✨ Starting development server with preview...${NC}"
 echo ""
 
-# Set environment variables and start the production server
+# Set environment variables and start the production server instead
 export PORT=3000
 export NODE_ENV=production
-
-# Check if the new production server exists, build if needed
-if [ ! -f "dist/production-server.js" ]; then
-    echo -e "${YELLOW}Building production server...${NC}"
-    ./scripts/build-production.sh
-fi
-
-# Use the new production server with proper API routing
-node dist/production-server.js
+node dist/index.js

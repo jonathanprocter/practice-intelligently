@@ -65,7 +65,6 @@ export interface IStorage {
   getSessionNote(id: string): Promise<SessionNote | undefined>;
   getSessionNoteById(sessionNoteId: string): Promise<SessionNote | null>;
   getSessionNotesByEventId(eventId: string): Promise<SessionNote[]>;
-  getSessionNotesByAppointmentId(appointmentId: string): Promise<SessionNote[]>;
   createSessionNote(note: InsertSessionNote): Promise<SessionNote>;
   updateSessionNote(id: string, note: Partial<SessionNote>): Promise<SessionNote>;
   deleteSessionNote(id: string): Promise<void>;
@@ -3646,33 +3645,6 @@ Generate a comprehensive summary in the following JSON format:
     return syncedCount;
   }
 
-  async getCalendarEventsByTherapist(therapistId: string, options?: { startDate?: string; endDate?: string }): Promise<CalendarEvent[]> {
-    try {
-      let query = db.select().from(calendarEvents).where(eq(calendarEvents.therapistId, therapistId));
-      
-      if (options?.startDate && options?.endDate) {
-        const startTime = new Date(options.startDate);
-        const endTime = new Date(options.endDate);
-        
-        return await db.select()
-          .from(calendarEvents)
-          .where(
-            and(
-              eq(calendarEvents.therapistId, therapistId),
-              gte(calendarEvents.startTime, startTime),
-              lte(calendarEvents.endTime, endTime)
-            )
-          )
-          .orderBy(desc(calendarEvents.startTime));
-      }
-      
-      return await query.orderBy(desc(calendarEvents.startTime));
-    } catch (error) {
-      console.error('Error fetching calendar events by therapist:', error);
-      return [];
-    }
-  }
-
   // Added methods for recent activity and calendar sync stats
   async getRecentSessionNotes(therapistId: string, days: number): Promise<SessionNote[]> {
     try {
@@ -3888,24 +3860,6 @@ Generate a comprehensive summary in the following JSON format:
       return result.rows.map(row => this.mapSessionNoteRow(row));
     } catch (error) {
       console.error('Error in getSessionNotesByEventId:', error);
-      return [];
-    }
-  }
-
-  async getSessionNotesByAppointmentId(appointmentId: string): Promise<SessionNote[]> {
-    try {
-      const query = `
-        SELECT sn.*, c.first_name, c.last_name
-        FROM session_notes sn
-        LEFT JOIN clients c ON sn.client_id = c.id::text
-        WHERE sn.appointment_id = $1
-        ORDER BY sn.created_at DESC
-      `;
-      
-      const result = await pool.query(query, [appointmentId]);
-      return result.rows.map(row => this.mapSessionNoteRow(row));
-    } catch (error) {
-      console.error('Error in getSessionNotesByAppointmentId:', error);
       return [];
     }
   }

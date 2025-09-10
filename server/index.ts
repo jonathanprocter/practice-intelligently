@@ -1,5 +1,16 @@
-// Global __dirname for compatibility with CJS modules
-globalThis.__dirname = import.meta.dirname || process.cwd();
+// Polyfill for import.meta.dirname and __dirname in Node.js 18
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// Define __dirname globally for compatibility with CJS modules
+globalThis.__dirname = dirname(fileURLToPath(import.meta.url));
+
+if (typeof import.meta.dirname === 'undefined') {
+  Object.defineProperty(import.meta, 'dirname', {
+    get() { return dirname(fileURLToPath(import.meta.url)); },
+    configurable: true
+  });
+}
 
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from 'http';
@@ -115,26 +126,19 @@ app.use((req, res, next) => {
       serveStatic(app);
     }
 
-    // Use port 5000 for frontend (Replit's expected preview port)
+    // ALWAYS serve the app on the port specified in the environment variable PORT
+    // Other ports are firewalled. Default to 5000 if not specified.
+    // this serves both the API and the client.
+    // It is the only port that is not firewalled.
     const port = parseInt(process.env.PORT || '5000', 10);
 
     server.on('error', (err: any) => {
       if (err.code === 'EADDRINUSE') {
-        console.error(`Port ${port} is already in use. Attempting to kill existing process...`);
-        // Try to kill existing process
-        exec(`pkill -f "server/index.ts" || fuser -k ${port}/tcp || true`, () => {
-          setTimeout(() => {
-            server.listen({
-              port,
-              host: "0.0.0.0",
-            }, () => {
-              log(`🚀 Server running at http://0.0.0.0:${port}`);
-              log(`🌐 Access your app via the Replit webview or external URL`);
-            });
-          }, 2000);
-        });
+        console.error(`Port ${port} is already in use. Server will exit.`);
+        process.exit(1);
       } else {
         console.error('Server error:', err);
+        // Don't exit immediately on all errors
         console.log('Server will continue running...');
       }
     });
@@ -142,9 +146,9 @@ app.use((req, res, next) => {
     server.listen({
       port,
       host: "0.0.0.0",
+      reusePort: true,
     }, () => {
-      log(`🚀 Server running at http://0.0.0.0:${port}`);
-      log(`🌐 Access your app via the Replit webview or external URL`);
+      log(`serving on port ${port}`);
     });
 
   } catch (error) {

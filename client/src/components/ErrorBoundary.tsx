@@ -1,9 +1,7 @@
 // components/ErrorBoundary.tsx
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, RefreshCw, Home, Bug, WifiOff } from 'lucide-react';
-import { ErrorType, parseApiError } from '@/lib/errorUtils';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -16,8 +14,6 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
-  errorInfo: ErrorInfo | null;
-  errorType?: ErrorType;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -26,11 +22,11 @@ export class ErrorBoundary extends Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = { hasError: false, error: null };
     this.resetKeys = props.resetKeys || [];
   }
 
-  static getDerivedStateFromError(error: Error): Partial<State> {
+  static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
@@ -49,27 +45,15 @@ export class ErrorBoundary extends Component<Props, State> {
     }
   }
 
-  async componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const { onError } = this.props;
 
     if (onError) {
       onError(error, errorInfo);
     }
 
-    // Determine error type
-    let errorType = ErrorType.UNKNOWN;
-    if (error.message?.includes('fetch') || error.message?.includes('NetworkError')) {
-      errorType = ErrorType.NETWORK;
-    } else if (error.message?.includes('401') || error.message?.includes('403')) {
-      errorType = ErrorType.AUTHENTICATION;
-    }
-
-    this.setState({ errorInfo, errorType });
-
-    // Log to error reporting service (in production, send to monitoring service)
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error caught by boundary:', error, errorInfo);
-    }
+    // Log to error reporting service
+    console.error('Error caught by boundary:', error, errorInfo);
   }
 
   resetErrorBoundary = () => {
@@ -78,7 +62,7 @@ export class ErrorBoundary extends Component<Props, State> {
       this.resetTimeoutId = null;
     }
 
-    this.setState({ hasError: false, error: null, errorInfo: null, errorType: undefined });
+    this.setState({ hasError: false, error: null });
   };
 
   componentWillUnmount() {
@@ -88,7 +72,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   render() {
-    const { hasError, error, errorInfo, errorType } = this.state;
+    const { hasError, error } = this.state;
     const { fallback, children } = this.props;
 
     if (hasError && error) {
@@ -96,14 +80,7 @@ export class ErrorBoundary extends Component<Props, State> {
         return fallback(error, this.resetErrorBoundary);
       }
 
-      return (
-        <DefaultErrorFallback 
-          error={error} 
-          errorInfo={errorInfo}
-          errorType={errorType}
-          resetErrorBoundary={this.resetErrorBoundary} 
-        />
-      );
+      return <DefaultErrorFallback error={error} resetErrorBoundary={this.resetErrorBoundary} />;
     }
 
     return children;
@@ -113,151 +90,52 @@ export class ErrorBoundary extends Component<Props, State> {
 // Default Error Fallback Component
 export function DefaultErrorFallback({ 
   error, 
-  errorInfo,
-  errorType,
   resetErrorBoundary 
 }: { 
   error: Error; 
-  errorInfo?: ErrorInfo | null;
-  errorType?: ErrorType;
   resetErrorBoundary: () => void;
 }) {
-  // Get appropriate icon and styling based on error type
-  const getErrorIcon = () => {
-    switch (errorType) {
-      case ErrorType.NETWORK:
-        return <WifiOff className="w-6 h-6 text-yellow-600" />;
-      case ErrorType.AUTHENTICATION:
-        return <AlertTriangle className="w-6 h-6 text-orange-600" />;
-      default:
-        return <Bug className="w-6 h-6 text-red-600" />;
-    }
-  };
-
-  const getErrorTitle = () => {
-    switch (errorType) {
-      case ErrorType.NETWORK:
-        return "Connection Problem";
-      case ErrorType.AUTHENTICATION:
-        return "Authentication Error";
-      default:
-        return "Something went wrong";
-    }
-  };
-
-  const getErrorMessage = () => {
-    switch (errorType) {
-      case ErrorType.NETWORK:
-        return "We're having trouble connecting to our servers. Please check your internet connection and try again.";
-      case ErrorType.AUTHENTICATION:
-        return "Your session may have expired. Please try logging in again.";
-      default:
-        return "An unexpected error occurred. Please try refreshing the page or contact support if the problem persists.";
-    }
-  };
-
-  const getIconBgColor = () => {
-    switch (errorType) {
-      case ErrorType.NETWORK:
-        return "bg-yellow-100";
-      case ErrorType.AUTHENTICATION:
-        return "bg-orange-100";
-      default:
-        return "bg-red-100";
-    }
-  };
-
   return (
     <div className="min-h-[400px] flex items-center justify-center p-6">
-      <Card className="max-w-md w-full shadow-lg">
-        <CardHeader className="text-center">
-          <div className={`flex items-center justify-center w-12 h-12 mx-auto ${getIconBgColor()} rounded-full mb-4`}>
-            {getErrorIcon()}
-          </div>
-          <CardTitle className="text-xl">{getErrorTitle()}</CardTitle>
-          <CardDescription className="mt-2">
-            {getErrorMessage()}
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent className="space-y-4">
-          {/* Error details for development */}
-          {process.env.NODE_ENV === 'development' && (
-            <details className="p-3 bg-gray-100 rounded text-xs text-gray-700">
-              <summary className="cursor-pointer font-medium">
-                Error details (Development only)
-              </summary>
-              <div className="mt-2 space-y-2">
-                <div>
-                  <strong>Message:</strong>
-                  <pre className="whitespace-pre-wrap break-words mt-1">
-                    {error.message}
-                  </pre>
-                </div>
-                {error.stack && (
-                  <div>
-                    <strong>Stack trace:</strong>
-                    <pre className="whitespace-pre-wrap break-words mt-1 max-h-48 overflow-auto">
-                      {error.stack}
-                    </pre>
-                  </div>
-                )}
-                {errorInfo?.componentStack && (
-                  <div>
-                    <strong>Component stack:</strong>
-                    <pre className="whitespace-pre-wrap break-words mt-1 max-h-48 overflow-auto">
-                      {errorInfo.componentStack}
-                    </pre>
-                  </div>
-                )}
-              </div>
-            </details>
-          )}
-          
-          {/* Action buttons */}
-          <div className="flex gap-3">
-            <Button
-              onClick={resetErrorBoundary}
-              className="flex-1"
-              variant="default"
-              data-testid="button-try-again"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Try Again
-            </Button>
-            
-            <Button
-              onClick={() => window.location.href = '/'}
-              className="flex-1"
-              variant="outline"
-              data-testid="button-go-home"
-            >
-              <Home className="w-4 h-4 mr-2" />
-              Go Home
-            </Button>
+      <div className="max-w-md w-full">
+        <div className="therapy-card p-6 border-red-200 bg-red-50">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-red-100 rounded-lg">
+              <AlertTriangle className="h-6 w-6 text-red-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-red-900">Something went wrong</h2>
+              <p className="text-sm text-red-700">An unexpected error occurred</p>
+            </div>
           </div>
 
-          {/* Additional help text */}
-          <div className="text-center text-sm text-gray-500 pt-2 border-t">
-            {errorType === ErrorType.NETWORK ? (
-              <p>Check your internet connection and try again.</p>
-            ) : errorType === ErrorType.AUTHENTICATION ? (
-              <p>
-                <a href="/login" className="text-therapy-primary hover:underline">
-                  Click here to log in again
-                </a>
-              </p>
-            ) : (
-              <p>
-                If this problem persists, please{' '}
-                <a href="mailto:support@therapy.app" className="text-therapy-primary hover:underline">
-                  contact support
-                </a>
-              </p>
-            )}
+          <div className="mb-4 p-3 bg-white/50 rounded-md">
+            <p className="text-sm text-red-800 font-mono break-all">
+              {error.message || 'Unknown error'}
+            </p>
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="flex gap-2">
+            <Button 
+              onClick={resetErrorBoundary}
+              variant="outline"
+              size="sm"
+              className="flex-1"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+            <Button 
+              onClick={() => window.location.reload()}
+              variant="outline"
+              size="sm"
+              className="flex-1"
+            >
+              Reload Page
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

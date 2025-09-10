@@ -1,25 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   /* ===== BACKGROUND SYSTEM ===== */
-  /* Professional therapy practice backgrounds with subtle warmth */
-  --color-bg-base: #FAFBFD;        /* Soft cloud base - main canvas */
-  --color-bg-default: #FFFFFF;     /* Pure white - content areas */
+  /* Replace ALL instances of ivory (#FFFFF0) with these: */
+  --color-bg-base: #F3F5F7;        /* Furthest back layer - main canvas */
+  --color-bg-default: #F8F9FA;     /* Default background - Ghost White */
   --color-bg-raised: #FFFFFF;      /* Cards, modals - Pure White */
-  --color-bg-overlay: rgba(255, 255, 255, 0.98); /* Overlays with transparency */
-  --color-bg-sunken: #F5F7FA;      /* Subtle depth - inputs/wells */
+  --color-bg-overlay: rgba(248, 249, 250, 0.97); /* Overlays with transparency */
+  --color-bg-sunken: #EBEEF1;      /* Recessed areas, inputs */
   
   /* ===== CORE PALETTE ===== */
-  /* Calming, professional colors for therapy practice */
-  --color-primary: #5B7FA6;        /* Calming Blue - primary actions */
-  --color-success: #7BB369;        /* Growth Green - success/positive */
-  --color-info: #6B9BD1;           /* Sky Blue - information/focus */
-  --color-secondary: #8B95A7;      /* Soft Gray Blue - secondary */
-  --color-neutral: #E2E8F0;        /* Light Slate - borders/dividers */
+  --color-primary: #3B5998;        /* French Blue - primary actions */
+  --color-success: #B7C9A3;        /* Sage Green - success/available */
+  --color-info: #6B8CAE;           /* Info Steel - information/focus */
+  --color-secondary: #5F7A8E;      /* Slate Blue - secondary/inactive */
+  --color-neutral: #C5CCC8;        /* Silver Sage - borders/disabled */
   
   /* ===== COMPLETE COLOR SCALES ===== */
   /* French Blue Scale */
@@ -92,13 +89,12 @@
   --color-border-success: var(--sage-green-400);
   
   /* ===== SHADOWS ===== */
-  --shadow-xs: 0 1px 3px rgba(91, 127, 166, 0.12);
-  --shadow-sm: 0 2px 6px rgba(91, 127, 166, 0.15);
-  --shadow-md: 0 6px 16px rgba(91, 127, 166, 0.18);
-  --shadow-lg: 0 10px 28px rgba(91, 127, 166, 0.20);
-  --shadow-xl: 0 16px 48px rgba(91, 127, 166, 0.22);
-  --shadow-focus: 0 0 0 4px rgba(91, 127, 166, 0.25);
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-xs: 0 1px 2px rgba(95, 122, 142, 0.05);
+  --shadow-sm: 0 2px 4px rgba(95, 122, 142, 0.08);
+  --shadow-md: 0 4px 12px rgba(95, 122, 142, 0.10);
+  --shadow-lg: 0 8px 24px rgba(95, 122, 142, 0.12);
+  --shadow-xl: 0 12px 36px rgba(95, 122, 142, 0.15);
+  --shadow-focus: 0 0 0 3px rgba(107, 140, 174, 0.25);
   
   /* ===== TRANSITIONS ===== */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -196,22 +192,19 @@
 
 @layer base {
   * {
-    border-color: hsl(var(--border));
+    @apply border-border;
   }
 
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    background: linear-gradient(135deg, var(--color-bg-base) 0%, #F0F4F8 100%);
-    color: hsl(var(--foreground));
-    /* Enhanced font rendering and readability */
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    /* Enhanced iPhone optimizations */
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
-    font-size: 16px;
-    line-height: 1.6;
+    font-feature-settings: "kern" 1;
     
     /* Prevent horizontal scroll on iPhone */
     overflow-x: hidden;
@@ -238,47 +231,25 @@
 @layer components {
   .therapy-card {
     background: var(--color-bg-raised);
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    box-shadow: var(--shadow-card);
-    border-radius: 1rem;
-    transition: all var(--transition-base);
-    backdrop-filter: blur(10px);
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .therapy-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--color-primary), var(--color-info));
-    opacity: 0;
-    transition: opacity var(--transition-fast);
+    border: 1px solid var(--color-border-default);
+    box-shadow: var(--shadow-sm);
+    @apply rounded-xl transition-all;
+    transition: all var(--transition-fast);
   }
   
   .therapy-card:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
     border-color: var(--color-border-hover);
   }
   
-  .therapy-card:hover::before {
-    opacity: 1;
-  }
-  
   .sidebar-nav {
-    background: linear-gradient(180deg, #4A6FA5 0%, #5B7FA6 100%);
+    background: var(--color-primary);
     color: white;
     pointer-events: auto;
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
-    backdrop-filter: blur(12px);
   }
   
   .sidebar-nav * {
@@ -301,7 +272,7 @@
   }
   
   .status-indicator {
-    width: 0.5rem; height: 0.5rem; border-radius: 9999px; display: inline-block; margin-right: 0.5rem;
+    @apply w-2 h-2 rounded-full inline-block mr-2;
   }
   
   .status-online {
@@ -318,7 +289,7 @@
   
   .progress-bar {
     background: linear-gradient(90deg, var(--therapy-primary) 0%, var(--therapy-success) 100%);
-    height: 0.375rem; border-radius: 9999px; transition: all 300ms;
+    @apply h-1.5 rounded-full transition-all duration-300;
   }
   
   .ai-insight {
@@ -347,79 +318,33 @@
     box-shadow: var(--shadow-focus);
   }
 
-  /* Enhanced Button Styles */
+  /* Button Styles */
   .btn-primary {
-    background: linear-gradient(135deg, var(--color-primary), #4A6FA5);
+    background: var(--color-primary);
     color: white;
     border: none;
-    border-radius: 0.625rem;
-    font-weight: 500;
-    letter-spacing: 0.025em;
-    transition: all var(--transition-base);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .btn-primary::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-  }
-
-  .btn-primary:hover::before {
-    width: 300px;
-    height: 300px;
+    transition: all var(--transition-fast);
   }
 
   .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-  }
-
-  .btn-success {
-    background: linear-gradient(135deg, var(--color-success), #6BA35A);
-    color: white;
-    border-radius: 0.625rem;
-    font-weight: 500;
-    transition: all var(--transition-base);
-  }
-
-  .btn-success:hover {
-    transform: translateY(-2px);
+    background: var(--french-blue-600);
     box-shadow: var(--shadow-md);
   }
 
-  .btn-secondary {
-    background: linear-gradient(135deg, var(--color-secondary), #7A8599);
+  .btn-success {
+    background: var(--color-success);
     color: white;
-    border-radius: 0.625rem;
-    font-weight: 500;
-    transition: all var(--transition-base);
+  }
+
+  .btn-secondary {
+    background: var(--color-secondary);
+    color: white;
   }
 
   .btn-outline {
     background: transparent;
     border: 2px solid var(--color-primary);
     color: var(--color-primary);
-    border-radius: 0.625rem;
-    font-weight: 500;
-    position: relative;
-    overflow: hidden;
-    transition: all var(--transition-base);
-  }
-
-  .btn-outline:hover {
-    color: white;
-    border-color: var(--color-primary);
-    background: var(--color-primary);
-    transform: translateY(-1px);
   }
 
   /* Calendar Styles */
@@ -850,98 +775,14 @@
   }
 }
 
-/* Enhanced Animations */
-@keyframes fadeIn {
-  from { 
-    opacity: 0; 
-    transform: translateY(20px);
-  }
-  to { 
-    opacity: 1; 
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.9;
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease-out;
-}
-
-.animate-slideIn {
-  animation: slideInRight 0.4s ease-out;
-}
-
-.animate-pulse {
-  animation: pulse 2s infinite;
-}
-
-/* Loading skeleton effect */
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--color-bg-sunken) 25%,
-    var(--color-bg-raised) 50%,
-    var(--color-bg-sunken) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
 /* Calendar-specific styles */
 .calendar-time-slot {
-  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
-  transition: all var(--transition-fast);
-  position: relative;
-}
-
-.calendar-time-slot::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--color-primary);
-  opacity: 0;
-  transition: opacity var(--transition-fast);
+  @apply border-b transition-colors;
+  border-color: #ddd;
 }
 
 .calendar-time-slot:hover {
-  background: linear-gradient(90deg, rgba(91, 127, 166, 0.05) 0%, transparent 100%);
-}
-
-.calendar-time-slot:hover::before {
-  opacity: 1;
+  background-color: rgba(196, 155, 108, 0.05);
 }
 
 .calendar-event {
@@ -979,15 +820,15 @@
 }
 
 .calendar-event-cancelled {
-  background-color: rgb(254 226 226); border-color: rgb(254 202 202);
+  @apply bg-red-100 border-red-200;
 }
 
 .old-calendar-event {
-  font-size: 0.75rem; padding: 0.25rem; margin-bottom: 0.25rem; border-radius: 0.25rem; border-left-width: 4px; background-color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer; transition: all 200ms;
+  @apply text-xs p-1 mb-1 rounded border-l-4 bg-white shadow-sm cursor-pointer transition-all duration-200;
 }
 
 .calendar-event:hover {
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  @apply shadow-md;
   transform: scale(1.02);
 }
 
@@ -1007,11 +848,11 @@
 }
 
 .calendar-event-no-show {
-  border-left-color: rgb(156 163 175); background-color: rgb(243 244 246);
+  @apply border-l-gray-400 bg-gray-100;
 }
 
 .calendar-day-header {
-  padding: 0.75rem; text-align: center; cursor: pointer; transition-property: color, background-color, border-color;
+  @apply p-3 text-center cursor-pointer transition-colors;
 }
 
 .calendar-day-header:hover {

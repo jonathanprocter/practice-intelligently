@@ -1,23 +1,12 @@
-import { Bell, User } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import IntegrationStatus from "@/components/ui/integration-status";
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient } from "@/lib/api";
-import { useLocation } from "wouter";
-import { DEFAULT_CLINICIAN_NAME } from "@shared/constants";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-// Replaced problematic image import with placeholder
-// Original: import profileImage from '@assets/image_1754410832108.png';
+// Temporarily using a placeholder for profile image until asset is available
+const profileImage = 'data:image/svg+xml,%3csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"%3e%3ccircle cx="20" cy="20" r="20" fill="%23ddd"/%3e%3ctext x="20" y="25" text-anchor="middle" fill="%23666" font-size="14"%3eJP%3c/text%3e%3c/svg%3e';
 
 export default function Header() {
-  const [, setLocation] = useLocation();
   const currentDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -33,7 +22,6 @@ export default function Header() {
   });
 
   const notificationCount = urgentActionItems?.length || 0;
-
 
   return (
     <header className="bg-white border-b border-therapy-border p-2 xs:p-3 sm:p-4 lg:p-6 header-safe sticky top-0 z-40 backdrop-blur-md bg-white/95">
@@ -54,7 +42,7 @@ export default function Header() {
             variant="ghost" 
             size="icon" 
             className="relative min-h-[48px] min-w-[48px] xs:min-h-[44px] xs:min-w-[44px] p-2 touch-manipulation iphone-button-enhanced rounded-xl"
-            data-testid="button-notifications"
+            data-testid="notifications-button"
             style={{
               WebkitTapHighlightColor: 'rgba(100, 149, 237, 0.1)',
               WebkitTouchCallout: 'none'
@@ -68,41 +56,17 @@ export default function Header() {
             )}
           </Button>
           
-          {/* User Profile Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center space-x-2 xs:space-x-3 p-1" data-testid="button-user-menu">
-                <img 
-                  src="https://api.dicebear.com/7.x/initials/svg?seed=JP" 
-                  alt={DEFAULT_CLINICIAN_NAME}
-                  className="w-10 h-10 xs:w-8 xs:h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-white shadow-sm"
-                />
-                <div className="hidden sm:block min-w-0">
-                  <p className="font-medium text-therapy-text text-sm truncate">{DEFAULT_CLINICIAN_NAME}</p>
-                  <p className="text-xs text-therapy-text/60">LMHC</p>
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{DEFAULT_CLINICIAN_NAME}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    therapist@practice.com
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => setLocation('/settings')}
-                className="cursor-pointer"
-                data-testid="menu-settings"
-              >
-                <User className="mr-2 h-4 w-4" />
-                Settings
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center space-x-2 xs:space-x-3">
+            <img 
+              src={profileImage} 
+              alt="Dr. Jonathan Procter" 
+              className="w-10 h-10 xs:w-8 xs:h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-white shadow-sm"
+            />
+            <div className="hidden sm:block min-w-0">
+              <p className="font-medium text-therapy-text text-sm truncate">Dr. Jonathan Procter</p>
+              <p className="text-xs text-therapy-text/60">LMHC</p>
+            </div>
+          </div>
         </div>
       </div>
     </header>

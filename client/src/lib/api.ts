@@ -1,6 +1,5 @@
 // lib/api.ts
 import { apiRequest } from "./queryClient";
-import { DEFAULT_THERAPIST_ID } from "@shared/constants";
 
 // Types remain the same as your original file
 export interface DashboardStats {
@@ -131,12 +130,70 @@ export interface ApiStatus {
 
 // API Client with context-aware methods
 export class ApiClient {
-  // Get therapist ID - always returns the default for single-user system
-  static getTherapistId(): string {
-    return DEFAULT_THERAPIST_ID;
+  // Store therapist ID in a static variable that can be set
+  private static currentTherapistId: string | null = null;
+
+  // Method to set the current therapist ID
+  static setTherapistId(therapistId: string | null) {
+    ApiClient.currentTherapistId = therapistId;
   }
 
-  // Removed auth methods - no longer needed for single-user system
+  // Get therapist ID with fallback for backwards compatibility
+  static getTherapistId(): string {
+    if (ApiClient.currentTherapistId) {
+      return ApiClient.currentTherapistId;
+    }
+
+    // Try to get from localStorage as fallback
+    if (typeof localStorage !== 'undefined') {
+      const storedAuth = localStorage.getItem('auth');
+      if (storedAuth) {
+        try {
+          const auth = JSON.parse(storedAuth);
+          if (auth.therapistId) {
+            return auth.therapistId;
+          }
+        } catch (e) {
+          // Silent handling for better stability
+        }
+      }
+    }
+
+    // Default therapist ID for the system
+    return 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+  }
+
+  // Auth methods
+  static async login(email: string, password: string): Promise<any> {
+    const response = await apiRequest('POST', '/api/auth/login', { email, password });
+    const data = await response.json();
+
+    // Set the therapist ID after successful login
+    if (data.therapistId) {
+      ApiClient.setTherapistId(data.therapistId);
+    }
+
+    return data;
+  }
+
+  static async logout(): Promise<void> {
+    await apiRequest('POST', '/api/auth/logout');
+    ApiClient.setTherapistId(null);
+  }
+
+  static async verifyAuth(): Promise<boolean> {
+    try {
+      const response = await apiRequest('GET', '/api/auth/verify');
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  static async refreshToken(): Promise<any> {
+    const response = await apiRequest('POST', '/api/auth/refresh');
+    return response.json();
+  }
 
   // Dashboard methods
   static async getDashboardStats(): Promise<DashboardStats> {
@@ -329,7 +386,7 @@ export class ApiClient {
       // Request comprehensive historical data from 2015-2030
       const timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
       const timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
-
+      
       const calendarResponse = await apiRequest('GET', `/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax}`);
       return await calendarResponse.json();
     } catch (error) {
@@ -341,7 +398,7 @@ export class ApiClient {
   // Method for getting appointments with custom date range (supports historical analysis)
   static async getAppointmentsInRange(timeMin?: string, timeMax?: string): Promise<Appointment[]> {
     const therapistId = ApiClient.getTherapistId();
-
+    
     try {
       let dbAppointments: Appointment[] = [];
       let calendarEvents: any[] = [];
@@ -355,7 +412,7 @@ export class ApiClient {
       try {
         const dbResponse = await apiRequest('GET', `/api/appointments/${therapistId}`);
         const allDbAppointments = await dbResponse.json();
-
+        
         // Filter by date range
         dbAppointments = allDbAppointments.filter((apt: Appointment) => {
           const aptTime = new Date(apt.startTime).getTime();

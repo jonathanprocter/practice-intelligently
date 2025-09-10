@@ -1,7 +1,0 @@
-2025-09-01 23:33:54: GEMINI_API_KEY not configured
-2025-09-01 23:33:54: ReferenceError: __dirname is not defined in ES module scope
-2025-09-01 23:33:54: This file is being treated as an ES module because it has a '.js' file extension and '/home/user/webapp/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.
-2025-09-01 23:33:54:     at file:///home/user/webapp/dist/index.js:18119:23
-2025-09-01 23:33:54:     at ModuleJob.run (node:internal/modules/esm/module_job:263:25)
-2025-09-01 23:33:54:     at async ModuleLoader.import (node:internal/modules/esm/loader:540:24)
-2025-09-01 23:34:33: GEMINI_API_KEY not configured

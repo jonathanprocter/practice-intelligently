@@ -16,7 +16,7 @@ PORT = "3000"
 PATH = "/nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin:$PATH"
 
 [workflows]
-runButton = "Start Application"
+runButton = "Clean Start Server"
 
 [[workflows.workflow]]
 name = "Project"
@@ -101,56 +101,6 @@ args = "sleep 3"
 task = "shell.exec"
 args = "/nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin/npm run dev"
 
-[[workflows.workflow]]
-name = "Clean Restart"
-author = 37925715
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pkill -f \"tsx server/index.ts\" || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pkill -f \"npm run dev\" || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "sleep 2"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-
-[[workflows.workflow]]
-name = "Start Application"
-author = 37925715
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pkill -f \"tsx server/index.ts\" || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pkill -f \"npm run dev\" || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "fuser -k 3000/tcp || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "fuser -k 5173/tcp || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "sleep 3"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-
 [[ports]]
 localPort = 3000
 externalPort = 80
@@ -162,17 +112,5 @@ externalPort = 5000
 [[ports]]
 localPort = 5173
 externalPort = 5173
-
-[[ports]]
-localPort = 32909
-externalPort = 3001
-
-[[ports]]
-localPort = 33743
-externalPort = 3000
-
-[[ports]]
-localPort = 37499
-externalPort = 3002
 
 [agent]

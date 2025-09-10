@@ -3,16 +3,10 @@ import { useQuery, useQueries } from "@tanstack/react-query";
 import { ApiClient, type DashboardStats } from "@/lib/api";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Suspense, lazy, useState, useEffect, useMemo } from "react";
-import { RefreshCw, Settings, LayoutGrid, Maximize2, Minimize2, Calendar, Users, Activity, Brain } from "lucide-react";
+import { RefreshCw, Settings, LayoutGrid, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { 
-  DashboardStatsSkeleton, 
-  TodaysScheduleSkeleton, 
-  ListSkeleton,
-  ContentSkeleton 
-} from "@/components/ui/skeletons";
 
 // Import core components directly (high priority)
 import QuickStats from "@/components/dashboard/quick-stats";
@@ -54,21 +48,44 @@ const getTherapistId = () => {
   return 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
 };
 
-// Loading Skeleton Component (backwards compatibility wrapper)
+// Loading Skeleton Component
 function DashboardSkeleton({ section = 'full' }: { section?: string }) {
   if (section === 'stats') {
-    return <DashboardStatsSkeleton />;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="therapy-card p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="h-12 w-12 bg-gray-200 rounded-lg" />
+              <div className="h-4 w-4 bg-gray-200 rounded" />
+            </div>
+            <div className="h-8 w-24 bg-gray-300 rounded mb-2" />
+            <div className="h-4 w-32 bg-gray-200 rounded" />
+          </div>
+        ))}
+      </div>
+    );
   }
-  if (section === 'schedule') {
-    return <TodaysScheduleSkeleton />;
-  }
-  if (section === 'list') {
-    return <ListSkeleton items={3} />;
-  }
-  return <ContentSkeleton lines={5} />;
+
+  return (
+    <div className="therapy-card p-6 animate-pulse">
+      <div className="h-6 w-40 bg-gray-200 rounded mb-4" />
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="flex gap-4">
+            <div className="h-12 w-12 bg-gray-200 rounded" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-3/4 bg-gray-200 rounded" />
+              <div className="h-3 w-1/2 bg-gray-200 rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
-// Enhanced Dashboard Section Wrapper
+// Dashboard Section Wrapper
 function DashboardSection({ 
   children, 
   title, 
@@ -77,8 +94,7 @@ function DashboardSection({
   onRefresh,
   className,
   collapsible = false,
-  defaultCollapsed = false,
-  icon: Icon
+  defaultCollapsed = false
 }: {
   children: React.ReactNode;
   title?: string;
@@ -88,70 +104,39 @@ function DashboardSection({
   className?: string;
   collapsible?: boolean;
   defaultCollapsed?: boolean;
-  icon?: any;
 }) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
   if (error) {
     return (
-      <div className={cn(
-        "therapy-card p-6 border-2 border-red-100 bg-gradient-to-br from-red-50 to-red-50/50 animate-fadeIn",
-        className
-      )}>
-        <div className="flex items-center justify-between mb-3">
-          {title && (
-            <div className="flex items-center gap-2">
-              {Icon && <Icon className="h-5 w-5 text-red-600" />}
-              <h3 className="text-base font-semibold text-red-800">{title}</h3>
-            </div>
-          )}
+      <div className={cn("therapy-card p-4 border-red-200 bg-red-50", className)}>
+        <div className="flex items-center justify-between mb-2">
+          {title && <h3 className="text-sm font-medium text-red-800">{title}</h3>}
           {onRefresh && (
-            <Button 
-              onClick={onRefresh} 
-              variant="ghost" 
-              size="sm"
-              className="hover:bg-red-100 text-red-600"
-            >
-              <RefreshCw className="h-4 w-4" />
+            <Button onClick={onRefresh} variant="ghost" size="sm">
+              <RefreshCw className="h-3 w-3" />
             </Button>
           )}
         </div>
-        <p className="text-sm text-red-600 flex items-center gap-2">
-          <span className="inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-          Failed to load. Please refresh.
-        </p>
+        <p className="text-xs text-red-600">Failed to load. Please refresh.</p>
       </div>
     );
   }
 
   if (collapsible && title) {
     return (
-      <div className={cn("animate-fadeIn", className)}>
-        <div className="flex items-center justify-between mb-4 p-4 bg-gradient-to-r from-therapy-primary/5 to-transparent rounded-lg">
-          <div className="flex items-center gap-3">
-            {Icon && <Icon className="h-5 w-5 text-therapy-primary" />}
-            <h3 className="text-lg font-semibold bg-gradient-to-r from-therapy-primary to-therapy-primary-dark bg-clip-text text-transparent">
-              {title}
-            </h3>
-          </div>
+      <div className={className}>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold text-therapy-text">{title}</h3>
           <Button
             variant="ghost"
             size="sm"
-            className="hover:bg-therapy-primary/10 transition-all duration-200"
             onClick={() => setIsCollapsed(!isCollapsed)}
           >
-            {isCollapsed ? 
-              <Maximize2 className="h-4 w-4 text-therapy-primary" /> : 
-              <Minimize2 className="h-4 w-4 text-therapy-primary" />
-            }
+            {isCollapsed ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
           </Button>
         </div>
-        <div className={cn(
-          "transition-all duration-300 overflow-hidden",
-          isCollapsed ? "max-h-0 opacity-0" : "max-h-[2000px] opacity-100"
-        )}>
-          {isLoading ? <DashboardSkeleton section={title?.toLowerCase()} /> : children}
-        </div>
+        {!isCollapsed && (isLoading ? <DashboardSkeleton section={title?.toLowerCase()} /> : children)}
       </div>
     );
   }
