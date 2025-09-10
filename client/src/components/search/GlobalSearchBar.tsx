@@ -84,8 +84,9 @@ export function GlobalSearchBar({ className, onResultClick, embedded = false }: 
     queryFn: async () => {
       const params = new URLSearchParams({
         q: debouncedQuery,
+        therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', // Default therapist ID
         limit: '10',
-        ...(entityFilter.length > 0 && { entities: entityFilter.join(',') }),
+        ...(entityFilter.length > 0 && { entityTypes: entityFilter.join(',') }),
       });
       return apiRequest('GET', `/api/search?${params}`);
     },
@@ -93,17 +94,23 @@ export function GlobalSearchBar({ className, onResultClick, embedded = false }: 
 
   // Search history query
   const { data: searchHistory } = useQuery<string[]>({
-    queryKey: ['/api/search/history'],
+    queryKey: ['/api/search/history/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'],
     enabled: open && !searchQuery,
+    queryFn: async () => {
+      return apiRequest('GET', '/api/search/history/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c');
+    },
   });
 
   // Save search mutation
   const saveSearchMutation = useMutation({
     mutationFn: async (data: { name: string; query: string; entityType?: string }) => {
-      return apiRequest('POST', '/api/search/saved', data);
+      return apiRequest('POST', '/api/search/presets', {
+        ...data,
+        therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/search/saved'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/search/presets'] });
     },
   });
 
