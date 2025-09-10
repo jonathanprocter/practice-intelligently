@@ -5,6 +5,9 @@ import xlsx from 'xlsx';
 import sharp from 'sharp';
 import { multiModelAI } from './ai-multi-model';
 import OpenAI from 'openai';
+import { storage } from './storage';
+import type { InsertSessionNote } from '../shared/schema';
+import { randomUUID } from 'crypto';
 
 // Dynamic imports for ES module compatibility
 let csvParser: any = null;
@@ -45,6 +48,8 @@ export interface ProcessedDocument {
   detectedSessionDate?: string;
   fileType: string;
   metadata: any;
+  progressNote?: ProgressNote;
+  autoCreatedNoteId?: string;
 }
 
 export interface ProgressNote {
@@ -61,6 +66,8 @@ export interface ProgressNote {
   clientId: string;
   sessionDate: string;
   createdAt: Date;
+  appointmentId?: string;
+  therapistId?: string;
 }
 
 export class DocumentProcessor {

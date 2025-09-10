@@ -12,6 +12,7 @@
 import React from 'react';
 import { useParams, useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import ClientProgressTimeline from '@/components/ClientProgressTimeline';
 // Optional imports - uncomment if you have these libraries installed
 // import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 
@@ -1362,6 +1363,13 @@ function ClientChartInner() {
 
         {/* Timeline Tab */}
         <TabsContent value={TABS.TIMELINE} className="space-y-6">
+          {/* Use the comprehensive timeline component */}
+          <ClientProgressTimeline 
+            clientId={clientId} 
+            clientName={`${client?.firstName || ''} ${client?.lastName || ''}`}
+          />
+          
+          {/* Original content as secondary information */}
           <div className="grid gap-6 lg:grid-cols-4">
             {/* Sidebar */}
             <div className="lg:col-span-1 space-y-4">

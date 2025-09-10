@@ -4164,6 +4164,81 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
     }
   });
 
+  // ========== CALENDAR SYNC ROUTES ==========
+  
+  // Sync all historical calendar events and create appointments
+  app.post('/api/calendar/sync/full', async (req, res) => {
+    try {
+      const { therapistId } = req.body;
+      
+      if (!therapistId) {
+        return res.status(400).json({ error: 'Therapist ID required' });
+      }
+      
+      const { calendarSyncService } = await import('./calendar-sync-service');
+      const result = await calendarSyncService.syncFullCalendarHistory(therapistId);
+      
+      res.json({
+        success: true,
+        message: `Synced ${result.synced} calendar events`,
+        result
+      });
+    } catch (error: any) {
+      console.error('Full calendar sync failed:', error);
+      res.status(500).json({ error: 'Calendar sync failed', details: error.message });
+    }
+  });
+  
+  // Sync today's calendar events
+  app.post('/api/calendar/sync/today', async (req, res) => {
+    try {
+      const { therapistId } = req.body;
+      
+      if (!therapistId) {
+        return res.status(400).json({ error: 'Therapist ID required' });
+      }
+      
+      const { calendarSyncService } = await import('./calendar-sync-service');
+      const result = await calendarSyncService.syncTodayEvents(therapistId);
+      
+      res.json({
+        success: true,
+        message: `Synced ${result.synced} calendar events for today`,
+        result
+      });
+    } catch (error: any) {
+      console.error('Today calendar sync failed:', error);
+      res.status(500).json({ error: 'Calendar sync failed', details: error.message });
+    }
+  });
+  
+  // Sync calendar events for date range
+  app.post('/api/calendar/sync/range', async (req, res) => {
+    try {
+      const { therapistId, startDate, endDate } = req.body;
+      
+      if (!therapistId || !startDate || !endDate) {
+        return res.status(400).json({ error: 'Therapist ID, start date, and end date required' });
+      }
+      
+      const { calendarSyncService } = await import('./calendar-sync-service');
+      const result = await calendarSyncService.syncCalendarRange(
+        therapistId,
+        new Date(startDate),
+        new Date(endDate)
+      );
+      
+      res.json({
+        success: true,
+        message: `Synced ${result.synced} calendar events`,
+        result
+      });
+    } catch (error: any) {
+      console.error('Range calendar sync failed:', error);
+      res.status(500).json({ error: 'Calendar sync failed', details: error.message });
+    }
+  });
+
   // ========== CLIENT CHART ANALYSIS ROUTES ==========
 
   // Generate case conceptualization for a client

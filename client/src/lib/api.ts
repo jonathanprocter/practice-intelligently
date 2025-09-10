@@ -131,7 +131,8 @@ export interface ApiStatus {
 // API Client with context-aware methods
 export class ApiClient {
   // Store therapist ID in a static variable that can be set
-  private static currentTherapistId: string | null = null;
+  // Initialize with default therapist ID
+  private static currentTherapistId: string | null = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
 
   // Method to set the current therapist ID
   static setTherapistId(therapistId: string | null) {
@@ -151,16 +152,19 @@ export class ApiClient {
         try {
           const auth = JSON.parse(storedAuth);
           if (auth.therapistId) {
+            ApiClient.currentTherapistId = auth.therapistId;
             return auth.therapistId;
           }
         } catch (e) {
-          // Silent handling for better stability
+          console.warn('Failed to parse stored auth:', e);
         }
       }
     }
 
-    // Default therapist ID for the system
-    return 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+    // Set and return default therapist ID for the system
+    const defaultId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+    ApiClient.currentTherapistId = defaultId;
+    return defaultId;
   }
 
   // Auth methods
@@ -624,4 +628,19 @@ export class ApiClient {
     const response = await apiRequest('PATCH', `/api/users/${userId}`, userData);
     return response.json();
   }
-}
+
+  // Client-specific methods for timeline
+  static async getAppointmentsByClient(clientId: string): Promise<Appointment[]> {
+    const response = await apiRequest('GET', `/api/appointments/client/${clientId}`);
+    return response.json();
+  }
+
+  static async getSessionNotesByClient(clientId: string): Promise<SessionNote[]> {
+    const response = await apiRequest('GET', `/api/session-notes/client/${clientId}`);
+    return response.json();
+  }
+
+  static async getAiInsightsByClient(clientId: string): Promise<AiInsight[]> {
+    const response = await apiRequest('GET', `/api/ai-insights/client/${clientId}`);
+    return response.json();
+  }
