@@ -26,6 +26,7 @@ import ProcessingResults from "@/pages/ProcessingResults";
 import ClientChart from "@/pages/ClientChart";
 import SessionSummaries from "@/pages/session-summaries";
 import SmartDocuments from "@/pages/smart-documents";
+import DocumentBatchTest from "@/pages/document-batch-test";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import CompassStable from "@/components/CompassStable";
@@ -82,6 +83,7 @@ function Router() {
         </Suspense>
       </Route>
       <Route path="/smart-documents" component={SmartDocuments} />
+      <Route path="/document-batch-test" component={DocumentBatchTest} />
       <Route path="/assessments" component={Assessments} />
       <Route path="/client-checkins" component={ClientCheckins} />
       <Route path="/action-items" component={ActionItems} />

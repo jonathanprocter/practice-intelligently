@@ -326,6 +326,20 @@ export interface IStorage {
   upsertCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent>;
   deleteCalendarEvent(id: string): Promise<void>;
   syncCalendarEvents(events: InsertCalendarEvent[]): Promise<number>;
+  
+  // Document Statistics
+  getDocumentStatistics(params: {
+    therapistId?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<{
+    totalDocuments: number;
+    totalSize: number;
+    byCategory: Record<string, number>;
+    byType: Record<string, number>;
+    averageProcessingTime: number;
+    recentDocuments: any[];
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3724,6 +3738,89 @@ Generate a comprehensive summary in the following JSON format:
     }
 
     return syncedCount;
+  }
+  
+  async getDocumentStatistics(params: {
+    therapistId?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<{
+    totalDocuments: number;
+    totalSize: number;
+    byCategory: Record<string, number>;
+    byType: Record<string, number>;
+    averageProcessingTime: number;
+    recentDocuments: any[];
+  }> {
+    try {
+      // Build query conditions
+      const conditions = [];
+      if (params.therapistId) {
+        conditions.push(eq(documents.therapistId, params.therapistId));
+      }
+      if (params.startDate) {
+        conditions.push(gte(documents.createdAt, params.startDate));
+      }
+      if (params.endDate) {
+        conditions.push(lte(documents.createdAt, params.endDate));
+      }
+      
+      // Get all documents matching criteria
+      const allDocs = await db
+        .select()
+        .from(documents)
+        .where(conditions.length > 0 ? and(...conditions) : undefined);
+      
+      // Calculate statistics
+      const stats = {
+        totalDocuments: allDocs.length,
+        totalSize: allDocs.reduce((sum, doc) => sum + (doc.fileSize || 0), 0),
+        byCategory: {} as Record<string, number>,
+        byType: {} as Record<string, number>,
+        averageProcessingTime: 0,
+        recentDocuments: allDocs
+          .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0))
+          .slice(0, 10)
+          .map(doc => ({
+            id: doc.id,
+            fileName: doc.fileName,
+            originalName: doc.originalName,
+            fileType: doc.fileType,
+            fileSize: doc.fileSize,
+            category: doc.category,
+            createdAt: doc.createdAt
+          }))
+      };
+      
+      // Count by category and type
+      for (const doc of allDocs) {
+        const category = doc.category || 'uncategorized';
+        const fileType = doc.fileType || 'unknown';
+        
+        stats.byCategory[category] = (stats.byCategory[category] || 0) + 1;
+        stats.byType[fileType] = (stats.byType[fileType] || 0) + 1;
+      }
+      
+      // Calculate average processing time from metadata if available
+      const processingTimes = allDocs
+        .map(doc => {
+          if (doc.metadata && typeof doc.metadata === 'object') {
+            const metadata = doc.metadata as any;
+            return metadata.processingTime || 0;
+          }
+          return 0;
+        })
+        .filter(time => time > 0);
+      
+      if (processingTimes.length > 0) {
+        stats.averageProcessingTime = processingTimes.reduce((sum, time) => sum + time, 0) / processingTimes.length;
+      }
+      
+      return stats;
+    } catch (error) {
+      console.error('Error getting document statistics:', error);
+      throw error;
+    }
   }
 
   // Added methods for recent activity and calendar sync stats

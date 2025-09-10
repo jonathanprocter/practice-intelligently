@@ -39,6 +39,7 @@ import { SessionDocumentProcessor } from './session-document-processor';
 import { optimizedComprehensiveProgressNotesParser } from './comprehensiveProgressNotesParser-optimized';
 import { stevenDelucaProcessor } from './steven-deluca-processor';
 import { registerEnhancedChartRoutes } from './routes/enhanced-chart-routes';
+import { registerDocumentBatchRoutes } from './routes/document-batch-routes';
 import { aiIntegrationService } from './ai-integration-service';
 import { bidirectionalCalendarSync } from './calendar-bidirectional-sync';
 import OpenAI from 'openai';
@@ -6556,8 +6557,14 @@ Follow-up areas for next session:
     }
   });
 
+  // Create HTTP server for WebSocket support
+  const httpServer = createServer(app);
+  
   // Register enhanced chart and document processing routes
   registerEnhancedChartRoutes(app);
+  
+  // Register batch document processing routes with WebSocket support
+  registerDocumentBatchRoutes(app, httpServer);
   
   // Register comprehensive document fix routes
   const { registerDocumentRoutes } = await import('./document-fix');
@@ -6567,6 +6574,5 @@ Follow-up areas for next session:
   const { registerFixedDocumentRoutes } = await import('./document-routes-fix');
   registerFixedDocumentRoutes(app);
 
-  const httpServer = createServer(app);
   return httpServer;
 }
