@@ -164,8 +164,8 @@ export class ApiClient {
   }
 
   // Auth methods
-  static async login(email: string, password: string): Promise<any> {
-    const response = await apiRequest('POST', '/api/auth/login', { email, password });
+  static async login(username: string, password: string): Promise<any> {
+    const response = await apiRequest('POST', '/api/auth/login', { username, password });
     const data = await response.json();
 
     // Set the therapist ID after successful login

@@ -62,6 +62,14 @@ const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: false }));
 
+// Add CORS headers for module scripts
+app.use((req, res, next) => {
+  // Set proper CORS headers for module scripts
+  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  next();
+});
+
 // Logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
@@ -135,10 +143,54 @@ app.use((req, res, next) => {
       process.exit(1);
     }
 
-    // Serve static files
-    app.use(express.static(distPath));
+    // Configure static file serving with proper MIME types
+    // IMPORTANT: We exclude index.html so we can transform it in the catch-all route
+    app.use(express.static(distPath, {
+      etag: true,
+      lastModified: true,
+      index: false,  // Disable automatic index.html serving
+      setHeaders: (res, filePath) => {
+        // Set correct MIME types based on file extension
+        if (filePath.endsWith('.js')) {
+          res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
+        } else if (filePath.endsWith('.mjs')) {
+          res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
+        } else if (filePath.endsWith('.css')) {
+          res.setHeader('Content-Type', 'text/css; charset=UTF-8');
+        } else if (filePath.endsWith('.html')) {
+          res.setHeader('Content-Type', 'text/html; charset=UTF-8');
+        } else if (filePath.endsWith('.json')) {
+          res.setHeader('Content-Type', 'application/json; charset=UTF-8');
+        } else if (filePath.endsWith('.svg')) {
+          res.setHeader('Content-Type', 'image/svg+xml');
+        } else if (filePath.endsWith('.png')) {
+          res.setHeader('Content-Type', 'image/png');
+        } else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) {
+          res.setHeader('Content-Type', 'image/jpeg');
+        } else if (filePath.endsWith('.woff2')) {
+          res.setHeader('Content-Type', 'font/woff2');
+        } else if (filePath.endsWith('.woff')) {
+          res.setHeader('Content-Type', 'font/woff');
+        }
+        
+        // Set cache headers for assets
+        if (filePath.includes('/assets/') || filePath.includes('/fonts/')) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
+      }
+    }));
 
-    // Catch-all route for SPA (but ONLY for non-API routes)
+    // Serve assets directory explicitly with correct MIME types
+    app.use('/assets', express.static(path.join(distPath, 'assets'), {
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.js') || filePath.endsWith('.mjs')) {
+          res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
+        }
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    }));
+
+    // Catch-all route for SPA (but ONLY for non-API routes and non-asset routes)
     app.get("*", (req, res, next) => {
       // Skip API routes - they should have already been handled
       if (req.path.startsWith("/api")) {
@@ -146,8 +198,48 @@ app.use((req, res, next) => {
         return res.status(404).json({ message: "API endpoint not found" });
       }
       
+      // Skip asset files - return 404 if they don't exist
+      if (req.path.startsWith('/assets/') || 
+          req.path.startsWith('/src/') ||
+          req.path.endsWith('.js') || 
+          req.path.endsWith('.mjs') ||
+          req.path.endsWith('.css') || 
+          req.path.endsWith('.json') ||
+          req.path.endsWith('.png') ||
+          req.path.endsWith('.jpg') ||
+          req.path.endsWith('.svg')) {
+        return res.status(404).send('File not found');
+      }
+      
       // Serve index.html for all other routes (SPA routing)
-      res.sendFile(path.resolve(distPath, "index.html"));
+      const indexPath = path.resolve(distPath, "index.html");
+      
+      // Read and modify the index.html to fix the script reference
+      fs.readFile(indexPath, 'utf8', (err, html) => {
+        if (err) {
+          console.error('Error reading index.html:', err);
+          return res.status(500).send('Error loading application');
+        }
+        
+        // Replace the development script tag with production script tags
+        if (html.includes('/src/main.tsx')) {
+          html = html.replace(
+            '<script type="module" src="/src/main.tsx"></script>',
+            '<script src="/app.js"></script>'
+          );
+        }
+        
+        // Add the CSS link if not present
+        if (!html.includes('app.css')) {
+          html = html.replace(
+            '</head>',
+            '  <link rel="stylesheet" href="/app.css">\n  </head>'
+          );
+        }
+        
+        res.setHeader('Content-Type', 'text/html; charset=UTF-8');
+        res.send(html);
+      });
     });
 
     // Use port 5000 for frontend (Replit's expected preview port)

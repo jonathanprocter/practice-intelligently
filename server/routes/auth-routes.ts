@@ -68,9 +68,15 @@ router.get('/verify', async (req, res) => {
 
 // Login endpoint
 router.post('/login', async (req, res) => {
+  // Debug logging
+  console.log('Login request received');
+  console.log('Content-Type:', req.headers['content-type']);
+  console.log('Body:', req.body);
+  
   const { username, password } = req.body;
 
   if (!username || !password) {
+    console.log('Missing credentials - username:', !!username, 'password:', !!password);
     return res.status(400).json({ error: 'Username and password are required' });
   }
 
