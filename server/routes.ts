@@ -39,6 +39,7 @@ import { SessionDocumentProcessor } from './session-document-processor';
 import { optimizedComprehensiveProgressNotesParser } from './comprehensiveProgressNotesParser-optimized';
 import { stevenDelucaProcessor } from './steven-deluca-processor';
 import { registerEnhancedChartRoutes } from './routes/enhanced-chart-routes';
+import { aiIntegrationService } from './ai-integration-service';
 import OpenAI from 'openai';
 
 // Initialize OpenAI client
@@ -1685,6 +1686,14 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
         updateData.noShowReason = reason;
       } else if (status === 'completed') {
         updateData.completedAt = new Date();
+        
+        // Automatically generate session summary when appointment is completed
+        const appointment = await storage.updateAppointment(id, updateData);
+        aiIntegrationService.generateSessionSummary(id, appointment.therapistId)
+          .catch(error => console.error('Background session summary generation failed:', error));
+        
+        res.json(appointment);
+        return;
       } else if (status === 'checked_in') {
         updateData.checkedInAt = new Date();
       }
@@ -1984,6 +1993,11 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
       });
 
       console.log(`✅ Created new session note with ID: ${sessionNote.id}`);
+      
+      // Automatically trigger AI insights generation
+      aiIntegrationService.generateSessionNoteInsights(sessionNote, clientId, therapistId)
+        .catch(error => console.error('Background AI insights generation failed:', error));
+      
       res.status(201).json(sessionNote);
     } catch (error) {
       console.error("Error creating session note:", error);
@@ -2826,6 +2840,22 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
       // Check if document contains multiple sessions
       const extractedText = processed.extractedText || '';
       const isMultiSession = await detectMultiSessionDocument(extractedText);
+      
+      // Trigger real-time AI analysis for the uploaded document
+      const therapistId = req.body.therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      if (processed && extractedText) {
+        aiIntegrationService.analyzeUploadedDocument(
+          req.file.filename || randomUUID(),
+          extractedText,
+          { 
+            clientId, 
+            clientName, 
+            therapistId,
+            fileType: req.file.mimetype,
+            originalName: req.file.originalname
+          }
+        ).catch(error => console.error('Background document AI analysis failed:', error));
+      }
 
       let result;
 
@@ -5455,6 +5485,86 @@ Follow-up areas for next session:
     } catch (error: any) {
       console.error('Error in evidence-based interventions:', error);
       res.status(500).json({ error: 'Failed to generate intervention recommendations', details: error.message });
+    }
+  });
+
+  // AI-Powered Next Session Recommendations
+  app.post('/api/ai/next-session-recommendations/:clientId', async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const { therapistId, appointmentId } = req.body;
+      
+      if (!therapistId) {
+        return res.status(400).json({ error: 'therapistId is required' });
+      }
+      
+      const recommendations = await aiIntegrationService.generateNextSessionRecommendations(
+        clientId,
+        therapistId,
+        appointmentId
+      );
+      
+      res.json(recommendations);
+    } catch (error: any) {
+      console.error('Error generating next session recommendations:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate session recommendations', 
+        details: error.message 
+      });
+    }
+  });
+
+  // AI-Powered Treatment Plan Generation
+  app.post('/api/ai/generate-treatment-plan/:clientId', async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const { therapistId, updateExisting } = req.body;
+      
+      if (!therapistId) {
+        return res.status(400).json({ error: 'therapistId is required' });
+      }
+      
+      const treatmentPlan = await aiIntegrationService.generateTreatmentPlan(
+        clientId,
+        therapistId,
+        updateExisting || false
+      );
+      
+      res.json(treatmentPlan);
+    } catch (error: any) {
+      console.error('Error generating treatment plan:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate treatment plan', 
+        details: error.message 
+      });
+    }
+  });
+
+  // Get AI-generated session prep for upcoming appointment
+  app.get('/api/ai/session-prep/:appointmentId', async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+      
+      // Get the appointment details
+      const appointment = await storage.getAppointment(appointmentId);
+      if (!appointment) {
+        return res.status(404).json({ error: 'Appointment not found' });
+      }
+      
+      // Generate recommendations for this appointment
+      const recommendations = await aiIntegrationService.generateNextSessionRecommendations(
+        appointment.clientId,
+        appointment.therapistId,
+        appointmentId
+      );
+      
+      res.json(recommendations);
+    } catch (error: any) {
+      console.error('Error generating session prep:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate session prep', 
+        details: error.message 
+      });
     }
   });
 

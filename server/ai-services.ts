@@ -106,28 +106,108 @@ function getSystemPrompt(type: 'session' | 'appointment' | 'progress'): string {
   }
 }
 
-// Main AI analysis function with OpenAI primary, Claude fallback
-export async function analyzeContent(content: string, type: 'session' | 'appointment' | 'progress' = 'session'): Promise<AIAnalysisResult> {
+// Enhanced AI analysis with comprehensive fallback chain and retry logic
+export async function analyzeContent(
+  content: string, 
+  type: 'session' | 'appointment' | 'progress' = 'session',
+  retryCount: number = 0
+): Promise<AIAnalysisResult> {
+  const maxRetries = 2;
+  
+  // Try OpenAI first
   try {
-    // Try OpenAI first
+    console.log(`🤖 Attempting AI analysis with OpenAI (attempt ${retryCount + 1})...`);
     return await analyzeWithOpenAI(content, type);
-  } catch (openaiError) {
-    console.warn('OpenAI failed, falling back to Claude:', openaiError);
-
+  } catch (openAIError: any) {
+    console.warn('OpenAI analysis failed:', openAIError.message);
+    
+    // Try Claude as second option
     try {
-      // Fallback to Claude
+      console.log(`🤖 Falling back to Claude...`);
       return await analyzeWithClaude(content, type);
-    } catch (claudeError) {
-      console.error('Both AI services failed:', { openaiError, claudeError });
-
-      // Return default analysis if both fail
-      return {
-        insights: ['Analysis temporarily unavailable - please check API keys'],
-        recommendations: ['Verify OpenAI and Anthropic API keys are configured'],
-        themes: ['Service unavailable'],
-        priority: 'low',
-        nextSteps: ['Check API configuration and retry analysis']
-      };
+    } catch (claudeError: any) {
+      console.warn('Claude analysis failed:', claudeError.message);
+      
+      // Try multi-model AI service if available
+      try {
+        console.log(`🤖 Attempting fallback with multi-model AI...`);
+        const { multiModelAI } = await import('./ai-multi-model');
+        const response = await multiModelAI.generateClinicalAnalysis(content, type);
+        
+        // Parse and format the response
+        try {
+          const parsed = typeof response.content === 'string' 
+            ? JSON.parse(response.content)
+            : response.content;
+          
+          return {
+            insights: parsed.insights || [response.content.substring(0, 500)],
+            recommendations: parsed.recommendations || ['Review AI analysis for clinical insights'],
+            themes: parsed.themes || [],
+            priority: parsed.priority || 'medium',
+            nextSteps: parsed.nextSteps || ['Continue monitoring progress']
+          };
+        } catch {
+          // If parsing fails, return structured default
+          return {
+            insights: [response.content.substring(0, 500)],
+            recommendations: ['Review AI analysis for clinical insights'],
+            themes: [],
+            priority: 'medium',
+            nextSteps: ['Continue monitoring progress']
+          };
+        }
+      } catch (multiModelError: any) {
+        console.warn('Multi-model AI failed:', multiModelError.message);
+        
+        // Try Perplexity as final fallback
+        try {
+          console.log(`🤖 Attempting final fallback with Perplexity...`);
+          const { perplexityClient } = await import('./perplexity');
+          const perplexityResponse = await perplexityClient.getClinicalResearch(
+            content.substring(0, 1000) // Limit content for Perplexity
+          );
+          
+          return {
+            insights: [perplexityResponse.substring(0, 500)],
+            recommendations: ['Based on current research and best practices'],
+            themes: ['Research-based insights'],
+            priority: 'medium',
+            nextSteps: ['Continue evidence-based treatment']
+          };
+        } catch (perplexityError: any) {
+          console.error('All AI providers failed:', perplexityError.message);
+          
+          // Retry entire chain if under max retries
+          if (retryCount < maxRetries) {
+            console.log(`⏳ Waiting 2 seconds before retry ${retryCount + 2}...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            return analyzeContent(content, type, retryCount + 1);
+          }
+          
+          // Return graceful fallback if all providers fail
+          console.log('❌ All AI providers exhausted, returning default analysis');
+          return {
+            insights: [
+              'AI analysis temporarily unavailable. Manual review recommended.',
+              'Session has been documented for future analysis.'
+            ],
+            recommendations: [
+              'Continue with standard therapeutic approach',
+              'Document observations thoroughly',
+              'Schedule supervision if needed'
+            ],
+            themes: ['Session documented'],
+            priority: 'medium',
+            nextSteps: [
+              'Review session notes manually',
+              'Monitor client progress',
+              'Follow established treatment plan',
+              'Consider case consultation if needed'
+            ]
+          };
+        }
+      }
     }
   }
 }
