@@ -1,9 +1,9 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { handleApiError, parseApiError, ErrorType } from "./errorUtils";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    throw res; // Throw the response object for better error parsing
   }
 }
 
@@ -11,8 +11,16 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
+  options?: {
+    skipErrorHandling?: boolean;
+    customErrorMessage?: string;
+  }
 ): Promise<Response> {
-  console.log(`API Request: ${method} ${url}`);
+  const { skipErrorHandling = false, customErrorMessage } = options || {};
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`API Request: ${method} ${url}`);
+  }
 
   const headers: any = {
     "Content-Type": "application/json",
@@ -24,31 +32,43 @@ export async function apiRequest(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const options: RequestInit = {
+  const requestOptions: RequestInit = {
     method,
     headers,
-    // Add timeout and retry logic
     signal: AbortSignal.timeout(30000), // 30 second timeout
   };
 
   if (data) {
-    options.body = JSON.stringify(data);
+    requestOptions.body = JSON.stringify(data);
   }
 
   try {
-    const response = await fetch(url, options);
+    const response = await fetch(url, requestOptions);
 
     if (!response.ok) {
-      console.error(`API Error: ${method} ${url} - ${response.status} ${response.statusText}`);
-      throw new Error(`HTTP error! status: ${response.status}`);
+      // Handle the error but let it propagate for proper handling
+      if (!skipErrorHandling) {
+        await handleApiError(response, {
+          showToast: true,
+          customMessage: customErrorMessage
+        });
+      }
+      throw response;
     }
 
     return response;
   } catch (error: any) {
-    // Handle specific network errors gracefully
-    if (error.name === 'AbortError' || error.message?.includes('Failed to fetch')) {
-      console.warn(`Network request failed for ${url}:`, error.message);
-      throw new Error('Network request failed - please check your connection');
+    // If error is already a Response, re-throw it
+    if (error instanceof Response) {
+      throw error;
+    }
+    
+    // Handle other errors
+    if (!skipErrorHandling) {
+      await handleApiError(error, {
+        showToast: true,
+        customMessage: customErrorMessage
+      });
     }
     throw error;
   }
@@ -68,17 +88,37 @@ export const getQueryFn: <T>(options: {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const res = await fetch(queryKey.join("/") as string, {
-      credentials: "include",
-      headers,
-    });
+    try {
+      const res = await fetch(queryKey.join("/") as string, {
+        credentials: "include",
+        headers,
+        signal: AbortSignal.timeout(30000), // Add timeout
+      });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
+      }
+
+      if (!res.ok) {
+        // Parse and handle error
+        const apiError = await parseApiError(res);
+        if (apiError.type === ErrorType.AUTHENTICATION) {
+          // Let the auth provider handle this
+          throw res;
+        }
+        // For other errors, throw the response
+        throw res;
+      }
+      
+      return await res.json();
+    } catch (error) {
+      // Handle network errors
+      if (error instanceof Response) {
+        throw error;
+      }
+      // For actual network errors, let the error boundary handle it
+      throw error;
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
   };
 
 export const queryClient = new QueryClient({
@@ -88,20 +128,37 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: 30 * 1000, // 30 seconds - allow some freshness for better UX
-      retry: (failureCount, error) => {
-        // Only retry on network errors, not on 4xx/5xx HTTP errors
-        if (error?.message?.includes('fetch')) {
-          return failureCount < 2; // Retry twice for network issues
+      retry: async (failureCount, error) => {
+        // Parse the error to determine if we should retry
+        if (error instanceof Response) {
+          const apiError = await parseApiError(error);
+          // Retry network errors and server errors (5xx)
+          if (apiError.type === ErrorType.NETWORK || (apiError.status && apiError.status >= 500)) {
+            return failureCount < 2;
+          }
+          // Don't retry client errors (4xx) or auth errors
+          return false;
         }
-        return false; // Don't retry HTTP errors
+        // Retry other network-related errors
+        if (error?.name === 'AbortError' || error?.message?.includes('fetch')) {
+          return failureCount < 2;
+        }
+        return false;
       },
       retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
     mutations: {
-      retry: (failureCount, error) => {
-        // Retry mutations only on network connectivity issues
-        if (error?.message?.includes('fetch') || error?.message?.includes('NetworkError')) {
-          return failureCount < 1; // Single retry for mutations
+      retry: async (failureCount, error) => {
+        // Similar retry logic for mutations but with fewer retries
+        if (error instanceof Response) {
+          const apiError = await parseApiError(error);
+          if (apiError.type === ErrorType.NETWORK) {
+            return failureCount < 1;
+          }
+          return false;
+        }
+        if (error?.name === 'AbortError' || error?.message?.includes('fetch')) {
+          return failureCount < 1;
         }
         return false;
       },

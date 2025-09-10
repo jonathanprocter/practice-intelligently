@@ -7,6 +7,12 @@ import { RefreshCw, Settings, LayoutGrid, Maximize2, Minimize2 } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { 
+  DashboardStatsSkeleton, 
+  TodaysScheduleSkeleton, 
+  ListSkeleton,
+  ContentSkeleton 
+} from "@/components/ui/skeletons";
 
 // Import core components directly (high priority)
 import QuickStats from "@/components/dashboard/quick-stats";
@@ -48,41 +54,18 @@ const getTherapistId = () => {
   return 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
 };
 
-// Loading Skeleton Component
+// Loading Skeleton Component (backwards compatibility wrapper)
 function DashboardSkeleton({ section = 'full' }: { section?: string }) {
   if (section === 'stats') {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="therapy-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="h-12 w-12 bg-gray-200 rounded-lg" />
-              <div className="h-4 w-4 bg-gray-200 rounded" />
-            </div>
-            <div className="h-8 w-24 bg-gray-300 rounded mb-2" />
-            <div className="h-4 w-32 bg-gray-200 rounded" />
-          </div>
-        ))}
-      </div>
-    );
+    return <DashboardStatsSkeleton />;
   }
-
-  return (
-    <div className="therapy-card p-6 animate-pulse">
-      <div className="h-6 w-40 bg-gray-200 rounded mb-4" />
-      <div className="space-y-3">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="flex gap-4">
-            <div className="h-12 w-12 bg-gray-200 rounded" />
-            <div className="flex-1 space-y-2">
-              <div className="h-4 w-3/4 bg-gray-200 rounded" />
-              <div className="h-3 w-1/2 bg-gray-200 rounded" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  if (section === 'schedule') {
+    return <TodaysScheduleSkeleton />;
+  }
+  if (section === 'list') {
+    return <ListSkeleton items={3} />;
+  }
+  return <ContentSkeleton lines={5} />;
 }
 
 // Dashboard Section Wrapper

@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ApiClient } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useLocation } from 'wouter';
+import { handleApiError, ErrorType, showWarningToast } from '@/lib/errorUtils';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -9,16 +11,110 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
+  handleAuthError: () => void;
+  refreshAuth: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Track if we've already shown session expired message (to avoid duplicates)
+let sessionExpiredShown = false;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [therapistId, setTherapistId] = useState<string | null>(null);
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  // Function to handle authentication errors globally
+  const handleAuthError = () => {
+    // Clear auth state
+    setIsAuthenticated(false);
+    setTherapistId(null);
+    setUser(null);
+    ApiClient.setTherapistId(null);
+    
+    // Clear local storage
+    localStorage.removeItem('auth');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('therapistId');
+    
+    // Show session expired message only once
+    if (!sessionExpiredShown) {
+      sessionExpiredShown = true;
+      showWarningToast(
+        'Session Expired',
+        'Your session has expired. Please log in again.'
+      );
+      
+      // Reset the flag after a delay
+      setTimeout(() => {
+        sessionExpiredShown = false;
+      }, 5000);
+    }
+    
+    // Redirect to login page
+    setLocation('/login');
+  };
+
+  // Refresh authentication token
+  const refreshAuth = async (): Promise<boolean> => {
+    try {
+      const response = await ApiClient.refreshToken();
+      if (response.token) {
+        localStorage.setItem('authToken', response.token);
+        return true;
+      }
+    } catch (error) {
+      handleAuthError();
+    }
+    return false;
+  };
+
+  // Set up global 401 handler
+  useEffect(() => {
+    // Intercept all fetch requests to handle 401 errors
+    const originalFetch = window.fetch;
+    
+    window.fetch = async (...args) => {
+      const response = await originalFetch(...args);
+      
+      // Check for 401 Unauthorized
+      if (response.status === 401) {
+        const url = typeof args[0] === 'string' ? args[0] : (args[0] as Request).url;
+        
+        // Don't redirect for login endpoint itself
+        if (!url.includes('/api/auth/login') && !url.includes('/api/auth/verify')) {
+          // Try to refresh the token first
+          const refreshed = await refreshAuth();
+          
+          if (!refreshed) {
+            // Refresh failed, handle auth error
+            handleAuthError();
+          } else {
+            // Retry the original request with new token
+            const token = localStorage.getItem('authToken');
+            if (token && args[1]) {
+              (args[1] as RequestInit).headers = {
+                ...(args[1] as RequestInit).headers,
+                'Authorization': `Bearer ${token}`
+              };
+            }
+            return originalFetch(...args);
+          }
+        }
+      }
+      
+      return response;
+    };
+    
+    // Cleanup on unmount
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, []);
 
   // Check for existing auth on mount
   useEffect(() => {
@@ -80,6 +176,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsAuthenticated(true);
         ApiClient.setTherapistId(response.therapistId);
         
+        // Reset session expired flag on successful login
+        sessionExpiredShown = false;
+        
         toast({
           title: "Login successful",
           description: "Welcome back to Practice Intelligence",
@@ -90,13 +189,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Invalid response from server');
       }
     } catch (error: any) {
+      // Handle the error but don't show toast here - it's handled in the login form
       console.error('Login error:', error);
-      toast({
-        title: "Login failed",
-        description: error.message || "Invalid username or password",
-        variant: "destructive",
+      
+      // Parse the error for better handling
+      const apiError = await handleApiError(error, { 
+        showToast: false // Don't show toast here, let the form handle it
       });
-      return false;
+      
+      // Throw the parsed error for the form to handle
+      throw apiError;
     }
   };
 
@@ -116,7 +218,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       title: "Logged out",
       description: "You have been successfully logged out",
     });
+    
+    // Redirect to login
+    setLocation('/login');
   };
+
+  // Set up periodic auth check (every 5 minutes)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    const checkInterval = setInterval(async () => {
+      try {
+        const isValid = await ApiClient.verifyAuth();
+        if (!isValid) {
+          handleAuthError();
+        }
+      } catch (error) {
+        // Silent fail for periodic checks
+        console.debug('Periodic auth check failed:', error);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    return () => clearInterval(checkInterval);
+  }, [isAuthenticated]);
 
   return (
     <AuthContext.Provider
@@ -127,6 +251,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         loading,
+        handleAuthError,
+        refreshAuth,
       }}
     >
       {children}
@@ -140,4 +266,18 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+}
+
+// Hook to handle authentication requirements in components
+export function useRequireAuth() {
+  const { isAuthenticated, loading } = useAuth();
+  const [, setLocation] = useLocation();
+  
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      setLocation('/login');
+    }
+  }, [isAuthenticated, loading, setLocation]);
+  
+  return { isAuthenticated, loading };
 }

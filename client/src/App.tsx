@@ -29,6 +29,8 @@ import SmartDocuments from "@/pages/smart-documents";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import CompassStable from "@/components/CompassStable";
+import { NetworkStatusIndicator } from "@/components/NetworkStatusIndicator";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import OAuthTestSimple from './pages/oauth-test-simple';
 import OAuthQuickTest from './pages/oauth-quick-test';
 import ContentViewer from './pages/content-viewer';
@@ -47,11 +49,14 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         <Header />
         <main className="p-2 xs:p-3 sm:p-4 lg:p-6 flex-1 min-h-0 overflow-y-auto iphone-scroll-container safe-area-bottom">
           <div className="main-content max-w-full touch-manipulation">
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
           </div>
         </main>
       </div>
       <CompassStable />
+      <NetworkStatusIndicator />
     </div>
   );
 }
@@ -139,17 +144,19 @@ function ProtectedRouter() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Switch>
-            <Route path="/login" component={Login} />
-            <Route component={ProtectedRouter} />
-          </Switch>
-          <Toaster />
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Switch>
+              <Route path="/login" component={Login} />
+              <Route component={ProtectedRouter} />
+            </Switch>
+            <Toaster />
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
