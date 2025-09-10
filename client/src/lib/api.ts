@@ -1,5 +1,6 @@
 // lib/api.ts
 import { apiRequest } from "./queryClient";
+import { DEFAULT_THERAPIST_ID } from "@shared/constants";
 
 // Types remain the same as your original file
 export interface DashboardStats {
@@ -130,70 +131,12 @@ export interface ApiStatus {
 
 // API Client with context-aware methods
 export class ApiClient {
-  // Store therapist ID in a static variable that can be set
-  private static currentTherapistId: string | null = null;
-
-  // Method to set the current therapist ID
-  static setTherapistId(therapistId: string | null) {
-    ApiClient.currentTherapistId = therapistId;
-  }
-
-  // Get therapist ID with fallback for backwards compatibility
+  // Get therapist ID - always returns the default for single-user system
   static getTherapistId(): string {
-    if (ApiClient.currentTherapistId) {
-      return ApiClient.currentTherapistId;
-    }
-
-    // Try to get from localStorage as fallback
-    if (typeof localStorage !== 'undefined') {
-      const storedAuth = localStorage.getItem('auth');
-      if (storedAuth) {
-        try {
-          const auth = JSON.parse(storedAuth);
-          if (auth.therapistId) {
-            return auth.therapistId;
-          }
-        } catch (e) {
-          // Silent handling for better stability
-        }
-      }
-    }
-
-    // Default therapist ID for the system
-    return 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+    return DEFAULT_THERAPIST_ID;
   }
 
-  // Auth methods
-  static async login(username: string, password: string): Promise<any> {
-    const response = await apiRequest('POST', '/api/auth/login', { username, password });
-    const data = await response.json();
-
-    // Set the therapist ID after successful login
-    if (data.therapistId) {
-      ApiClient.setTherapistId(data.therapistId);
-    }
-
-    return data;
-  }
-
-  static async logout(): Promise<void> {
-    await apiRequest('POST', '/api/auth/logout');
-    ApiClient.setTherapistId(null);
-  }
-
-  static async verifyAuth(): Promise<boolean> {
-    try {
-      const response = await apiRequest('GET', '/api/auth/verify');
-      return response.ok;
-    } catch {
-      return false;
-    }
-  }
-
-  static async refreshToken(): Promise<any> {
-    const response = await apiRequest('POST', '/api/auth/refresh');
-    return response.json();
-  }
+  // Removed auth methods - no longer needed for single-user system
 
   // Dashboard methods
   static async getDashboardStats(): Promise<DashboardStats> {

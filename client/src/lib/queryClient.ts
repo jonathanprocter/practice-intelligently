@@ -26,12 +26,6 @@ export async function apiRequest(
     "Content-Type": "application/json",
   };
 
-  // Add authentication token if available
-  const token = localStorage.getItem('authToken');
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
   const requestOptions: RequestInit = {
     method,
     headers,
@@ -80,33 +74,16 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const headers: HeadersInit = {};
-    
-    // Add authentication token if available
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
     try {
       const res = await fetch(queryKey.join("/") as string, {
         credentials: "include",
-        headers,
         signal: AbortSignal.timeout(30000), // Add timeout
       });
-
-      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-        return null;
-      }
 
       if (!res.ok) {
         // Parse and handle error
         const apiError = await parseApiError(res);
-        if (apiError.type === ErrorType.AUTHENTICATION) {
-          // Let the auth provider handle this
-          throw res;
-        }
-        // For other errors, throw the response
+        // For errors, throw the response
         throw res;
       }
       

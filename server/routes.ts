@@ -44,7 +44,7 @@ import { registerEnhancedTimelineRoutes } from './routes/enhanced-timeline-route
 import { registerCriticalFixes } from './fixes/critical-bugs-and-improvements';
 import { registerAIEnhancedRoutes } from './routes/ai-enhanced-routes';
 import OpenAI from 'openai';
-import authRoutes from './routes/auth-routes';
+// Auth routes removed - single-user system
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -121,7 +121,7 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
   registerTimelineRoutes(app);
   registerEnhancedTimelineRoutes(app);
   registerAIEnhancedRoutes(app);
-  app.use('/api/auth', authRoutes);
+  // Auth routes removed - single-user system
 
   // Create and return server
   const server = createServer(app);
