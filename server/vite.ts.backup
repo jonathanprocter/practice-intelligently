@@ -56,7 +56,6 @@ export async function setupVite(app: Express, server: Server) {
 
     try {
       const url = req.originalUrl;
-      const indexTemplate = fs.readFileSync(path.resolve(__dirname, "../client/index.html"), "utf-8");
       let template = await vite.transformIndexHtml(url, indexTemplate);
       res.status(200).set({ "Content-Type": "text/html" }).end(template);
     } catch (e) {

@@ -40,7 +40,7 @@ window.addEventListener('error', (event) => {
 });
 
 // Disable HMR overlay for development and handle connection issues
-if (import.meta.env.DEV && typeof window !== 'undefined') {
+if (import.meta.env?.DEV && typeof window !== 'undefined') {
   window.__vite_plugin_react_preamble_installed__ = true;
   
   // Add HMR connection retry logic
