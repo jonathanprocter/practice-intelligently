@@ -648,3 +648,4 @@ export class ApiClient {
   static async markInsightAsRead(insightId: string): Promise<void> {
     await apiRequest('PATCH', `/api/ai-insights/${insightId}/read`);
   }
+}

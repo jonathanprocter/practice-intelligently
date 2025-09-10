@@ -1,6 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { optimizedStorage } from "./storage-optimized";
+import { performanceMiddleware } from "./middleware/compression";
 import { analyzeContent, analyzeSessionTranscript } from "./ai-services";
 import { multiModelAI } from './ai-multi-model';
 import { perplexityClient } from './perplexity';
@@ -3045,9 +3047,12 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
 
   // Calendar events without therapist ID (frontend compatibility)
   app.get('/api/calendar/events', async (req, res) => {
+    console.log('📅 /api/calendar/events endpoint hit');
     try {
       const { timeMin, timeMax, calendarId } = req.query;
+      console.log('📅 Query params:', { timeMin, timeMax, calendarId });
       const { simpleOAuth } = await import('./oauth-simple');
+      console.log('📅 OAuth module imported successfully');
 
       if (!simpleOAuth.isConnected()) {
         return res.status(401).json({ error: 'Google Calendar not connected', requiresAuth: true });
@@ -3117,9 +3122,10 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
         console.log(`📊 Found ${allEvents.length} events in calendar: ${calendarId}`);
       }
 
+      console.log(`📅 Returning ${allEvents.length} events`);
       res.json(allEvents);
     } catch (error: any) {
-      console.error('Error getting calendar events:', error);
+      console.error('Error getting calendar events:', error.message, error.stack);
       if (error.message?.includes('authentication') || error.message?.includes('expired')) {
         return res.status(401).json({ error: 'Authentication expired. Please re-authenticate.', requiresAuth: true });
       }
@@ -3311,8 +3317,11 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
   });
 
   app.get('/api/auth/google/status', async (req, res) => {
+    console.log('🔐 /api/auth/google/status endpoint hit');
     try {
+      console.log('🔐 Importing oauth-simple module...');
       const { simpleOAuth } = await import('./oauth-simple');
+      console.log('🔐 OAuth module imported successfully');
 
       const isConnected = simpleOAuth.isConnected();
       const status = {
