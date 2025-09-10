@@ -84,4 +84,12 @@ echo ""
 # Set environment variables and start the production server
 export PORT=3000
 export NODE_ENV=production
-node dist/index.js
+
+# Check if the new production server exists, build if needed
+if [ ! -f "dist/production-server.js" ]; then
+    echo -e "${YELLOW}Building production server...${NC}"
+    ./scripts/build-production.sh
+fi
+
+# Use the new production server with proper API routing
+node dist/production-server.js
