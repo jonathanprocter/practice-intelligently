@@ -1311,16 +1311,18 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
     }
   });
 
-  // Search clients by name (put this BEFORE the therapistId route to avoid collision)
+  // Enhanced search clients with fuzzy matching and multiple fields
   app.get("/api/clients/search", async (req, res) => {
     try {
-      const { name } = req.query;
-      if (!name) {
-        return res.status(400).json({ error: "Name parameter is required" });
+      const { name, q, field, status, riskLevel, tags } = req.query;
+      const searchQuery = name || q;
+      if (!searchQuery) {
+        return res.status(400).json({ error: "Search query parameter 'name' or 'q' is required" });
       }
 
-      const clients = await storage.getClients('e66b8b8e-e7a2-40b9-ae74-00c93ffe503c');
-      const searchTerm = (name as string).toLowerCase().trim();
+      const therapistId = req.headers['x-therapist-id'] as string || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      const clients = await storage.getClients(therapistId);
+      const searchTerm = (searchQuery as string).toLowerCase().trim();
 
       // Common nickname mappings for better matching
       const nicknameMap: Record<string, string[]> = {
@@ -1473,6 +1475,26 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
     try {
       const clientData = req.body;
 
+      // Enhanced validation
+      if (!clientData.firstName || !clientData.lastName) {
+        return res.status(400).json({ error: "First name and last name are required" });
+      }
+
+      // Check for duplicate clients
+      const existingClients = await storage.getClients(clientData.therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c');
+      const duplicate = existingClients.find(c => 
+        c.firstName?.toLowerCase() === clientData.firstName?.toLowerCase() &&
+        c.lastName?.toLowerCase() === clientData.lastName?.toLowerCase() &&
+        c.dateOfBirth === clientData.dateOfBirth
+      );
+      
+      if (duplicate) {
+        return res.status(409).json({ 
+          error: "A client with this name and date of birth already exists",
+          existingClient: duplicate
+        });
+      }
+
       // Convert date string fields to Date objects if they exist
       const dateFields = ['dateOfBirth', 'hipaaSignedDate', 'lastContact'];
       dateFields.forEach(field => {
@@ -1481,8 +1503,30 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
         }
       });
 
+      // Validate email format if provided
+      if (clientData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientData.email)) {
+        return res.status(400).json({ error: "Invalid email format" });
+      }
+
+      // Validate phone format if provided
+      if (clientData.phone && !/^[\d\s\-\(\)\+]+$/.test(clientData.phone)) {
+        return res.status(400).json({ error: "Invalid phone format" });
+      }
+
       const validatedData = insertClientSchema.parse(clientData);
       const client = await storage.createClient(validatedData);
+      
+      // Create audit log entry
+      await storage.createAuditLog({
+        userId: clientData.therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+        action: 'CREATE_CLIENT',
+        entityType: 'client',
+        entityId: client.id,
+        details: { clientName: `${client.firstName} ${client.lastName}` },
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.headers['user-agent'] || 'unknown'
+      });
+      
       res.json(client);
     } catch (error) {
       console.error("Error creating client:", error);
@@ -1499,6 +1543,22 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
       const { id } = req.params;
       const updates = req.body;
 
+      // Get existing client for audit trail
+      const existingClient = await storage.getClient(id);
+      if (!existingClient) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+
+      // Validate email format if provided
+      if (updates.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updates.email)) {
+        return res.status(400).json({ error: "Invalid email format" });
+      }
+
+      // Validate phone format if provided
+      if (updates.phone && !/^[\d\s\-\(\)\+]+$/.test(updates.phone)) {
+        return res.status(400).json({ error: "Invalid phone format" });
+      }
+
       // Convert date string fields to Date objects if they exist
       const processedUpdates = { ...updates };
       const dateFields = ['dateOfBirth', 'hipaaSignedDate', 'lastContact'];
@@ -1509,7 +1569,35 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
         }
       });
 
+      // Track changes for audit log
+      const changes: any = {};
+      Object.keys(processedUpdates).forEach(key => {
+        if (existingClient[key as keyof typeof existingClient] !== processedUpdates[key]) {
+          changes[key] = {
+            old: existingClient[key as keyof typeof existingClient],
+            new: processedUpdates[key]
+          };
+        }
+      });
+
       const client = await storage.updateClient(id, processedUpdates);
+      
+      // Create audit log entry if there were changes
+      if (Object.keys(changes).length > 0) {
+        await storage.createAuditLog({
+          userId: existingClient.therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+          action: 'UPDATE_CLIENT',
+          entityType: 'client',
+          entityId: id,
+          details: { 
+            clientName: `${client.firstName} ${client.lastName}`,
+            changes
+          },
+          ipAddress: req.ip || 'unknown',
+          userAgent: req.headers['user-agent'] || 'unknown'
+        });
+      }
+      
       res.json(client);
     } catch (error) {
       console.error("Error updating client:", error);
@@ -1521,13 +1609,70 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
     }
   });
 
-  // Delete client endpoint
+  // Enhanced delete client endpoint with soft delete option
   app.delete("/api/clients/:id", async (req, res) => {
     try {
       const { id } = req.params;
+      const { soft = false, reason } = req.query;
 
-      await storage.deleteClient(id);
-      res.json({ success: true, message: "Client deleted successfully" });
+      // Get client for audit trail
+      const client = await storage.getClient(id);
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+
+      // Check for related data
+      const appointments = await storage.getAppointmentsByClient(id);
+      const sessionNotes = await storage.getSessionNotesByClientId(id);
+      
+      if ((appointments.length > 0 || sessionNotes.length > 0) && !soft) {
+        return res.status(400).json({ 
+          error: "Cannot delete client with existing data",
+          suggestion: "Use soft delete to archive the client instead",
+          relatedData: {
+            appointments: appointments.length,
+            sessionNotes: sessionNotes.length
+          }
+        });
+      }
+
+      if (soft === 'true' || soft === true) {
+        // Soft delete - archive the client
+        await storage.updateClient(id, { status: 'archived' });
+        
+        await storage.createAuditLog({
+          userId: client.therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+          action: 'ARCHIVE_CLIENT',
+          entityType: 'client',
+          entityId: id,
+          details: { 
+            clientName: `${client.firstName} ${client.lastName}`,
+            reason: reason || 'No reason provided'
+          },
+          ipAddress: req.ip || 'unknown',
+          userAgent: req.headers['user-agent'] || 'unknown'
+        });
+        
+        res.json({ success: true, message: "Client archived successfully", archived: true });
+      } else {
+        // Hard delete
+        await storage.deleteClient(id);
+        
+        await storage.createAuditLog({
+          userId: client.therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+          action: 'DELETE_CLIENT',
+          entityType: 'client',
+          entityId: id,
+          details: { 
+            clientName: `${client.firstName} ${client.lastName}`,
+            reason: reason || 'No reason provided'
+          },
+          ipAddress: req.ip || 'unknown',
+          userAgent: req.headers['user-agent'] || 'unknown'
+        });
+        
+        res.json({ success: true, message: "Client permanently deleted" });
+      }
     } catch (error) {
       console.error("Error deleting client:", error);
       res.status(500).json({ error: "Failed to delete client" });
@@ -1581,6 +1726,207 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
     } catch (error) {
       console.error("Error fetching client:", error);
       res.status(500).json({ error: "Failed to fetch client" });
+    }
+  });
+
+  // Get client audit trail
+  app.get("/api/clients/:id/audit", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { limit = 50 } = req.query;
+      
+      const auditLogs = await storage.getAuditLogs({
+        entityType: 'client',
+        entityId: id,
+        limit: parseInt(limit as string)
+      });
+      
+      res.json(auditLogs);
+    } catch (error) {
+      console.error("Error fetching client audit trail:", error);
+      res.status(500).json({ error: "Failed to fetch audit trail" });
+    }
+  });
+
+  // Get client analytics and statistics
+  app.get("/api/clients/:id/analytics", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Get all related data for analytics
+      const [appointments, sessionNotes, actionItems] = await Promise.all([
+        storage.getAppointmentsByClient(id),
+        storage.getSessionNotesByClientId(id),
+        storage.getActionItemsByClient(id)
+      ]);
+      
+      // Calculate analytics
+      const totalSessions = appointments.filter(a => a.status === 'completed').length;
+      const missedSessions = appointments.filter(a => a.status === 'no-show').length;
+      const upcomingSessions = appointments.filter(a => 
+        new Date(a.startTime) > new Date() && a.status === 'scheduled'
+      ).length;
+      
+      const firstAppointment = appointments
+        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())[0];
+      const lastAppointment = appointments
+        .filter(a => a.status === 'completed')
+        .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())[0];
+      
+      const analytics = {
+        totalSessions,
+        missedSessions,
+        upcomingSessions,
+        attendanceRate: totalSessions > 0 ? 
+          ((totalSessions / (totalSessions + missedSessions)) * 100).toFixed(1) : 0,
+        totalNotes: sessionNotes.length,
+        pendingActionItems: actionItems.filter(item => item.status === 'pending').length,
+        completedActionItems: actionItems.filter(item => item.status === 'completed').length,
+        firstSessionDate: firstAppointment?.startTime || null,
+        lastSessionDate: lastAppointment?.startTime || null,
+        treatmentDuration: firstAppointment && lastAppointment ? 
+          Math.floor((new Date(lastAppointment.startTime).getTime() - 
+                      new Date(firstAppointment.startTime).getTime()) / (1000 * 60 * 60 * 24)) : 0
+      };
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching client analytics:", error);
+      res.status(500).json({ error: "Failed to fetch client analytics" });
+    }
+  });
+
+  // Update client tags
+  app.patch("/api/clients/:id/tags", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { tags } = req.body;
+      
+      if (!Array.isArray(tags)) {
+        return res.status(400).json({ error: "Tags must be an array" });
+      }
+      
+      const client = await storage.getClient(id);
+      if (!client) {
+        return res.status(404).json({ error: "Client not found" });
+      }
+      
+      // Update client with new tags
+      const updatedClient = await storage.updateClient(id, { 
+        primaryConcerns: { 
+          ...(client.primaryConcerns as any || {}), 
+          tags 
+        } 
+      });
+      
+      await storage.createAuditLog({
+        userId: client.therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+        action: 'UPDATE_CLIENT_TAGS',
+        entityType: 'client',
+        entityId: id,
+        details: { 
+          clientName: `${client.firstName} ${client.lastName}`,
+          tags
+        },
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.headers['user-agent'] || 'unknown'
+      });
+      
+      res.json(updatedClient);
+    } catch (error) {
+      console.error("Error updating client tags:", error);
+      res.status(500).json({ error: "Failed to update client tags" });
+    }
+  });
+
+  // Batch update client status
+  app.patch("/api/clients/batch/status", async (req, res) => {
+    try {
+      const { clientIds, status } = req.body;
+      
+      if (!Array.isArray(clientIds) || clientIds.length === 0) {
+        return res.status(400).json({ error: "Client IDs must be a non-empty array" });
+      }
+      
+      const validStatuses = ['active', 'inactive', 'archived'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: "Invalid status. Must be one of: " + validStatuses.join(', ') });
+      }
+      
+      const updatedClients = [];
+      const errors = [];
+      
+      for (const clientId of clientIds) {
+        try {
+          const client = await storage.updateClient(clientId, { status });
+          updatedClients.push(client);
+          
+          await storage.createAuditLog({
+            userId: client.therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+            action: 'BATCH_UPDATE_STATUS',
+            entityType: 'client',
+            entityId: clientId,
+            details: { 
+              clientName: `${client.firstName} ${client.lastName}`,
+              newStatus: status
+            },
+            ipAddress: req.ip || 'unknown',
+            userAgent: req.headers['user-agent'] || 'unknown'
+          });
+        } catch (error) {
+          errors.push({ clientId, error: error instanceof Error ? error.message : 'Unknown error' });
+        }
+      }
+      
+      res.json({
+        success: true,
+        updated: updatedClients.length,
+        errors: errors.length,
+        clients: updatedClients,
+        errorDetails: errors
+      });
+    } catch (error) {
+      console.error("Error in batch status update:", error);
+      res.status(500).json({ error: "Failed to update client statuses" });
+    }
+  });
+
+  // Export clients to CSV
+  app.get("/api/clients/export/csv", async (req, res) => {
+    try {
+      const { therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', status } = req.query;
+      
+      let clients = await storage.getClients(therapistId as string);
+      
+      if (status) {
+        clients = clients.filter(c => c.status === status);
+      }
+      
+      // Convert to CSV format
+      const headers = ['ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Date of Birth', 'Gender', 'Status', 'Risk Level'];
+      const rows = clients.map(c => [
+        c.id,
+        c.firstName,
+        c.lastName,
+        c.email || '',
+        c.phone || '',
+        c.dateOfBirth ? new Date(c.dateOfBirth).toLocaleDateString() : '',
+        c.gender || '',
+        c.status,
+        c.riskLevel || ''
+      ]);
+      
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="clients_${new Date().toISOString().split('T')[0]}.csv"`);
+      res.send(csvContent);
+    } catch (error) {
+      console.error("Error exporting clients:", error);
+      res.status(500).json({ error: "Failed to export clients" });
     }
   });
 
