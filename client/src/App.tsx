@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "../contexts/AuthContext";
+import { WebSocketProvider } from "@/contexts/WebSocketContext";
 import { ApiClient } from "@/lib/api";
 import Dashboard from "@/pages/dashboard";
 import Clients from "@/pages/clients";
@@ -30,11 +31,13 @@ import DocumentBatchTest from "@/pages/document-batch-test";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import CompassStable from "@/components/CompassStable";
+import { RealtimeNotifications } from "@/components/common/RealtimeNotifications";
 import OAuthTestSimple from './pages/oauth-test-simple';
 import OAuthQuickTest from './pages/oauth-quick-test';
 import ContentViewer from './pages/content-viewer';
 import ReauthGoogle from './pages/reauth-google';
 import TestTimeline from './pages/test-timeline';
+import WebSocketTest from './pages/websocket-test';
 
 const OAuthTest = lazy(() => import("./pages/oauth-test"));
 const OAuthSimple = lazy(() => import("./pages/oauth-simple"));
@@ -54,6 +57,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
       </div>
       <CompassStable />
+      <RealtimeNotifications />
     </div>
   );
 }
@@ -92,6 +96,7 @@ function Router() {
       <Route path="/content-viewer" component={ContentViewer} />
       <Route path="/reauth-google" component={ReauthGoogle} />
       <Route path="/test-timeline" component={TestTimeline} />
+      <Route path="/websocket-test" component={WebSocketTest} />
       <Route path="/settings" component={Settings} />
 
       <Route path="/oauth-test">
@@ -129,12 +134,14 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider delayDuration={400}>
-          <Toaster />
-          <AppLayout>
-            <Router />
-          </AppLayout>
-        </TooltipProvider>
+        <WebSocketProvider autoConnect={true}>
+          <TooltipProvider delayDuration={400}>
+            <Toaster />
+            <AppLayout>
+              <Router />
+            </AppLayout>
+          </TooltipProvider>
+        </WebSocketProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
