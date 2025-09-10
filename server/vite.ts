@@ -42,7 +42,7 @@ export async function setupVite(app: Express, server: Server) {
       }
     },
     appType: "spa",
-    root: path.resolve(__dirname, "../client"),
+    root: path.resolve(import.meta.dirname || dirname(fileURLToPath(import.meta.url)), "../client"),
   });
 
   app.use(vite.ssrFixStacktrace);
@@ -56,7 +56,7 @@ export async function setupVite(app: Express, server: Server) {
 
     try {
       const url = req.originalUrl;
-      const indexTemplate = fs.readFileSync(path.resolve(__dirname, "../client/index.html"), "utf-8");
+      const indexTemplate = fs.readFileSync(path.resolve(import.meta.dirname || dirname(fileURLToPath(import.meta.url)), "../client/index.html"), "utf-8");
       let template = await vite.transformIndexHtml(url, indexTemplate);
       res.status(200).set({ "Content-Type": "text/html" }).end(template);
     } catch (e) {

@@ -1,6 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   root: path.resolve(__dirname, './client'),
@@ -9,14 +12,13 @@ export default defineConfig({
     outDir: path.resolve(__dirname, './dist/public'),
     emptyOutDir: true,
     sourcemap: false,
-    minify: false, // Disable minification to reduce memory usage
+    minify: false,
     chunkSizeWarningLimit: 5000,
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, './client/index.html')
       },
       output: {
-        // Disable code splitting to reduce memory usage
         manualChunks: undefined,
         inlineDynamicImports: true
       }
