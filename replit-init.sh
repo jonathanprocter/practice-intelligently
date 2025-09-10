@@ -81,8 +81,7 @@ echo ""
 echo -e "${GREEN}✨ Starting development server with preview...${NC}"
 echo ""
 
-# Set environment variables and start the production server
+# Set environment variables and start the development server
 export PORT=3000
-export NODE_ENV=production
-echo "Starting production server..."
-node dist/index.js
+export NODE_ENV=development
+npm run dev
