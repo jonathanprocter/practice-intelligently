@@ -43,6 +43,7 @@ import { registerDocumentBatchRoutes } from './routes/document-batch-routes';
 import { aiIntegrationService } from './ai-integration-service';
 import { enhancedAIAutomation } from './ai-automation-enhanced';
 import { bidirectionalCalendarSync } from './calendar-bidirectional-sync';
+import { searchService } from './search-service';
 import OpenAI from 'openai';
 
 // Initialize OpenAI client
@@ -1394,6 +1395,218 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
       res.status(500).json({ error: "Failed to search clients" });
     }
   });
+
+  // ===== COMPREHENSIVE SEARCH API ENDPOINTS =====
+  
+  // Global search across all entities
+  app.get("/api/search", async (req, res) => {
+    try {
+      const { 
+        q, 
+        entities, 
+        dateFrom, 
+        dateTo, 
+        status, 
+        tags, 
+        categories,
+        limit = 20,
+        offset = 0,
+        sortBy = 'relevance',
+        sortOrder = 'desc'
+      } = req.query;
+
+      if (!q) {
+        return res.status(400).json({ error: "Search query parameter 'q' is required" });
+      }
+
+      const therapistId = req.headers['x-therapist-id'] as string || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+
+      const searchOptions = {
+        query: q as string,
+        filters: {
+          therapistId,
+          dateFrom: dateFrom ? new Date(dateFrom as string) : undefined,
+          dateTo: dateTo ? new Date(dateTo as string) : undefined,
+          status: status ? (status as string).split(',') : undefined,
+          tags: tags ? (tags as string).split(',') : undefined,
+          categories: categories ? (categories as string).split(',') : undefined,
+        },
+        entityTypes: entities ? (entities as string).split(',') : undefined,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+        sortBy: sortBy as 'relevance' | 'date' | 'name',
+        sortOrder: sortOrder as 'asc' | 'desc'
+      };
+
+      const results = await searchService.globalSearch(searchOptions);
+      
+      // Save to search history
+      await searchService.saveSearchHistory(
+        therapistId,
+        q as string,
+        entities as string,
+        searchOptions.filters,
+        results.totalCount
+      );
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error performing global search:", error);
+      res.status(500).json({ error: "Failed to perform search" });
+    }
+  });
+
+  // Search clients with advanced filters
+  app.get("/api/search/clients", async (req, res) => {
+    try {
+      const { q, status, limit = 10, offset = 0 } = req.query;
+      
+      if (!q) {
+        return res.status(400).json({ error: "Search query parameter 'q' is required" });
+      }
+
+      const therapistId = req.headers['x-therapist-id'] as string || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      
+      const results = await searchService.searchClients(
+        q as string,
+        therapistId,
+        { status: status ? [status as string] : undefined },
+        parseInt(limit as string),
+        parseInt(offset as string)
+      );
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching clients:", error);
+      res.status(500).json({ error: "Failed to search clients" });
+    }
+  });
+
+  // Search appointments with date range
+  app.get("/api/search/appointments", async (req, res) => {
+    try {
+      const { q, dateFrom, dateTo, status, limit = 10, offset = 0 } = req.query;
+      
+      if (!q) {
+        return res.status(400).json({ error: "Search query parameter 'q' is required" });
+      }
+
+      const therapistId = req.headers['x-therapist-id'] as string || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      
+      const results = await searchService.searchAppointments(
+        q as string,
+        therapistId,
+        {
+          dateFrom: dateFrom ? new Date(dateFrom as string) : undefined,
+          dateTo: dateTo ? new Date(dateTo as string) : undefined,
+          status: status ? [status as string] : undefined
+        },
+        parseInt(limit as string),
+        parseInt(offset as string)
+      );
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching appointments:", error);
+      res.status(500).json({ error: "Failed to search appointments" });
+    }
+  });
+
+  // Search session notes
+  app.get("/api/search/session-notes", async (req, res) => {
+    try {
+      const { q, clientId, limit = 10, offset = 0 } = req.query;
+      
+      if (!q) {
+        return res.status(400).json({ error: "Search query parameter 'q' is required" });
+      }
+
+      const therapistId = req.headers['x-therapist-id'] as string || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      
+      const results = await searchService.searchSessionNotes(
+        q as string,
+        therapistId,
+        { clientId: clientId as string },
+        parseInt(limit as string),
+        parseInt(offset as string)
+      );
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching session notes:", error);
+      res.status(500).json({ error: "Failed to search session notes" });
+    }
+  });
+
+  // Search documents
+  app.get("/api/search/documents", async (req, res) => {
+    try {
+      const { q, category, limit = 10, offset = 0 } = req.query;
+      
+      if (!q) {
+        return res.status(400).json({ error: "Search query parameter 'q' is required" });
+      }
+
+      const therapistId = req.headers['x-therapist-id'] as string || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      
+      const results = await searchService.searchDocuments(
+        q as string,
+        therapistId,
+        { categories: category ? [category as string] : undefined },
+        parseInt(limit as string),
+        parseInt(offset as string)
+      );
+
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching documents:", error);
+      res.status(500).json({ error: "Failed to search documents" });
+    }
+  });
+
+  // Get search history
+  app.get("/api/search/history", async (req, res) => {
+    try {
+      const therapistId = req.headers['x-therapist-id'] as string || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      const history = await searchService.getSearchHistory(therapistId);
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching search history:", error);
+      res.status(500).json({ error: "Failed to fetch search history" });
+    }
+  });
+
+  // Save a search preset
+  app.post("/api/search/saved", async (req, res) => {
+    try {
+      const therapistId = req.headers['x-therapist-id'] as string || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      const { name, query, entityType, filters } = req.body;
+
+      if (!name || !query) {
+        return res.status(400).json({ error: "Name and query are required" });
+      }
+
+      await searchService.saveSearchPreset(therapistId, name, query, entityType, filters);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error saving search preset:", error);
+      res.status(500).json({ error: "Failed to save search preset" });
+    }
+  });
+
+  // Get saved searches
+  app.get("/api/search/saved", async (req, res) => {
+    try {
+      const therapistId = req.headers['x-therapist-id'] as string || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
+      const savedSearches = await searchService.getSavedSearches(therapistId);
+      res.json(savedSearches);
+    } catch (error) {
+      console.error("Error fetching saved searches:", error);
+      res.status(500).json({ error: "Failed to fetch saved searches" });
+    }
+  });
+
+  // ===== END SEARCH API ENDPOINTS =====
 
   // Debug endpoint to find specific calendar event
   app.get("/api/calendar/event/:eventId", async (req, res) => {

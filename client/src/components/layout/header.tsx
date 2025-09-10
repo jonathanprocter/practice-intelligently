@@ -4,6 +4,7 @@ import IntegrationStatus from "@/components/ui/integration-status";
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient } from "@/lib/api";
 import { WebSocketStatus } from "@/components/common/WebSocketStatus";
+import { GlobalSearchBar } from "@/components/search/GlobalSearchBar";
 // Temporarily using a placeholder for profile image until asset is available
 const profileImage = 'data:image/svg+xml,%3csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"%3e%3ccircle cx="20" cy="20" r="20" fill="%23ddd"/%3e%3ctext x="20" y="25" text-anchor="middle" fill="%23666" font-size="14"%3eJP%3c/text%3e%3c/svg%3e';
 
@@ -35,6 +36,10 @@ export default function Header() {
         </div>
         
         <div className="flex items-center space-x-1 xs:space-x-2 sm:space-x-4 flex-shrink-0">
+          <div className="hidden md:block">
+            <GlobalSearchBar className="w-64" />
+          </div>
+          
           <div className="hidden md:flex items-center gap-2">
             <WebSocketStatus />
             <IntegrationStatus />
