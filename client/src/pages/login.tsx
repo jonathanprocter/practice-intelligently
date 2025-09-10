@@ -131,11 +131,18 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-therapy-primary/10 to-therapy-secondary/10 p-4">
-      <Card className="w-full max-w-md shadow-xl">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-therapy-primary/20 via-therapy-primary/10 to-therapy-success/10 p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-therapy-primary/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-therapy-success/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-therapy-info/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }} />
+      </div>
+      
+      <Card className="w-full max-w-md shadow-2xl backdrop-blur-md bg-white/95 border-0 relative z-10 animate-fadeIn">
         <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center mb-4">
-            <div className="p-3 rounded-full bg-therapy-primary/10">
+          <div className="flex items-center justify-center mb-6">
+            <div className="p-4 rounded-full bg-gradient-to-br from-therapy-primary/20 to-therapy-primary/10 shadow-lg animate-pulse">
               <svg
                 viewBox="0 0 200 260"
                 className="w-16 h-16"
@@ -154,10 +161,10 @@ export default function Login() {
               </svg>
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-center">
+          <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-therapy-primary to-therapy-primary-dark bg-clip-text text-transparent">
             Practice Intelligence
           </CardTitle>
-          <CardDescription className="text-center">
+          <CardDescription className="text-center text-base text-therapy-text/70">
             Sign in to access your therapy practice management system
           </CardDescription>
         </CardHeader>
