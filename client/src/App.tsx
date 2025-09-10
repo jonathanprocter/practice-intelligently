@@ -38,6 +38,7 @@ import ContentViewer from './pages/content-viewer';
 import ReauthGoogle from './pages/reauth-google';
 import TestTimeline from './pages/test-timeline';
 import WebSocketTest from './pages/websocket-test';
+import SearchResults from './pages/search-results';
 
 const OAuthTest = lazy(() => import("./pages/oauth-test"));
 const OAuthSimple = lazy(() => import("./pages/oauth-simple"));
@@ -93,6 +94,7 @@ function Router() {
       <Route path="/action-items" component={ActionItems} />
       <Route path="/analytics" component={Analytics} />
       <Route path="/ai-insights" component={AiInsights} />
+      <Route path="/search/:query?" component={SearchResults} />
       <Route path="/content-viewer" component={ContentViewer} />
       <Route path="/reauth-google" component={ReauthGoogle} />
       <Route path="/test-timeline" component={TestTimeline} />
