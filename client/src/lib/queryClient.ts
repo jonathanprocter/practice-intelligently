@@ -14,11 +14,19 @@ export async function apiRequest(
 ): Promise<Response> {
   console.log(`API Request: ${method} ${url}`);
 
+  const headers: any = {
+    "Content-Type": "application/json",
+  };
+
+  // Add authentication token if available
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const options: RequestInit = {
     method,
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers,
     // Add timeout and retry logic
     signal: AbortSignal.timeout(30000), // 30 second timeout
   };
@@ -52,8 +60,17 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const headers: HeadersInit = {};
+    
+    // Add authentication token if available
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const res = await fetch(queryKey.join("/") as string, {
       credentials: "include",
+      headers,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

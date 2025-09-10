@@ -1,12 +1,24 @@
-import { Bell } from "lucide-react";
+import { Bell, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import IntegrationStatus from "@/components/ui/integration-status";
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLocation } from "wouter";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 // Replaced problematic image import with placeholder
 // Original: import profileImage from '@assets/image_1754410832108.png';
 
 export default function Header() {
+  const { user, logout } = useAuth();
+  const [, setLocation] = useLocation();
   const currentDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -22,6 +34,11 @@ export default function Header() {
   });
 
   const notificationCount = urgentActionItems?.length || 0;
+
+  const handleLogout = () => {
+    logout();
+    setLocation('/login');
+  };
 
   return (
     <header className="bg-white border-b border-therapy-border p-2 xs:p-3 sm:p-4 lg:p-6 header-safe sticky top-0 z-40 backdrop-blur-md bg-white/95">
@@ -42,7 +59,7 @@ export default function Header() {
             variant="ghost" 
             size="icon" 
             className="relative min-h-[48px] min-w-[48px] xs:min-h-[44px] xs:min-w-[44px] p-2 touch-manipulation iphone-button-enhanced rounded-xl"
-            data-testid="notifications-button"
+            data-testid="button-notifications"
             style={{
               WebkitTapHighlightColor: 'rgba(100, 149, 237, 0.1)',
               WebkitTouchCallout: 'none'
@@ -56,17 +73,50 @@ export default function Header() {
             )}
           </Button>
           
-          <div className="flex items-center space-x-2 xs:space-x-3">
-            <img 
-              src="https://api.dicebear.com/7.x/initials/svg?seed=JP" 
-              alt="Dr. Jonathan Procter" 
-              className="w-10 h-10 xs:w-8 xs:h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-white shadow-sm"
-            />
-            <div className="hidden sm:block min-w-0">
-              <p className="font-medium text-therapy-text text-sm truncate">Dr. Jonathan Procter</p>
-              <p className="text-xs text-therapy-text/60">LMHC</p>
-            </div>
-          </div>
+          {/* User Profile Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center space-x-2 xs:space-x-3 p-1" data-testid="button-user-menu">
+                <img 
+                  src="https://api.dicebear.com/7.x/initials/svg?seed=JP" 
+                  alt={user?.name || "Dr. Jonathan Procter"}
+                  className="w-10 h-10 xs:w-8 xs:h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-white shadow-sm"
+                />
+                <div className="hidden sm:block min-w-0">
+                  <p className="font-medium text-therapy-text text-sm truncate">{user?.name || "Dr. Jonathan Procter"}</p>
+                  <p className="text-xs text-therapy-text/60">{user?.role === 'therapist' ? 'LMHC' : user?.role}</p>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{user?.name || 'Primary Therapist'}</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email || 'therapist@practice.com'}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setLocation('/settings')}
+                className="cursor-pointer"
+                data-testid="menu-settings"
+              >
+                <User className="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="cursor-pointer text-red-600 focus:text-red-600"
+                data-testid="menu-logout"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

@@ -1,9 +1,11 @@
 import { lazy, Suspense } from "react";
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Clients from "@/pages/clients";
 import Appointments from "@/pages/appointments";
@@ -54,75 +56,99 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Router() {
-  return (
-    <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/clients" component={Clients} />
-      <Route path="/clients/:clientId/chart">
-        {(params) => <ClientChart key={params.clientId} />}
-      </Route>
-      <Route path="/appointments" component={Appointments} />
-      <Route path="/calendar" component={Calendar} />
-      <Route path="/calendar/integration" component={CalendarIntegration} />
-      <Route path="/calendar/setup" component={GoogleCloudSetup} />
-      <Route path="/oauth/debug" component={OAuthDebug} />
-      <Route path="/session-notes" component={SessionNotes} />
-      <Route path="/session-summaries" component={SessionSummaries} />
-      {/* Progress Notes merged into Session Notes - redirect for compatibility */}
-      <Route path="/progress-notes" component={SessionNotes} />
-      <Route path="/document-processing" component={DocumentProcessing} />
-      <Route path="/processing-results" component={ProcessingResults} />
-      <Route path="/notes-management">
-        <Suspense fallback={<div className="p-6">Loading...</div>}>
-          <NotesManagement />
-        </Suspense>
-      </Route>
-      <Route path="/smart-documents" component={SmartDocuments} />
-      <Route path="/assessments" component={Assessments} />
-      <Route path="/client-checkins" component={ClientCheckins} />
-      <Route path="/action-items" component={ActionItems} />
-      <Route path="/analytics" component={Analytics} />
-      <Route path="/ai-insights" component={AiInsights} />
-      <Route path="/content-viewer" component={ContentViewer} />
-      <Route path="/reauth-google" component={ReauthGoogle} />
-      <Route path="/settings" component={Settings} />
+function ProtectedRouter() {
+  const { isAuthenticated, loading } = useAuth();
+  const [, setLocation] = useLocation();
 
-      <Route path="/oauth-test">
-        <Suspense fallback={<div className="p-6">Loading...</div>}>
-          <OAuthTest />
-        </Suspense>
-      </Route>
-      <Route path="/oauth-simple">
-        <Suspense fallback={<div className="p-6">Loading...</div>}>
-          <OAuthSimple />
-        </Suspense>
-      </Route>
-      <Route path="/oauth-test-simple">
-        <Suspense fallback={<div className="p-6">Loading...</div>}>
-          <OAuthTestSimple />
-        </Suspense>
-      </Route>
-      <Route path="/oauth-quick-test" component={OAuthQuickTest} />
-      <Route path="/oauth-troubleshoot">
-        <Suspense fallback={<div className="p-6">Loading...</div>}>
-          <OAuthTroubleshoot />
-        </Suspense>
-      </Route>
-      <Route component={NotFound} />
-    </Switch>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-therapy-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    setLocation('/login');
+    return null;
+  }
+
+  return (
+    <AppLayout>
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/clients" component={Clients} />
+        <Route path="/clients/:clientId/chart">
+          {(params) => <ClientChart key={params.clientId} />}
+        </Route>
+        <Route path="/appointments" component={Appointments} />
+        <Route path="/calendar" component={Calendar} />
+        <Route path="/calendar/integration" component={CalendarIntegration} />
+        <Route path="/calendar/setup" component={GoogleCloudSetup} />
+        <Route path="/oauth/debug" component={OAuthDebug} />
+        <Route path="/session-notes" component={SessionNotes} />
+        <Route path="/session-summaries" component={SessionSummaries} />
+        {/* Progress Notes merged into Session Notes - redirect for compatibility */}
+        <Route path="/progress-notes" component={SessionNotes} />
+        <Route path="/document-processing" component={DocumentProcessing} />
+        <Route path="/processing-results" component={ProcessingResults} />
+        <Route path="/notes-management">
+          <Suspense fallback={<div className="p-6">Loading...</div>}>
+            <NotesManagement />
+          </Suspense>
+        </Route>
+        <Route path="/smart-documents" component={SmartDocuments} />
+        <Route path="/assessments" component={Assessments} />
+        <Route path="/client-checkins" component={ClientCheckins} />
+        <Route path="/action-items" component={ActionItems} />
+        <Route path="/analytics" component={Analytics} />
+        <Route path="/ai-insights" component={AiInsights} />
+        <Route path="/content-viewer" component={ContentViewer} />
+        <Route path="/reauth-google" component={ReauthGoogle} />
+        <Route path="/settings" component={Settings} />
+
+        <Route path="/oauth-test">
+          <Suspense fallback={<div className="p-6">Loading...</div>}>
+            <OAuthTest />
+          </Suspense>
+        </Route>
+        <Route path="/oauth-simple">
+          <Suspense fallback={<div className="p-6">Loading...</div>}>
+            <OAuthSimple />
+          </Suspense>
+        </Route>
+        <Route path="/oauth-test-simple">
+          <Suspense fallback={<div className="p-6">Loading...</div>}>
+            <OAuthTestSimple />
+          </Suspense>
+        </Route>
+        <Route path="/oauth-quick-test" component={OAuthQuickTest} />
+        <Route path="/oauth-troubleshoot">
+          <Suspense fallback={<div className="p-6">Loading...</div>}>
+            <OAuthTroubleshoot />
+          </Suspense>
+        </Route>
+        <Route component={NotFound} />
+      </Switch>
+    </AppLayout>
   );
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <AppLayout>
-          <Router />
-        </AppLayout>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Switch>
+            <Route path="/login" component={Login} />
+            <Route component={ProtectedRouter} />
+          </Switch>
+          <Toaster />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
