@@ -33,6 +33,7 @@ import OAuthTestSimple from './pages/oauth-test-simple';
 import OAuthQuickTest from './pages/oauth-quick-test';
 import ContentViewer from './pages/content-viewer';
 import ReauthGoogle from './pages/reauth-google';
+import TestTimeline from './pages/test-timeline';
 
 const OAuthTest = lazy(() => import("./pages/oauth-test"));
 const OAuthSimple = lazy(() => import("./pages/oauth-simple"));
@@ -88,6 +89,7 @@ function Router() {
       <Route path="/ai-insights" component={AiInsights} />
       <Route path="/content-viewer" component={ContentViewer} />
       <Route path="/reauth-google" component={ReauthGoogle} />
+      <Route path="/test-timeline" component={TestTimeline} />
       <Route path="/settings" component={Settings} />
 
       <Route path="/oauth-test">

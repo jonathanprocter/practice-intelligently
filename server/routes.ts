@@ -1748,6 +1748,18 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
     }
   });
 
+  // AI Insights by client ID
+  app.get("/api/ai-insights/client/:clientId", async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      const insights = await storage.getClientAiInsights(clientId);
+      res.json(insights);
+    } catch (error) {
+      console.error("Error fetching AI insights for client:", error);
+      res.status(500).json({ error: "Failed to fetch AI insights" });
+    }
+  });
+
   // Manual metadata override for document processing
   app.post("/api/documents/manual-metadata-override", async (req, res) => {
     try {
