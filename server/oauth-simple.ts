@@ -210,11 +210,27 @@ class SimpleOAuth {
       console.log('Successfully refreshed OAuth tokens');
     } catch (error: any) {
       console.error('Failed to refresh tokens:', error.message);
+      
+      // Check for specific error types
+      if (error.message?.includes('invalid_client') || error.message?.includes('invalid_grant')) {
+        console.error('\n⚠️  OAuth Error: The stored credentials are no longer valid.');
+        console.error('   This can happen when:');
+        console.error('   1. The OAuth app credentials have changed');
+        console.error('   2. The refresh token has expired (typically after 6 months of inactivity)');
+        console.error('   3. The OAuth consent has been revoked');
+        console.error('\n📌 To fix this:');
+        console.error('   1. Visit /api/auth/google to start fresh authentication');
+        console.error('   2. Complete the Google OAuth flow');
+        console.error('   3. The calendar sync will resume automatically\n');
+      }
+      
       // Clear invalid tokens
       this.tokens = null;
       this.isAuthenticated = false;
       await this.clearTokens();
-      throw new Error('Token refresh failed. Please re-authenticate.');
+      
+      // Don't throw error for refresh failures - let the app handle re-auth gracefully
+      // throw new Error('Token refresh failed. Please re-authenticate.');
     }
   }
 
