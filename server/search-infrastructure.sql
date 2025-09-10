@@ -6,10 +6,15 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 -- Enable unaccent extension for accent-insensitive search
 CREATE EXTENSION IF NOT EXISTS unaccent;
 
--- Create search configuration for English with unaccent
-CREATE TEXT SEARCH CONFIGURATION IF NOT EXISTS english_unaccent (COPY = english);
-ALTER TEXT SEARCH CONFIGURATION english_unaccent
-    ALTER MAPPING FOR hword, hword_part, word WITH unaccent, english_stem;
+-- Create search configuration for English with unaccent (skip if exists)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_ts_config WHERE cfgname = 'english_unaccent') THEN
+        CREATE TEXT SEARCH CONFIGURATION english_unaccent (COPY = english);
+        ALTER TEXT SEARCH CONFIGURATION english_unaccent
+            ALTER MAPPING FOR hword, hword_part, word WITH unaccent, english_stem;
+    END IF;
+END $$;
 
 -- Add full-text search columns to clients table
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS search_vector tsvector;
