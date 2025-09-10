@@ -133,7 +133,7 @@ app.use((req, res, next) => {
     });
 
     // Serve static files (after API routes)
-    const distPath = path.resolve(process.cwd(), "server/public");
+    const distPath = path.resolve(process.cwd(), "dist/public");
     
     // Check if dist directory exists
     try {
