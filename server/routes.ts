@@ -40,6 +40,7 @@ import { optimizedComprehensiveProgressNotesParser } from './comprehensiveProgre
 import { stevenDelucaProcessor } from './steven-deluca-processor';
 import { registerEnhancedChartRoutes } from './routes/enhanced-chart-routes';
 import { aiIntegrationService } from './ai-integration-service';
+import { bidirectionalCalendarSync } from './calendar-bidirectional-sync';
 import OpenAI from 'openai';
 
 // Initialize OpenAI client
@@ -4671,6 +4672,189 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
     } catch (error: any) {
       console.error('Range calendar sync failed:', error);
       res.status(500).json({ error: 'Calendar sync failed', details: error.message });
+    }
+  });
+
+  // ========== BIDIRECTIONAL CALENDAR SYNC ROUTES ==========
+
+  // Create Google Calendar event when appointment is created
+  app.post('/api/calendar/appointments/:appointmentId/sync-to-google', async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+      
+      const appointment = await storage.getAppointment(appointmentId);
+      if (!appointment) {
+        return res.status(404).json({ error: 'Appointment not found' });
+      }
+
+      const eventId = await bidirectionalCalendarSync.createGoogleEvent(appointment);
+      
+      res.json({
+        success: true,
+        message: 'Appointment synced to Google Calendar',
+        googleEventId: eventId
+      });
+    } catch (error: any) {
+      console.error('Failed to sync appointment to Google:', error);
+      res.status(500).json({ error: 'Failed to sync to Google Calendar', details: error.message });
+    }
+  });
+
+  // Update Google Calendar event when appointment is updated
+  app.put('/api/calendar/appointments/:appointmentId/sync-to-google', async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+      
+      const appointment = await storage.getAppointment(appointmentId);
+      if (!appointment) {
+        return res.status(404).json({ error: 'Appointment not found' });
+      }
+
+      const success = await bidirectionalCalendarSync.updateGoogleEvent(appointment);
+      
+      res.json({
+        success,
+        message: success ? 'Google Calendar event updated' : 'Failed to update Google Calendar event'
+      });
+    } catch (error: any) {
+      console.error('Failed to update Google Calendar event:', error);
+      res.status(500).json({ error: 'Failed to update Google Calendar', details: error.message });
+    }
+  });
+
+  // Delete Google Calendar event when appointment is deleted
+  app.delete('/api/calendar/appointments/:appointmentId/sync-to-google', async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+      
+      const appointment = await storage.getAppointment(appointmentId);
+      if (!appointment) {
+        return res.status(404).json({ error: 'Appointment not found' });
+      }
+
+      const success = await bidirectionalCalendarSync.deleteGoogleEvent(appointment);
+      
+      res.json({
+        success,
+        message: success ? 'Google Calendar event deleted' : 'Failed to delete Google Calendar event'
+      });
+    } catch (error: any) {
+      console.error('Failed to delete Google Calendar event:', error);
+      res.status(500).json({ error: 'Failed to delete from Google Calendar', details: error.message });
+    }
+  });
+
+  // Bidirectional sync from Google Calendar
+  app.post('/api/calendar/sync/bidirectional', async (req, res) => {
+    try {
+      const { therapistId, timeMin, timeMax } = req.body;
+      
+      if (!therapistId) {
+        return res.status(400).json({ error: 'Therapist ID required' });
+      }
+
+      const result = await bidirectionalCalendarSync.syncFromGoogle(
+        therapistId,
+        timeMin ? new Date(timeMin) : undefined,
+        timeMax ? new Date(timeMax) : undefined
+      );
+      
+      res.json({
+        success: true,
+        message: `Synced ${result.synced} events from Google Calendar`,
+        result
+      });
+    } catch (error: any) {
+      console.error('Bidirectional sync failed:', error);
+      res.status(500).json({ error: 'Bidirectional sync failed', details: error.message });
+    }
+  });
+
+  // Check for scheduling conflicts
+  app.post('/api/calendar/check-conflicts', async (req, res) => {
+    try {
+      const { therapistId, startTime, endTime, excludeAppointmentId } = req.body;
+      
+      if (!therapistId || !startTime || !endTime) {
+        return res.status(400).json({ error: 'Therapist ID, start time, and end time required' });
+      }
+
+      const conflicts = await bidirectionalCalendarSync.checkForConflicts(
+        therapistId,
+        new Date(startTime),
+        new Date(endTime),
+        excludeAppointmentId
+      );
+      
+      res.json({
+        hasConflicts: conflicts.length > 0,
+        conflicts
+      });
+    } catch (error: any) {
+      console.error('Failed to check conflicts:', error);
+      res.status(500).json({ error: 'Failed to check conflicts', details: error.message });
+    }
+  });
+
+  // Get calendar sync status
+  app.get('/api/calendar/sync/status/:therapistId', async (req, res) => {
+    try {
+      const { therapistId } = req.params;
+      const status = bidirectionalCalendarSync.getSyncStatus(therapistId);
+      
+      res.json(status);
+    } catch (error: any) {
+      console.error('Failed to get sync status:', error);
+      res.status(500).json({ error: 'Failed to get sync status', details: error.message });
+    }
+  });
+
+  // Setup webhook for Google Calendar push notifications
+  app.post('/api/calendar/webhook/setup', async (req, res) => {
+    try {
+      const { therapistId } = req.body;
+      
+      if (!therapistId) {
+        return res.status(400).json({ error: 'Therapist ID required' });
+      }
+
+      // Generate webhook URL
+      const webhookUrl = `https://${req.get('host')}/api/calendar/webhook/notifications`;
+      
+      const success = await bidirectionalCalendarSync.setupWebhook(therapistId, webhookUrl);
+      
+      res.json({
+        success,
+        message: success ? 'Webhook setup successful' : 'Failed to setup webhook',
+        webhookUrl
+      });
+    } catch (error: any) {
+      console.error('Failed to setup webhook:', error);
+      res.status(500).json({ error: 'Failed to setup webhook', details: error.message });
+    }
+  });
+
+  // Handle webhook notifications from Google Calendar
+  app.post('/api/calendar/webhook/notifications', async (req, res) => {
+    try {
+      const resourceId = req.headers['x-goog-resource-id'] as string;
+      const resourceState = req.headers['x-goog-resource-state'] as string;
+      const channelId = req.headers['x-goog-channel-id'] as string;
+      
+      console.log('Received Google Calendar webhook:', { resourceId, resourceState, channelId });
+      
+      // Extract therapist ID from channel ID (format: watch-{therapistId}-{timestamp})
+      const therapistIdMatch = channelId?.match(/watch-([a-f0-9-]+)-/);
+      const therapistId = therapistIdMatch ? therapistIdMatch[1] : null;
+      
+      if (therapistId) {
+        await bidirectionalCalendarSync.handleWebhookNotification(therapistId, resourceId, resourceState);
+      }
+      
+      res.status(200).send();
+    } catch (error: any) {
+      console.error('Failed to handle webhook notification:', error);
+      res.status(500).json({ error: 'Failed to handle webhook', details: error.message });
     }
   });
 

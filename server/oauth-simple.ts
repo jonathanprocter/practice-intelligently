@@ -162,6 +162,11 @@ class SimpleOAuth {
     }
   }
 
+  // Get the OAuth2Client instance (needed for bidirectional sync and other services)
+  getOAuth2Client(): OAuth2Client {
+    return this.oauth2Client;
+  }
+
   // Add automatic token refresh method
   async refreshTokensIfNeeded(): Promise<void> {
     if (!this.tokens || !this.tokens.refresh_token) {

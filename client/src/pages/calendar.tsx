@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings, Search, Filter, MapPin, User, X, RefreshCw, FileText, Loader2 } from 'lucide-react';
 import CalendarSyncStatusIndicator from '@/components/calendar/CalendarSyncStatusIndicator';
+import BidirectionalCalendarView from '@/components/calendar/BidirectionalCalendarView';
 
 // Helper function to check if a date is today
 const isToday = (date: Date): boolean => {
@@ -32,6 +33,8 @@ const isToday = (date: Date): boolean => {
 };
 
 export default function Calendar() {
+  // Get therapist ID from user context or default
+  const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'; // This should come from auth context
   const [currentWeek, setCurrentWeek] = useState(() => {
     // Start with the current week to show today's events
     return getWeekStart(new Date());
@@ -943,7 +946,7 @@ export default function Calendar() {
       {/* Calendar Content */}
       <div className="flex-1 p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="day" className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Daily View
@@ -955,6 +958,10 @@ export default function Calendar() {
             <TabsTrigger value="appointments" className="flex items-center gap-2">
               <List className="w-4 h-4" />
               Appointments
+            </TabsTrigger>
+            <TabsTrigger value="enhanced" className="flex items-center gap-2">
+              <RefreshCw className="w-4 h-4" />
+              Enhanced Sync
             </TabsTrigger>
           </TabsList>
 
@@ -1000,6 +1007,10 @@ export default function Calendar() {
               selectedDate={activeTab === 'appointments' ? undefined : selectedDate}
               onAppointmentClick={handleEventClick}
             />
+          </TabsContent>
+
+          <TabsContent value="enhanced" className="h-full">
+            <BidirectionalCalendarView therapistId={therapistId} />
           </TabsContent>
         </Tabs>
       </div>
