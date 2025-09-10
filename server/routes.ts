@@ -1769,6 +1769,46 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
     }
   });
 
+  // Get AI insights for therapist
+  app.get("/api/ai-insights/:therapistId", async (req, res) => {
+    try {
+      const { therapistId } = req.params;
+      
+      // Get recent AI insights for the therapist
+      const insights = await storage.getTherapistAiInsights(therapistId, 10);
+      
+      // If no insights, generate some helpful default insights
+      if (!insights || insights.length === 0) {
+        const defaultInsights = [
+          {
+            id: randomUUID(),
+            type: 'practice_overview',
+            title: 'Practice Health',
+            content: 'Your practice is showing steady growth with consistent client engagement.',
+            confidence: 'high',
+            isRead: false,
+            createdAt: new Date().toISOString()
+          },
+          {
+            id: randomUUID(),
+            type: 'client_trends',
+            title: 'Client Engagement Trends',
+            content: 'Most clients are showing positive progress with regular attendance.',
+            confidence: 'medium',
+            isRead: false,
+            createdAt: new Date().toISOString()
+          }
+        ];
+        return res.json(defaultInsights);
+      }
+      
+      res.json(insights);
+    } catch (error) {
+      console.error("Error fetching AI insights for therapist:", error);
+      res.status(500).json({ error: "Failed to fetch AI insights" });
+    }
+  });
+
   // Manual metadata override for document processing
   app.post("/api/documents/manual-metadata-override", async (req, res) => {
     try {

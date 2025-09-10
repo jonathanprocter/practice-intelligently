@@ -13,12 +13,14 @@ import QuickStats from "@/components/dashboard/quick-stats";
 import ApiStatusIndicators from "@/components/dashboard/api-status-indicators";
 
 // Lazy load heavy/secondary components
-const TodaysSchedule = lazy(() => import("@/components/dashboard/todays-schedule"));
+const TodaysSchedule = lazy(() => import("@/components/dashboard/todays-schedule-enhanced"));
 const AiInsightsPanel = lazy(() => import("@/components/dashboard/ai-insights-panel"));
 const UrgentActionItems = lazy(() => import("@/components/dashboard/urgent-action-items"));
 const TodaysSessions = lazy(() => import("@/components/dashboard/todays-sessions"));
 const RecentActivity = lazy(() => import("@/components/dashboard/recent-activity"));
 const ProgressOverview = lazy(() => import("@/components/dashboard/progress-overview"));
+const RealTimeMetrics = lazy(() => import("@/components/dashboard/real-time-metrics"));
+const QuickActionsPanel = lazy(() => import("@/components/dashboard/quick-actions-panel"));
 const SessionDocumentUploader = lazy(() => import("@/components/SessionDocumentUploader").then(
   module => ({ default: module.SessionDocumentUploader })
 ));
@@ -375,52 +377,80 @@ export default function Dashboard() {
           </DashboardSection>
         </ErrorBoundary>
 
-        {/* Critical Information Row - iPhone Responsive */}
-        <div className={cn("grid grid-cols-1 gap-4 sm:gap-6", getGridClass('primary'))}>
-          <ErrorBoundary>
-            <Suspense fallback={<DashboardSkeleton />}>
-              <div className="lg:col-span-2">
+        {/* Main Dashboard Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* Left Column - Main Content (2 cols on lg) */}
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+            {/* Today's Schedule - Enhanced */}
+            <ErrorBoundary>
+              <Suspense fallback={<DashboardSkeleton />}>
                 <TodaysSchedule />
-              </div>
-            </Suspense>
-          </ErrorBoundary>
-
-          <ErrorBoundary>
-            <Suspense fallback={<DashboardSkeleton />}>
-              <UrgentActionItems />
-            </Suspense>
-          </ErrorBoundary>
-
-          {dashboardLayout !== 'compact' && (
-            <ErrorBoundary>
-              <Suspense fallback={<DashboardSkeleton />}>
-                <AiInsightsPanel />
               </Suspense>
             </ErrorBoundary>
-          )}
-        </div>
 
-        {/* Secondary Information Row */}
-        <div className={cn("grid grid-cols-1 gap-6", getGridClass('secondary'))}>
-          <ErrorBoundary>
-            <Suspense fallback={<DashboardSkeleton />}>
-              <TodaysSessions />
-            </Suspense>
-          </ErrorBoundary>
-
-          {dashboardLayout === 'compact' && (
+            {/* Real-Time Metrics */}
             <ErrorBoundary>
               <Suspense fallback={<DashboardSkeleton />}>
-                <AiInsightsPanel />
+                <RealTimeMetrics />
               </Suspense>
             </ErrorBoundary>
-          )}
 
-          <ErrorBoundary>
-            <Suspense fallback={<DashboardSkeleton />}>
-              <SessionDocumentUploader therapistId={therapistId} />
-            </Suspense>
-          </ErrorBoundary>
+            {/* Recent Activity */}
+            <ErrorBoundary>
+              <Suspense fallback={<DashboardSkeleton />}>
+                <RecentActivity />
+              </Suspense>
+            </ErrorBoundary>
+
+            {dashboardLayout !== 'compact' && (
+              <ErrorBoundary>
+                <Suspense fallback={<DashboardSkeleton />}>
+                  <AiInsightsPanel />
+                </Suspense>
+              </ErrorBoundary>
+            )}
+          </div>
+
+          {/* Right Column - Quick Actions & Secondary Content */}
+          <div className="space-y-4 sm:space-y-6">
+            {/* Quick Actions Panel */}
+            <ErrorBoundary>
+              <Suspense fallback={<DashboardSkeleton />}>
+                <QuickActionsPanel />
+              </Suspense>
+            </ErrorBoundary>
+
+            {/* Urgent Action Items */}
+            <ErrorBoundary>
+              <Suspense fallback={<DashboardSkeleton />}>
+                <UrgentActionItems />
+              </Suspense>
+            </ErrorBoundary>
+
+            {/* Today's Sessions */}
+            <ErrorBoundary>
+              <Suspense fallback={<DashboardSkeleton />}>
+                <TodaysSessions />
+              </Suspense>
+            </ErrorBoundary>
+
+            {dashboardLayout === 'compact' && (
+              <ErrorBoundary>
+                <Suspense fallback={<DashboardSkeleton />}>
+                  <AiInsightsPanel />
+                </Suspense>
+              </ErrorBoundary>
+            )}
+
+            {/* Document Uploader - Hidden on compact */}
+            {dashboardLayout !== 'compact' && (
+              <ErrorBoundary>
+                <Suspense fallback={<DashboardSkeleton />}>
+                  <SessionDocumentUploader therapistId={therapistId} />
+                </Suspense>
+              </ErrorBoundary>
+            )}
+          </div>
         </div>
 
         {/* Tertiary Information - Lower Priority */}
