@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 // Import core components directly (high priority)
 import QuickStats from "@/components/dashboard/quick-stats";
 import ApiStatusIndicators from "@/components/dashboard/api-status-indicators";
+import { AIInsightsWidget } from "@/components/dashboard/ai-insights-widget";
 
 // Lazy load heavy/secondary components
 const TodaysSchedule = lazy(() => import("@/components/dashboard/todays-schedule-enhanced"));

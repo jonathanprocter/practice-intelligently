@@ -41,6 +41,7 @@ import { stevenDelucaProcessor } from './steven-deluca-processor';
 import { registerEnhancedChartRoutes } from './routes/enhanced-chart-routes';
 import { registerDocumentBatchRoutes } from './routes/document-batch-routes';
 import { aiIntegrationService } from './ai-integration-service';
+import { enhancedAIAutomation } from './ai-automation-enhanced';
 import { bidirectionalCalendarSync } from './calendar-bidirectional-sync';
 import OpenAI from 'openai';
 
@@ -1529,6 +1530,12 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
         userAgent: req.headers['user-agent'] || 'unknown'
       });
       
+      // Trigger AI initial assessment for new client
+      enhancedAIAutomation.onNewClientCreated(
+        client, 
+        clientData.therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'
+      ).catch(err => console.error('AI assessment generation failed:', err));
+      
       res.json(client);
     } catch (error) {
       console.error("Error creating client:", error);
@@ -2037,6 +2044,12 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
         
         // Automatically generate session summary when appointment is completed
         const appointment = await storage.updateAppointment(id, updateData);
+        
+        // Use enhanced AI automation for comprehensive analysis
+        enhancedAIAutomation.onAppointmentCompleted(id, appointment.therapistId)
+          .catch(error => console.error('Enhanced AI appointment analysis failed:', error));
+        
+        // Keep legacy service for backward compatibility
         aiIntegrationService.generateSessionSummary(id, appointment.therapistId)
           .catch(error => console.error('Background session summary generation failed:', error));
         
@@ -2382,7 +2395,11 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
 
       console.log(`✅ Created new session note with ID: ${sessionNote.id}`);
       
-      // Automatically trigger AI insights generation
+      // Use enhanced AI automation for comprehensive analysis
+      enhancedAIAutomation.onSessionNoteCreated(sessionNote, clientId, therapistId)
+        .catch(error => console.error('Enhanced AI session analysis failed:', error));
+      
+      // Keep legacy service for backward compatibility
       aiIntegrationService.generateSessionNoteInsights(sessionNote, clientId, therapistId)
         .catch(error => console.error('Background AI insights generation failed:', error));
       

@@ -21,6 +21,7 @@ import { db, pool } from "./db";
 import { eq, desc, and, gte, lte, count, like, or, sql, asc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import OpenAI from 'openai';
+import { aiStorageMethods } from './storage-ai-methods';
 
 // Initialize OpenAI instance
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -65,6 +66,7 @@ export interface IStorage {
   getSessionNote(id: string): Promise<SessionNote | undefined>;
   getSessionNoteById(sessionNoteId: string): Promise<SessionNote | null>;
   getSessionNotesByEventId(eventId: string): Promise<SessionNote[]>;
+  getSessionNotesByAppointmentId(appointmentId: string): Promise<SessionNote[]>;
   createSessionNote(note: InsertSessionNote): Promise<SessionNote>;
   updateSessionNote(id: string, note: Partial<SessionNote>): Promise<SessionNote>;
   deleteSessionNote(id: string): Promise<void>;
@@ -72,6 +74,9 @@ export interface IStorage {
   getSessionNotesByClientId(clientId: string): Promise<SessionNote[]>;
   getAllSessionNotesByTherapist(therapistId: string): Promise<SessionNote[]>;
   getSessionNotesByTherapistTimeframe(therapistId: string, timeframe: 'week' | 'month' | 'quarter'): Promise<SessionNote[]>;
+  getSessionNoteCount(clientId: string): Promise<number>;
+  getRecentSessionNotes(clientId: string, limit: number): Promise<SessionNote[]>;
+  getSessionNotesByDateRange(therapistId: string, startDate: Date, endDate: Date): Promise<SessionNote[]>;
 
   // Session prep notes methods
   getSessionPrepNotes(eventId: string): Promise<SessionPrepNote[]>;
@@ -120,6 +125,8 @@ export interface IStorage {
   // AI insights methods
   getAiInsights(therapistId: string): Promise<AiInsight[]>;
   getClientAiInsights(clientId: string): Promise<AiInsight[]>;
+  getAiInsightsByClient(clientId: string): Promise<AiInsight[]>;
+  getAiInsightsByDateRange(therapistId: string, startDate: Date, endDate: Date): Promise<AiInsight[]>;
   createAiInsight(insight: InsertAiInsight): Promise<AiInsight>;
   markInsightAsRead(id: string): Promise<AiInsight>;
 
@@ -315,9 +322,21 @@ export interface IStorage {
   getSessionSummaries(clientId: string): Promise<SessionSummary[]>;
   getSessionSummariesByTherapist(therapistId: string): Promise<SessionSummary[]>;
   getSessionSummary(id: string): Promise<SessionSummary | undefined>;
+  getSessionSummariesByClient(clientId: string): Promise<SessionSummary[]>;
   createSessionSummary(summary: InsertSessionSummary): Promise<SessionSummary>;
   updateSessionSummary(id: string, summary: Partial<SessionSummary>): Promise<SessionSummary>;
   generateAISessionSummary(sessionNoteIds: string[], clientId: string, therapistId: string, timeframe: string): Promise<SessionSummary>;
+  
+  // Analytics and metrics methods
+  getMonthlyRevenue(therapistId: string, month: number, year: number): Promise<any>;
+  getClientMetrics(therapistId: string, month: number, year: number): Promise<any>;
+  getTreatmentOutcomes(therapistId: string, month: number, year: number): Promise<any>;
+  getProgressReports(clientId: string): Promise<any[]>;
+  getActiveClients(therapistId: string): Promise<Client[]>;
+  getNewClientsByDateRange(therapistId: string, startDate: Date, endDate: Date): Promise<Client[]>;
+  getAppointmentsByDateRange(therapistId: string, startDate: Date, endDate: Date): Promise<Appointment[]>;
+  getTreatmentPlansByClient(clientId: string): Promise<TreatmentPlan[]>;
+  getAssessmentsByClient(clientId: string): Promise<Assessment[]>;
 
   // Calendar Events methods
   getCalendarEvents(therapistId: string, startDate?: Date, endDate?: Date): Promise<CalendarEvent[]>;

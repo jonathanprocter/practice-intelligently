@@ -644,3 +644,7 @@ export class ApiClient {
     const response = await apiRequest('GET', `/api/ai-insights/client/${clientId}`);
     return response.json();
   }
+
+  static async markInsightAsRead(insightId: string): Promise<void> {
+    await apiRequest('PATCH', `/api/ai-insights/${insightId}/read`);
+  }
