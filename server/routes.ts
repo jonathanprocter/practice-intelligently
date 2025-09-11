@@ -3385,71 +3385,142 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
       const { code, error, state } = req.query;
 
       if (error) {
-        console.error('OAuth authorization error:', error);
+        console.error('🚫 OAuth authorization error:', error);
         return res.redirect(`/calendar-integration?error=${encodeURIComponent('Authorization failed. Please try again.')}`);
       }
 
       if (!code) {
+        console.error('⚠️ No authorization code received in callback');
         return res.redirect(`/calendar-integration?error=${encodeURIComponent('No authorization code received.')}`);
       }
 
-      const { simpleOAuth } = await import('./oauth-simple');
+      console.log('🔐 OAuth callback received with code:', code ? 'present' : 'missing');
+      const { SimpleOAuth } = await import('./oauth-simple');
+      
+      // Create a new instance with the request object for proper redirect URI
+      const oauthInstance = new SimpleOAuth(req);
 
       try {
-        await simpleOAuth.exchangeCodeForTokens(code as string);
+        await oauthInstance.exchangeCodeForTokens(code as string, req);
         console.log('✅ OAuth callback successful - tokens exchanged and saved');
         return res.redirect('/calendar-integration?success=true&message=Successfully connected to Google Calendar');
       } catch (tokenError: any) {
         console.error('❌ OAuth token exchange failed:', tokenError);
+        console.error('Token error details:', {
+          message: tokenError.message,
+          stack: tokenError.stack
+        });
         return res.redirect(`/calendar-integration?error=${encodeURIComponent('Failed to complete authentication. Please try again.')}`);
       }
 
     } catch (error: any) {
-      console.error('OAuth callback error:', error);
+      console.error('🔥 OAuth callback error:', error);
+      console.error('Callback error details:', {
+        message: error.message,
+        stack: error.stack
+      });
       res.redirect(`/calendar-integration?error=${encodeURIComponent('Authentication failed. Please try again.')}`);
     }
   });
 
   app.get('/api/auth/google', async (req, res) => {
     try {
-      const { simpleOAuth } = await import('./oauth-simple');
+      const { SimpleOAuth } = await import('./oauth-simple');
       const forceReconnect = req.query.force === 'true';
+      
+      // Create a new instance with the request object for proper redirect URI
+      const oauthInstance = new SimpleOAuth(req);
+      console.log(`🔗 OAuth request from: ${req.protocol}://${req.get('host')}`);
 
       // Check if already connected (unless force reconnect is requested)
-      if (simpleOAuth.isConnected() && !forceReconnect) {
+      if (oauthInstance.isConnected() && !forceReconnect) {
         // Test if the connection actually works
-        const connectionWorks = await simpleOAuth.testConnection();
+        const connectionWorks = await oauthInstance.testConnection();
         if (connectionWorks) {
+          console.log('✅ Already authenticated and connection is working');
           return res.json({
             message: 'Already authenticated with Google',
             connected: true,
             authUrl: null
           });
         } else {
-          console.log('Connection test failed, will provide new auth URL');
+          console.log('⚠️ Connection test failed, will provide new auth URL');
           // Fall through to generate new auth URL
         }
       }
 
       // If force reconnect, clear existing tokens first
       if (forceReconnect) {
-        console.log('Force reconnect requested, clearing existing tokens...');
-        await simpleOAuth.clearTokens();
+        console.log('🔄 Force reconnect requested, clearing existing tokens...');
+        await oauthInstance.clearTokens();
       }
 
-      // Generate OAuth URL for authentication (await the async call)
-      const authUrl = await simpleOAuth.getAuthUrl();
-      console.log('Generated OAuth URL:', authUrl);
+      // Generate OAuth URL for authentication with request-based redirect URI
+      const authUrl = await oauthInstance.getAuthUrl(req);
+      console.log('📋 Generated OAuth URL:', authUrl);
 
       res.json({ 
         authUrl,
         message: forceReconnect ? 'Forcing reconnection to Google Calendar' : 'Visit this URL to authenticate with Google'
       });
     } catch (error: any) {
-      console.error('Error generating auth URL:', error);
+      console.error('🔥 Error generating auth URL:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack
+      });
       res.status(500).json({ error: 'Failed to generate auth URL', details: error.message });
     }
   });
+
+  // JSON endpoint to get auth URL without redirect
+  app.get('/api/auth/google/url', async (req, res) => {
+    try {
+      const { SimpleOAuth } = await import('./oauth-simple');
+      
+      // Create a new instance with the request object for proper redirect URI
+      const oauthInstance = new SimpleOAuth(req);
+      console.log(`🔗 OAuth URL request from: ${req.protocol}://${req.get('host')}`);
+
+      // Check if already connected
+      if (oauthInstance.isConnected()) {
+        const connectionWorks = await oauthInstance.testConnection();
+        if (connectionWorks) {
+          console.log('✅ Already authenticated, no need for new auth URL');
+          return res.json({
+            success: true,
+            connected: true,
+            authUrl: null,
+            message: 'Already authenticated with Google'
+          });
+        }
+      }
+
+      // Generate OAuth URL for authentication with request-based redirect URI
+      const authUrl = await oauthInstance.getAuthUrl(req);
+      console.log('📋 Generated OAuth URL for JSON response:', authUrl);
+
+      res.json({ 
+        success: true,
+        connected: false,
+        authUrl,
+        message: 'Use this URL to authenticate with Google'
+      });
+    } catch (error: any) {
+      console.error('🔥 Error generating auth URL:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        code: error.code
+      });
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to generate auth URL', 
+        details: error.message 
+      });
+    }
+  });
+
   // ========== DOCUMENT PROCESSING ROUTES (Auto-generated) ==========
 
   // File upload endpoint that handles actual file uploads with multi-session support

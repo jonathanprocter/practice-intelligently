@@ -9,9 +9,9 @@ class SimpleOAuth {
   private isAuthenticated = false;
   private tokensFilePath: string;
 
-  constructor() {
-    const redirectUri = this.getRedirectUri();
-    // OAuth initialization complete
+  constructor(request?: any) {
+    const redirectUri = this.getRedirectUri(request);
+    console.log(`🚀 Initializing SimpleOAuth with redirect URI: ${redirectUri}`);
 
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
       throw new Error('Google OAuth credentials not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.');
@@ -30,17 +30,34 @@ class SimpleOAuth {
     });
   }
 
-  private getRedirectUri(): string {
-    // Check Replit environment variables
+  private getRedirectUri(request?: any): string {
+    // If request object is provided, use it to compute the redirect URI dynamically
+    if (request) {
+      const protocol = request.protocol || 'https';
+      const host = request.get('host') || request.headers?.host;
+      if (host) {
+        const redirectUri = `${protocol}://${host}/api/auth/google/callback`;
+        console.log(`🔗 Dynamic redirect URI from request: ${redirectUri}`);
+        return redirectUri;
+      }
+    }
+    
+    // Fallback to environment variables
     if (process.env.REPLIT_DEV_DOMAIN) {
-      return `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/google/callback`;
+      const redirectUri = `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/google/callback`;
+      console.log(`🔗 Redirect URI from REPLIT_DEV_DOMAIN: ${redirectUri}`);
+      return redirectUri;
     }
     if (process.env.REPLIT_DOMAINS) {
       const domain = process.env.REPLIT_DOMAINS.split(',')[0];
-      return `https://${domain}/api/auth/google/callback`;
+      const redirectUri = `https://${domain}/api/auth/google/callback`;
+      console.log(`🔗 Redirect URI from REPLIT_DOMAINS: ${redirectUri}`);
+      return redirectUri;
     }
     // Local development fallback
-    return 'http://localhost:5000/api/auth/google/callback';
+    const redirectUri = 'http://localhost:5000/api/auth/google/callback';
+    console.log(`🔗 Using local development redirect URI: ${redirectUri}`);
+    return redirectUri;
   }
 
   async getAccessToken(code: string): Promise<any> {
@@ -55,8 +72,14 @@ class SimpleOAuth {
     }
   }
 
-  async getAuthUrl(): Promise<string> {
-    // Generating OAuth URL
+  async getAuthUrl(request?: any): Promise<string> {
+    // Update OAuth client with dynamic redirect URI if request is provided
+    if (request) {
+      const redirectUri = this.getRedirectUri(request);
+      this.oauth2Client.redirectUri = redirectUri;
+      console.log(`📝 Updated OAuth client redirect URI for auth URL: ${redirectUri}`);
+    }
+    
     const scopes = [
       'https://www.googleapis.com/auth/calendar.readonly',
       'https://www.googleapis.com/auth/calendar.events',
@@ -70,7 +93,7 @@ class SimpleOAuth {
       include_granted_scopes: true
     });
 
-    // OAuth URL generated successfully
+    console.log(`✅ Generated OAuth URL: ${authUrl}`);
     return authUrl;
   }
 
@@ -105,8 +128,15 @@ class SimpleOAuth {
     }
   }
 
-  async exchangeCodeForTokens(code: string): Promise<void> {
+  async exchangeCodeForTokens(code: string, request?: any): Promise<void> {
     try {
+      // Update redirect URI if request is provided
+      if (request) {
+        const redirectUri = this.getRedirectUri(request);
+        this.oauth2Client.redirectUri = redirectUri;
+        console.log(`🔄 Using redirect URI for token exchange: ${redirectUri}`);
+      }
+      
       console.log('Exchanging code for tokens...');
       const { tokens } = await this.oauth2Client.getToken(code);
 
@@ -115,10 +145,20 @@ class SimpleOAuth {
       this.isAuthenticated = true;
       await this.saveTokens(tokens);
 
-      console.log('Successfully obtained and saved tokens:', Object.keys(tokens));
+      console.log('✅ Successfully obtained and saved tokens:', Object.keys(tokens));
     } catch (error: any) {
-      console.error('Token exchange failed:', error);
+      console.error('❌ Token exchange failed:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        response: error.response?.data
+      });
       this.isAuthenticated = false;
+      
+      // More detailed error message
+      if (error.message?.includes('redirect_uri_mismatch')) {
+        throw new Error(`OAuth redirect URI mismatch. Check that the redirect URI matches what's configured in Google Cloud Console.`);
+      }
       throw new Error(`OAuth token exchange failed: ${error.message}`);
     }
   }
@@ -360,12 +400,7 @@ class SimpleOAuth {
     }
   }
 
-  async disconnect(): Promise<void> {
-    this.tokens = null;
-    this.isAuthenticated = false;
-    this.oauth2Client.setCredentials({});
-
-    // Remove tokens file
+  async clearTokens(): Promise<void> {
     try {
       const { promises: fsPromises } = await import('fs');
       try {
@@ -377,6 +412,14 @@ class SimpleOAuth {
     } catch (error) {
       console.warn('Failed to delete tokens file:', error);
     }
+  }
+
+  async disconnect(): Promise<void> {
+    this.tokens = null;
+    this.isAuthenticated = false;
+    this.oauth2Client.setCredentials({});
+
+    await this.clearTokens();
 
     console.log('OAuth session disconnected');
   }
@@ -572,6 +615,8 @@ class SimpleOAuth {
   }
 }
 
-// Export singleton instance
+// Export singleton instance for backward compatibility
 export const simpleOAuth = new SimpleOAuth();
+
+// Export class for creating request-specific instances
 export { SimpleOAuth };

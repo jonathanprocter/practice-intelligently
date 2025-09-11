@@ -40,6 +40,7 @@ import OAuthFix from './pages/oauth-fix';
 import TestTimeline from './pages/test-timeline';
 import WebSocketTest from './pages/websocket-test';
 import SearchResults from './pages/search-results';
+import OAuthTestVerification from './pages/oauth-test-verification';
 
 const OAuthTest = lazy(() => import("./pages/oauth-test"));
 const OAuthSimple = lazy(() => import("./pages/oauth-simple"));
@@ -119,6 +120,7 @@ function Router() {
         </Suspense>
       </Route>
       <Route path="/oauth-quick-test" component={OAuthQuickTest} />
+      <Route path="/oauth-test-verification" component={OAuthTestVerification} />
       <Route path="/oauth-troubleshoot">
         <Suspense fallback={<div className="p-6">Loading...</div>}>
           <OAuthTroubleshoot />
