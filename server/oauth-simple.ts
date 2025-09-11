@@ -33,11 +33,13 @@ class SimpleOAuth {
   private getRedirectUri(request?: any): string {
     // If request object is provided, use it to compute the redirect URI dynamically
     if (request) {
-      const protocol = request.protocol || 'https';
       const host = request.get('host') || request.headers?.host;
       if (host) {
+        // Force HTTPS for Replit domains (they run behind SSL proxy)
+        const isReplitDomain = host.includes('replit.dev') || host.includes('repl.co');
+        const protocol = isReplitDomain ? 'https' : (request.protocol || 'https');
         const redirectUri = `${protocol}://${host}/api/auth/google/callback`;
-        console.log(`🔗 Dynamic redirect URI from request: ${redirectUri}`);
+        console.log(`🔗 Dynamic redirect URI from request: ${redirectUri} (forced HTTPS: ${isReplitDomain})`);
         return redirectUri;
       }
     }
@@ -54,8 +56,8 @@ class SimpleOAuth {
       console.log(`🔗 Redirect URI from REPLIT_DOMAINS: ${redirectUri}`);
       return redirectUri;
     }
-    // Local development fallback
-    const redirectUri = 'http://localhost:5000/api/auth/google/callback';
+    // Local development fallback - use port 3000 which is what the app actually runs on
+    const redirectUri = 'http://localhost:3000/api/auth/google/callback';
     console.log(`🔗 Using local development redirect URI: ${redirectUri}`);
     return redirectUri;
   }
