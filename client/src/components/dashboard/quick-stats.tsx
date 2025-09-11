@@ -1,11 +1,35 @@
 import { Calendar, Users, CheckSquare, TrendingUp, CheckCircle2 } from "lucide-react";
 import type { DashboardStats } from "@/lib/api";
+import { motion } from "framer-motion";
+import { cardAnimation, staggerContainer } from "@/lib/animations";
+import { DashboardStatSkeleton } from "@/components/ui/animated-skeleton";
 
 interface QuickStatsProps {
   stats?: DashboardStats;
 }
 
 export default function QuickStats({ stats }: QuickStatsProps) {
+  if (!stats) {
+    return (
+      <motion.div 
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+      >
+        {[...Array(4)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+          >
+            <DashboardStatSkeleton />
+          </motion.div>
+        ))}
+      </motion.div>
+    );
+  }
 
   const statItems = [
     {
@@ -35,20 +59,57 @@ export default function QuickStats({ stats }: QuickStatsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <motion.div 
+      variants={staggerContainer}
+      initial="initial"
+      animate="animate"
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+    >
       {statItems.map((stat, index) => (
-        <div key={index} className="therapy-card p-4 xs:p-5 sm:p-6 iphone-card-interaction touch-manipulation hover:shadow-lg transition-all duration-300 cursor-pointer" data-testid={`stat-card-${stat.label.toLowerCase().replace(/\s+/g, '-')}`}>
+        <motion.div 
+          key={index}
+          variants={cardAnimation}
+          initial="initial"
+          animate="animate"
+          whileHover="hover"
+          whileTap="tap"
+          transition={{ delay: index * 0.1 }}
+          className="therapy-card p-4 xs:p-5 sm:p-6 iphone-card-interaction touch-manipulation cursor-pointer" 
+          data-testid={`stat-card-${stat.label.toLowerCase().replace(/\s+/g, '-')}`}
+        >
           <div className="flex items-center justify-between mb-4">
-            <div className={`w-12 h-12 xs:w-10 xs:h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center ${stat.color}`}>
+            <motion.div 
+              className={`w-12 h-12 xs:w-10 xs:h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center ${stat.color}`}
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ 
+                delay: index * 0.1 + 0.2,
+                type: "spring",
+                stiffness: 260,
+                damping: 20
+              }}
+            >
               <stat.icon className="text-xl xs:text-lg sm:text-xl" />
-            </div>
+            </motion.div>
           </div>
-          <h3 className="text-2xl xs:text-xl sm:text-2xl font-bold text-therapy-text mb-1 truncate">
+          <motion.h3 
+            className="text-2xl xs:text-xl sm:text-2xl font-bold text-therapy-text mb-1 truncate"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 + 0.3 }}
+          >
             {stat.value}
-          </h3>
-          <p className="text-therapy-text/60 text-sm xs:text-xs sm:text-sm truncate leading-tight">{stat.label}</p>
-        </div>
+          </motion.h3>
+          <motion.p 
+            className="text-therapy-text/60 text-sm xs:text-xs sm:text-sm truncate leading-tight"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: index * 0.1 + 0.4 }}
+          >
+            {stat.label}
+          </motion.p>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }

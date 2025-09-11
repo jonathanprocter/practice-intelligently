@@ -7,6 +7,11 @@ import { RefreshCw, Settings, LayoutGrid, Maximize2, Minimize2 } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { pageTransition, staggerContainer, fadeIn } from "@/lib/animations";
+import { DashboardStatSkeleton } from "@/components/ui/animated-skeleton";
+import { SectionLoader } from "@/components/ui/animated-spinner";
+import { LoadingButton } from "@/components/ui/animated-spinner";
 
 // Import core components directly (high priority)
 import QuickStats from "@/components/dashboard/quick-stats";
@@ -51,44 +56,34 @@ const getTherapistId = () => {
   return 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
 };
 
-// Loading Skeleton Component
+// Loading Skeleton Component with animations
 function DashboardSkeleton({ section = 'full' }: { section?: string }) {
   if (section === 'stats') {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
+      <motion.div 
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="therapy-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="h-12 w-12 bg-gray-200 rounded-lg" />
-              <div className="h-4 w-4 bg-gray-200 rounded" />
-            </div>
-            <div className="h-8 w-24 bg-gray-300 rounded mb-2" />
-            <div className="h-4 w-32 bg-gray-200 rounded" />
-          </div>
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+          >
+            <DashboardStatSkeleton />
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     );
   }
 
-  return (
-    <div className="therapy-card p-6 animate-pulse">
-      <div className="h-6 w-40 bg-gray-200 rounded mb-4" />
-      <div className="space-y-3">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="flex gap-4">
-            <div className="h-12 w-12 bg-gray-200 rounded" />
-            <div className="flex-1 space-y-2">
-              <div className="h-4 w-3/4 bg-gray-200 rounded" />
-              <div className="h-3 w-1/2 bg-gray-200 rounded" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  return <SectionLoader title="Loading dashboard..." />;
 }
 
-// Dashboard Section Wrapper
+// Dashboard Section Wrapper with animations
 function DashboardSection({ 
   children, 
   title, 
@@ -112,35 +107,64 @@ function DashboardSection({
 
   if (error) {
     return (
-      <div className={cn("therapy-card p-4 border-red-200 bg-red-50", className)}>
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className={cn("therapy-card p-4 border-red-200 bg-red-50", className)}
+      >
         <div className="flex items-center justify-between mb-2">
           {title && <h3 className="text-sm font-medium text-red-800">{title}</h3>}
           {onRefresh && (
-            <Button onClick={onRefresh} variant="ghost" size="sm">
+            <LoadingButton
+              onClick={onRefresh}
+              variant="ghost"
+              size="sm"
+              loadingText="Refreshing..."
+            >
               <RefreshCw className="h-3 w-3" />
-            </Button>
+              Refresh
+            </LoadingButton>
           )}
         </div>
         <p className="text-xs text-red-600">Failed to load. Please refresh.</p>
-      </div>
+      </motion.div>
     );
   }
 
   if (collapsible && title) {
     return (
-      <div className={className}>
-        <div className="flex items-center justify-between mb-2">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className={className}
+      >
+        <motion.div 
+          className="flex items-center justify-between mb-2"
+          whileHover={{ x: 2 }}
+        >
           <h3 className="text-lg font-semibold text-therapy-text">{title}</h3>
-          <Button
-            variant="ghost"
-            size="sm"
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1 rounded hover:bg-accent"
           >
             {isCollapsed ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
-          </Button>
-        </div>
-        {!isCollapsed && (isLoading ? <DashboardSkeleton section={title?.toLowerCase()} /> : children)}
-      </div>
+          </motion.button>
+        </motion.div>
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            >
+              {isLoading ? <DashboardSkeleton section={title?.toLowerCase()} /> : children}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     );
   }
 
@@ -148,7 +172,16 @@ function DashboardSection({
     return <DashboardSkeleton section={title?.toLowerCase()} />;
   }
 
-  return <div className={className}>{children}</div>;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
 }
 
 // Main Dashboard Component

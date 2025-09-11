@@ -9,6 +9,12 @@ import {
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { motion, AnimatePresence } from "framer-motion";
+import { pageTransition, cardAnimation, listAnimation, listItemAnimation, fadeIn } from "@/lib/animations";
+import { ClientCardSkeleton } from "@/components/ui/animated-skeleton";
+import { AnimatedSpinner, LoadingButton } from "@/components/ui/animated-spinner";
+import { NoClientsEmptyState, ErrorEmptyState } from "@/components/ui/empty-state";
+import { AnimatedFormField } from "@/components/ui/animated-form-field";
 import { Badge } from "@/components/ui/badge";
 import { ClientForm } from "@/components/forms/ClientForm";
 import { ClientListGenerator } from "@/components/clients/ClientListGenerator";
