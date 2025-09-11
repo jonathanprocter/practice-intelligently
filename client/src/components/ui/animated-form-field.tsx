@@ -14,7 +14,6 @@ interface AnimatedFormFieldProps extends React.InputHTMLAttributes<HTMLInputElem
   validator?: (value: string) => string | null;
   autoSave?: boolean;
   onAutoSave?: (value: string) => void;
-  showPasswordToggle?: boolean;
 }
 
 export function AnimatedFormField({
@@ -29,17 +28,15 @@ export function AnimatedFormField({
   onAutoSave,
   className,
   type = "text",
-  showPasswordToggle = false,
   ...props
 }: AnimatedFormFieldProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [localError, setLocalError] = useState(error);
   const [isValid, setIsValid] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const actualType = type === "password" && showPassword ? "text" : type;
+  const actualType = type;
 
   useEffect(() => {
     setLocalError(error);
@@ -165,21 +162,6 @@ export function AnimatedFormField({
                 </motion.div>
               )}
               
-              {type === "password" && showPasswordToggle && (
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </motion.button>
-              )}
             </div>
           )}
         </AnimatePresence>

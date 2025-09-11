@@ -35,7 +35,7 @@ const uploadToMemory = multer({
 });
 import { getAllApiStatuses } from "./health-check";
 import { simpleOAuth } from "./oauth-simple";
-import { googleCalendarService } from "./auth";
+import { googleCalendarService } from "./google-calendar";
 import { generateUSHolidays, getHolidaysForYear, getHolidaysInRange, isUSHoliday } from "./us-holidays";
 import { SessionDocumentProcessor } from './session-document-processor';
 import { optimizedComprehensiveProgressNotesParser } from './comprehensiveProgressNotesParser-optimized';
@@ -1172,8 +1172,7 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
-      // Don't return password
-      const { password, ...safeUser } = user;
+      const safeUser = user;
       res.json(safeUser);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -1186,14 +1185,9 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
       const { id } = req.params;
       const updateData = req.body;
 
-      // Remove password field if it's empty or undefined
-      if (!updateData.password) {
-        delete updateData.password;
-      }
 
       const user = await storage.updateUser(id, updateData);
-      // Don't return password
-      const { password, ...safeUser } = user;
+      const safeUser = user;
       res.json(safeUser);
     } catch (error) {
       console.error("Error updating user:", error);
@@ -7098,6 +7092,21 @@ Follow-up areas for next session:
   // Register additional fixed document routes for better compatibility
   const { registerFixedDocumentRoutes } = await import('./document-routes-fix');
   registerFixedDocumentRoutes(app);
+
+  // Serve React app for index route
+  app.get('/', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../client/index.html'));
+  });
+
+  // Catch-all route to serve the React app for all non-API routes
+  app.get('*', (req, res) => {
+    // Only serve the app for non-API routes
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.resolve(__dirname, '../client/index.html'));
+    } else {
+      res.status(404).json({ error: 'API endpoint not found' });
+    }
+  });
 
   return httpServer;
 }

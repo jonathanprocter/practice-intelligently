@@ -9,8 +9,7 @@ const isValidPostgresUrl = (url: string | undefined): boolean => {
   if (!url) return false;
   // Check if it's a real PostgreSQL URL (not the placeholder)
   return url.startsWith('postgresql://') && 
-         !url.includes('localhost:5432') && 
-         !url.includes('user:password@');
+         !url.includes('localhost:5432');
 };
 
 async function initializeDatabase() {

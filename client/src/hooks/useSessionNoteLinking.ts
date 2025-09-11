@@ -16,7 +16,7 @@ interface AutoLinkSuggestion {
   reason: string;
 }
 
-export function useSessionNoteLinking(clientId: string) {
+export function useNoteLinking(clientId: string) {
   const [isLinking, setIsLinking] = useState(false);
   const [isUnlinking, setIsUnlinking] = useState(false);
   const [isAutoLinking, setIsAutoLinking] = useState(false);

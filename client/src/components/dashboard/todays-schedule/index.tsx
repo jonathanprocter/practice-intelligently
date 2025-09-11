@@ -1,7 +1,6 @@
 // components/dashboard/todays-schedule/index.tsx
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ApiClient, type Appointment } from "@/lib/api";
-import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -14,14 +13,14 @@ import SessionPrepModal from "@/components/session-prep/session-prep-modal";
 import ClientInfoModal from "./ClientInfoModal";
 import DeleteAppointmentDialog from "./DeleteAppointmentDialog";
 import { useAppointmentActions } from "./hooks/useAppointmentActions";
-import { useSessionManagement } from "./hooks/useSessionManagement";
+import { useAppointmentManagement } from "./hooks/useAppointmentManagement";
 
 // Constants
 const REFRESH_INTERVAL = 30 * 1000; // 30 seconds
 const CACHE_TIME = 5 * 60 * 1000; // 5 minutes
 
 export default function TodaysSchedule() {
-  const { therapistId } = useAuth();
+  const therapistId = 'default-therapist'; // Fixed therapist ID
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -43,7 +42,7 @@ export default function TodaysSchedule() {
   });
 
   // Hooks
-  const { activeSession, startSession, endSession } = useSessionManagement();
+  const { activeSession, startSession, endSession } = useAppointmentManagement();
   const { deleteAppointment, isDeleting } = useAppointmentActions();
 
   // Data fetching
@@ -54,12 +53,12 @@ export default function TodaysSchedule() {
     refetch,
     isRefetching 
   } = useQuery({
-    queryKey: ['todays-appointments', therapistId],
+    queryKey: ['todays-appointments'],
     queryFn: ApiClient.getTodaysAppointments,
     refetchInterval: REFRESH_INTERVAL,
     staleTime: 15 * 1000, // Consider data fresh for 15 seconds
     gcTime: CACHE_TIME,
-    enabled: !!therapistId,
+    enabled: true,
   });
 
   // Computed values

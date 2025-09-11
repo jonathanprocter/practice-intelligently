@@ -269,10 +269,12 @@ export class ErrorRecovery {
     // Handle based on error type
     switch (errorType) {
       case ErrorType.AUTH:
-        // Redirect to login
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
+        // Show error message instead of redirecting to login
+        toast({
+          title: 'Authentication Error',
+          description: 'An authentication error occurred. Please refresh the page.',
+          variant: 'destructive',
+        });
         break;
 
       case ErrorType.OAUTH:

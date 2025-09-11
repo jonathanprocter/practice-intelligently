@@ -20,14 +20,6 @@ class OptimizedStorage {
     );
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const cacheKey = `user:username:${username}`;
-    return cacheService.getOrSet(
-      cacheKey,
-      () => storage.getUserByUsername(username),
-      cacheTTL.long
-    );
-  }
 
   // Client methods with optimized caching
   async getClients(therapistId: string): Promise<Client[]> {

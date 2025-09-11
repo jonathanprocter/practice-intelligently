@@ -24,8 +24,6 @@ const createTablesSQL = `
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-  username TEXT NOT NULL UNIQUE,
-  password TEXT NOT NULL,
   full_name TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'therapist',
   email TEXT NOT NULL UNIQUE,

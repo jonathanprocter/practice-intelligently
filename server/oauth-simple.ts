@@ -6,7 +6,7 @@ import path from 'path';
 class SimpleOAuth {
   private oauth2Client: OAuth2Client;
   private tokens: any = null;
-  private isAuthenticated = false;
+  private hasGoogleTokens = false;
   private tokensFilePath: string;
 
   constructor(request?: any) {
@@ -106,17 +106,17 @@ class SimpleOAuth {
         const tokensData = await fsPromises.readFile(this.tokensFilePath, 'utf8');
         this.tokens = JSON.parse(tokensData);
         this.oauth2Client.setCredentials(this.tokens);
-        this.isAuthenticated = true;
+        this.hasGoogleTokens = true;
         console.log('Loaded existing OAuth tokens');
       } catch (fileError) {
         // File doesn't exist or is invalid, start fresh
         this.tokens = null;
-        this.isAuthenticated = false;
+        this.hasGoogleTokens = false;
       }
     } catch (error) {
       console.warn('Failed to load existing tokens:', error);
       this.tokens = null;
-      this.isAuthenticated = false;
+      this.hasGoogleTokens = false;
     }
   }
 
@@ -144,7 +144,7 @@ class SimpleOAuth {
 
       this.tokens = tokens;
       this.oauth2Client.setCredentials(tokens);
-      this.isAuthenticated = true;
+      this.hasGoogleTokens = true;
       await this.saveTokens(tokens);
 
       console.log('✅ Successfully obtained and saved tokens:', Object.keys(tokens));
@@ -155,7 +155,7 @@ class SimpleOAuth {
         code: error.code,
         response: error.response?.data
       });
-      this.isAuthenticated = false;
+      this.hasGoogleTokens = false;
       
       // More detailed error message
       if (error.message?.includes('redirect_uri_mismatch')) {
@@ -166,7 +166,7 @@ class SimpleOAuth {
   }
 
   isConnected(): boolean {
-    if (!this.isAuthenticated || this.tokens === null) {
+    if (!this.hasGoogleTokens || this.tokens === null) {
       return false;
     }
     
@@ -213,7 +213,7 @@ class SimpleOAuth {
   async refreshTokensIfNeeded(): Promise<void> {
     if (!this.tokens || !this.tokens.refresh_token) {
       console.log('No refresh token available, need to re-authenticate');
-      this.isAuthenticated = false;
+      this.hasGoogleTokens = false;
       return;
     }
 
@@ -247,7 +247,7 @@ class SimpleOAuth {
       
       this.oauth2Client.setCredentials(this.tokens);
       await this.saveTokens(this.tokens);
-      this.isAuthenticated = true;
+      this.hasGoogleTokens = true;
       
       console.log('Successfully refreshed OAuth tokens');
     } catch (error: any) {
@@ -268,7 +268,7 @@ class SimpleOAuth {
       
       // Clear invalid tokens
       this.tokens = null;
-      this.isAuthenticated = false;
+      this.hasGoogleTokens = false;
       await this.clearTokens();
       
       // Don't throw error for refresh failures - let the app handle re-auth gracefully
@@ -310,7 +310,7 @@ class SimpleOAuth {
     } catch (error: any) {
       console.error('Error fetching calendars:', error);
       if (error.code === 401 || error.code === 403) {
-        this.isAuthenticated = false;
+        this.hasGoogleTokens = false;
         throw new Error('Authentication expired. Please re-authenticate.');
       }
       throw error;
@@ -372,7 +372,7 @@ class SimpleOAuth {
     } catch (error: any) {
       console.error(`Error fetching events from calendar ${calendarId}:`, error.message);
       if (error.code === 401 || error.code === 403) {
-        this.isAuthenticated = false;
+        this.hasGoogleTokens = false;
         throw new Error('Authentication expired. Please re-authenticate.');
       }
       // Don't throw error for individual calendars, just return empty array
@@ -395,7 +395,7 @@ class SimpleOAuth {
     } catch (error: any) {
       console.error('Error deleting event:', error);
       if (error.code === 401 || error.code === 403) {
-        this.isAuthenticated = false;
+        this.hasGoogleTokens = false;
         throw new Error('Authentication expired. Please re-authenticate.');
       }
       throw error;
@@ -418,7 +418,7 @@ class SimpleOAuth {
 
   async disconnect(): Promise<void> {
     this.tokens = null;
-    this.isAuthenticated = false;
+    this.hasGoogleTokens = false;
     this.oauth2Client.setCredentials({});
 
     await this.clearTokens();
@@ -450,7 +450,7 @@ class SimpleOAuth {
     } catch (error: any) {
       console.error('Error fetching Drive files:', error);
       if (error.code === 401 || error.code === 403) {
-        this.isAuthenticated = false;
+        this.hasGoogleTokens = false;
         throw new Error('Authentication expired. Please re-authenticate.');
       }
       throw error;
@@ -474,7 +474,7 @@ class SimpleOAuth {
     } catch (error: any) {
       console.error('Error fetching Drive file:', error);
       if (error.code === 401 || error.code === 403) {
-        this.isAuthenticated = false;
+        this.hasGoogleTokens = false;
         throw new Error('Authentication expired. Please re-authenticate.');
       }
       throw error;
@@ -500,7 +500,7 @@ class SimpleOAuth {
     } catch (error: any) {
       console.error('Error searching Drive files:', error);
       if (error.code === 401 || error.code === 403) {
-        this.isAuthenticated = false;
+        this.hasGoogleTokens = false;
         throw new Error('Authentication expired. Please re-authenticate.');
       }
       throw error;
@@ -544,7 +544,7 @@ class SimpleOAuth {
     } catch (error: any) {
       console.error('Error getting file content:', error);
       if (error.code === 401 || error.code === 403) {
-        this.isAuthenticated = false;
+        this.hasGoogleTokens = false;
         throw new Error('Authentication expired. Please re-authenticate.');
       }
       throw error;
@@ -567,7 +567,7 @@ class SimpleOAuth {
     } catch (error: any) {
       console.error('Error getting event:', error);
       if (error.code === 401 || error.code === 403) {
-        this.isAuthenticated = false;
+        this.hasGoogleTokens = false;
         throw new Error('Authentication expired. Please re-authenticate.');
       }
       throw error;
@@ -590,7 +590,7 @@ class SimpleOAuth {
     } catch (error: any) {
       console.error('Error updating event:', error);
       if (error.code === 401 || error.code === 403) {
-        this.isAuthenticated = false;
+        this.hasGoogleTokens = false;
         throw new Error('Authentication expired. Please re-authenticate.');
       }
       throw error;
@@ -599,7 +599,7 @@ class SimpleOAuth {
 
   async clearTokens(): Promise<void> {
     this.tokens = null;
-    this.isAuthenticated = false;
+    this.hasGoogleTokens = false;
     this.oauth2Client.setCredentials({});
 
     // Remove tokens file

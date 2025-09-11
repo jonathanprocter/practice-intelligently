@@ -193,9 +193,9 @@ export const useRealtimeUpdates = (
 };
 
 /**
- * Hook to track user presence and online status
+ * Hook to track presence and online status
  */
-export const useUserPresence = () => {
+export const usePresenceTracking = () => {
   const queryClient = useQueryClient();
 
   useWebSocketEvent('user:online', (data) => {

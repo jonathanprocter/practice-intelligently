@@ -49,8 +49,8 @@ export const etagMiddleware = (req: Request, res: Response, next: NextFunction) 
 
 // Cache control headers middleware
 export const cacheControlMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  // Skip caching for auth endpoints
-  if (req.path.includes('/auth') || req.path.includes('/login')) {
+  // Skip caching for OAuth endpoints
+  if (req.path.includes('/oauth') || req.path.includes('/auth/google')) {
     res.setHeader('Cache-Control', 'no-store');
     return next();
   }

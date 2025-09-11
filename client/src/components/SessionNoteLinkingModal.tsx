@@ -117,7 +117,7 @@ const ScrollArea = ({ children, className = "" }: { children: React.ReactNode; c
 );
 
 // Custom hook for session note linking operations
-function useSessionNoteLinking(clientId: string) {
+function useNoteLinking(clientId: string) {
   const [isLinking, setIsLinking] = useState(false);
   const [isUnlinking, setIsUnlinking] = useState(false);
   const [isAutoLinking, setIsAutoLinking] = useState(false);
@@ -270,7 +270,7 @@ export function SessionNoteLinkingModal({
     isUnlinking,
     isAutoLinking,
     isBulkLinking
-  } = useSessionNoteLinking(clientId);
+  } = useNoteLinking(clientId);
 
   const { toast } = useToast();
 

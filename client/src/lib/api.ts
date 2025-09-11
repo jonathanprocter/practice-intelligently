@@ -167,37 +167,8 @@ export class ApiClient {
     return defaultId;
   }
 
-  // Auth methods
-  static async login(email: string, password: string): Promise<any> {
-    const response = await apiRequest('POST', '/api/auth/login', { email, password });
-    const data = await response.json();
-
-    // Set the therapist ID after successful login
-    if (data.therapistId) {
-      ApiClient.setTherapistId(data.therapistId);
-    }
-
-    return data;
-  }
-
-  static async logout(): Promise<void> {
-    await apiRequest('POST', '/api/auth/logout');
-    ApiClient.setTherapistId(null);
-  }
-
-  static async verifyAuth(): Promise<boolean> {
-    try {
-      const response = await apiRequest('GET', '/api/auth/verify');
-      return response.ok;
-    } catch {
-      return false;
-    }
-  }
-
-  static async refreshToken(): Promise<any> {
-    const response = await apiRequest('POST', '/api/auth/refresh');
-    return response.json();
-  }
+  // Auth methods removed - app no longer requires authentication
+  // Google OAuth is still available for calendar integration only
 
   // Dashboard methods
   static async getDashboardStats(): Promise<DashboardStats> {

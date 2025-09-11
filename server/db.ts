@@ -7,7 +7,6 @@ import ws from 'ws';
 import * as schema from '@shared/schema';
 import * as fs from 'fs';
 import * as path from 'path';
-import bcrypt from 'bcrypt';
 
 dotenv.config();
 
@@ -30,7 +29,7 @@ const isValidPostgresUrl = (url: string | undefined): boolean => {
   
   // Otherwise, check it's not a placeholder URL
   const isPlaceholder = url.includes('localhost:5432') || 
-                        url === 'postgresql://user:password@localhost:5432/dbname';
+                        url === 'postgresql://localhost:5432/dbname';
   
   return isValidPostgres && !isPlaceholder;
 };
@@ -85,8 +84,6 @@ if (isValidPostgresUrl(process.env.DATABASE_URL)) {
   -- Users table
   CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-    username TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL,
     full_name TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'therapist',
     email TEXT NOT NULL UNIQUE,
@@ -298,19 +295,7 @@ if (isValidPostgresUrl(process.env.DATABASE_URL)) {
     sqlite.exec(createTablesSQL);
     console.log('Database tables initialized successfully');
     
-    // Create default admin user if not exists
-    const adminCheck = sqlite.prepare('SELECT id FROM users WHERE username = ?').get('admin');
-    if (!adminCheck) {
-      const hashedPassword = bcrypt.hashSync('admin123', 10);
-      
-      const insertAdmin = sqlite.prepare(`
-        INSERT INTO users (username, password, full_name, role, email)
-        VALUES (?, ?, ?, ?, ?)
-      `);
-      
-      insertAdmin.run('admin', hashedPassword, 'System Administrator', 'therapist', 'admin@therapy.local');
-      console.log('Default admin user created (username: admin, password: admin123)');
-    }
+    // No default user creation needed - authentication removed
   } catch (error) {
     console.error('Error initializing database tables:', error);
   }

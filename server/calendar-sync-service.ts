@@ -1,5 +1,5 @@
 import { storage } from './storage';
-import { googleCalendarService } from './auth';
+import { googleCalendarService } from './google-calendar';
 import { pool } from './db';
 import type { InsertAppointment } from '../shared/schema';
 
