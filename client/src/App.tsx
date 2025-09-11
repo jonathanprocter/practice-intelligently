@@ -36,6 +36,7 @@ import OAuthTestSimple from './pages/oauth-test-simple';
 import OAuthQuickTest from './pages/oauth-quick-test';
 import ContentViewer from './pages/content-viewer';
 import ReauthGoogle from './pages/reauth-google';
+import OAuthFix from './pages/oauth-fix';
 import TestTimeline from './pages/test-timeline';
 import WebSocketTest from './pages/websocket-test';
 import SearchResults from './pages/search-results';
@@ -97,6 +98,7 @@ function Router() {
       <Route path="/search/:query?" component={SearchResults} />
       <Route path="/content-viewer" component={ContentViewer} />
       <Route path="/reauth-google" component={ReauthGoogle} />
+      <Route path="/oauth-fix" component={OAuthFix} />
       <Route path="/test-timeline" component={TestTimeline} />
       <Route path="/websocket-test" component={WebSocketTest} />
       <Route path="/settings" component={Settings} />
