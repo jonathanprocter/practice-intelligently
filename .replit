@@ -130,8 +130,8 @@ localPort = 36245
 externalPort = 3002
 
 [[ports]]
-localPort = 45083
-externalPort = 6000
+localPort = 42127
+externalPort = 6800
 
 [[ports]]
 localPort = 46405
