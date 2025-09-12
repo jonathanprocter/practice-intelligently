@@ -1,6 +1,8 @@
-// Polyfill for import.meta.dirname in Node.js 18
+// server/vite.ts
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+
+// Polyfill for import.meta.dirname in Node.js 18
 if (typeof import.meta.dirname === 'undefined') {
   Object.defineProperty(import.meta, 'dirname', {
     get() { return dirname(fileURLToPath(import.meta.url)); },
@@ -11,12 +13,10 @@ if (typeof import.meta.dirname === 'undefined') {
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
-import { createServer as createViteServer, createLogger } from "vite";
+import { createServer as createViteServer, type ViteDevServer } from "vite";
 import { type Server } from "http";
-import viteConfig from "../vite.config";
-import { nanoid } from "nanoid";
 
-const viteLogger = createLogger();
+let vite: ViteDevServer | null = null;
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -26,78 +26,122 @@ export function log(message: string, source = "express") {
     hour12: true,
   });
 
-  // Use structured logging instead of console.log in production
   if (process.env.NODE_ENV !== 'production') {
     console.log(`${formattedTime} [${source}] ${message}`);
   }
 }
 
 export async function setupVite(app: Express, server: Server) {
-  const serverOptions = {
-    middlewareMode: true,
-    hmr: { server },
-    allowedHosts: true as const,
-  };
+  try {
+    log("Starting Vite setup...", "vite");
 
-  const vite = await createViteServer({
-    ...viteConfig,
-    configFile: false,
-    customLogger: {
-      ...viteLogger,
-      error: (msg, options) => {
-        viteLogger.error(msg, options);
-        process.exit(1);
+    // Import the vite config - it already has the correct root and paths
+    const viteConfig = (await import("../vite.config")).default;
+
+    // Create Vite server with middleware mode
+    vite = await createViteServer({
+      ...viteConfig,
+      configFile: false, // We're using the imported config directly
+      server: {
+        ...viteConfig.server,
+        middlewareMode: true,
+        hmr: {
+          ...viteConfig.server?.hmr,
+          server,
+        },
       },
-    },
-    server: serverOptions,
-    appType: "custom",
-  });
+      // Override appType for middleware mode
+      appType: "custom",
+    });
 
-  app.use(vite.middlewares);
-  app.use("*", async (req, res, next) => {
-    const url = req.originalUrl;
+    log("Vite server created, applying middleware...", "vite");
 
-    // Skip API routes
-    if (url.startsWith("/api")) {
-      return next();
-    }
+    // Apply Vite middleware first - handles all module transformation
+    app.use(vite.middlewares);
 
-    try {
-      const clientTemplate = path.resolve(
-        import.meta.dirname,
-        "..",
-        "client",
-        "index.html",
-      );
+    // Only handle HTML serving for SPA navigation routes
+    // This MUST come after vite.middlewares
+    app.use("*", async (req, res, next) => {
+      const url = req.originalUrl;
 
-      // always reload the index.html file from disk incase it changes
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
-      );
-      const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
-    } catch (e) {
-      vite.ssrFixStacktrace(e as Error);
-      next(e);
-    }
-  });
+      // Skip API routes
+      if (url.startsWith("/api")) {
+        return next();
+      }
+
+      // CRITICAL: Skip Vite internal routes and assets
+      // This is what was causing your blank page issue
+      if (
+        url.startsWith("/@") ||           // Vite internals (@vite/client, @react-refresh, etc.)
+        url.startsWith("/src") ||         // Source files
+        url.startsWith("/node_modules") || // Dependencies
+        url.startsWith("/__") ||          // Vite special routes
+        /\.[a-zA-Z0-9]+$/.test(url)       // Files with extensions (.js, .css, .png, etc.)
+      ) {
+        // Let Vite handle these
+        return next();
+      }
+
+      try {
+        // The root is already set to 'client' in vite.config.ts
+        const indexPath = path.resolve(viteConfig.root || process.cwd(), "index.html");
+
+        if (!fs.existsSync(indexPath)) {
+          log(`index.html not found at: ${indexPath}`, "vite");
+          return res.status(404).send("index.html not found");
+        }
+
+        let html = await fs.promises.readFile(indexPath, "utf-8");
+
+        // Let Vite transform the HTML (inject HMR client, process modules, etc.)
+        html = await vite.transformIndexHtml(url, html);
+
+        res.status(200).set({ "Content-Type": "text/html" }).send(html);
+      } catch (error) {
+        log(`Error serving HTML: ${error}`, "vite");
+        vite.ssrFixStacktrace(error as Error);
+        next(error);
+      }
+    });
+
+    log("Vite middleware setup complete", "vite");
+  } catch (error) {
+    console.error("Failed to setup Vite:", error);
+    throw error;
+  }
 }
 
 export async function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  // Note: Your vite.config.ts outputs to dist/public, not just dist
+  const distPath = path.resolve(process.cwd(), "dist", "public");
 
   try {
     await fs.promises.access(distPath);
+    log(`Serving production build from: ${distPath}`, "express");
   } catch {
-    await fs.promises.mkdir(distPath, { recursive: true });
+    throw new Error(
+      `Production build not found at: ${distPath}\n` +
+      `Please run 'npm run build' first.`
+    );
   }
 
-  app.use(express.static(distPath));
+  // Serve static files
+  app.use(express.static(distPath, {
+    maxAge: '1y',
+    etag: true,
+    setHeaders: (res, filepath) => {
+      if (filepath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache');
+      }
+    }
+  }));
 
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
+  // SPA fallback
+  app.get("*", (req, res) => {
+    if (req.path.startsWith("/api")) {
+      return res.status(404).json({ error: "API endpoint not found" });
+    }
+
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
