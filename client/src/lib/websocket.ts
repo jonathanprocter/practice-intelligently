@@ -98,10 +98,8 @@ class WebSocketManager {
     this.therapistId = therapistId || ApiClient.getTherapistId();
     this.setConnectionStatus('connecting');
 
-    // Determine the WebSocket URL based on environment
-    const wsUrl = process.env.NODE_ENV === 'development' 
-      ? 'http://localhost:5000'
-      : window.location.origin;
+    // Use the same origin as the current page for WebSocket connection
+    const wsUrl = window.location.origin;
 
     console.log(`🔌 Connecting to WebSocket at ${wsUrl}...`);
 

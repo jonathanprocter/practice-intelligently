@@ -8,8 +8,8 @@ packages = ["ghostscript", "graphicsmagick", "imagemagick", "poppler_utils"]
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["npm", "run", "build"]
-run = ["npm", "run", "start"]
+build = ["sh", "-c", "NODE_ENV=production NPM_CONFIG_CACHE=/tmp/.npm-cache NODE_OPTIONS=--max-old-space-size=4096 npm run build"]
+run = ["sh", "-c", "NODE_ENV=production npm start"]
 
 [env]
 PORT = "3000"
@@ -128,10 +128,6 @@ externalPort = 6000
 [[ports]]
 localPort = 35977
 externalPort = 3003
-
-[[ports]]
-localPort = 36241
-externalPort = 8000
 
 [[ports]]
 localPort = 36245
