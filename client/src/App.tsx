@@ -137,16 +137,13 @@ function App() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <WebSocketProvider autoConnect={true}>
-        <TooltipProvider delayDuration={400}>
-          <Toaster />
-          <AppLayout>
-            <Router />
-          </AppLayout>
-        </TooltipProvider>
-      </WebSocketProvider>
-    </QueryClientProvider>
+    <WebSocketProvider autoConnect={true}>
+      <TooltipProvider delayDuration={400}>
+        <AppLayout>
+          <Router />
+        </AppLayout>
+      </TooltipProvider>
+    </WebSocketProvider>
   );
 }
 
