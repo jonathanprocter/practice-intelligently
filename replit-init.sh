@@ -4,16 +4,8 @@
 echo "🚀 Initializing Practice Intelligence for Replit..."
 echo "=============================================="
 
-# Apply deployment fixes
-export NODE_ENV=production
-export NPM_CONFIG_CACHE=/tmp/.npm-cache
-export NODE_OPTIONS=--max-old-space-size=4096
-export CI=false
-
-echo "✅ Deployment environment configured:"
-echo "   NODE_ENV=$NODE_ENV"
-echo "   NPM_CONFIG_CACHE=$NPM_CONFIG_CACHE"
-echo "   NODE_OPTIONS=$NODE_OPTIONS"
+# Set development environment
+export NODE_ENV=development
 
 # Check Node.js version
 echo "Checking Node.js version..."
@@ -74,5 +66,5 @@ echo ""
 echo "✨ Starting development server with preview..."
 echo ""
 
-# Start the application with optimized environment
-NODE_ENV=production NPM_CONFIG_CACHE=/tmp/.npm-cache NODE_OPTIONS=--max-old-space-size=4096 npm run dev
+# Start the application in development mode (for local development)
+NODE_ENV=development npm run dev
