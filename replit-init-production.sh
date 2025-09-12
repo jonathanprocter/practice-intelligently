@@ -6,6 +6,19 @@
 echo "🚀 Starting RemarkablePlanner in Production Mode..."
 echo "=============================================="
 
+# Force Node.js 20 to resolve deployment compatibility issues
+echo "Configuring Node.js 20 environment for production..."
+
+# Find and prepend Node.js 20 to PATH
+NODE20_PATHS=$(compgen -G "/nix/store/*nodejs-20*/bin" 2>/dev/null || true)
+if [ -n "$NODE20_PATHS" ]; then
+    NODE20_BIN=$(echo "$NODE20_PATHS" | head -n1)
+    export PATH="$NODE20_BIN:$PATH"
+    echo "✓ Node.js 20 path configured: $NODE20_BIN"
+else
+    echo "⚠️ Node.js 20 not found in /nix/store"
+fi
+
 # Set production environment variables
 export NODE_ENV=production
 export NPM_CONFIG_CACHE=/tmp/.npm-cache
@@ -16,6 +29,16 @@ export CI=false
 echo "Checking Node.js version..."
 node_version=$(node -v)
 echo "✓ Node.js version: $node_version"
+
+# Validate minimum version requirement for production
+if [[ "$node_version" < "v20" ]]; then
+    echo "❌ PRODUCTION ERROR: Node.js $node_version detected, but packages require Node.js 20+"
+    echo "❌ Dependencies like better-sqlite3, @google/genai require Node.js 20+"
+    echo "❌ Deployment will fail with this version"
+    exit 1
+else
+    echo "✓ Node.js version meets production requirements"
+fi
 
 # Check if required environment variables are set
 echo "Verifying environment variables..."

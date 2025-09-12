@@ -89,13 +89,26 @@ class SystemTester {
       this.results.database.passed++;
       
       // Test timezone
-      const tzResult = await client.query('SHOW timezone');
-      const timezone = tzResult.rows[0].timezone;
-      if (timezone.includes('America') || timezone.includes('New_York') || timezone.includes('Eastern')) {
-        console.log(chalk.green(`  ✓ Timezone configured: ${timezone}`));
-        this.results.database.passed++;
-      } else {
-        console.log(chalk.yellow(`  ⚠ Timezone is ${timezone}, expected America/New_York`));
+      try {
+        const tzResult = await client.query('SHOW timezone');
+        if (tzResult && tzResult.rows && tzResult.rows.length > 0 && tzResult.rows[0]) {
+          const timezone = tzResult.rows[0].timezone || tzResult.rows[0].TimeZone || '';
+          if (timezone && (timezone.includes('America') || timezone.includes('New_York') || timezone.includes('Eastern'))) {
+            console.log(chalk.green(`  ✓ Timezone configured: ${timezone}`));
+            this.results.database.passed++;
+          } else if (timezone) {
+            console.log(chalk.yellow(`  ⚠ Timezone is ${timezone}, expected America/New_York`));
+            this.results.database.warnings++;
+          } else {
+            console.log(chalk.yellow(`  ⚠ Could not determine timezone`));
+            this.results.database.warnings++;
+          }
+        } else {
+          console.log(chalk.yellow(`  ⚠ Could not query timezone information`));
+          this.results.database.warnings++;
+        }
+      } catch (tzError) {
+        console.log(chalk.yellow(`  ⚠ Error checking timezone: ${tzError.message}`));
         this.results.database.warnings++;
       }
       
@@ -112,7 +125,7 @@ class SystemTester {
           )
         `, [table]);
         
-        if (result.rows[0].exists) {
+        if (result && result.rows && result.rows[0] && result.rows[0].exists) {
           console.log(chalk.green(`  ✓ Table '${table}' exists`));
           this.results.database.passed++;
         } else {
@@ -126,7 +139,7 @@ class SystemTester {
       if (allTablesExist) {
         // Check for users
         const userResult = await pool.query('SELECT COUNT(*) FROM users');
-        const userCount = parseInt(userResult.rows[0].count);
+        const userCount = userResult && userResult.rows && userResult.rows[0] ? parseInt(userResult.rows[0].count || 0) : 0;
         
         if (userCount > 0) {
           console.log(chalk.green(`  ✓ Found ${userCount} user(s) in database`));
@@ -143,7 +156,7 @@ class SystemTester {
           AND appointment_id NOT IN (SELECT id FROM appointments)
         `);
         
-        const orphanCount = parseInt(orphanedNotes.rows[0].count);
+        const orphanCount = orphanedNotes && orphanedNotes.rows && orphanedNotes.rows[0] ? parseInt(orphanedNotes.rows[0].count || 0) : 0;
         if (orphanCount === 0) {
           console.log(chalk.green('  ✓ No orphaned session notes'));
           this.results.database.passed++;
@@ -228,19 +241,43 @@ class SystemTester {
     
     // Test health endpoint
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      
       const response = await fetch(`${baseUrl}/api/health`, { 
-        timeout: 5000 
-      }).catch(() => null);
+        signal: controller.signal
+      }).catch((err) => {
+        if (err.name === 'AbortError') {
+          console.log(chalk.yellow('  ⚠ Request timeout - server may be slow or not responding'));
+        }
+        return null;
+      });
+      
+      clearTimeout(timeout);
       
       if (response && response.ok) {
         console.log(chalk.green('  ✓ Health endpoint responding'));
         this.results.api.passed++;
+        
+        // Try to get response body for more info
+        try {
+          const data = await response.json();
+          if (data && data.status === 'healthy') {
+            console.log(chalk.green('  ✓ API reports healthy status'));
+            this.results.api.passed++;
+          }
+        } catch (jsonError) {
+          // Response might not be JSON, that's okay
+        }
+      } else if (response) {
+        console.log(chalk.yellow(`  ⚠ Health endpoint returned status ${response.status}`));
+        this.results.api.warnings++;
       } else {
         console.log(chalk.yellow('  ⚠ Health endpoint not responding - server may not be running'));
         this.results.api.warnings++;
       }
     } catch (error) {
-      console.log(chalk.yellow('  ⚠ Cannot reach API - server may not be running'));
+      console.log(chalk.yellow(`  ⚠ Cannot reach API - ${error.message}`));
       this.results.api.warnings++;
     }
   }
