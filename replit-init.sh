@@ -7,15 +7,32 @@ echo "=============================================="
 # Set development environment
 export NODE_ENV=development
 
-# Check for Node.js 20 availability
-echo "Checking for Node.js 20..."
-# Since nodejs_20 was installed as a system dependency, it should be available
-# The .replit file still forces Node.js 18, but we'll work with what we have
+# Force Node.js 20 to resolve package compatibility issues
+echo "Configuring Node.js 20 environment..."
 
-# Check Node.js version
-echo "Checking Node.js version..."
+# Find and prepend Node.js 20 to PATH
+NODE20_PATHS=$(compgen -G "/nix/store/*nodejs-20*/bin" 2>/dev/null || true)
+if [ -n "$NODE20_PATHS" ]; then
+    NODE20_BIN=$(echo "$NODE20_PATHS" | head -n1)
+    export PATH="$NODE20_BIN:$PATH"
+    echo "✓ Node.js 20 path configured: $NODE20_BIN"
+else
+    echo "⚠️ Node.js 20 not found in /nix/store"
+fi
+
+# Check and validate Node.js version
+echo "Verifying Node.js version..."
 node_version=$(node -v)
-echo "✓ Node.js version: $node_version"
+echo "✓ Current Node.js version: $node_version"
+
+# Validate minimum version requirement
+if [[ "$node_version" < "v20" ]]; then
+    echo "⚠️ WARNING: Node.js $node_version detected, but packages require Node.js 20+"
+    echo "⚠️ This may cause deployment failures with better-sqlite3, pdfjs-dist, and @google/genai"
+    echo "⚠️ Continuing with current version..."
+else
+    echo "✓ Node.js version meets package requirements"
+fi
 
 # Install dependencies with optimized settings
 echo "Installing dependencies..."
