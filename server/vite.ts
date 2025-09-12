@@ -48,9 +48,19 @@ export async function setupVite(app: Express, server: Server) {
   app.use(vite.ssrFixStacktrace);
   app.use(vite.middlewares);
 
-  // serve the SPA for all non-API routes
+  // serve the SPA for all non-API and non-asset routes
   app.use("*", async (req, res, next) => {
+    // Skip API routes
     if (req.originalUrl.startsWith("/api")) {
+      return next();
+    }
+
+    // Skip requests for actual files (assets, modules, etc.)
+    // This allows Vite middleware to handle these requests
+    if (req.originalUrl.includes('.') || 
+        req.originalUrl.startsWith('/src') || 
+        req.originalUrl.startsWith('/@') ||
+        req.originalUrl.startsWith('/node_modules')) {
       return next();
     }
 
