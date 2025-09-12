@@ -35,44 +35,20 @@ export async function setupVite(app: Express, server: Server) {
   try {
     log("Starting Vite setup...", "vite");
 
-    // NUCLEAR OPTION: Completely disable host checking
-    // This tells some frameworks to skip host validation entirely
-    process.env.DANGEROUSLY_DISABLE_HOST_CHECK = "true";
-    process.env.DISABLE_HOST_CHECK = "true";
-
-    // Also try to monkey-patch the host checking if needed
-    const originalWarn = console.warn;
-    console.warn = (...args: any[]) => {
-      // Suppress host blocking warnings
-      if (args[0]?.includes?.('Blocked request') || args[0]?.includes?.('allowedHosts')) {
-        return;
-      }
-      originalWarn(...args);
-    };
-
-    // Create Vite server with maximum permissiveness
+    // Create Vite server without host restrictions
     vite = await createViteServer({
-      configFile: false, // Don't load any config file
+      configFile: false,
       root: path.resolve(process.cwd(), "client"),
       server: {
         middlewareMode: true,
         hmr: { 
           server,
-          port: 443,
-          protocol: 'wss',
-          host: 'localhost', // Try localhost for HMR
         },
-        // Maximum permissiveness
-        host: '0.0.0.0', // Listen on all interfaces
-        allowedHosts: "all", // Allow all hosts
-        cors: {
-          origin: true, // Allow all origins
-          credentials: true,
-        },
-        fs: {
-          strict: false, // Disable strict mode
-          allow: ['/'], // Allow access to root
-        },
+        host: '0.0.0.0',
+        cors: true,
+        // Try to disable host check in every possible way
+        allowedHosts: "all",
+        proxy: {},
       },
       resolve: {
         alias: {
@@ -85,39 +61,69 @@ export async function setupVite(app: Express, server: Server) {
       build: {
         outDir: path.resolve(process.cwd(), "dist/public"),
       },
-      // Additional options to bypass security
-      optimizeDeps: {
-        force: true, // Force re-optimization
-      },
-      clearScreen: false, // Don't clear terminal
-      logLevel: 'info', // Show all logs
     });
 
-    log("Vite server created with all host checks disabled", "vite");
+    log("Vite server created", "vite");
 
-    // Middleware to manually handle the host check error
-    app.use((req, res, next) => {
-      // Force accept any host
-      if (req.headers.host) {
-        req.headers['x-forwarded-host'] = req.headers.host;
-        req.headers['x-original-host'] = req.headers.host;
-        // Trick Vite into thinking it's localhost
-        if (req.url?.startsWith('/@')) {
-          req.headers.host = 'localhost:3000';
-        }
+    // BYPASS VITE FOR HTML - Serve index.html directly for root requests
+    app.get('/', async (req, res) => {
+      try {
+        const indexPath = path.resolve(process.cwd(), "client", "index.html");
+        let html = await fs.promises.readFile(indexPath, "utf-8");
+
+        // Manually inject Vite client for HMR
+        html = html.replace(
+          '<head>',
+          `<head>
+            <script type="module">
+              import RefreshRuntime from '/@react-refresh'
+              RefreshRuntime.injectIntoGlobalHook(window)
+              window.$RefreshReg$ = () => {}
+              window.$RefreshSig$ = () => (type) => type
+              window.__vite_plugin_react_preamble_installed__ = true
+            </script>
+            <script type="module" src="/@vite/client"></script>`
+        );
+
+        // Make sure the main script tag is correct
+        html = html.replace(
+          /src="\/src\/main\.tsx"/,
+          'type="module" src="/src/main.tsx"'
+        );
+
+        res.status(200).set({ "Content-Type": "text/html" }).send(html);
+      } catch (error) {
+        console.error("Error serving index.html:", error);
+        res.status(500).send("Error loading application");
       }
-      next();
     });
 
-    // Apply Vite middleware
+    // Apply Vite middleware for everything else (modules, HMR, etc.)
     app.use(vite.middlewares);
 
-    log("Vite middleware applied with host override", "vite");
+    // Fallback for SPA routes
+    app.get('*', async (req, res, next) => {
+      // Skip API routes
+      if (req.path.startsWith('/api')) {
+        return next();
+      }
 
-    // Restore console.warn after setup
-    setTimeout(() => {
-      console.warn = originalWarn;
-    }, 1000);
+      // Skip asset requests
+      if (req.path.includes('.') || req.path.startsWith('/@')) {
+        return next();
+      }
+
+      try {
+        const indexPath = path.resolve(process.cwd(), "client", "index.html");
+        let html = await fs.promises.readFile(indexPath, "utf-8");
+        html = await vite.transformIndexHtml(req.url, html);
+        res.status(200).set({ "Content-Type": "text/html" }).send(html);
+      } catch (error) {
+        next(error);
+      }
+    });
+
+    log("Vite setup complete with HTML bypass", "vite");
 
   } catch (error) {
     console.error("Failed to setup Vite:", error);
