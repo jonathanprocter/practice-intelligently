@@ -30,6 +30,7 @@ export const useWebSocket = () => {
   return context;
 };
 
+
 interface WebSocketProviderProps {
   children: React.ReactNode;
   autoConnect?: boolean;
@@ -273,12 +274,24 @@ export const WebSocketProvider = ({ children, autoConnect = true }: WebSocketPro
 
   // Auto-connect on mount if enabled
   useEffect(() => {
+    console.log('🔌 WebSocketProvider mount:', {
+      autoConnect,
+      therapistId,
+      shouldConnect: autoConnect && therapistId
+    });
+    
     if (autoConnect && therapistId) {
+      console.log('🔌 Initiating WebSocket connection with therapistId:', therapistId);
       wsManager.connect(therapistId);
+    } else if (autoConnect && !therapistId) {
+      console.warn('⚠️ WebSocket autoConnect enabled but no therapistId available');
+      // Try connecting without therapistId
+      wsManager.connect();
     }
 
     return () => {
       if (autoConnect) {
+        console.log('🔌 WebSocketProvider unmount, disconnecting...');
         wsManager.disconnect();
       }
     };
