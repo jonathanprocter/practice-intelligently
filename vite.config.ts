@@ -37,11 +37,13 @@ export default defineConfig({
       overlay: false,
     },
     fs: {
-      strict: true,
-      deny: ["**/.*"],
+      strict: false, // Changed to false
+      allow: ['.'], // Allow everything
     },
-    // FIX for Replit hosts
-    host: true,
-    allowedHosts: "all", // Allow all hosts for Replit
+    // Maximum permissiveness for Replit
+    host: '0.0.0.0', // Listen on all interfaces
+    strictPort: false,
+    cors: true, // Enable CORS
+    allowedHosts: "all", // Allow ALL hosts
   },
 });

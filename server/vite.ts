@@ -35,31 +35,29 @@ export async function setupVite(app: Express, server: Server) {
   try {
     log("Starting Vite setup...", "vite");
 
-    // Create Vite server with Replit-friendly configuration
+    // Import and use the vite config directly, only modifying what's needed for middleware mode
+    const viteConfig = (await import("../vite.config.js")).default;
+
+    // Create Vite server merging configs properly
     vite = await createViteServer({
-      configFile: path.resolve(process.cwd(), "vite.config.ts"),
+      ...viteConfig,
+      configFile: false, // We're using the imported config
       server: {
+        ...viteConfig.server, // Keep all server settings from config including allowedHosts
         middlewareMode: true,
         hmr: { 
+          ...viteConfig.server?.hmr,
           server,
-          // Important for Replit WebSocket connections
-          port: 443,
-          protocol: 'wss',
         },
-        // Allow all hosts in middleware mode for Replit
-        host: true,
-        allowedHosts: "all",
       },
     });
 
     log("Vite server created successfully", "vite");
 
-    // CRITICAL: Apply Vite middleware - this handles everything in dev mode
+    // Apply Vite middleware
     app.use(vite.middlewares);
 
     log("Vite middleware applied", "vite");
-
-    // DO NOT add any catch-all handler here - Vite handles everything
 
   } catch (error) {
     console.error("Failed to setup Vite:", error);
