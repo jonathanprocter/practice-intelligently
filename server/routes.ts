@@ -35,6 +35,7 @@ const uploadToMemory = multer({
 });
 import { getAllApiStatuses } from "./health-check";
 import { simpleOAuth } from "./oauth-simple";
+import { oauthRefreshService } from "./oauth-refresh-service";
 import { googleCalendarService } from "./google-calendar";
 import { generateUSHolidays, getHolidaysForYear, getHolidaysInRange, isUSHoliday } from "./us-holidays";
 import { SessionDocumentProcessor } from './session-document-processor';
@@ -1143,6 +1144,39 @@ async function syncCalendarEvents(): Promise<any> {
 export async function registerRoutes(app: Express, wss?: WebSocketServer): Promise<Server> {
   // Set the WebSocket server on app locals for access in routes
   app.locals.wss = wss;
+
+  // Initialize OAuth refresh service and attempt immediate token refresh
+  console.log('🔄 Initializing OAuth refresh service...');
+  try {
+    const tokenStatus = await oauthRefreshService.getTokenStatus();
+    console.log('📊 OAuth token status:', tokenStatus);
+    
+    if (tokenStatus.hasTokens && tokenStatus.needsRefresh) {
+      console.log('🔄 Tokens need refresh, attempting to refresh...');
+      const refreshed = await oauthRefreshService.forceRefresh();
+      if (refreshed) {
+        console.log('✅ OAuth tokens successfully refreshed on startup');
+        // Reinitialize bidirectional calendar sync after token refresh
+        await bidirectionalCalendarSync.reinitialize();
+      } else {
+        console.log('❌ Failed to refresh OAuth tokens on startup');
+      }
+    } else if (tokenStatus.hasTokens && tokenStatus.isValid) {
+      console.log('✅ OAuth tokens are valid');
+      // Reinitialize bidirectional calendar sync with valid tokens
+      await bidirectionalCalendarSync.reinitialize();
+    } else if (!tokenStatus.hasTokens) {
+      console.log('⚠️ No OAuth tokens found - authentication required');
+    }
+    
+    // Start auto-refresh if we have tokens
+    if (tokenStatus.hasTokens) {
+      oauthRefreshService.startAutoRefresh();
+      console.log('🔄 OAuth auto-refresh service started');
+    }
+  } catch (error) {
+    console.error('Error initializing OAuth refresh service:', error);
+  }
 
   // Health check
   app.get("/api/health", async (req, res) => {

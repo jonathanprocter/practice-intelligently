@@ -63,6 +63,9 @@ export class BidirectionalCalendarSync {
 
   private async initializeCalendar() {
     try {
+      // First attempt to refresh tokens if needed
+      await simpleOAuth.refreshTokensIfNeeded();
+      
       if (simpleOAuth.isConnected()) {
         const oauth2Client = simpleOAuth.getOAuth2Client();
         this.calendar = google.calendar({ version: 'v3', auth: oauth2Client });
@@ -72,6 +75,20 @@ export class BidirectionalCalendarSync {
       }
     } catch (error) {
       console.error('Failed to initialize calendar:', error);
+    }
+  }
+
+  /**
+   * Reinitialize the calendar connection (useful after OAuth token refresh)
+   */
+  async reinitialize(): Promise<boolean> {
+    try {
+      console.log('🔄 Reinitializing bidirectional calendar sync...');
+      await this.initializeCalendar();
+      return simpleOAuth.isConnected();
+    } catch (error) {
+      console.error('Failed to reinitialize calendar:', error);
+      return false;
     }
   }
 

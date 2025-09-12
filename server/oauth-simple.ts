@@ -210,11 +210,11 @@ class SimpleOAuth {
   }
 
   // Add automatic token refresh method
-  async refreshTokensIfNeeded(): Promise<void> {
+  async refreshTokensIfNeeded(): Promise<boolean> {
     if (!this.tokens || !this.tokens.refresh_token) {
       console.log('No refresh token available, need to re-authenticate');
       this.hasGoogleTokens = false;
-      return;
+      return false;
     }
 
     // Check if token is expired or will expire soon (within 10 minutes)
@@ -224,7 +224,7 @@ class SimpleOAuth {
     if (this.tokens.expiry_date && this.tokens.expiry_date > now + bufferTime) {
       // Token is still valid for more than 10 minutes
       console.log('Token still valid, no refresh needed');
-      return;
+      return true;
     }
 
     // If we don't have expiry_date or token is close to expiring, refresh it
@@ -250,6 +250,7 @@ class SimpleOAuth {
       this.hasGoogleTokens = true;
       
       console.log('Successfully refreshed OAuth tokens');
+      return true;
     } catch (error: any) {
       console.error('Failed to refresh tokens:', error.message);
       
@@ -273,16 +274,17 @@ class SimpleOAuth {
       
       // Don't throw error for refresh failures - let the app handle re-auth gracefully
       // throw new Error('Token refresh failed. Please re-authenticate.');
+      return false;
     }
   }
 
   async getCalendars() {
+    // Attempt to refresh tokens before checking connection
+    await this.refreshTokensIfNeeded();
+    
     if (!this.isConnected()) {
       throw new Error('Not authenticated. Please complete OAuth flow first.');
     }
-
-    // Attempt to refresh tokens before making API call
-    await this.refreshTokensIfNeeded();
 
     try {
       const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
@@ -318,12 +320,12 @@ class SimpleOAuth {
   }
 
   async getEvents(calendarId: string = 'primary', timeMin?: string, timeMax?: string) {
+    // Attempt to refresh tokens before checking connection
+    await this.refreshTokensIfNeeded();
+    
     if (!this.isConnected()) {
       throw new Error('Not authenticated. Please complete OAuth flow first.');
     }
-
-    // Attempt to refresh tokens before making API call
-    await this.refreshTokensIfNeeded();
 
     try {
       const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
