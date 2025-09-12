@@ -6,7 +6,7 @@ set -euo pipefail  # Exit on any error, undefined vars, or pipeline failures
 echo "🚀 Starting deployment build with environment fixes..."
 
 # Set environment variables to handle Nix directory caching issues
-export NODE_ENV=production
+# NODE_ENV should be set as environment variable in deployment, not hardcoded
 export DISABLE_CARTOGRAPHER=true
 export NIX_REMOTE=''
 export NODE_NO_WARNINGS=1
@@ -51,7 +51,7 @@ rm -rf dist/ || true
 # Run the build with enhanced error handling and warning suppression
 echo "🔨 Building frontend with Vite..."
 set +e  # Temporarily disable exit on error to capture build output
-NODE_ENV=production DISABLE_CARTOGRAPHER=true NIX_REMOTE='' NODE_NO_WARNINGS=1 npx vite build > /tmp/vite-build.log 2>&1
+DISABLE_CARTOGRAPHER=true NIX_REMOTE='' NODE_NO_WARNINGS=1 npx vite build > /tmp/vite-build.log 2>&1
 VITE_EXIT_CODE=$?
 set -e  # Re-enable exit on error
 
@@ -68,7 +68,7 @@ fi
 
 echo "🔨 Building backend with esbuild..."
 set +e  # Temporarily disable exit on error to capture build output
-NODE_ENV=production NODE_NO_WARNINGS=1 npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --log-level=error --allow-overwrite > /tmp/esbuild.log 2>&1
+NODE_NO_WARNINGS=1 npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist --log-level=error --allow-overwrite > /tmp/esbuild.log 2>&1
 ESBUILD_EXIT_CODE=$?
 set -e  # Re-enable exit on error
 

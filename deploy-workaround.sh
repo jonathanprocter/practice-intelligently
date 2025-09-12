@@ -7,7 +7,7 @@ echo "🚀 Starting deployment with compatibility workaround..."
 echo "=============================================="
 
 # Set production environment variables
-export NODE_ENV=production
+# NODE_ENV should be set as environment variable in deployment, not hardcoded
 export NPM_CONFIG_CACHE=/tmp/.npm-cache
 export NODE_OPTIONS=--max-old-space-size=4096
 export DISABLE_CARTOGRAPHER=true
@@ -26,11 +26,11 @@ echo "Note: Ignoring Node.js version warnings during build"
 
 # Frontend build
 echo "Building frontend with Vite..."
-NODE_ENV=production DISABLE_CARTOGRAPHER=true NODE_NO_WARNINGS=1 npx vite build 2>&1 | grep -v "EBADENGINE" || true
+DISABLE_CARTOGRAPHER=true NODE_NO_WARNINGS=1 npx vite build 2>&1 | grep -v "EBADENGINE" || true
 
 # Backend build
 echo "Building backend with esbuild..."
-NODE_ENV=production NODE_NO_WARNINGS=1 npx esbuild server/index.ts \
+NODE_NO_WARNINGS=1 npx esbuild server/index.ts \
     --platform=node \
     --packages=external \
     --bundle \
@@ -48,7 +48,7 @@ if [ -d "dist" ] && [ -f "dist/index.js" ]; then
     # Create production start script
     cat > start-production.sh << 'EOF'
 #!/bin/bash
-export NODE_ENV=production
+# NODE_ENV should be set as environment variable in deployment, not hardcoded
 export NODE_NO_WARNINGS=1
 echo "Starting production server..."
 node dist/index.js
