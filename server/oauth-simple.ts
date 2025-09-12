@@ -597,24 +597,6 @@ class SimpleOAuth {
     }
   }
 
-  async clearTokens(): Promise<void> {
-    this.tokens = null;
-    this.hasGoogleTokens = false;
-    this.oauth2Client.setCredentials({});
-
-    // Remove tokens file
-    try {
-      const { promises: fsPromises } = await import('fs');
-      try {
-        await fsPromises.unlink(this.tokensFilePath);
-        console.log('OAuth tokens cleared and file deleted');
-      } catch (fileError) {
-        // File might not exist, which is fine
-      }
-    } catch (error) {
-      console.warn('Failed to clear tokens file:', error);
-    }
-  }
 }
 
 // Export singleton instance for backward compatibility
