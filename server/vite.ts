@@ -14,6 +14,7 @@ import fs from "fs";
 import path from "path";
 import { createServer as createViteServer, type ViteDevServer } from "vite";
 import { type Server } from "http";
+import react from "@vitejs/plugin-react";
 
 let vite: ViteDevServer | null = null;
 
@@ -25,7 +26,6 @@ export function log(message: string, source = "express") {
     hour12: true,
   });
 
-  // Use structured logging instead of console.log in production
   if (process.env.NODE_ENV !== 'production') {
     console.log(`${formattedTime} [${source}] ${message}`);
   }
@@ -35,24 +35,36 @@ export async function setupVite(app: Express, server: Server) {
   try {
     log("Starting Vite setup...", "vite");
 
-    // Import and use the vite config directly, only modifying what's needed for middleware mode
-    const viteConfig = (await import("../vite.config.js")).default;
-
-    // Create Vite server merging configs properly
+    // IMPORTANT: Set configFile to false to prevent loading vite.config.ts
     vite = await createViteServer({
-      ...viteConfig,
-      configFile: false, // We're using the imported config
+      configFile: false, // THIS IS CRITICAL - don't load any config file
+      root: path.resolve(process.cwd(), "client"),
       server: {
-        ...viteConfig.server, // Keep all server settings from config including allowedHosts
         middlewareMode: true,
         hmr: { 
-          ...viteConfig.server?.hmr,
           server,
+          port: 443,
+          protocol: 'wss',
         },
+        // Force allow all hosts
+        host: '0.0.0.0',
+        allowedHosts: "all", // This MUST work with configFile: false
+        cors: true,
+      },
+      resolve: {
+        alias: {
+          "@": path.resolve(process.cwd(), "client", "src"),
+          "@shared": path.resolve(process.cwd(), "shared"),
+          "@assets": path.resolve(process.cwd(), "attached_assets"),
+        },
+      },
+      plugins: [react()],
+      build: {
+        outDir: path.resolve(process.cwd(), "dist/public"),
       },
     });
 
-    log("Vite server created successfully", "vite");
+    log("Vite server created with allowedHosts='all' and configFile=false", "vite");
 
     // Apply Vite middleware
     app.use(vite.middlewares);
@@ -66,7 +78,6 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export async function serveStatic(app: Express) {
-  // For production only - your config outputs to dist/public
   const distPath = path.resolve(process.cwd(), "dist", "public");
 
   try {
@@ -79,7 +90,6 @@ export async function serveStatic(app: Express) {
     );
   }
 
-  // Serve static files
   app.use(express.static(distPath, {
     maxAge: '1y',
     etag: true,
@@ -90,7 +100,6 @@ export async function serveStatic(app: Express) {
     }
   }));
 
-  // SPA fallback for production
   app.get("*", (req, res) => {
     if (req.path.startsWith("/api")) {
       return res.status(404).json({ error: "API endpoint not found" });
@@ -105,7 +114,6 @@ export async function serveStatic(app: Express) {
   });
 }
 
-// Optional: Cleanup function for graceful shutdown
 export async function closeVite() {
   if (vite) {
     await vite.close();
