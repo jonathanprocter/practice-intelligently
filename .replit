@@ -99,7 +99,7 @@ args = "sleep 3"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "/nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin/npm run dev"
+args = "npm run dev"
 
 [[ports]]
 localPort = 3000
