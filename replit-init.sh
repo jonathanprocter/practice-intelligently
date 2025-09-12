@@ -88,5 +88,5 @@ echo ""
 echo "✨ Starting development server with preview..."
 echo ""
 
-# Start the application in development mode (for local development)
+# Start the application in development mode (standard configuration)
 NODE_ENV=development npm run dev
