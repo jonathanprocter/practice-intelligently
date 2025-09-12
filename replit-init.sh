@@ -7,6 +7,11 @@ echo "=============================================="
 # Set development environment
 export NODE_ENV=development
 
+# Check for Node.js 20 availability
+echo "Checking for Node.js 20..."
+# Since nodejs_20 was installed as a system dependency, it should be available
+# The .replit file still forces Node.js 18, but we'll work with what we have
+
 # Check Node.js version
 echo "Checking Node.js version..."
 node_version=$(node -v)

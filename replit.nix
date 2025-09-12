@@ -1,5 +1,6 @@
 { pkgs }: {
   deps = [
+    pkgs.nodejs_20
     pkgs.nano
     pkgs.lsof
     pkgs.nodejs_18  # Changed from nodejs_20 to nodejs_18
