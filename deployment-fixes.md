@@ -7,14 +7,14 @@ This document provides solutions for the deployment errors and how to apply them
 ### 1. Replit Cartographer Plugin Error
 **Issue**: `TypeError: traverse is not a function during build process`
 
-**Solution**: The cartographer plugin is already conditionally loaded only in development. To completely disable it during production builds:
+**Solution**: The cartographer plugin is conditionally loaded only when `NODE_ENV !== "production"` AND `REPL_ID !== undefined`. To disable it during production builds:
 
-Add this environment variable during deployment:
+**Ensure this environment variable is set during build/deploy:**
 ```
-DISABLE_CARTOGRAPHER=true
+NODE_ENV=production
 ```
 
-The vite.config.ts already checks for `NODE_ENV !== "production"` and `REPL_ID !== undefined`, but the additional `DISABLE_CARTOGRAPHER` check provides an extra layer of control.
+The vite.config.ts checks these conditions - setting `NODE_ENV=production` will prevent the plugin from loading. This is the reliable fix as the configuration already supports it.
 
 ### 2. Duplicate clearTokens() Method
 **Issue**: `Duplicate class member clearTokens() in server/oauth-simple.ts`
@@ -32,18 +32,22 @@ Each has its own properly encapsulated `clearTokens()` method. The `OAuthTokenMa
 **Solution**: Add these environment variables to disable package caching:
 ```
 NPM_CONFIG_CACHE=/tmp/.npm-cache
-DISABLE_PACKAGE_CACHING=true
 NODE_OPTIONS=--max-old-space-size=4096
 ```
 
 ### 4. Build Command Warnings
 **Issue**: Build fails due to warnings being treated as errors
 
-**Solution**: Set build-time environment variables:
+**Solution**: Vite typically doesn't fail builds on warnings by default. If sourcemaps are causing issues during build, use:
+
+```bash
+# Disable sourcemaps in build
+vite build --sourcemap false
+```
+
+Or set `CI=false` if running in a CI environment that treats warnings as errors:
 ```
 CI=false
-DISABLE_ESLINT_PLUGIN=true
-GENERATE_SOURCEMAP=false
 ```
 
 ### 5. Node.js Version Consistency
@@ -51,26 +55,27 @@ GENERATE_SOURCEMAP=false
 
 **Solution**: ✅ **Already resolved** - Node.js 20 is already installed and available.
 
+**For CI/CD deployment**: Ensure Node.js 20 is used in the deployment environment by verifying:
+```bash
+node --version  # Should show v20.x.x
+```
+
 ## Environment Variables for Production Deployment
 
 Create or update your production environment with these variables:
 
 ```bash
-# Disable cartographer plugin in production
-DISABLE_CARTOGRAPHER=true
+# CRITICAL: Disable cartographer plugin in production
+NODE_ENV=production
 
-# Package caching fixes
+# Package caching fixes for Nix directories
 NPM_CONFIG_CACHE=/tmp/.npm-cache
-DISABLE_PACKAGE_CACHING=true
 
 # Build optimization
 NODE_OPTIONS=--max-old-space-size=4096
-CI=false
-DISABLE_ESLINT_PLUGIN=true
-GENERATE_SOURCEMAP=false
 
-# Production settings
-NODE_ENV=production
+# Only if CI treats warnings as errors
+CI=false
 ```
 
 ## Manual Application Steps
@@ -81,14 +86,21 @@ Since core configuration files (vite.config.ts, package.json, replit.nix) cannot
 2. **For manual builds**: Export these environment variables before running build commands
 3. **For CI/CD**: Add these to your pipeline's environment configuration
 
-## Verification
+## Verification Checklist
 
-After applying these fixes:
+After applying these fixes, verify the following in your deployment environment:
 
-1. The cartographer plugin will be disabled during production builds
-2. Package caching issues should be resolved with custom cache directory
-3. Build warnings will not fail the deployment
-4. Node.js version is already at v20 for consistency
+1. **Environment check**: `echo $NODE_ENV` should output "production"
+2. **Node version**: `node --version` should show v20.x.x
+3. **Build logs**: Cartographer plugin should NOT appear in build output
+4. **Build success**: Both `vite build` and `npm run build` should complete without errors
+5. **Cache location**: `echo $NPM_CONFIG_CACHE` should show `/tmp/.npm-cache`
+
+Expected results:
+- ✅ Cartographer plugin disabled during production builds
+- ✅ Package caching uses ephemeral directory (/tmp/.npm-cache)
+- ✅ Build completes without Nix directory errors
+- ✅ Node.js 20 consistency maintained
 
 ## Files Modified
 
