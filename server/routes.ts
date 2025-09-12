@@ -7127,20 +7127,9 @@ Follow-up areas for next session:
   const { registerFixedDocumentRoutes } = await import('./document-routes-fix');
   registerFixedDocumentRoutes(app);
 
-  // Serve React app for index route
-  app.get('/', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../client/index.html'));
-  });
-
-  // Catch-all route to serve the React app for all non-API routes
-  app.get('*', (req, res) => {
-    // Only serve the app for non-API routes
-    if (!req.path.startsWith('/api')) {
-      res.sendFile(path.resolve(__dirname, '../client/index.html'));
-    } else {
-      res.status(404).json({ error: 'API endpoint not found' });
-    }
-  });
+  // NOTE: In development, Vite handles serving the React app
+  // These routes are handled by setupVite() in vite.ts
+  // In production, serveStatic() in vite.ts handles these routes
 
   return httpServer;
 }
