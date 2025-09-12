@@ -8,8 +8,8 @@ export NODE_ENV=production
 export NIX_REMOTE=''
 export NODE_NO_WARNINGS=1
 
-# Add Node.js 20 path for consistency  
-export NODE_PATH="/nix/store/*/bin/node"
+# Add Node.js 20 path for consistency
+export PATH="/nix/store/*/bin:$PATH"
 
 # Disable package caching to resolve Nix directory issues
 export npm_config_cache="/tmp/.npm"
