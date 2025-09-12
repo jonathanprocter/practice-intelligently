@@ -38,7 +38,7 @@ export npm_config_update_notifier=false
 export npm_config_fund=false
 
 echo "✅ Environment configured for deployment:"
-echo "   NODE_ENV=$NODE_ENV"
+echo "   NODE_ENV=${NODE_ENV:-unset}"
 echo "   DISABLE_CARTOGRAPHER=$DISABLE_CARTOGRAPHER"
 echo "   NIX_REMOTE=$NIX_REMOTE"  
 echo "   NODE_NO_WARNINGS=$NODE_NO_WARNINGS"
