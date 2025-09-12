@@ -5,6 +5,7 @@ echo "🚀 Starting deployment build with environment fixes..."
 
 # Set environment variables to handle Nix directory caching issues
 export NODE_ENV=production
+export DISABLE_CARTOGRAPHER=true
 export NIX_REMOTE=''
 export NODE_NO_WARNINGS=1
 
@@ -21,6 +22,7 @@ export npm_config_fund=false
 
 echo "✅ Environment configured for deployment:"
 echo "   NODE_ENV=$NODE_ENV"
+echo "   DISABLE_CARTOGRAPHER=$DISABLE_CARTOGRAPHER"
 echo "   NIX_REMOTE=$NIX_REMOTE"  
 echo "   NODE_NO_WARNINGS=$NODE_NO_WARNINGS"
 echo "   npm_config_cache=$npm_config_cache"
@@ -31,7 +33,7 @@ rm -rf dist/ || true
 
 # Run the build with enhanced error handling and warning suppression
 echo "🔨 Building frontend with Vite..."
-NODE_ENV=production NIX_REMOTE='' vite build 2>&1 | sed '/Warning:/d' || {
+NODE_ENV=production DISABLE_CARTOGRAPHER=true NIX_REMOTE='' vite build 2>&1 | sed '/Warning:/d' || {
     echo "❌ Frontend build failed"
     exit 1
 }

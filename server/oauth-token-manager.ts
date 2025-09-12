@@ -213,7 +213,7 @@ export class OAuthTokenManager {
   /**
    * Clear all OAuth tokens and reset
    */
-  async clearTokens(): Promise<void> {
+  async clearAllTokens(): Promise<void> {
     try {
       // Stop auto-refresh
       this.stopAutoRefresh();
