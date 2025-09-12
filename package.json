@@ -74,6 +74,7 @@
     "@uppy/progress-bar": "^4.3.2",
     "@uppy/react": "^4.5.2",
     "adm-zip": "^0.5.16",
+    "axios": "^1.12.1",
     "better-sqlite3": "^12.2.0",
     "canvas": "^3.1.2",
     "chalk": "^5.6.0",
@@ -146,14 +147,14 @@
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^4.3.2",
     "autoprefixer": "^10.4.20",
-    "drizzle-kit": "^0.18.1",
+    "drizzle-kit": "^0.31.4",
     "esbuild": "^0.25.0",
     "pm2": "^6.0.8",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.1",
     "typescript": "5.6.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.6"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
