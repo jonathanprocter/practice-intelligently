@@ -1,5 +1,7 @@
 # Cloud Run Deployment Environment Setup
 
+> 📖 **Complete Guide**: For detailed deployment documentation, see [CLOUD_RUN_DEPLOYMENT_GUIDE.md](./CLOUD_RUN_DEPLOYMENT_GUIDE.md)
+
 ## Critical Issue Resolved ✅
 Your deployment failed because of hardcoded `NODE_ENV=production` values conflicting with Cloud Run's environment variable management. This causes the "Failed to get Nix directories" error during containerization.
 

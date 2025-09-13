@@ -35,10 +35,6 @@ echo "🔗 Access Information:"
 echo "   - Local URL: http://localhost:3000"
 echo "   - Use the preview window in Replit"
 echo ""
-echo "👤 Default Login:"
-echo "   - Username: admin"
-echo "   - Password: admin123"
-echo ""
 
 # Start in production mode
 NODE_ENV=production PORT=3000 npm start
