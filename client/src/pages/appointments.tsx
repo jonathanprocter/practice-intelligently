@@ -6,6 +6,7 @@ import {
   MessageSquare, Target, TrendingUp, List, Grid3X3, CalendarDays,
   Archive, PlayCircle, Eye, Check, X, PhoneCall, MessageCircle
 } from "lucide-react";
+import { useTodaysCalendarEvents } from "@/hooks/useCalendarEvents";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -49,6 +50,9 @@ export default function Appointments() {
   const [expandedAppointment, setExpandedAppointment] = useState<string | null>(null);
   const [sessionPrepModal, setSessionPrepModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<ExtendedAppointment | null>(null);
+  
+  // Use shared hook for today's calendar events
+  const { events: todaysCalendarEvents } = useTodaysCalendarEvents();
 
   // Advanced filtering states
   const [dateRange, setDateRange] = useState<{start: string, end: string}>({
@@ -65,7 +69,7 @@ export default function Appointments() {
 
   // Enhanced query for date range and comprehensive filtering
   const { data: appointmentsData, isLoading } = useQuery({
-    queryKey: ['appointments', quickFilterType, dateRange, selectedDate],
+    queryKey: ['appointments', quickFilterType, dateRange, selectedDate, todaysCalendarEvents],
     queryFn: async () => {
       let dbAppointments = [];
       let calendarEvents = [];
@@ -74,36 +78,27 @@ export default function Appointments() {
         // Get both database appointments and calendar events for today
         dbAppointments = await ApiClient.getTodaysAppointments();
         
-        // Also fetch calendar events for today to show appointments that aren't in the database yet
-        const today = new Date();
-        const timeMin = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-        const timeMax = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString();
-        
-        try {
-          const response = await fetch(`/api/calendar/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`);
-          if (response.ok) {
-            const events = await response.json();
-            // Filter for appointment-like events (containing "Appointment" in summary)
-            calendarEvents = events.filter((event: any) => 
-              event.summary?.includes('Appointment') || 
-              event.summary?.includes('Session') ||
-              event.summary?.includes('Therapy')
-            ).map((event: any) => ({
-              id: event.id,
-              clientId: null,
-              therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', // Current therapist
-              startTime: event.start?.dateTime || event.start?.date,
-              endTime: event.end?.dateTime || event.end?.date,
-              type: event.summary,
-              status: 'scheduled',
-              location: event.location || 'Office',
-              googleEventId: event.id,
-              notes: event.description,
-              clientName: event.summary?.replace(' Appointment', '').replace(' Session', '').trim(),
-              isCalendarEvent: true
-            }));
-          }
-        } catch (error) {}
+        // Map calendar events from the shared hook to appointment format
+        calendarEvents = todaysCalendarEvents
+          .filter((event: any) => 
+            event.title?.includes('Appointment') || 
+            event.title?.includes('Session') ||
+            event.title?.includes('Therapy')
+          )
+          .map((event: any) => ({
+            id: event.id,
+            clientId: null,
+            therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c', // Current therapist
+            startTime: event.startTime,
+            endTime: event.endTime,
+            type: event.title,
+            status: 'scheduled',
+            location: event.location || 'Office',
+            googleEventId: event.googleEventId,
+            notes: event.description,
+            clientName: event.clientName || event.title?.replace(' Appointment', '').replace(' Session', '').trim(),
+            isCalendarEvent: true
+          }));
       } else if (quickFilterType === 'custom' && dateRange.start && dateRange.end) {
         // For date range queries, fetch appointments for each day and combine
         const start = new Date(dateRange.start);

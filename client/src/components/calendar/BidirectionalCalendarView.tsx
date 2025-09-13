@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ApiClient } from '@/lib/api';
 import { CalendarEvent } from '@/types/calendar';
 import { SessionNote } from '@/lib/api';
+import { useCalendarEvents } from '@/hooks/useCalendarEvents';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -84,14 +85,10 @@ export default function BidirectionalCalendarView({ therapistId }: CalendarViewP
     },
   });
 
-  // Fetch Google Calendar events
-  const { data: googleEvents = [], isLoading: eventsLoading, refetch: refetchEvents } = useQuery({
-    queryKey: ['/api/calendar/events', dateRange],
-    queryFn: async () => {
-      const response = await fetch(`/api/calendar/events?timeMin=${dateRange.start.toISOString()}&timeMax=${dateRange.end.toISOString()}`);
-      if (!response.ok) throw new Error('Failed to fetch calendar events');
-      return response.json();
-    },
+  // Use the shared hook for calendar events
+  const { events: googleEvents = [], isLoading: eventsLoading, refetch: refetchEvents } = useCalendarEvents({
+    timeMin: dateRange.start,
+    timeMax: dateRange.end,
   });
 
   // Fetch sync status

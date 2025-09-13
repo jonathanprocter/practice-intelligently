@@ -25,6 +25,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { CalendarDays, List, Clock, FileDown, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Settings, Search, Filter, MapPin, User, X, RefreshCw, FileText, Loader2 } from 'lucide-react';
 import CalendarSyncStatusIndicator from '@/components/calendar/CalendarSyncStatusIndicator';
 import BidirectionalCalendarView from '@/components/calendar/BidirectionalCalendarView';
+import { useCalendarEvents } from '@/hooks/useCalendarEvents';
 
 // Helper function to check if a date is today
 const isToday = (date: Date): boolean => {
@@ -82,123 +83,36 @@ export default function Calendar() {
     window.location.href = url;
   };
 
-  // Get events based on current view - daily by default, weekly when needed
-  const { data: googleEvents = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['google-calendar-events', selectedCalendarId, activeTab, selectedDate, currentWeek],
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    queryFn: async () => {
-      try {
-        let timeMin: string, timeMax: string;
+  // Get time range based on active tab
+  const getTimeRange = () => {
+    if (activeTab === 'day') {
+      const dayStart = new Date(selectedDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(selectedDate);
+      dayEnd.setHours(23, 59, 59, 999);
+      return { timeMin: dayStart, timeMax: dayEnd };
+    } else if (activeTab === 'historical') {
+      return {
+        timeMin: new Date('2015-01-01T00:00:00.000Z'),
+        timeMax: new Date('2030-12-31T23:59:59.999Z')
+      };
+    } else {
+      const startOfWeek = new Date(currentWeek);
+      startOfWeek.setDate(currentWeek.getDate() - currentWeek.getDay());
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 7);
+      return { timeMin: startOfWeek, timeMax: endOfWeek };
+    }
+  };
 
-        if (activeTab === 'day') {
-          // For daily view, only fetch current day's events
-          const dayStart = new Date(selectedDate);
-          dayStart.setHours(0, 0, 0, 0);
-          const dayEnd = new Date(selectedDate);
-          dayEnd.setHours(23, 59, 59, 999);
+  const { timeMin, timeMax } = getTimeRange();
 
-          timeMin = dayStart.toISOString();
-          timeMax = dayEnd.toISOString();
-        } else if (activeTab === 'historical') {
-          // For historical view, fetch comprehensive data from 2015-2030
-          timeMin = new Date('2015-01-01T00:00:00.000Z').toISOString();
-          timeMax = new Date('2030-12-31T23:59:59.999Z').toISOString();
-        } else {
-          // For week view or appointments view, fetch current week's events
-          const startOfWeek = new Date(currentWeek);
-          startOfWeek.setDate(currentWeek.getDate() - currentWeek.getDay());
-          const endOfWeek = new Date(startOfWeek);
-          endOfWeek.setDate(startOfWeek.getDate() + 7);
-
-          timeMin = startOfWeek.toISOString();
-          timeMax = endOfWeek.toISOString();
-        }
-        const url = `/api/calendar/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`;
-
-        const workingResponse = await fetch(url);
-
-        if (workingResponse.ok) {
-          const workingEvents = await workingResponse.json();
-
-          // Transform events to CalendarEvent format - handle database response properly
-          const transformedEvents: CalendarEvent[] = workingEvents.map((event: any) => {
-            try {
-              // Parse start time from database format
-              let startTime: Date;
-              if (event.start?.dateTime) {
-                startTime = new Date(event.start.dateTime);
-              } else if (event.start?.date) {
-                startTime = new Date(event.start.date + 'T00:00:00');
-              } else {
-                // Fallback for any other format
-                startTime = new Date();
-              }
-
-              // Parse end time from database format
-              let endTime: Date;
-              if (event.end?.dateTime) {
-                endTime = new Date(event.end.dateTime);
-              } else if (event.end?.date) {
-                endTime = new Date(event.end.date + 'T23:59:59');
-              } else {
-                endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // 1 hour default
-              }
-
-              // Ensure we have a valid CalendarEvent structure
-              const calendarEvent: CalendarEvent = {
-                id: event.id || `event-${Date.now()}-${Math.random()}`,
-                title: event.summary || event.title || 'Appointment',
-                startTime: startTime,
-                endTime: endTime,
-                clientId: undefined,
-                clientName: (() => {
-                  const title = event.summary || event.title || 'Appointment';
-                  // Extract client name from different appointment formats
-                  if (title.toLowerCase().includes('appointment')) {
-                    return title.replace(/\s+appointment$/i, '').trim();
-                  } else if (title.toLowerCase().match(/(coffee|call|meeting)\s+with\s+(.+)/i)) {
-                    const match = title.match(/(coffee|call|meeting)\s+with\s+(.+)/i);
-                    return match ? match[2].trim() : title;
-                  }
-                  return title;
-                })(),
-                type: 'individual' as const,
-                status: 'scheduled' as const,
-                location: event.location || '',
-                notes: event.description || '',
-                isAllDay: !!event.start?.date && !event.start?.dateTime,
-                priority: 'medium' as const,
-                color: undefined,
-                source: event.source || 'google' as const, // Use the actual source from the backend
-                therapistId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
-                attendees: event.attendees || '',
-                calendarId: event.calendarId || event.organizer?.email || 'primary',
-                calendarName: event.calendarName || 'Google Calendar',
-                createdAt: event.created ? new Date(event.created) : new Date(),
-                updatedAt: event.updated ? new Date(event.updated) : new Date()
-              };
-
-              return calendarEvent;
-            } catch (transformError) {
-              console.error('Error transforming event:', transformError, event);
-              return null;
-            }
-          }).filter((event: CalendarEvent | null): event is CalendarEvent => event !== null);
-
-          return transformedEvents;
-        } else {
-          console.error('❌ Frontend: Working API failed, status:', workingResponse.status);
-          throw new Error(`Working API failed with status: ${workingResponse.status}`);
-        }
-      } catch (err) {
-        console.error('Calendar fetch error:', err);
-        throw err;
-      }
-    },
-    retry: 1,
-    refetchOnWindowFocus: false,
-    refetchOnMount: true
+  // Use the shared hook for calendar events
+  const { events: googleEvents = [], isLoading, error, refetch } = useCalendarEvents({
+    timeMin,
+    timeMax,
+    calendarId: selectedCalendarId,
+    activeTab,
   });
 
   // Fetch available calendars
