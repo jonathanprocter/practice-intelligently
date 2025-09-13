@@ -5,6 +5,17 @@ This is a comprehensive full-stack web application designed to streamline therap
 
 ## Recent Enhancements
 
+### September 13, 2025 - Performance Optimization and Bug Fixes
+- **React Ref Warning Fix**: Resolved console warnings in Badge component by implementing proper ref forwarding with forwardRef
+- **Eliminated Duplicate API Calls**: Created shared hooks (useUrgentActionItems and useCalendarEvents) to centralize data fetching
+  - Reduced urgent action items API calls from 4-6 duplicates to single cached request
+  - Optimized calendar event fetching with 5-minute cache and reduced refetch frequency
+- **WebSocket Memory Leak Resolution**: Fixed listener registration issues preventing memory leaks
+  - Proper cleanup in useEffect hooks
+  - Stable event handlers using useCallback
+  - Single listener registration per component lifecycle
+- **Overall Performance Impact**: Significantly reduced server load and improved application responsiveness
+
 ### September 13, 2025 - Comprehensive Google Calendar Sync Enhancement
 - **Extended Date Range**: Expanded Google Calendar sync to cover 2015-2030 (15 years) for comprehensive historical and future appointment management
 - **Full Bidirectional Sync**: 
