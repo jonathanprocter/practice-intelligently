@@ -1,5 +1,5 @@
 // components/common/RealtimeNotifications.tsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useWebSocketEvent } from '@/contexts/WebSocketContext';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -22,9 +22,10 @@ interface Notification {
 export const RealtimeNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
+  const removeTimeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
-  // Helper to add notification
-  const addNotification = (notification: Omit<Notification, 'id' | 'timestamp'>) => {
+  // Helper to add notification - using useCallback to create stable reference
+  const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp'>) => {
     const newNotification: Notification = {
       ...notification,
       id: `${Date.now()}-${Math.random()}`,
@@ -34,17 +35,26 @@ export const RealtimeNotifications = () => {
     setNotifications(prev => [newNotification, ...prev].slice(0, 10)); // Keep max 10
     
     // Auto-remove after 10 seconds
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       removeNotification(newNotification.id);
     }, 10000);
-  };
+    
+    removeTimeoutsRef.current.set(newNotification.id, timeoutId);
+  }, []);
 
-  const removeNotification = (id: string) => {
+  const removeNotification = useCallback((id: string) => {
+    // Clear timeout if exists
+    const timeoutId = removeTimeoutsRef.current.get(id);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      removeTimeoutsRef.current.delete(id);
+    }
+    
     setNotifications(prev => prev.filter(n => n.id !== id));
-  };
+  }, []);
 
-  // Subscribe to WebSocket events
-  useWebSocketEvent('appointment:created', (data) => {
+  // Create stable callback functions for WebSocket events
+  const handleAppointmentCreated = useCallback((data: any) => {
     addNotification({
       type: 'appointment',
       title: 'New Appointment',
@@ -54,9 +64,9 @@ export const RealtimeNotifications = () => {
         onClick: () => window.location.href = '/appointments'
       }
     });
-  });
+  }, [addNotification]);
 
-  useWebSocketEvent('session-note:created', (data) => {
+  const handleSessionNoteCreated = useCallback((data: any) => {
     addNotification({
       type: 'session-note',
       title: 'New Session Note',
@@ -66,9 +76,9 @@ export const RealtimeNotifications = () => {
         onClick: () => window.location.href = '/session-notes'
       }
     });
-  });
+  }, [addNotification]);
 
-  useWebSocketEvent('ai:insight-generated', (data) => {
+  const handleAIInsightGenerated = useCallback((data: any) => {
     addNotification({
       type: 'ai',
       title: 'AI Insight Available',
@@ -78,23 +88,38 @@ export const RealtimeNotifications = () => {
         onClick: () => window.location.href = '/ai-insights'
       }
     });
-  });
+  }, [addNotification]);
 
-  useWebSocketEvent('calendar:sync-completed', (data) => {
+  const handleCalendarSyncCompleted = useCallback((data: any) => {
     addNotification({
       type: 'calendar',
       title: 'Calendar Synced',
       description: `${data.appointmentsUpdated || 0} appointments synchronized`
     });
-  });
+  }, [addNotification]);
 
-  useWebSocketEvent('document:processing-completed', (data) => {
+  const handleDocumentProcessingCompleted = useCallback((data: any) => {
     addNotification({
       type: 'session-note',
       title: 'Document Processed',
       description: 'Document analysis complete and notes created'
     });
-  });
+  }, [addNotification]);
+
+  // Subscribe to WebSocket events with stable callbacks
+  useWebSocketEvent('appointment:created', handleAppointmentCreated);
+  useWebSocketEvent('session-note:created', handleSessionNoteCreated);
+  useWebSocketEvent('ai:insight-generated', handleAIInsightGenerated);
+  useWebSocketEvent('calendar:sync-completed', handleCalendarSyncCompleted);
+  useWebSocketEvent('document:processing-completed', handleDocumentProcessingCompleted);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      removeTimeoutsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
+      removeTimeoutsRef.current.clear();
+    };
+  }, []);
 
   const getIcon = (type: Notification['type']) => {
     switch (type) {

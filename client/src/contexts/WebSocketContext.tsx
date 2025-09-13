@@ -396,11 +396,24 @@ export const WebSocketProvider = ({ children, autoConnect = true }: WebSocketPro
 // Custom hooks for common WebSocket operations
 export const useWebSocketEvent = (event: WebSocketEventName, callback: WebSocketCallback) => {
   const { subscribe } = useWebSocket();
+  const callbackRef = useRef(callback);
+  
+  // Update the ref when callback changes
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
   
   useEffect(() => {
-    const unsubscribe = subscribe(event, callback);
-    return unsubscribe;
-  }, [event, callback, subscribe]);
+    // Create a stable wrapper that always calls the current callback
+    const stableCallback: WebSocketCallback = (data) => {
+      callbackRef.current(data);
+    };
+    
+    const unsubscribe = subscribe(event, stableCallback);
+    return () => {
+      unsubscribe();
+    };
+  }, [event, subscribe]); // Don't include callback in dependencies
 };
 
 export const useWebSocketRoom = (roomType: 'therapist' | 'client' | 'appointment', roomId: string | undefined) => {
