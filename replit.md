@@ -5,6 +5,20 @@ This is a comprehensive full-stack web application designed to streamline therap
 
 ## Recent Enhancements
 
+### September 13, 2025 - Comprehensive Google Calendar Sync Enhancement
+- **Extended Date Range**: Expanded Google Calendar sync to cover 2015-2030 (15 years) for comprehensive historical and future appointment management
+- **Full Bidirectional Sync**: 
+  - New events from Google Calendar are automatically created as appointments in the database
+  - Modified events in Google Calendar trigger updates to existing appointments
+  - Deleted events from Google Calendar are detected and marked as cancelled in the database
+- **Pagination Support**: Implemented efficient pagination to handle large datasets (15 years of calendar data)
+- **Database Preservation**: Existing appointments are preserved and updated, never replaced during sync
+- **Enhanced Error Handling**: Comprehensive error tracking and logging for reliable sync operations
+- **Known Limitations for Future Improvement**:
+  - Initial full sync for 15 years may exceed HTTP timeout - needs background job processing
+  - No incremental sync using Google's syncToken yet - currently processes full date range
+  - Global sync lock instead of per-therapist - limits concurrent syncs
+
 ### September 12, 2025 - Production Deployment Ready
 - **Complete Deployment Preparation**: Application is now fully ready for production deployment
   - Fixed all hardcoded development URLs (WebSocket connections now use dynamic origins)

@@ -3021,21 +3021,34 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
 
   // Calendar events sync endpoint - Sync Google Calendar events to database
   app.post('/api/calendar/sync', async (req, res) => {
-    console.log('🔄 Starting calendar events sync to database...');
+    console.log('🔄 Starting comprehensive calendar events sync (2015-2030)...');
     try {
+      // Get therapist ID from body or use default
+      const therapistId = req.body?.therapistId || '00000000-0000-0000-0000-000000000001';
+      
+      // Optional: Allow custom date range from request body
+      const startDate = req.body?.startDate ? new Date(req.body.startDate) : new Date('2015-01-01T00:00:00.000Z');
+      const endDate = req.body?.endDate ? new Date(req.body.endDate) : new Date('2030-12-31T23:59:59.999Z');
+      
+      console.log(`📅 Sync range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+      
       // Send sync start notification
       if (req.app.locals.wss) {
         req.app.locals.wss.clients.forEach((client: any) => {
           if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({
               type: 'sync_progress',
-              data: { step: 'Starting sync...', progress: 5 }
+              data: { 
+                step: `Starting comprehensive sync (${startDate.getFullYear()}-${endDate.getFullYear()})...`, 
+                progress: 5 
+              }
             }));
           }
         });
       }
 
-      const syncResult = await syncCalendarEvents();
+      // Use the bidirectional calendar sync with the comprehensive date range
+      const syncResult = await bidirectionalCalendarSync.syncFromGoogle(therapistId, startDate, endDate);
 
       // Send completion notification
       if (req.app.locals.wss) {
@@ -3043,13 +3056,35 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
           if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({
               type: 'sync_complete',
-              data: { totalSynced: syncResult.totalSynced, step: 'Sync complete!' }
+              data: { 
+                totalSynced: syncResult.synced,
+                created: syncResult.created,
+                updated: syncResult.updated,
+                deleted: syncResult.deleted,
+                skipped: syncResult.skipped,
+                errors: syncResult.errors,
+                step: 'Sync complete!' 
+              }
             }));
           }
         });
       }
 
-      res.json(syncResult);
+      // Return comprehensive sync result
+      res.json({
+        success: syncResult.errors.length === 0,
+        synced: syncResult.synced,
+        created: syncResult.created,
+        updated: syncResult.updated,
+        deleted: syncResult.deleted,
+        skipped: syncResult.skipped,
+        errors: syncResult.errors,
+        dateRange: {
+          start: startDate.toISOString(),
+          end: endDate.toISOString()
+        },
+        message: `Successfully synced ${syncResult.synced} events (${syncResult.created} created, ${syncResult.updated} updated, ${syncResult.deleted} deleted)`
+      });
     } catch (error: any) {
       console.error('❌ Calendar sync failed:', error);
 

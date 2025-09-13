@@ -268,6 +268,7 @@ export class BidirectionalCalendarSync {
 
   /**
    * Sync changes from Google Calendar to the app
+   * Supports pagination for large date ranges (2015-2030)
    */
   async syncFromGoogle(therapistId: string, timeMin?: Date, timeMax?: Date): Promise<CalendarSyncResult> {
     const result: CalendarSyncResult = {
@@ -284,58 +285,131 @@ export class BidirectionalCalendarSync {
       return result;
     }
 
+    // Lock to prevent concurrent syncs
+    if (this.syncInProgress) {
+      result.errors.push('Sync already in progress');
+      return result;
+    }
+
+    this.syncInProgress = true;
+
     try {
-      // Set default time range if not provided
-      const startTime = timeMin || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // 30 days ago
-      const endTime = timeMax || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 90 days ahead
+      // Set time range to 2015-2030 if not provided
+      const startTime = timeMin || new Date('2015-01-01T00:00:00.000Z');
+      const endTime = timeMax || new Date('2030-12-31T23:59:59.999Z');
 
-      // Get events from Google Calendar
-      const response = await this.calendar.events.list({
-        calendarId: 'primary',
-        timeMin: startTime.toISOString(),
-        timeMax: endTime.toISOString(),
-        singleEvents: true,
-        orderBy: 'startTime',
-        maxResults: 500,
-      });
+      console.log(`🔄 Starting comprehensive Google Calendar sync from ${startTime.toISOString()} to ${endTime.toISOString()}`);
 
-      const events = response.data.items || [];
-      console.log(`Found ${events.length} Google Calendar events to process`);
+      // Collect all events with pagination
+      let allEvents: any[] = [];
+      let pageToken: string | undefined = undefined;
+      let pageCount = 0;
+      const maxResults = 2500; // Maximum allowed by Google Calendar API
 
-      // Process each event
-      for (const event of events) {
+      // Paginate through all events
+      do {
+        pageCount++;
+        console.log(`📄 Fetching page ${pageCount} of Google Calendar events...`);
+
         try {
-          const processed = await this.processGoogleEvent(event, therapistId);
-          
-          if (processed.created) {
-            result.created++;
-            result.synced++;
-          } else if (processed.updated) {
-            result.updated++;
-            result.synced++;
-          } else if (processed.deleted) {
-            result.deleted++;
-            result.synced++;
-          } else if (processed.skipped) {
-            result.skipped++;
+          const response = await this.calendar.events.list({
+            calendarId: 'primary',
+            timeMin: startTime.toISOString(),
+            timeMax: endTime.toISOString(),
+            singleEvents: true,
+            orderBy: 'startTime',
+            maxResults,
+            pageToken,
+            showDeleted: false, // Don't include deleted events
+            timeZone: 'America/New_York',
+          });
+
+          const events = response.data.items || [];
+          allEvents = allEvents.concat(events);
+          pageToken = response.data.nextPageToken;
+
+          console.log(`  ✓ Page ${pageCount}: Retrieved ${events.length} events (total so far: ${allEvents.length})`);
+
+          // Add a small delay between pages to avoid rate limiting
+          if (pageToken) {
+            await new Promise(resolve => setTimeout(resolve, 100));
           }
-        } catch (error: any) {
-          result.errors.push(`Failed to process event "${event.summary}": ${error.message}`);
+        } catch (pageError: any) {
+          console.error(`Failed to fetch page ${pageCount}:`, pageError);
+          result.errors.push(`Failed to fetch page ${pageCount}: ${pageError.message}`);
+          // Continue with what we have so far
+          break;
+        }
+      } while (pageToken);
+
+      console.log(`📊 Total Google Calendar events found: ${allEvents.length}`);
+
+      // Build a map of Google event IDs for efficient lookup
+      const googleEventMap = new Map<string, any>();
+      for (const event of allEvents) {
+        if (event.id) {
+          googleEventMap.set(event.id, event);
         }
       }
 
-      // Check for deleted events
-      await this.checkForDeletedEvents(therapistId, events, result);
+      // Process events in batches to avoid overwhelming the database
+      const batchSize = 50;
+      for (let i = 0; i < allEvents.length; i += batchSize) {
+        const batch = allEvents.slice(i, i + batchSize);
+        console.log(`Processing batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(allEvents.length / batchSize)} (events ${i + 1}-${Math.min(i + batchSize, allEvents.length)})`);
+
+        // Process events in parallel within each batch
+        const batchPromises = batch.map(async (event) => {
+          try {
+            const processed = await this.processGoogleEvent(event, therapistId);
+            
+            if (processed.created) {
+              result.created++;
+              result.synced++;
+            } else if (processed.updated) {
+              result.updated++;
+              result.synced++;
+            } else if (processed.deleted) {
+              result.deleted++;
+              result.synced++;
+            } else if (processed.skipped) {
+              result.skipped++;
+            }
+          } catch (error: any) {
+            console.error(`Failed to process event "${event.summary}":`, error);
+            result.errors.push(`Failed to process event "${event.summary}": ${error.message}`);
+          }
+        });
+
+        await Promise.all(batchPromises);
+      }
+
+      // Check for deleted events (events in DB but not in Google)
+      console.log('🔍 Checking for events deleted from Google Calendar...');
+      await this.checkForDeletedEventsComprehensive(therapistId, googleEventMap, startTime, endTime, result);
 
       // Update last sync time
       this.lastSyncTime.set(therapistId, new Date());
 
-      console.log('✅ Google Calendar sync completed:', result);
+      // Log comprehensive summary
+      console.log('✅ Google Calendar sync completed successfully!');
+      console.log(`📈 Sync Statistics:`);
+      console.log(`   - Total Synced: ${result.synced}`);
+      console.log(`   - Created: ${result.created}`);
+      console.log(`   - Updated: ${result.updated}`);
+      console.log(`   - Deleted: ${result.deleted}`);
+      console.log(`   - Skipped: ${result.skipped}`);
+      if (result.errors.length > 0) {
+        console.log(`   - Errors: ${result.errors.length}`);
+      }
+
       return result;
     } catch (error: any) {
-      console.error('Google Calendar sync failed:', error);
+      console.error('❌ Google Calendar sync failed:', error);
       result.errors.push(`Sync failed: ${error.message}`);
       return result;
+    } finally {
+      this.syncInProgress = false;
     }
   }
 
@@ -385,54 +459,154 @@ export class BidirectionalCalendarSync {
 
   /**
    * Update appointment from Google Calendar event
+   * Enhanced with comprehensive field mapping
    */
   private async updateAppointmentFromGoogle(appointment: Appointment, event: any): Promise<boolean> {
     try {
+      // Parse times
+      const startTime = new Date(event.start.dateTime || event.start.date);
+      const endTime = new Date(event.end.dateTime || event.end.date);
+
+      // Check if significant changes occurred
+      const hasTimeChange = 
+        startTime.getTime() !== new Date(appointment.startTime).getTime() ||
+        endTime.getTime() !== new Date(appointment.endTime).getTime();
+      
+      const hasLocationChange = event.location !== appointment.location;
+      const hasDescriptionChange = event.description !== appointment.notes;
+
+      // Only update if there are actual changes
+      if (!hasTimeChange && !hasLocationChange && !hasDescriptionChange) {
+        return false; // No changes, skip update
+      }
+
+      // Extract video link from location or description
+      let videoLink = appointment.videoLink;
+      if (event.location?.includes('zoom.us') || event.location?.includes('meet.google.com')) {
+        videoLink = event.location;
+      } else if (event.description) {
+        const zoomMatch = event.description.match(/https:\/\/[\w-]+\.zoom\.us\/[\w\/?=&-]+/);
+        const meetMatch = event.description.match(/https:\/\/meet\.google\.com\/[\w-]+/);
+        const newVideoLink = zoomMatch?.[0] || meetMatch?.[0];
+        if (newVideoLink) {
+          videoLink = newVideoLink;
+        }
+      }
+
+      // Extract reminder settings
+      let reminderMinutes = appointment.reminderMinutes || 60;
+      if (event.reminders?.overrides?.length > 0) {
+        const popupReminder = event.reminders.overrides.find((r: any) => r.method === 'popup');
+        if (popupReminder) {
+          reminderMinutes = popupReminder.minutes;
+        }
+      }
+
+      // Determine new status based on event status and time
+      let status = appointment.status;
+      if (event.status === 'cancelled') {
+        status = 'cancelled';
+      } else if (new Date() > endTime && status === 'scheduled') {
+        // Auto-complete past appointments
+        status = 'completed';
+      }
+
       const updates: Partial<Appointment> = {
-        startTime: new Date(event.start.dateTime || event.start.date),
-        endTime: new Date(event.end.dateTime || event.end.date),
+        startTime,
+        endTime,
         location: event.location || appointment.location,
         notes: event.description || appointment.notes,
-        lastGoogleSync: new Date(),
+        lastGoogleSync: new Date(event.updated || new Date()),
+        videoLink: videoLink || undefined,
+        reminderMinutes,
+        status,
+        // Update appointment type if changed
+        type: this.determineAppointmentType(event),
+        // Handle recurring event updates
+        recurrenceRule: event.recurrence?.[0] || appointment.recurrenceRule,
+        recurrenceId: event.recurringEventId || appointment.recurrenceId,
       };
 
       await storage.updateAppointment(appointment.id, updates);
-      console.log(`Updated appointment from Google: ${appointment.id}`);
+      console.log(`  ✓ Updated appointment from Google: ${appointment.id} (${event.summary})`);
       return true;
-    } catch (error) {
-      console.error('Failed to update appointment from Google:', error);
+    } catch (error: any) {
+      console.error(`Failed to update appointment ${appointment.id} from Google:`, error);
       return false;
     }
   }
 
   /**
    * Create appointment from Google Calendar event
+   * Enhanced with comprehensive field mapping
    */
   private async createAppointmentFromGoogle(event: any, therapistId: string): Promise<boolean> {
     try {
+      // Skip all-day events and events without proper time
+      if (!event.start?.dateTime && event.start?.date) {
+        console.log(`Skipping all-day event: ${event.summary}`);
+        return false;
+      }
+
       // Extract client info from event
       const clientInfo = await this.extractClientFromEvent(event);
       const clientId = await this.findOrCreateClient(clientInfo, therapistId);
 
+      // Parse start and end times
+      const startTime = new Date(event.start.dateTime || event.start.date);
+      const endTime = new Date(event.end.dateTime || event.end.date);
+
+      // Validate times
+      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+        console.error(`Invalid dates for event: ${event.summary}`);
+        return false;
+      }
+
+      // Extract video link from location or description
+      let videoLink = '';
+      if (event.location?.includes('zoom.us') || event.location?.includes('meet.google.com')) {
+        videoLink = event.location;
+      } else if (event.description) {
+        const zoomMatch = event.description.match(/https:\/\/[\w-]+\.zoom\.us\/[\w\/?=&-]+/);
+        const meetMatch = event.description.match(/https:\/\/meet\.google\.com\/[\w-]+/);
+        videoLink = zoomMatch?.[0] || meetMatch?.[0] || '';
+      }
+
+      // Extract reminder settings
+      let reminderMinutes = 60; // Default to 1 hour
+      if (event.reminders?.overrides?.length > 0) {
+        // Use the first popup reminder
+        const popupReminder = event.reminders.overrides.find((r: any) => r.method === 'popup');
+        if (popupReminder) {
+          reminderMinutes = popupReminder.minutes;
+        }
+      }
+
       const appointment: InsertAppointment = {
         clientId,
         therapistId,
-        startTime: new Date(event.start.dateTime || event.start.date),
-        endTime: new Date(event.end.dateTime || event.end.date),
+        startTime,
+        endTime,
         type: this.determineAppointmentType(event),
         status: this.determineStatus(event),
         location: event.location || 'Office',
         notes: event.description || '',
         googleEventId: event.id,
         googleCalendarId: event.calendarId || 'primary',
-        lastGoogleSync: new Date(),
+        lastGoogleSync: new Date(event.updated || new Date()),
+        videoLink: videoLink || undefined,
+        reminderSent: false,
+        reminderMinutes,
+        // Handle recurring events
+        recurrenceRule: event.recurrence?.[0] || undefined,
+        recurrenceId: event.recurringEventId || undefined,
       };
 
-      await storage.createAppointment(appointment);
-      console.log(`Created appointment from Google: ${event.summary}`);
+      const createdAppointment = await storage.createAppointment(appointment);
+      console.log(`  ✓ Created appointment from Google: ${event.summary} (${startTime.toLocaleDateString()})`);
       return true;
-    } catch (error) {
-      console.error('Failed to create appointment from Google:', error);
+    } catch (error: any) {
+      console.error(`Failed to create appointment from Google event "${event.summary}":`, error);
       return false;
     }
   }
@@ -460,6 +634,64 @@ export class BidirectionalCalendarSync {
         }
       }
     } catch (error) {
+      console.error('Failed to check for deleted events:', error);
+      result.errors.push(`Failed to check deleted events: ${error.message}`);
+    }
+  }
+
+  /**
+   * Comprehensive check for events deleted from Google Calendar
+   * Handles large date ranges efficiently
+   */
+  private async checkForDeletedEventsComprehensive(
+    therapistId: string,
+    googleEventMap: Map<string, any>,
+    startTime: Date,
+    endTime: Date,
+    result: CalendarSyncResult
+  ): Promise<void> {
+    try {
+      // Get all appointments within the date range that have Google event IDs
+      const query = `
+        SELECT * FROM appointments 
+        WHERE therapist_id = $1 
+        AND google_event_id IS NOT NULL 
+        AND start_time >= $2 
+        AND start_time <= $3
+        AND status != 'cancelled'
+      `;
+      
+      const appointmentsResult = await pool.query(query, [
+        therapistId,
+        startTime.toISOString(),
+        endTime.toISOString()
+      ]);
+      
+      const appointments = appointmentsResult.rows;
+      console.log(`Found ${appointments.length} appointments to check for deletion`);
+
+      // Check each appointment to see if it still exists in Google
+      let deletedCount = 0;
+      for (const appointment of appointments) {
+        if (!googleEventMap.has(appointment.google_event_id)) {
+          // Event was deleted from Google Calendar
+          try {
+            await storage.cancelAppointment(appointment.id, 'Deleted from Google Calendar');
+            deletedCount++;
+            result.deleted++;
+            result.synced++;
+            console.log(`  ✓ Marked appointment as cancelled (deleted from Google): ${appointment.id}`);
+          } catch (deleteError: any) {
+            console.error(`  ✗ Failed to mark appointment ${appointment.id} as deleted:`, deleteError);
+            result.errors.push(`Failed to delete appointment ${appointment.id}: ${deleteError.message}`);
+          }
+        }
+      }
+
+      if (deletedCount > 0) {
+        console.log(`📝 Marked ${deletedCount} appointments as cancelled (deleted from Google)`);
+      }
+    } catch (error: any) {
       console.error('Failed to check for deleted events:', error);
       result.errors.push(`Failed to check deleted events: ${error.message}`);
     }
