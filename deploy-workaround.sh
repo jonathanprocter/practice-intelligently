@@ -26,7 +26,7 @@ echo "Note: Ignoring Node.js version warnings during build"
 
 # Frontend build
 echo "Building frontend with Vite..."
-DISABLE_CARTOGRAPHER=true NODE_NO_WARNINGS=1 npx vite build 2>&1 | grep -v "EBADENGINE" || true
+DISABLE_CARTOGRAPHER=true NODE_NO_WARNINGS=1 npx vite build --config client/vite.config.ts 2>&1 | grep -v "EBADENGINE" || true
 
 # Backend build
 echo "Building backend with esbuild..."
