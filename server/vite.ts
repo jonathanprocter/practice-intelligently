@@ -67,11 +67,18 @@ export async function setupVite(app: express.Express, server?: any): Promise<Vit
   try {
     const { createServer: createViteServer } = await import('vite');
 
+    // Extract the Replit development domain if available
+    const devHost = process.env.REPLIT_DEV_DOMAIN ? new URL(`https://${process.env.REPLIT_DEV_DOMAIN}`).host : undefined;
+
     // IMPORTANT: Tell Vite to use the config file from the client folder
     const viteServer = await createViteServer({
       configFile: path.resolve(process.cwd(), 'client/vite.config.ts'),
       server: {
         middlewareMode: true,
+        host: true,
+        cors: true,
+        // Allow the Replit domain and local hosts
+        allowedHosts: devHost ? [devHost, 'localhost', '127.0.0.1'] : 'all',
         hmr: {
           port: 3001
         }
