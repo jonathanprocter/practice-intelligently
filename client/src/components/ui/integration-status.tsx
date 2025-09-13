@@ -15,6 +15,13 @@ interface HealthStatus {
 export default function IntegrationStatus() {
   const { data: health } = useQuery<HealthStatus>({
     queryKey: ['/api/health'],
+    queryFn: async () => {
+      const response = await fetch('/api/health');
+      if (!response.ok) {
+        throw new Error('Failed to fetch health status');
+      }
+      return response.json();
+    },
     refetchInterval: 30000, // Check every 30 seconds
   });
 

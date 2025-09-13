@@ -63,11 +63,7 @@ const app = express();
   try {
     const server = createServer(app);
 
-    // CRITICAL: Setup Vite FIRST, before any middleware or routes
-    // This handles both development and production modes
-    await setupVite(app, server);
-
-    // THEN add body parsing middleware
+    // FIRST add body parsing middleware (needed for API routes)
     app.use(express.json({ limit: '50mb' }));
     app.use(express.urlencoded({ limit: '50mb', extended: false }));
 
@@ -103,8 +99,12 @@ const app = express();
     const wsManager = setupWebSocketServer(server);
     app.set('wsManager', wsManager);
 
-    // THEN register API routes
+    // THEN register API routes BEFORE Vite (so API routes are handled first)
     await registerRoutes(app);
+
+    // FINALLY setup Vite (this should be last as it catches all non-API routes)
+    // This handles both development and production modes
+    await setupVite(app, server);
 
     // Error handler
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

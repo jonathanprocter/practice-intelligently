@@ -33,6 +33,7 @@ export default defineConfig({
   server: {
     hmr: {
       overlay: false,
+      port: 3001,
     },
     fs: {
       strict: false,

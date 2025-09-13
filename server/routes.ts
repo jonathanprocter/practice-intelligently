@@ -2379,7 +2379,8 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
       const { therapistId } = req.params;
       
       // Get recent AI insights for the therapist
-      const insights = await storage.getTherapistAiInsights(therapistId, 10);
+      const allInsights = await storage.getAiInsights(therapistId);
+      const insights = allInsights.slice(0, 10); // Get the 10 most recent insights
       
       // If no insights, generate some helpful default insights
       if (!insights || insights.length === 0) {
