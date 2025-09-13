@@ -1,10 +1,9 @@
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import IntegrationStatus from "@/components/ui/integration-status";
-import { useQuery } from "@tanstack/react-query";
-import { ApiClient } from "@/lib/api";
 import { WebSocketStatus } from "@/components/common/WebSocketStatus";
 import { GlobalSearchBar } from "@/components/search/GlobalSearchBar";
+import { useUrgentActionItems } from "@/hooks/useUrgentActionItems";
 // Temporarily using a placeholder for profile image until asset is available
 const profileImage = 'data:image/svg+xml,%3csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"%3e%3ccircle cx="20" cy="20" r="20" fill="%23ddd"/%3e%3ctext x="20" y="25" text-anchor="middle" fill="%23666" font-size="14"%3eJP%3c/text%3e%3c/svg%3e';
 
@@ -17,13 +16,7 @@ export default function Header() {
   });
 
   // Get real notification count from urgent action items
-  const { data: urgentActionItems } = useQuery({
-    queryKey: ['urgent-action-items'],
-    queryFn: ApiClient.getUrgentActionItems,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-  });
-
-  const notificationCount = urgentActionItems?.length || 0;
+  const { count: notificationCount } = useUrgentActionItems();
 
   return (
     <header className="bg-white border-b border-therapy-border p-2 xs:p-3 sm:p-4 lg:p-6 header-safe sticky top-0 z-40 backdrop-blur-md bg-white/95">

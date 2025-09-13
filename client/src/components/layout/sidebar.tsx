@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { ApiClient } from "@/lib/api";
+import { useUrgentActionItems } from "@/hooks/useUrgentActionItems";
 
 const getNavigationItems = (clientCount: number, urgentActionItemCount: number) => [
   { path: "/", label: "Dashboard", icon: BarChart },
@@ -35,13 +36,9 @@ export default function Sidebar() {
   });
 
   // Get real urgent action items count
-  const { data: urgentActionItems } = useQuery({
-    queryKey: ['urgent-action-items'],
-    queryFn: ApiClient.getUrgentActionItems,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-  });
+  const { count: urgentActionItemCount } = useUrgentActionItems();
 
-  const navigationItems = getNavigationItems(clients?.length || 0, urgentActionItems?.length || 0);
+  const navigationItems = getNavigationItems(clients?.length || 0, urgentActionItemCount);
 
   const isActive = (path: string) => {
     if (path === "/") return location === "/";

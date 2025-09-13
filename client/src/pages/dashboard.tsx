@@ -212,13 +212,6 @@ export default function Dashboard() {
         gcTime: 5 * 60 * 1000,
       },
       {
-        queryKey: ['urgent-actions', therapistId],
-        queryFn: ApiClient.getUrgentActionItems,
-        staleTime: DASHBOARD_CONFIG.staleTime.stats,
-        refetchInterval: DASHBOARD_CONFIG.refreshIntervals.actions,
-        gcTime: 5 * 60 * 1000,
-      },
-      {
         queryKey: ['ai-insights', therapistId],
         queryFn: ApiClient.getAiInsights,
         staleTime: DASHBOARD_CONFIG.staleTime.insights,

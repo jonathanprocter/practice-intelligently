@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
 import { ApiClient, type ActionItem } from "@/lib/api";
 import { AlertTriangle, Clock, FileText, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useUrgentActionItems } from "@/hooks/useUrgentActionItems";
 
 const getPriorityIcon = (priority: string) => {
   switch (priority) {
@@ -29,10 +29,7 @@ const getBadgeColor = (priority: string) => {
 };
 
 export default function UrgentActionItems() {
-  const { data: actionItems, isLoading } = useQuery({
-    queryKey: ['urgent-action-items'],
-    queryFn: ApiClient.getUrgentActionItems,
-  });
+  const { actionItems, isLoading } = useUrgentActionItems();
 
   const formatDueDate = (dateString?: string) => {
     if (!dateString) return 'No due date';
