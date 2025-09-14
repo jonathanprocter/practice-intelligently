@@ -41,13 +41,16 @@ export const WeeklyCalendarGrid = ({
   const [exportStatus, setExportStatus] = useState<string>('');
   const { toast } = useToast();
 
-  // Calculate weekStart from the week prop - ensure it's the beginning of the week (Sunday)
+  // Calculate weekStart from the week prop - ensure it's the beginning of the week (Monday)
   const weekStart = useMemo(() => {
     if (week && week.length > 0) {
       const firstDay = week[0].date;
-      // Ensure we get the start of the week (Sunday)
+      // Ensure we get the start of the week (Monday)
       const startOfWeek = new Date(firstDay);
-      startOfWeek.setDate(firstDay.getDate() - firstDay.getDay());
+      const day = firstDay.getDay();
+      // If Sunday (0), go back 6 days to Monday; otherwise go back (day - 1) days
+      const diff = day === 0 ? -6 : 1 - day;
+      startOfWeek.setDate(firstDay.getDate() + diff);
       startOfWeek.setHours(0, 0, 0, 0);
       return startOfWeek;
     }

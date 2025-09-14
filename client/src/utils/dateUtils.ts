@@ -24,8 +24,12 @@ export function formatDateLong(date: Date): string {
 export function getWeekStart(date: Date): Date {
   const d = new Date(date);
   const day = d.getDay();
-  const diff = d.getDate() - day; // Adjust to get Monday as start of week
-  const weekStart = new Date(d.setDate(diff));
+  // Adjust to get Monday as start of week (getDay returns 0 for Sunday, 1 for Monday, etc.)
+  // If Sunday (0), we need to go back 6 days to get to Monday
+  // Otherwise, we go back (day - 1) days
+  const diff = day === 0 ? -6 : 1 - day;
+  const weekStart = new Date(d);
+  weekStart.setDate(d.getDate() + diff);
   weekStart.setHours(0, 0, 0, 0);
   return weekStart;
 }

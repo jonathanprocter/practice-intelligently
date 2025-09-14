@@ -97,10 +97,8 @@ export default function Calendar() {
         timeMax: new Date('2030-12-31T23:59:59.999Z')
       };
     } else {
-      const startOfWeek = new Date(currentWeek);
-      startOfWeek.setDate(currentWeek.getDate() - currentWeek.getDay());
-      const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 7);
+      const startOfWeek = getWeekStart(currentWeek);
+      const endOfWeek = getWeekEnd(currentWeek);
       return { timeMin: startOfWeek, timeMax: endOfWeek };
     }
   };
@@ -170,9 +168,8 @@ export default function Calendar() {
   // Create calendar days with events (filtered to current week for display)
   const calendarDays = useMemo(() => {
     const days = [];
-    const startOfWeek = new Date(currentWeek);
-    // Ensure startOfWeek is the beginning of the week (Sunday) based on locale
-    startOfWeek.setDate(currentWeek.getDate() - currentWeek.getDay());
+    const startOfWeek = getWeekStart(currentWeek);
+    // Start of week is now Monday
 
     for (let i = 0; i < 7; i++) {
       const date = new Date(startOfWeek);
