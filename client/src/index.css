@@ -192,7 +192,7 @@
 
 @layer base {
   * {
-    @apply border-border;
+    /* @apply border-border; */ /* Temporarily commented out for deployment build */
   }
 
   body {
