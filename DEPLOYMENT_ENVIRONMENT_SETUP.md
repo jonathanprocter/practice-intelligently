@@ -48,19 +48,26 @@ NODE_NO_WARNINGS=1
    - Variable Name: `NIX_REMOTE`, Value: (leave empty)
    - Variable Name: `NODE_NO_WARNINGS`, Value: `1`
 
-## Alternative Deployment Method
-If the above doesn't work, try using the optimized deployment script:
+## ✨ WORKAROUND SOLUTION - Use These Scripts Instead
 
+Since package.json and .replit files are protected, use these custom scripts:
+
+### Build for Production:
 ```bash
-bash deploy.sh
+bash deploy-fix.sh
 ```
 
-This script:
-- ✅ Removes hardcoded NODE_ENV conflicts
-- ✅ Sets proper Nix environment variables
-- ✅ Handles build warnings that could fail deployment
-- ✅ Validates build artifacts
-- ✅ Provides detailed error logging
+### Start in Production:
+```bash
+bash start-production.sh
+```
+
+These scripts:
+- ✅ Build and run without hardcoded NODE_ENV
+- ✅ Set proper Nix environment variables  
+- ✅ Handle build warnings that could fail deployment
+- ✅ Validate build artifacts before starting
+- ✅ Provide detailed error logging
 
 ## Verification Steps
 1. Ensure deployment environment variables are set (above)
