@@ -5,7 +5,8 @@
 echo "Starting production build..."
 
 # Set environment variables
-export NODE_ENV=production
+# NODE_ENV should be set as deployment environment variable instead
+# export NODE_ENV=production
 export NPM_CONFIG_CACHE=/tmp/.npm-cache
 export NODE_OPTIONS=--max-old-space-size=4096
 
