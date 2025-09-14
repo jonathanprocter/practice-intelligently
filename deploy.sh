@@ -51,7 +51,7 @@ rm -rf dist/ || true
 # Run the build with enhanced error handling and warning suppression
 echo "🔨 Building frontend with Vite..."
 set +e  # Temporarily disable exit on error to capture build output
-DISABLE_CARTOGRAPHER=true NIX_REMOTE='' NODE_NO_WARNINGS=1 npx vite build --config client/vite.config.ts > /tmp/vite-build.log 2>&1
+DISABLE_CARTOGRAPHER=true NIX_REMOTE='' NODE_NO_WARNINGS=1 npx vite build > /tmp/vite-build.log 2>&1
 VITE_EXIT_CODE=$?
 set -e  # Re-enable exit on error
 
