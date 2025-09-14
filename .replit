@@ -8,12 +8,14 @@ packages = ["ghostscript", "graphicsmagick", "imagemagick", "poppler_utils"]
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["sh", "-c", "NODE_ENV=production NPM_CONFIG_CACHE=/tmp/.npm-cache NODE_OPTIONS=--max-old-space-size=4096 npm run build"]
-run = ["sh", "-c", "NODE_ENV=production npm start"]
+build = ["sh", "-c", "NPM_CONFIG_CACHE=/tmp/.npm-cache NODE_OPTIONS=--max-old-space-size=4096 npm run build"]
+run = ["sh", "-c", "npm start"]
 
 [env]
 PORT = "3000"
 PATH = "/nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin:$PATH"
+NODE_ENV = "production"
+CI = "true"
 
 [workflows]
 runButton = "Clean Start Server"
@@ -104,57 +106,5 @@ args = "npm run dev"
 [[ports]]
 localPort = 3000
 externalPort = 80
-
-[[ports]]
-localPort = 3001
-externalPort = 8008
-
-[[ports]]
-localPort = 5000
-externalPort = 5000
-
-[[ports]]
-localPort = 5001
-externalPort = 8080
-
-[[ports]]
-localPort = 5173
-externalPort = 5173
-
-[[ports]]
-localPort = 32909
-externalPort = 3001
-
-[[ports]]
-localPort = 33743
-externalPort = 3000
-
-[[ports]]
-localPort = 34307
-externalPort = 8000
-
-[[ports]]
-localPort = 35883
-externalPort = 6000
-
-[[ports]]
-localPort = 35977
-externalPort = 3003
-
-[[ports]]
-localPort = 36245
-externalPort = 3002
-
-[[ports]]
-localPort = 37561
-externalPort = 8081
-
-[[ports]]
-localPort = 42127
-externalPort = 6800
-
-[[ports]]
-localPort = 46405
-externalPort = 4200
 
 [agent]
