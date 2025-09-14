@@ -37,4 +37,5 @@ echo "   - Use the preview window in Replit"
 echo ""
 
 # Start in production mode
-NODE_ENV=production PORT=3000 npm start
+# NODE_ENV should be set as deployment environment variable instead
+PORT=3000 npm start

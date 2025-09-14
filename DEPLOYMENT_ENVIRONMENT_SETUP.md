@@ -13,9 +13,15 @@ Your deployment failed because of hardcoded `NODE_ENV=production` values conflic
 - No changes needed to server code
 
 ### 2. Deployment Scripts ✅
-- `deploy.sh` already properly configured without hardcoded NODE_ENV
+- `build-deploy.sh` - Removed hardcoded NODE_ENV export
+- `replit-prod.sh` - Removed NODE_ENV from npm start command  
+- `replit-init-production.sh` - Removed hardcoded NODE_ENV export
 - Environment variables properly set for Nix compatibility
 - Build process optimized for Cloud Run
+
+### 3. Remaining Issues 🔧
+- `.replit` file - Contains hardcoded NODE_ENV in deployment build/run commands (PROTECTED - needs Replit support)
+- `package.json` - Contains hardcoded NODE_ENV in build/start/deploy scripts (PROTECTED - needs permission)
 
 ## Manual Configuration Required in Replit 🔧
 
