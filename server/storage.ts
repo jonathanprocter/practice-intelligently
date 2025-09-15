@@ -18,7 +18,7 @@ import {
   type AssessmentPackage, type InsertAssessmentPackage, type AssessmentAuditLog, type InsertAssessmentAuditLog
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, desc, and, gte, lte, count, like, or, sql, asc } from "drizzle-orm";
+import { eq, desc, and, gte, lte, count, like, or, sql, asc, isNotNull } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import OpenAI from 'openai';
 import { aiStorageMethods } from './storage-ai-methods';
@@ -437,7 +437,18 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(clients)
-      .where(eq(clients.therapistId, therapistId))
+      .where(
+        and(
+          eq(clients.therapistId, therapistId),
+          // Only return real clients - those with at least email, phone, or date of birth
+          // This filters out fake "clients" created from calendar events like "Walk Dogs", "Free Time", etc.
+          or(
+            isNotNull(clients.email),
+            isNotNull(clients.phone),
+            isNotNull(clients.dateOfBirth)
+          )
+        )
+      )
       .orderBy(desc(clients.createdAt));
   }
 
