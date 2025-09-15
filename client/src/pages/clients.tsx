@@ -312,7 +312,7 @@ export default function Clients() {
     }
   };
 
-  const handleBulkAction = (action: string) => {
+  const handleBulkAction = async (action: string) => {
     if (selectedClients.size === 0) {
       toast({
         title: "No clients selected",
@@ -323,6 +323,35 @@ export default function Clients() {
     }
     
     switch (action) {
+      case 'delete':
+        const clientNames = clients
+          ?.filter(c => selectedClients.has(c.id))
+          .map(c => `${c.firstName} ${c.lastName}`)
+          .slice(0, 5)
+          .join(', ');
+        const moreCount = selectedClients.size > 5 ? ` and ${selectedClients.size - 5} more` : '';
+        
+        if (confirm(`Are you sure you want to permanently delete ${selectedClients.size} client(s)?\n\n${clientNames}${moreCount}\n\nThis action cannot be undone.`)) {
+          try {
+            // Delete each client sequentially
+            for (const clientId of Array.from(selectedClients)) {
+              await ApiClient.deleteClient(clientId);
+            }
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+            setSelectedClients(new Set());
+            toast({
+              title: "Clients Deleted",
+              description: `Successfully deleted ${selectedClients.size} client(s).`,
+            });
+          } catch (error) {
+            toast({
+              title: "Delete Failed",
+              description: "Some clients could not be deleted. They may have associated data.",
+              variant: "destructive",
+            });
+          }
+        }
+        break;
       case 'archive':
         archiveClientsMutation.mutate(Array.from(selectedClients));
         break;
@@ -405,6 +434,12 @@ export default function Clients() {
                       {client.pronouns}
                     </Badge>
                   )}
+                  {(!client.email && !client.phone && !client.dateOfBirth) && (
+                    <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      Calendar Entry
+                    </Badge>
+                  )}
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-therapy-text/70">
@@ -461,64 +496,89 @@ export default function Clients() {
                 )}
               </div>
               
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={() => setLocation(`/clients/${client.id}/chart`)}
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    View Chart
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => {
-                      setEditingClient(client);
-                      setShowClientForm(true);
-                    }}
-                  >
-                    <Edit2 className="h-4 w-4 mr-2" />
-                    Edit Client
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => {
-                      navigator.clipboard.writeText(client.email || '');
-                      toast({
-                        title: "Email copied",
-                        description: "Client email has been copied to clipboard.",
-                      });
-                    }}
-                    disabled={!client.email}
-                  >
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy Email
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => window.open(`tel:${client.phone}`, '_self')}
-                    disabled={!client.phone}
-                  >
-                    <Phone className="h-4 w-4 mr-2" />
-                    Call Client
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    className="text-red-600"
-                    onClick={() => {
-                      if (confirm(`Are you sure you want to delete ${client.firstName} ${client.lastName}?`)) {
-                        deleteClientMutation.mutate(client.id);
-                      }
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Client
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="flex gap-1">
+                {/* Quick Delete Button for fake clients without email/phone */}
+                {!client.email && !client.phone && !client.dateOfBirth && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => {
+                          if (confirm(`Delete "${client.firstName} ${client.lastName}"? This appears to be a calendar-generated entry.`)) {
+                            deleteClientMutation.mutate(client.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Quick delete (no client info)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => setLocation(`/clients/${client.id}/chart`)}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Chart
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        setEditingClient(client);
+                        setShowClientForm(true);
+                      }}
+                    >
+                      <Edit2 className="h-4 w-4 mr-2" />
+                      Edit Client
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        navigator.clipboard.writeText(client.email || '');
+                        toast({
+                          title: "Email copied",
+                          description: "Client email has been copied to clipboard.",
+                        });
+                      }}
+                      disabled={!client.email}
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy Email
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => window.open(`tel:${client.phone}`, '_self')}
+                      disabled={!client.phone}
+                    >
+                      <Phone className="h-4 w-4 mr-2" />
+                      Call Client
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      className="text-red-600"
+                      onClick={() => {
+                        if (confirm(`Are you sure you want to delete ${client.firstName} ${client.lastName}?`)) {
+                          deleteClientMutation.mutate(client.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Client
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -593,6 +653,14 @@ export default function Clients() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
+                  <DropdownMenuItem 
+                    className="text-red-600"
+                    onClick={() => handleBulkAction('delete')}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Selected
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => handleBulkAction('archive')}>
                     <Archive className="h-4 w-4 mr-2" />
                     Archive Selected
