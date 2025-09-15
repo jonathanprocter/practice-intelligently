@@ -3026,8 +3026,8 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
   app.post('/api/calendar/sync', async (req, res) => {
     console.log('🔄 Starting comprehensive calendar events sync (2015-2030)...');
     try {
-      // Get therapist ID from body or use default
-      const therapistId = req.body?.therapistId || '00000000-0000-0000-0000-000000000001';
+      // Get therapist ID from body or use the valid therapist ID from database
+      const therapistId = req.body?.therapistId || 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c';
       
       // Optional: Allow custom date range from request body
       const startDate = req.body?.startDate ? new Date(req.body.startDate) : new Date('2015-01-01T00:00:00.000Z');

@@ -422,7 +422,9 @@ export default function Calendar() {
       const response = await fetch('/api/calendar/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
+        body: JSON.stringify({
+          forceUpdate: true  // Force update all appointments regardless of Google timestamp
+        })
       });
       return response.json();
     },

@@ -158,7 +158,15 @@ export default function CalendarSyncStatusIndicator() {
     try {
       setSyncStatus(prev => ({ ...prev, isActive: true, currentStep: 'Starting sync...', progress: 5 }));
       
-      const response = await fetch('/api/calendar/sync', { method: 'POST' });
+      const response = await fetch('/api/calendar/sync', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          forceUpdate: true  // Force update all appointments regardless of Google timestamp
+        })
+      });
       const result = await response.json();
       
       if (response.ok) {
