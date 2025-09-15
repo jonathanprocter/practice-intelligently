@@ -3033,7 +3033,13 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
       const startDate = req.body?.startDate ? new Date(req.body.startDate) : new Date('2015-01-01T00:00:00.000Z');
       const endDate = req.body?.endDate ? new Date(req.body.endDate) : new Date('2030-12-31T23:59:59.999Z');
       
+      // Get force update flag - defaults to false
+      const forceUpdate = req.body?.forceUpdate === true;
+      
       console.log(`📅 Sync range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+      if (forceUpdate) {
+        console.log('🔄 Force update enabled - will update all appointments regardless of Google update timestamp');
+      }
       
       // Send sync start notification
       if (req.app.locals.wss) {
@@ -3050,8 +3056,8 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
         });
       }
 
-      // Use the bidirectional calendar sync with the comprehensive date range
-      const syncResult = await bidirectionalCalendarSync.syncFromGoogle(therapistId, startDate, endDate);
+      // Use the bidirectional calendar sync with the comprehensive date range and force update option
+      const syncResult = await bidirectionalCalendarSync.syncFromGoogle(therapistId, startDate, endDate, forceUpdate);
 
       // Send completion notification
       if (req.app.locals.wss) {

@@ -269,8 +269,10 @@ export class BidirectionalCalendarSync {
   /**
    * Sync changes from Google Calendar to the app
    * Supports pagination for large date ranges (2015-2030)
+   * @param forceUpdate - If true, updates all appointments regardless of Google's update timestamp
+   * @param calendarId - The calendar to sync from, defaults to Simple Practice calendar
    */
-  async syncFromGoogle(therapistId: string, timeMin?: Date, timeMax?: Date): Promise<CalendarSyncResult> {
+  async syncFromGoogle(therapistId: string, timeMin?: Date, timeMax?: Date, forceUpdate: boolean = false, calendarId: string = '79dfcb90ce59b1b0345b24f5c8d342bd308eac9521d063a684a8bbd377f2b822@group.calendar.google.com'): Promise<CalendarSyncResult> {
     const result: CalendarSyncResult = {
       synced: 0,
       created: 0,
@@ -313,7 +315,7 @@ export class BidirectionalCalendarSync {
 
         try {
           const response = await this.calendar.events.list({
-            calendarId: 'primary',
+            calendarId: calendarId, // Use the provided calendar ID (Simple Practice by default)
             timeMin: startTime.toISOString(),
             timeMax: endTime.toISOString(),
             singleEvents: true,
@@ -361,7 +363,7 @@ export class BidirectionalCalendarSync {
         // Process events in parallel within each batch
         const batchPromises = batch.map(async (event) => {
           try {
-            const processed = await this.processGoogleEvent(event, therapistId);
+            const processed = await this.processGoogleEvent(event, therapistId, forceUpdate);
             
             if (processed.created) {
               result.created++;
@@ -386,7 +388,7 @@ export class BidirectionalCalendarSync {
 
       // Check for deleted events (events in DB but not in Google)
       console.log('🔍 Checking for events deleted from Google Calendar...');
-      await this.checkForDeletedEventsComprehensive(therapistId, googleEventMap, startTime, endTime, result);
+      await this.checkForDeletedEventsComprehensive(therapistId, googleEventMap, startTime, endTime, result, calendarId);
 
       // Update last sync time
       this.lastSyncTime.set(therapistId, new Date());
@@ -415,10 +417,12 @@ export class BidirectionalCalendarSync {
 
   /**
    * Process a single Google Calendar event
+   * @param forceUpdate - If true, updates appointments regardless of Google's update timestamp
    */
   private async processGoogleEvent(
     event: any,
-    therapistId: string
+    therapistId: string,
+    forceUpdate: boolean = false
   ): Promise<{ created: boolean; updated: boolean; deleted: boolean; skipped: boolean }> {
     // Check if event was cancelled
     if (event.status === 'cancelled') {
@@ -440,15 +444,25 @@ export class BidirectionalCalendarSync {
     const existingAppointment = await storage.getAppointmentByEventId(event.id);
     
     if (existingAppointment) {
-      // Check if event was updated in Google
+      // Check if event was updated in Google or if force update is enabled
       const googleUpdated = new Date(event.updated);
       const lastSync = existingAppointment.lastGoogleSync || new Date(0);
       
-      if (googleUpdated > lastSync) {
+      // Always update if forceUpdate is true, or if Google event was updated after last sync
+      if (forceUpdate || googleUpdated > lastSync) {
         // Update existing appointment
-        const updated = await this.updateAppointmentFromGoogle(existingAppointment, event);
+        const updated = await this.updateAppointmentFromGoogle(existingAppointment, event, forceUpdate);
         return { created: false, updated, deleted: false, skipped: !updated };
       }
+      
+      // Even if not force updating, check if appointment data needs correction
+      // This ensures data accuracy even when Google hasn't marked the event as updated
+      const needsDataCorrection = await this.checkAppointmentNeedsCorrection(existingAppointment, event);
+      if (needsDataCorrection) {
+        const updated = await this.updateAppointmentFromGoogle(existingAppointment, event, true);
+        return { created: false, updated, deleted: false, skipped: !updated };
+      }
+      
       return { created: false, updated: false, deleted: false, skipped: true };
     }
 
@@ -458,10 +472,78 @@ export class BidirectionalCalendarSync {
   }
 
   /**
+   * Check if appointment data needs correction by comparing with Google event
+   * This ensures data accuracy even when Google hasn't marked the event as updated
+   */
+  private async checkAppointmentNeedsCorrection(appointment: Appointment, event: any): Promise<boolean> {
+    try {
+      // Parse times from Google event
+      const googleStartTime = new Date(event.start.dateTime || event.start.date);
+      const googleEndTime = new Date(event.end.dateTime || event.end.date);
+      const appointmentStartTime = new Date(appointment.startTime);
+      const appointmentEndTime = new Date(appointment.endTime);
+
+      // Check for time discrepancies
+      if (googleStartTime.getTime() !== appointmentStartTime.getTime() ||
+          googleEndTime.getTime() !== appointmentEndTime.getTime()) {
+        console.log(`  ⚠️ Time mismatch for appointment ${appointment.id}`);
+        return true;
+      }
+
+      // Check for location discrepancies
+      if (event.location !== appointment.location && event.location) {
+        console.log(`  ⚠️ Location mismatch for appointment ${appointment.id}`);
+        return true;
+      }
+
+      // Check for client name mismatch in summary
+      const clientInfo = await this.extractClientFromEvent(event);
+      if (clientInfo.firstName || clientInfo.lastName) {
+        const client = await storage.getClient(appointment.clientId);
+        if (client) {
+          const googleClientName = `${clientInfo.firstName} ${clientInfo.lastName}`.trim();
+          const dbClientName = `${client.firstName} ${client.lastName}`.trim();
+          if (googleClientName && dbClientName && googleClientName !== dbClientName) {
+            console.log(`  ⚠️ Client name mismatch for appointment ${appointment.id}: Google: "${googleClientName}" vs DB: "${dbClientName}"`);
+            // In this case, we might need to update the client association
+            return true;
+          }
+        }
+      }
+
+      // Check for appointment type mismatch
+      const googleAppointmentType = this.determineAppointmentType(event);
+      if (googleAppointmentType !== appointment.type) {
+        console.log(`  ⚠️ Appointment type mismatch for appointment ${appointment.id}`);
+        return true;
+      }
+
+      // Check for status discrepancy (e.g., cancelled in Google but not in DB)
+      if (event.status === 'cancelled' && appointment.status !== 'cancelled') {
+        console.log(`  ⚠️ Status mismatch for appointment ${appointment.id}: cancelled in Google but not in DB`);
+        return true;
+      }
+
+      // Check if past appointment is still marked as scheduled
+      if (new Date() > googleEndTime && appointment.status === 'scheduled') {
+        console.log(`  ⚠️ Past appointment ${appointment.id} still marked as scheduled`);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error(`Error checking appointment correction needs:`, error);
+      // If we can't check, assume it needs updating to be safe
+      return true;
+    }
+  }
+
+  /**
    * Update appointment from Google Calendar event
    * Enhanced with comprehensive field mapping
+   * @param forceUpdate - If true, updates all fields regardless of changes
    */
-  private async updateAppointmentFromGoogle(appointment: Appointment, event: any): Promise<boolean> {
+  private async updateAppointmentFromGoogle(appointment: Appointment, event: any, forceUpdate: boolean = false): Promise<boolean> {
     try {
       // Parse times
       const startTime = new Date(event.start.dateTime || event.start.date);
@@ -475,8 +557,8 @@ export class BidirectionalCalendarSync {
       const hasLocationChange = event.location !== appointment.location;
       const hasDescriptionChange = event.description !== appointment.notes;
 
-      // Only update if there are actual changes
-      if (!hasTimeChange && !hasLocationChange && !hasDescriptionChange) {
+      // Only skip update if not forcing and no changes detected
+      if (!forceUpdate && !hasTimeChange && !hasLocationChange && !hasDescriptionChange) {
         return false; // No changes, skip update
       }
 
@@ -648,7 +730,8 @@ export class BidirectionalCalendarSync {
     googleEventMap: Map<string, any>,
     startTime: Date,
     endTime: Date,
-    result: CalendarSyncResult
+    result: CalendarSyncResult,
+    calendarId: string = '79dfcb90ce59b1b0345b24f5c8d342bd308eac9521d063a684a8bbd377f2b822@group.calendar.google.com'
   ): Promise<void> {
     try {
       // Get all appointments within the date range that have Google event IDs
