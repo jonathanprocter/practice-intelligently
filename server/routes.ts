@@ -1865,7 +1865,7 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
   app.delete("/api/clients/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const { soft = false, reason } = req.query;
+      const { soft = false, force = false, reason } = req.query;
 
       // Get client for audit trail
       const client = await storage.getClient(id);
@@ -1877,7 +1877,10 @@ export async function registerRoutes(app: Express, wss?: WebSocketServer): Promi
       const appointments = await storage.getAppointmentsByClient(id);
       const sessionNotes = await storage.getSessionNotesByClientId(id);
       
-      if ((appointments.length > 0 || sessionNotes.length > 0) && !soft) {
+      // Allow force deletion for fake clients (without email/phone/DOB)
+      const isFakeClient = !client.email && !client.phone && !client.dateOfBirth;
+      
+      if ((appointments.length > 0 || sessionNotes.length > 0) && !soft && !force && !isFakeClient) {
         return res.status(400).json({ 
           error: "Cannot delete client with existing data",
           suggestion: "Use soft delete to archive the client instead",

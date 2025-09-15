@@ -250,8 +250,9 @@ export class ApiClient {
     return response.json();
   }
 
-  static async deleteClient(id: string): Promise<void> {
-    await apiRequest('DELETE', `/api/clients/${id}`);
+  static async deleteClient(id: string, force: boolean = false): Promise<void> {
+    const url = force ? `/api/clients/${id}?force=true` : `/api/clients/${id}`;
+    await apiRequest('DELETE', url);
   }
 
   // Appointment methods

@@ -155,7 +155,7 @@ export default function Clients() {
   });
 
   const deleteClientMutation = useMutation({
-    mutationFn: (clientId: string) => ApiClient.deleteClient(clientId),
+    mutationFn: ({ clientId, force }: { clientId: string; force: boolean }) => ApiClient.deleteClient(clientId, force),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       toast({
@@ -335,7 +335,9 @@ export default function Clients() {
           try {
             // Delete each client sequentially
             for (const clientId of Array.from(selectedClients)) {
-              await ApiClient.deleteClient(clientId);
+              const client = clients?.find(c => c.id === clientId);
+              const isFakeClient = client && !client.email && !client.phone && !client.dateOfBirth;
+              await ApiClient.deleteClient(clientId, isFakeClient || false);
             }
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             setSelectedClients(new Set());
@@ -507,7 +509,7 @@ export default function Clients() {
                         className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                         onClick={() => {
                           if (confirm(`Delete "${client.firstName} ${client.lastName}"? This appears to be a calendar-generated entry.`)) {
-                            deleteClientMutation.mutate(client.id);
+                            deleteClientMutation.mutate({ clientId: client.id, force: true });
                           }
                         }}
                       >
@@ -569,7 +571,8 @@ export default function Clients() {
                       className="text-red-600"
                       onClick={() => {
                         if (confirm(`Are you sure you want to delete ${client.firstName} ${client.lastName}?`)) {
-                          deleteClientMutation.mutate(client.id);
+                          const isFakeClient = !client.email && !client.phone && !client.dateOfBirth;
+                          deleteClientMutation.mutate({ clientId: client.id, force: isFakeClient });
                         }
                       }}
                     >
