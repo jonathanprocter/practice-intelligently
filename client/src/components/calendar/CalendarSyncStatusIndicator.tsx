@@ -47,7 +47,7 @@ export default function CalendarSyncStatusIndicator() {
   });
 
   const [activities, setActivities] = useState<CalendarActivity[]>([]);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
 
   const addActivity = (activity: Omit<CalendarActivity, 'timestamp'>) => {
     const newActivity: CalendarActivity = {
@@ -201,6 +201,7 @@ export default function CalendarSyncStatusIndicator() {
         size="sm"
         onClick={() => setIsVisible(true)}
         className="fixed bottom-4 right-4 z-50"
+        data-testid="open-sync-status"
       >
         <Activity className="w-4 h-4" />
       </Button>
@@ -208,7 +209,10 @@ export default function CalendarSyncStatusIndicator() {
   }
 
   return (
-    <Card className="fixed bottom-4 right-4 w-96 z-50 shadow-lg border-2">
+    <Card 
+      className="fixed bottom-4 right-4 w-96 z-50 shadow-lg border-2"
+      data-testid="calendar-sync-status"
+    >
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -221,6 +225,8 @@ export default function CalendarSyncStatusIndicator() {
               size="sm"
               onClick={triggerManualSync}
               disabled={syncStatus.isActive}
+              data-testid="manual-sync-button"
+              title="Manual sync"
             >
               <RefreshCw className={`w-4 h-4 ${syncStatus.isActive ? 'animate-spin' : ''}`} />
             </Button>
@@ -228,6 +234,9 @@ export default function CalendarSyncStatusIndicator() {
               variant="ghost"
               size="sm"
               onClick={() => setIsVisible(false)}
+              data-testid="close-sync-status"
+              aria-label="Close sync status"
+              title="Close"
             >
               ×
             </Button>
