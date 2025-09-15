@@ -5236,6 +5236,78 @@ Respond with ONLY a JSON array of strings, like: ["CBT", "anxiety", "homework as
     }
   });
 
+  // Sync calendar events for current week
+  app.post('/api/calendar/sync/week', async (req, res) => {
+    try {
+      const { simpleOAuth } = await import('./oauth-simple');
+      
+      if (!simpleOAuth.isConnected()) {
+        return res.status(400).json({ error: 'Google Calendar not connected' });
+      }
+
+      // Get current week's date range (Monday to Sunday)
+      const today = new Date();
+      const currentDay = today.getDay();
+      const daysToMonday = currentDay === 0 ? -6 : 1 - currentDay; // If Sunday, go back 6 days
+      const daysToSunday = currentDay === 0 ? 0 : 7 - currentDay; // If Sunday, it's today
+      
+      const monday = new Date(today);
+      monday.setDate(today.getDate() + daysToMonday);
+      monday.setHours(0, 0, 0, 0);
+      
+      const sunday = new Date(today);
+      sunday.setDate(today.getDate() + daysToSunday);
+      sunday.setHours(23, 59, 59, 999);
+
+      console.log(`📅 Syncing calendar events for this week: ${monday.toISOString()} to ${sunday.toISOString()}`);
+
+      // Get all calendars
+      const calendars = await simpleOAuth.getCalendars();
+      let totalEvents = 0;
+      let appointmentsCreated = 0;
+      let appointmentsUpdated = 0;
+
+      // Sync events from all calendars for this week
+      for (const calendar of calendars) {
+        try {
+          const events = await simpleOAuth.getEvents(
+            calendar.id,
+            monday.toISOString(),
+            sunday.toISOString()
+          );
+          
+          totalEvents += events.length;
+          
+          // Process each event for appointment creation/update
+          for (const event of events) {
+            const syncResult = await syncEventToAppointment(event, calendar.id);
+            if (syncResult > 0) {
+              appointmentsCreated += syncResult;
+            }
+          }
+          
+          console.log(`✅ Synced ${events.length} events from ${calendar.summary}`);
+        } catch (error) {
+          console.warn(`Failed to sync calendar ${calendar.summary}:`, error);
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Successfully synced ${totalEvents} events for this week`,
+        totalEvents,
+        appointmentsCreated,
+        weekRange: {
+          start: monday.toISOString(),
+          end: sunday.toISOString()
+        }
+      });
+    } catch (error: any) {
+      console.error('Failed to sync calendar for week:', error);
+      res.status(500).json({ error: 'Failed to sync calendar', details: error.message });
+    }
+  });
+
   // ========== CLIENT CHART ANALYSIS ROUTES ==========
 
   // Generate case conceptualization for a client
