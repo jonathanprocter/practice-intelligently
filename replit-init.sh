@@ -22,23 +22,24 @@ echo "🗄️ Setting up SQLite database for development..."
 # The script will create the db file if it doesn't exist
 node server/seed-database.js
 
-# 4. Run System Audit
-echo "🩺 Running comprehensive system audit..."
-node comprehensive-system-audit.js
-
-# 5. Start the application with PM2
+# 4. Start the application with PM2
 echo "🚀 Launching application with PM2..."
-# Check if the process is already running
-pm2 describe practice-intelligence > /dev/null
-if [ $? -ne 0 ]; then
-  # Not running, so start it
-  pm2 start --name "practice-intelligence" npm -- run dev
-else
-  # Already running, so restart it to apply changes
-  pm2 restart practice-intelligence
-fi
+# Kill any existing process first
+pm2 delete practice-intelligence 2>/dev/null || true
+sleep 2
+
+# Start the application
+pm2 start --name "practice-intelligence" npm -- run dev
+
+# Wait for the server to start
+echo "⏳ Waiting for server to start..."
+sleep 5
 
 pm2 logs --lines 15
+
+# 5. Run System Audit after server is running
+echo "🩺 Running comprehensive system audit..."
+node comprehensive-system-audit.js
 
 echo "✅ Initialization complete! Your application is running."
 echo "🔗 Access it in the Replit Webview."

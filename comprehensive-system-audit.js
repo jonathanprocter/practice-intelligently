@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || 5000;
-const BASE_URL = `http://localhost:${PORT}`;
+const BASE_URL = `http://127.0.0.1:${PORT}`;
 
 const dbPath = process.env.DATABASE_URL || path.join(__dirname, './data/therapy.db');
 
@@ -107,5 +107,5 @@ async function runAudit() {
   }
 }
 
-// Give the server a moment to start up before running the audit
-setTimeout(runAudit, 3000);
+// Give the server more time to start up before running the audit
+setTimeout(runAudit, 8000);
