@@ -1,9 +1,18 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load React plugin safely
+let react;
+try {
+  const reactPlugin = await import("@vitejs/plugin-react");
+  react = reactPlugin.default;
+} catch (e) {
+  console.warn("React plugin not available, proceeding without it");
+  react = () => {};
+}
 
 // Load Replit plugins conditionally
 const replitPlugins = [];
