@@ -1,0 +1,976 @@
+
+> practice-intelligence-app@1.0.0 build
+> tsc
+
+client/src/components/ClientChartAccess.tsx(467,34): error TS2322: Type '"destructive" | "secondary" | "warning"' is not assignable to type '"default" | "destructive" | "outline" | "secondary" | null | undefined'.
+  Type '"warning"' is not assignable to type '"default" | "destructive" | "outline" | "secondary" | null | undefined'.
+client/src/components/Compass.tsx(190,9): error TS7034: Variable 'elements' implicitly has type 'any[]' in some locations where its type cannot be determined.
+client/src/components/Compass.tsx(208,16): error TS7005: Variable 'elements' implicitly has an 'any[]' type.
+client/src/components/Compass.tsx(241,29): error TS2339: Property 'scrollIntoView' does not exist on type 'never'.
+client/src/components/Compass.tsx(269,18): error TS2322: Type '{ id: string; role: string; content: string; timestamp: Date; aiProvider: string; }' is not assignable to type 'Message'.
+  Types of property 'role' are incompatible.
+    Type 'string' is not assignable to type '"user" | "system" | "assistant"'.
+client/src/components/Compass.tsx(286,17): error TS2345: Argument of type '(prev: Message[]) => { id: string; role: string; content: string; timestamp: Date; }[]' is not assignable to parameter of type 'SetStateAction<Message[]>'.
+  Type '(prev: Message[]) => { id: string; role: string; content: string; timestamp: Date; }[]' is not assignable to type '(prevState: Message[]) => Message[]'.
+    Type '{ id: string; role: string; content: string; timestamp: Date; }[]' is not assignable to type 'Message[]'.
+      Type '{ id: string; role: string; content: string; timestamp: Date; }' is not assignable to type 'Message'.
+        Types of property 'role' are incompatible.
+          Type 'string' is not assignable to type '"user" | "system" | "assistant"'.
+client/src/components/Compass.tsx(319,19): error TS2345: Argument of type '(prev: Message[]) => (Message | { id: string; role: string; content: any; timestamp: Date; aiProvider: any; })[]' is not assignable to parameter of type 'SetStateAction<Message[]>'.
+  Type '(prev: Message[]) => (Message | { id: string; role: string; content: any; timestamp: Date; aiProvider: any; })[]' is not assignable to type '(prevState: Message[]) => Message[]'.
+    Type '(Message | { id: string; role: string; content: any; timestamp: Date; aiProvider: any; })[]' is not assignable to type 'Message[]'.
+      Type 'Message | { id: string; role: string; content: any; timestamp: Date; aiProvider: any; }' is not assignable to type 'Message'.
+        Type '{ id: string; role: string; content: any; timestamp: Date; aiProvider: any; }' is not assignable to type 'Message'.
+          Types of property 'role' are incompatible.
+            Type 'string' is not assignable to type '"user" | "system" | "assistant"'.
+client/src/components/Compass.tsx(336,19): error TS2345: Argument of type '(prev: Message[]) => (Message | { id: string; role: string; content: string; timestamp: Date; aiProvider: string; })[]' is not assignable to parameter of type 'SetStateAction<Message[]>'.
+  Type '(prev: Message[]) => (Message | { id: string; role: string; content: string; timestamp: Date; aiProvider: string; })[]' is not assignable to type '(prevState: Message[]) => Message[]'.
+    Type '(Message | { id: string; role: string; content: string; timestamp: Date; aiProvider: string; })[]' is not assignable to type 'Message[]'.
+      Type 'Message | { id: string; role: string; content: string; timestamp: Date; aiProvider: string; }' is not assignable to type 'Message'.
+        Type '{ id: string; role: string; content: string; timestamp: Date; aiProvider: string; }' is not assignable to type 'Message'.
+          Types of property 'role' are incompatible.
+            Type 'string' is not assignable to type '"user" | "system" | "assistant"'.
+client/src/components/Compass.tsx(679,33): error TS7006: Parameter 'event' implicitly has an 'any' type.
+client/src/components/Compass.tsx(680,63): error TS2339: Property 'contains' does not exist on type 'never'.
+client/src/components/Compass.tsx(960,37): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/src/components/Compass.tsx(1054,49): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ openai: string; anthropic: string; gemini: string; perplexity: string; offline: string; system: string; }'.
+  No index signature with a parameter of type 'string' was found on type '{ openai: string; anthropic: string; gemini: string; perplexity: string; offline: string; system: string; }'.
+client/src/components/CompassStable.tsx(18,29): error TS2339: Property 'scrollIntoView' does not exist on type 'never'.
+client/src/components/CompassStable.tsx(29,20): error TS2345: Argument of type 'string' is not assignable to parameter of type 'SetStateAction<null>'.
+client/src/components/CompassStable.tsx(39,22): error TS2322: Type '{ id: string; role: string; content: string; timestamp: Date; aiProvider: string; }' is not assignable to type 'never'.
+client/src/components/CompassStable.tsx(45,30): error TS7006: Parameter 'message' implicitly has an 'any' type.
+client/src/components/CompassStable.tsx(57,17): error TS2345: Argument of type '(prev: never[]) => { id: string; role: string; content: any; timestamp: Date; }[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '(prev: never[]) => { id: string; role: string; content: any; timestamp: Date; }[]' is not assignable to type '(prevState: never[]) => never[]'.
+    Type '{ id: string; role: string; content: any; timestamp: Date; }[]' is not assignable to type 'never[]'.
+      Type '{ id: string; role: string; content: any; timestamp: Date; }' is not assignable to type 'never'.
+client/src/components/CompassStable.tsx(70,21): error TS2339: Property 'role' does not exist on type 'never'.
+client/src/components/CompassStable.tsx(71,24): error TS2339: Property 'content' does not exist on type 'never'.
+client/src/components/CompassStable.tsx(90,19): error TS2345: Argument of type '(prev: never[]) => { id: string; role: string; content: any; timestamp: Date; aiProvider: any; }[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '(prev: never[]) => { id: string; role: string; content: any; timestamp: Date; aiProvider: any; }[]' is not assignable to type '(prevState: never[]) => never[]'.
+    Type '{ id: string; role: string; content: any; timestamp: Date; aiProvider: any; }[]' is not assignable to type 'never[]'.
+      Type '{ id: string; role: string; content: any; timestamp: Date; aiProvider: any; }' is not assignable to type 'never'.
+client/src/components/CompassStable.tsx(104,19): error TS2345: Argument of type '(prev: never[]) => { id: string; role: string; content: string; timestamp: Date; aiProvider: string; }[]' is not assignable to parameter of type 'SetStateAction<never[]>'.
+  Type '(prev: never[]) => { id: string; role: string; content: string; timestamp: Date; aiProvider: string; }[]' is not assignable to type '(prevState: never[]) => never[]'.
+    Type '{ id: string; role: string; content: string; timestamp: Date; aiProvider: string; }[]' is not assignable to type 'never[]'.
+      Type '{ id: string; role: string; content: string; timestamp: Date; aiProvider: string; }' is not assignable to type 'never'.
+client/src/components/CompassStable.tsx(110,25): error TS7006: Parameter 'e' implicitly has an 'any' type.
+client/src/components/CompassStable.tsx(115,27): error TS7006: Parameter 'e' implicitly has an 'any' type.
+client/src/components/CompassStable.tsx(174,32): error TS2339: Property 'id' does not exist on type 'never'.
+client/src/components/CompassStable.tsx(175,46): error TS2339: Property 'role' does not exist on type 'never'.
+client/src/components/CompassStable.tsx(179,31): error TS2339: Property 'role' does not exist on type 'never'.
+client/src/components/CompassStable.tsx(185,32): error TS2339: Property 'content' does not exist on type 'never'.
+client/src/components/CompassStable.tsx(188,31): error TS2339: Property 'role' does not exist on type 'never'.
+client/src/components/CompassStable.tsx(190,32): error TS2339: Property 'timestamp' does not exist on type 'never'.
+client/src/components/CreateSessionNoteModal.tsx(319,30): error TS2554: Expected 1 arguments, but got 0.
+client/src/components/CreateSessionNoteModal.tsx(320,27): error TS2554: Expected 1 arguments, but got 0.
+client/src/components/CreateSessionNoteModal.tsx(321,29): error TS2554: Expected 1 arguments, but got 0.
+client/src/components/DocumentsView.tsx(52,46): error TS7006: Parameter 'doc' implicitly has an 'any' type.
+client/src/components/DocumentsView.tsx(60,57): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+client/src/components/DocumentsView.tsx(60,62): error TS7006: Parameter 'doc' implicitly has an 'any' type.
+client/src/components/DocumentsView.tsx(110,58): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ high: string; confidential: string; standard: string; low: string; }'.
+  No index signature with a parameter of type 'string' was found on type '{ high: string; confidential: string; standard: string; low: string; }'.
+client/src/components/DocumentsView.tsx(243,51): error TS18046: 'categoryDocs' is of type 'unknown'.
+client/src/components/DocumentsView.tsx(248,18): error TS18046: 'categoryDocs' is of type 'unknown'.
+client/src/components/DocumentsView.tsx(248,36): error TS7006: Parameter 'doc' implicitly has an 'any' type.
+client/src/components/DocumentsView.tsx(272,58): error TS7006: Parameter 'tag' implicitly has an 'any' type.
+client/src/components/DocumentsView.tsx(272,63): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+client/src/components/DocumentsView.tsx(338,33): error TS7006: Parameter 'd' implicitly has an 'any' type.
+client/src/components/DocumentsView.tsx(344,33): error TS7006: Parameter 'd' implicitly has an 'any' type.
+client/src/components/DocumentsView.tsx(350,33): error TS7006: Parameter 'd' implicitly has an 'any' type.
+client/src/components/EditSessionNoteTitleModal.tsx(43,56): error TS18047: 'note' is possibly 'null'.
+client/src/components/SessionRecommendations.tsx(99,34): error TS18046: 'recommendations' is of type 'unknown'.
+client/src/components/SessionRecommendations.tsx(100,38): error TS18046: 'recommendations' is of type 'unknown'.
+client/src/components/calendar/CalendarSyncStatusIndicator.tsx(183,93): error TS18046: 'error' is of type 'unknown'.
+client/src/components/calendar/DailyView.tsx(4,10): error TS2305: Module '"../../utils/dateUtils"' has no exported member 'formatTime'.
+client/src/components/calendar/DailyView.tsx(4,22): error TS2305: Module '"../../utils/dateUtils"' has no exported member 'formatEventTime'.
+client/src/components/calendar/DailyView.tsx(4,39): error TS2305: Module '"../../utils/dateUtils"' has no exported member 'getDayNavigationName'.
+client/src/components/calendar/DailyView.tsx(4,61): error TS2305: Module '"../../utils/dateUtils"' has no exported member 'getNextDay'.
+client/src/components/calendar/DailyView.tsx(4,73): error TS2305: Module '"../../utils/dateUtils"' has no exported member 'getPreviousDay'.
+client/src/components/calendar/DailyView.tsx(4,89): error TS2305: Module '"../../utils/dateUtils"' has no exported member 'getDateString'.
+client/src/components/calendar/DailyView.tsx(6,28): error TS2307: Cannot find module '../../utils/titleCleaner' or its corresponding type declarations.
+client/src/components/calendar/DailyView.tsx(7,29): error TS2307: Cannot find module '../../utils/emojiCleaner' or its corresponding type declarations.
+client/src/components/calendar/DailyView.tsx(8,29): error TS2307: Cannot find module '../../hooks/useCalendar' or its corresponding type declarations.
+client/src/components/calendar/DailyView.tsx(9,37): error TS2307: Cannot find module '../../hooks/useEventDuplication' or its corresponding type declarations.
+client/src/components/calendar/DailyView.tsx(174,62): error TS2367: This comparison appears to be unintentional because the types '"manual" | "system" | "google" | undefined' and '"simplepractice"' have no overlap.
+client/src/components/calendar/DailyView.tsx(179,9): error TS2367: This comparison appears to be unintentional because the types '"manual" | "system" | "google" | undefined' and '"simplepractice"' have no overlap.
+client/src/components/calendar/DailyView.tsx(237,53): error TS7053: Element implicitly has an 'any' type because expression of type '"actionItems" | "notes"' can't be used to index type 'CalendarEvent'.
+  Property 'actionItems' does not exist on type 'CalendarEvent'.
+client/src/components/calendar/DailyView.tsx(380,24): error TS2339: Property 'description' does not exist on type 'CalendarEvent'.
+client/src/components/calendar/DailyView.tsx(381,61): error TS2339: Property 'description' does not exist on type 'CalendarEvent'.
+client/src/components/calendar/DailyView.tsx(394,59): error TS2551: Property 'isHour' does not exist on type 'TimeSlot'. Did you mean 'hour'?
+client/src/components/calendar/DailyView.tsx(396,23): error TS2339: Property 'time' does not exist on type 'TimeSlot'.
+client/src/components/calendar/DailyView.tsx(444,21): error TS2339: Property 'className' does not exist on type '{ gridRowStart?: undefined; gridRowEnd?: undefined; gridColumn?: undefined; zIndex?: undefined; } | { gridRowStart: number; gridRowEnd: number; gridColumn: string; zIndex: number; }'.
+client/src/components/calendar/DailyView.tsx(444,32): error TS2339: Property 'style' does not exist on type '{ gridRowStart?: undefined; gridRowEnd?: undefined; gridColumn?: undefined; zIndex?: undefined; } | { gridRowStart: number; gridRowEnd: number; gridColumn: string; zIndex: number; }'.
+client/src/components/calendar/DailyView.tsx(448,33): error TS2367: This comparison appears to be unintentional because the types '"manual" | "system" | "google" | undefined' and '"simplepractice"' have no overlap.
+client/src/components/calendar/DailyView.tsx(473,77): error TS2367: This comparison appears to be unintentional because the types '"manual" | "system" | "google" | undefined' and '"simplepractice"' have no overlap.
+client/src/components/calendar/DailyView.tsx(478,68): error TS2339: Property 'display' does not exist on type 'string'.
+client/src/components/calendar/DailyView.tsx(501,28): error TS2339: Property 'actionItems' does not exist on type 'CalendarEvent'.
+client/src/components/calendar/DailyView.tsx(504,32): error TS2339: Property 'actionItems' does not exist on type 'CalendarEvent'.
+client/src/components/calendar/DailyView.tsx(505,35): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/src/components/calendar/DailyView.tsx(506,35): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/src/components/calendar/DailyView.tsx(507,35): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/src/components/calendar/DailyView.tsx(508,32): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/src/components/calendar/DailyView.tsx(509,35): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/src/components/calendar/DailyView.tsx(510,33): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/src/components/calendar/DailyView.tsx(510,39): error TS7006: Parameter 'index' implicitly has an 'any' type.
+client/src/components/calendar/DailyView.tsx(572,120): error TS2367: This comparison appears to be unintentional because the types '"manual" | "system" | "google" | undefined' and '"simplepractice"' have no overlap.
+client/src/components/clients/ClientListGenerator.tsx(39,49): error TS18046: 'error' is of type 'unknown'.
+client/src/components/dashboard/ClientInfoModal.tsx(183,15): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+client/src/components/dashboard/ClientInfoModal.tsx(391,19): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+client/src/components/dashboard/ai-insights-widget.tsx(47,26): error TS2551: Property 'getClientAiInsights' does not exist on type 'typeof ApiClient'. Did you mean 'getAiInsights'?
+client/src/components/dashboard/ai-insights-widget.tsx(70,14): error TS7006: Parameter 'insight' implicitly has an 'any' type.
+client/src/components/dashboard/ai-insights-widget.tsx(71,13): error TS7006: Parameter 'a' implicitly has an 'any' type.
+client/src/components/dashboard/ai-insights-widget.tsx(71,16): error TS7006: Parameter 'b' implicitly has an 'any' type.
+client/src/components/dashboard/ai-insights-widget.tsx(84,28): error TS7006: Parameter 'i' implicitly has an 'any' type.
+client/src/components/dashboard/ai-insights-widget.tsx(85,30): error TS7006: Parameter 'i' implicitly has an 'any' type.
+client/src/components/dashboard/ai-insights-widget.tsx(86,38): error TS7006: Parameter 'i' implicitly has an 'any' type.
+client/src/components/dashboard/ai-insights-widget.tsx(305,36): error TS7006: Parameter 'insight' implicitly has an 'any' type.
+client/src/components/dashboard/ai-insights-widget.tsx(353,69): error TS7006: Parameter 'rec' implicitly has an 'any' type.
+client/src/components/dashboard/ai-insights-widget.tsx(353,74): error TS7006: Parameter 'idx' implicitly has an 'any' type.
+client/src/components/dashboard/quick-actions-panel.tsx(226,50): error TS2365: Operator '>' cannot be applied to types 'string | number' and 'number'.
+client/src/components/dashboard/real-time-metrics.tsx(142,25): error TS2339: Property 'monthlyRevenue' does not exist on type 'DashboardStats'.
+client/src/components/dashboard/todays-schedule-enhanced.tsx(292,23): error TS2551: Property 'completeAppointment' does not exist on type 'typeof ApiClient'. Did you mean 'createAppointment'?
+client/src/components/dashboard/todays-schedule/index.tsx(11,29): error TS2307: Cannot find module './AppointmentCard' or its corresponding type declarations.
+client/src/components/dashboard/todays-schedule/index.tsx(13,29): error TS2307: Cannot find module './ClientInfoModal' or its corresponding type declarations.
+client/src/components/dashboard/todays-schedule/index.tsx(14,37): error TS2307: Cannot find module './DeleteAppointmentDialog' or its corresponding type declarations.
+client/src/components/dashboard/todays-schedule/index.tsx(15,39): error TS2307: Cannot find module './hooks/useAppointmentActions' or its corresponding type declarations.
+client/src/components/dashboard/todays-schedule/index.tsx(274,24): error TS7006: Parameter 'open' implicitly has an 'any' type.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(59,38): error TS2339: Property 'categories' does not exist on type 'Response'.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(62,33): error TS2339: Property 'categoryCounts' does not exist on type 'Response | { categoryCounts: never[]; sensitivityCounts: never[]; totalDocuments: number; }'.
+  Property 'categoryCounts' does not exist on type 'Response'.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(62,58): error TS2339: Property 'statistics' does not exist on type 'Response | { categoryCounts: never[]; sensitivityCounts: never[]; totalDocuments: number; }'.
+  Property 'statistics' does not exist on type 'Response'.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(63,49): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(63,55): error TS7006: Parameter 'index' implicitly has an 'any' type.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(70,36): error TS2339: Property 'sensitivityCounts' does not exist on type 'Response | { categoryCounts: never[]; sensitivityCounts: never[]; totalDocuments: number; }'.
+  Property 'sensitivityCounts' does not exist on type 'Response'.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(70,64): error TS2339: Property 'statistics' does not exist on type 'Response | { categoryCounts: never[]; sensitivityCounts: never[]; totalDocuments: number; }'.
+  Property 'statistics' does not exist on type 'Response'.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(71,54): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(132,73): error TS2339: Property 'totalDocuments' does not exist on type 'Response | { categoryCounts: never[]; sensitivityCounts: never[]; totalDocuments: number; }'.
+  Property 'totalDocuments' does not exist on type 'Response'.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(144,73): error TS2339: Property 'categoryCounts' does not exist on type 'Response | { categoryCounts: never[]; sensitivityCounts: never[]; totalDocuments: number; }'.
+  Property 'categoryCounts' does not exist on type 'Response'.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(157,27): error TS2339: Property 'sensitivityCounts' does not exist on type 'Response | { categoryCounts: never[]; sensitivityCounts: never[]; totalDocuments: number; }'.
+  Property 'sensitivityCounts' does not exist on type 'Response'.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(157,50): error TS7006: Parameter 's' implicitly has an 'any' type.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(221,63): error TS18046: 'percent' is of type 'unknown'.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(226,46): error TS7006: Parameter 'entry' implicitly has an 'any' type.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(226,53): error TS7006: Parameter 'index' implicitly has an 'any' type.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(272,27): error TS2339: Property 'documents' does not exist on type 'Response'.
+client/src/components/documents/DocumentAnalyticsDashboard.tsx(284,34): error TS2339: Property 'documents' does not exist on type 'Response'.
+client/src/components/forms/ClientForm.tsx(50,5): error TS2322: Type 'Resolver<{ firstName: string; lastName: string; preferredName?: string | undefined; pronouns?: string | undefined; email?: string | undefined; phone?: string | undefined; alternatePhone?: string | undefined; ... 4 more ...; riskLevel?: "low" | ... 2 more ... | undefined; }, any, { ...; }>' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type 'ResolverOptions<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }>' is not assignable to type 'ResolverOptions<{ firstName: string; lastName: string; preferredName?: string | undefined; pronouns?: string | undefined; email?: string | undefined; phone?: string | undefined; alternatePhone?: string | undefined; ... 4 more ...; riskLevel?: "low" | ... 2 more ... | undefined; }>'.
+      Type '"active" | "inactive" | "archived" | undefined' is not assignable to type '"active" | "inactive" | "archived"'.
+        Type 'undefined' is not assignable to type '"active" | "inactive" | "archived"'.
+client/src/components/forms/ClientForm.tsx(136,45): error TS2345: Argument of type '(data: ClientFormData) => Promise<void>' is not assignable to parameter of type 'SubmitHandler<TFieldValues>'.
+  Types of parameters 'data' and 'data' are incompatible.
+    Type 'TFieldValues' is not assignable to type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }'.
+      Type 'FieldValues' is missing the following properties from type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }': firstName, lastName, status, riskLevel
+client/src/components/forms/ClientForm.tsx(139,17): error TS2322: Type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+  The types of '_options.resolver' are incompatible between these types.
+    Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues> | undefined' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }> | undefined'.
+      Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+        Type 'TFieldValues' is not assignable to type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }'.
+          Type 'FieldValues' is missing the following properties from type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }': firstName, lastName, status, riskLevel
+client/src/components/forms/ClientForm.tsx(153,17): error TS2322: Type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+  The types of '_options.resolver' are incompatible between these types.
+    Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues> | undefined' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }> | undefined'.
+      Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+        Type 'TFieldValues' is not assignable to type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }'.
+          Type 'FieldValues' is missing the following properties from type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }': firstName, lastName, status, riskLevel
+client/src/components/forms/ClientForm.tsx(167,17): error TS2322: Type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+  The types of '_options.resolver' are incompatible between these types.
+    Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues> | undefined' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }> | undefined'.
+      Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+        Type 'TFieldValues' is not assignable to type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }'.
+          Type 'FieldValues' is missing the following properties from type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }': firstName, lastName, status, riskLevel
+client/src/components/forms/ClientForm.tsx(181,17): error TS2322: Type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+  The types of '_options.resolver' are incompatible between these types.
+    Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues> | undefined' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }> | undefined'.
+      Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+        Type 'TFieldValues' is not assignable to type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }'.
+          Type 'FieldValues' is missing the following properties from type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }': firstName, lastName, status, riskLevel
+client/src/components/forms/ClientForm.tsx(195,17): error TS2322: Type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+  The types of '_options.resolver' are incompatible between these types.
+    Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues> | undefined' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }> | undefined'.
+      Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+        Type 'TFieldValues' is not assignable to type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }'.
+          Type 'FieldValues' is missing the following properties from type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }': firstName, lastName, status, riskLevel
+client/src/components/forms/ClientForm.tsx(209,17): error TS2322: Type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+  The types of '_options.resolver' are incompatible between these types.
+    Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues> | undefined' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }> | undefined'.
+      Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+        Type 'TFieldValues' is not assignable to type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }'.
+          Type 'FieldValues' is missing the following properties from type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }': firstName, lastName, status, riskLevel
+client/src/components/forms/ClientForm.tsx(223,17): error TS2322: Type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+  The types of '_options.resolver' are incompatible between these types.
+    Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues> | undefined' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }> | undefined'.
+      Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+        Type 'TFieldValues' is not assignable to type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }'.
+          Type 'FieldValues' is missing the following properties from type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }': firstName, lastName, status, riskLevel
+client/src/components/forms/ClientForm.tsx(237,17): error TS2322: Type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+  The types of '_options.resolver' are incompatible between these types.
+    Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues> | undefined' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }> | undefined'.
+      Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+        Type 'TFieldValues' is not assignable to type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }'.
+          Type 'FieldValues' is missing the following properties from type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }': firstName, lastName, status, riskLevel
+client/src/components/forms/ClientForm.tsx(279,17): error TS2322: Type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+  The types of '_options.resolver' are incompatible between these types.
+    Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues> | undefined' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }> | undefined'.
+      Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+        Type 'TFieldValues' is not assignable to type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }'.
+          Type 'FieldValues' is missing the following properties from type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }': firstName, lastName, status, riskLevel
+client/src/components/forms/ClientForm.tsx(304,17): error TS2322: Type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+  The types of '_options.resolver' are incompatible between these types.
+    Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues> | undefined' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }> | undefined'.
+      Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+        Type 'TFieldValues' is not assignable to type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }'.
+          Type 'FieldValues' is missing the following properties from type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }': firstName, lastName, status, riskLevel
+client/src/components/forms/ClientForm.tsx(318,17): error TS2322: Type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+  The types of '_options.resolver' are incompatible between these types.
+    Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues> | undefined' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }> | undefined'.
+      Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+        Type 'TFieldValues' is not assignable to type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }'.
+          Type 'FieldValues' is missing the following properties from type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }': firstName, lastName, status, riskLevel
+client/src/components/forms/ClientForm.tsx(341,17): error TS2322: Type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Control<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+  The types of '_options.resolver' are incompatible between these types.
+    Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues> | undefined' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }> | undefined'.
+      Type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, TFieldValues>' is not assignable to type 'Resolver<{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }, any, { ...; }>'.
+        Type 'TFieldValues' is not assignable to type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }'.
+          Type 'FieldValues' is missing the following properties from type '{ firstName: string; lastName: string; status: "active" | "inactive" | "archived"; riskLevel: "low" | "high" | "medium"; preferredName?: string | undefined; pronouns?: string | undefined; ... 5 more ...; referralSource?: string | undefined; }': firstName, lastName, status, riskLevel
+client/src/components/forms/DocumentUploadZone.tsx(103,24): error TS2345: Argument of type '(prev: UploadedFile[]) => (UploadedFile | { status: "completed" | "awaiting-confirmation"; progress: number; extractedData: unknown; file: File; id: string; error?: string | undefined; })[]' is not assignable to parameter of type 'SetStateAction<UploadedFile[]>'.
+  Type '(prev: UploadedFile[]) => (UploadedFile | { status: "completed" | "awaiting-confirmation"; progress: number; extractedData: unknown; file: File; id: string; error?: string | undefined; })[]' is not assignable to type '(prevState: UploadedFile[]) => UploadedFile[]'.
+    Type '(UploadedFile | { status: "completed" | "awaiting-confirmation"; progress: number; extractedData: unknown; file: File; id: string; error?: string | undefined; })[]' is not assignable to type 'UploadedFile[]'.
+      Type 'UploadedFile | { status: "completed" | "awaiting-confirmation"; progress: number; extractedData: unknown; file: File; id: string; error?: string | undefined; }' is not assignable to type 'UploadedFile'.
+        Type '{ status: "completed" | "awaiting-confirmation"; progress: number; extractedData: unknown; file: File; id: string; error?: string; }' is not assignable to type 'UploadedFile'.
+          Types of property 'extractedData' are incompatible.
+            Type 'unknown' is not assignable to type '{ detectedClientName?: string | undefined; detectedSessionDate?: string | undefined; extractedText: string; fullContent: string; fileName: string; requiresConfirmation?: boolean | undefined; } | undefined'.
+client/src/components/forms/DocumentUploadZone.tsx(107,23): error TS18046: 'data' is of type 'unknown'.
+client/src/components/forms/DocumentUploadZone.tsx(116,22): error TS18046: 'data' is of type 'unknown'.
+client/src/components/forms/DocumentUploadZone.tsx(133,26): error TS2339: Property 'details' does not exist on type 'Error'.
+client/src/components/forms/DocumentUploadZone.tsx(134,32): error TS2339: Property 'details' does not exist on type 'Error'.
+client/src/components/forms/DocumentUploadZone.tsx(135,26): error TS2339: Property 'error' does not exist on type 'Error'.
+client/src/components/forms/DocumentUploadZone.tsx(136,32): error TS2339: Property 'error' does not exist on type 'Error'.
+client/src/components/forms/DocumentUploadZone.tsx(553,21): error TS2322: Type 'string' is not assignable to type 'number'.
+client/src/components/forms/DocumentUploadZone.tsx(562,21): error TS2322: Type 'string' is not assignable to type 'number'.
+client/src/components/insights/EnhancedInsightsPanel.tsx(9,33): error TS2307: Cannot find module '../../../shared/schema' or its corresponding type declarations.
+client/src/components/insights/EnhancedInsightsPanel.tsx(96,25): error TS2345: Argument of type '{ title: string; priority: "low" | "high" | "medium"; dueDate: string; type: string; }[]' is not assignable to parameter of type 'ActionItem[]'.
+  Type '{ title: string; priority: "low" | "high" | "medium"; dueDate: string; type: string; }' is missing the following properties from type 'ActionItem': id, description
+client/src/components/optimized/OptimizedClientList.tsx(3,39): error TS2307: Cannot find module 'react-window' or its corresponding type declarations.
+client/src/components/optimized/OptimizedClientList.tsx(4,23): error TS2307: Cannot find module 'react-virtualized-auto-sizer' or its corresponding type declarations.
+client/src/components/optimized/OptimizedClientList.tsx(135,13): error TS7031: Binding element 'height' implicitly has an 'any' type.
+client/src/components/optimized/OptimizedClientList.tsx(135,21): error TS7031: Binding element 'width' implicitly has an 'any' type.
+client/src/components/optimized/OptimizedDashboard.tsx(75,5): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(options: DefinedInitialDataOptions<unknown, Error, unknown, string[]>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<unknown, Error>', gave the following error.
+    Object literal may only specify known properties, and 'cacheTime' does not exist in type 'DefinedInitialDataOptions<unknown, Error, unknown, string[]>'.
+  Overload 2 of 3, '(options: UndefinedInitialDataOptions<DashboardStats, Error, DashboardStats, string[]>, queryClient?: QueryClient | undefined): UseQueryResult<...>', gave the following error.
+    Object literal may only specify known properties, and 'cacheTime' does not exist in type 'UndefinedInitialDataOptions<DashboardStats, Error, DashboardStats, string[]>'.
+  Overload 3 of 3, '(options: UseQueryOptions<DashboardStats, Error, DashboardStats, string[]>, queryClient?: QueryClient | undefined): UseQueryResult<...>', gave the following error.
+    Object literal may only specify known properties, and 'cacheTime' does not exist in type 'UseQueryOptions<DashboardStats, Error, DashboardStats, string[]>'.
+client/src/components/optimized/OptimizedDashboard.tsx(85,19): error TS2339: Property 'completionRate' does not exist on type '{}'.
+client/src/components/optimized/OptimizedDashboard.tsx(130,25): error TS2339: Property 'todaysSessions' does not exist on type '{}'.
+client/src/components/optimized/OptimizedDashboard.tsx(135,25): error TS2339: Property 'activeClients' does not exist on type '{}'.
+client/src/components/optimized/OptimizedDashboard.tsx(140,25): error TS2339: Property 'urgentActionItems' does not exist on type '{}'.
+client/src/components/optimized/OptimizedDashboard.tsx(145,28): error TS2339: Property 'completionRate' does not exist on type '{}'.
+client/src/components/optimized/OptimizedDashboard.tsx(147,11): error TS2322: Type '{ value: number; isUp: boolean; } | null' is not assignable to type '{ value: number; isUp: boolean; } | undefined'.
+  Type 'null' is not assignable to type '{ value: number; isUp: boolean; } | undefined'.
+client/src/components/search/GlobalSearchBar.tsx(84,5): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(options: DefinedInitialDataOptions<SearchResponse, Error, SearchResponse, readonly unknown[]>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>', gave the following error.
+    Type '() => Promise<Response>' is not assignable to type 'QueryFunction<SearchResponse, readonly unknown[]>'.
+      Type 'Promise<Response>' is not assignable to type 'SearchResponse | Promise<SearchResponse>'.
+        Type 'Promise<Response>' is not assignable to type 'Promise<SearchResponse>'.
+          Type 'Response' is missing the following properties from type 'SearchResponse': results, totalCount
+  Overload 2 of 3, '(options: UndefinedInitialDataOptions<SearchResponse, Error, SearchResponse, readonly unknown[]>, queryClient?: QueryClient | undefined): UseQueryResult<...>', gave the following error.
+    Type '() => Promise<Response>' is not assignable to type 'unique symbol | QueryFunction<SearchResponse, readonly unknown[], never> | undefined'.
+      Type '() => Promise<Response>' is not assignable to type 'QueryFunction<SearchResponse, readonly unknown[], never>'.
+        Type 'Promise<Response>' is not assignable to type 'SearchResponse | Promise<SearchResponse>'.
+          Type 'Promise<Response>' is not assignable to type 'Promise<SearchResponse>'.
+            Type 'Response' is missing the following properties from type 'SearchResponse': results, totalCount
+  Overload 3 of 3, '(options: UseQueryOptions<SearchResponse, Error, SearchResponse, readonly unknown[]>, queryClient?: QueryClient | undefined): UseQueryResult<...>', gave the following error.
+    Type '() => Promise<Response>' is not assignable to type 'unique symbol | QueryFunction<SearchResponse, readonly unknown[], never> | undefined'.
+      Type '() => Promise<Response>' is not assignable to type 'QueryFunction<SearchResponse, readonly unknown[], never>'.
+        Type 'Promise<Response>' is not assignable to type 'SearchResponse | Promise<SearchResponse>'.
+          Type 'Promise<Response>' is not assignable to type 'Promise<SearchResponse>'.
+            Type 'Response' is missing the following properties from type 'SearchResponse': results, totalCount
+client/src/components/search/GlobalSearchBar.tsx(99,5): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(options: DefinedInitialDataOptions<string[], Error, string[], readonly unknown[]>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<string[], Error>', gave the following error.
+    Type '() => Promise<Response>' is not assignable to type 'QueryFunction<string[], readonly unknown[]>'.
+      Type 'Promise<Response>' is not assignable to type 'string[] | Promise<string[]>'.
+        Type 'Promise<Response>' is not assignable to type 'Promise<string[]>'.
+          Type 'Response' is missing the following properties from type 'string[]': length, pop, push, concat, and 35 more.
+  Overload 2 of 3, '(options: UndefinedInitialDataOptions<string[], Error, string[], readonly unknown[]>, queryClient?: QueryClient | undefined): UseQueryResult<string[], Error>', gave the following error.
+    Type '() => Promise<Response>' is not assignable to type 'unique symbol | QueryFunction<string[], readonly unknown[], never> | undefined'.
+      Type '() => Promise<Response>' is not assignable to type 'QueryFunction<string[], readonly unknown[], never>'.
+        Type 'Promise<Response>' is not assignable to type 'string[] | Promise<string[]>'.
+          Type 'Promise<Response>' is not assignable to type 'Promise<string[]>'.
+            Type 'Response' is missing the following properties from type 'string[]': length, pop, push, concat, and 35 more.
+  Overload 3 of 3, '(options: UseQueryOptions<string[], Error, string[], readonly unknown[]>, queryClient?: QueryClient | undefined): UseQueryResult<string[], Error>', gave the following error.
+    Type '() => Promise<Response>' is not assignable to type 'unique symbol | QueryFunction<string[], readonly unknown[], never> | undefined'.
+      Type '() => Promise<Response>' is not assignable to type 'QueryFunction<string[], readonly unknown[], never>'.
+        Type 'Promise<Response>' is not assignable to type 'string[] | Promise<string[]>'.
+          Type 'Promise<Response>' is not assignable to type 'Promise<string[]>'.
+            Type 'Response' is missing the following properties from type 'string[]': length, pop, push, concat, and 35 more.
+client/src/components/search/GlobalSearchBar.tsx(132,34): error TS2339: Property 'results' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/components/search/GlobalSearchBar.tsx(135,63): error TS2339: Property 'results' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/components/search/GlobalSearchBar.tsx(139,55): error TS2339: Property 'results' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/components/search/GlobalSearchBar.tsx(141,43): error TS2339: Property 'results' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/components/search/GlobalSearchBar.tsx(246,15): error TS2322: Type 'NoInfer<TQueryFnData>' is not assignable to type 'SearchResponse | undefined'.
+  Type 'TQueryFnData' is not assignable to type 'SearchResponse | undefined'.
+    Type 'TQueryFnData' is not assignable to type 'SearchResponse'.
+      Type 'NoInfer<TQueryFnData>' is not assignable to type 'SearchResponse'.
+        Type 'TQueryFnData' is not assignable to type 'SearchResponse'.
+client/src/components/search/GlobalSearchBar.tsx(247,15): error TS2322: Type 'NoInfer<TQueryFnData>' is not assignable to type 'string[] | undefined'.
+  Type 'TQueryFnData' is not assignable to type 'string[] | undefined'.
+    Type 'TQueryFnData' is not assignable to type 'string[]'.
+      Type 'NoInfer<TQueryFnData>' is not assignable to type 'string[]'.
+        Type 'TQueryFnData' is not assignable to type 'string[]'.
+client/src/components/search/GlobalSearchBar.tsx(328,15): error TS2322: Type 'NoInfer<TQueryFnData>' is not assignable to type 'SearchResponse | undefined'.
+  Type 'TQueryFnData' is not assignable to type 'SearchResponse | undefined'.
+    Type 'TQueryFnData' is not assignable to type 'SearchResponse'.
+      Type 'NoInfer<TQueryFnData>' is not assignable to type 'SearchResponse'.
+        Type 'TQueryFnData' is not assignable to type 'SearchResponse'.
+client/src/components/search/GlobalSearchBar.tsx(329,15): error TS2322: Type 'NoInfer<TQueryFnData>' is not assignable to type 'string[] | undefined'.
+  Type 'TQueryFnData' is not assignable to type 'string[] | undefined'.
+    Type 'TQueryFnData' is not assignable to type 'string[]'.
+      Type 'NoInfer<TQueryFnData>' is not assignable to type 'string[]'.
+        Type 'TQueryFnData' is not assignable to type 'string[]'.
+client/src/components/ui/accordion.tsx(2,37): error TS2307: Cannot find module '@radix-ui/react-accordion' or its corresponding type declarations.
+client/src/components/ui/animated-card.tsx(59,15): error TS2345: Argument of type 'MouseEvent<Element, MouseEvent>' is not assignable to parameter of type 'MouseEvent<HTMLDivElement, MouseEvent>'.
+  Type 'Element' is missing the following properties from type 'HTMLDivElement': align, accessKey, accessKeyLabel, autocapitalize, and 126 more.
+client/src/components/ui/animated-card.tsx(63,6): error TS2322: Type '{ children: (false | "" | 0 | 0n | Element | null | undefined)[]; defaultChecked?: boolean | undefined; defaultValue?: string | number | readonly string[] | undefined; suppressContentEditableWarning?: boolean | undefined; ... 280 more ...; onClick: (e: MouseEvent<...>) => void; }' is not assignable to type 'Omit<HTMLMotionProps<"div">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLDivElement> | undefined' is not assignable to type '((event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLDivElement>' is not assignable to type '(event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'MouseEvent | PointerEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLDivElement>'.
+            Type 'MouseEvent' is missing the following properties from type 'DragEvent<HTMLDivElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+client/src/components/ui/animated-card.tsx(271,17): error TS2552: Cannot find name 'listAnimation'. Did you mean 'Animation'?
+client/src/components/ui/animated-form-field.tsx(7,11): error TS2430: Interface 'AnimatedFormFieldProps' incorrectly extends interface 'InputHTMLAttributes<HTMLInputElement>'.
+  Types of property 'autoSave' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'string | undefined'.
+      Type 'boolean' is not assignable to type 'string'.
+client/src/components/ui/animated-form-field.tsx(108,10): error TS2322: Type '{ accept?: string | undefined; alt?: string | undefined; autoComplete?: HTMLInputAutoCompleteAttribute | undefined; capture?: boolean | "user" | "environment" | undefined; ... 304 more ...; transition: { ...; }; }' is not assignable to type 'Omit<HTMLMotionProps<"input">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLInputElement> | undefined' is not assignable to type '((event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLInputElement>' is not assignable to type '(event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'MouseEvent | PointerEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLInputElement>'.
+            Type 'MouseEvent' is missing the following properties from type 'DragEvent<HTMLInputElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+client/src/components/ui/animated-form-field.tsx(303,6): error TS2322: Type '{ children: Element; disabled: boolean; form?: string | undefined; formAction?: string | ((formData: FormData) => void | Promise<void>) | undefined; formEncType?: string | undefined; ... 284 more ...; whileTap: { ...; } | {}; }' is not assignable to type 'Omit<HTMLMotionProps<"button">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLButtonElement> | undefined' is not assignable to type '((event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLButtonElement>' is not assignable to type '(event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'MouseEvent | PointerEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLButtonElement>'.
+            Type 'MouseEvent' is missing the following properties from type 'DragEvent<HTMLButtonElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+client/src/components/ui/animated-skeleton.tsx(45,8): error TS2322: Type '{ children: Element[]; defaultChecked?: boolean | undefined; defaultValue?: string | number | readonly string[] | undefined; suppressContentEditableWarning?: boolean | undefined; suppressHydrationWarning?: boolean | undefined; ... 275 more ...; className: string; }' is not assignable to type 'Omit<HTMLMotionProps<"div">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLDivElement> | undefined' is not assignable to type '((event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLDivElement>' is not assignable to type '(event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'MouseEvent | PointerEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLDivElement>'.
+            Type 'MouseEvent' is missing the following properties from type 'DragEvent<HTMLDivElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+client/src/components/ui/animated-skeleton.tsx(71,8): error TS2322: Type '{ defaultChecked?: boolean | undefined; defaultValue?: string | number | readonly string[] | undefined; suppressContentEditableWarning?: boolean | undefined; suppressHydrationWarning?: boolean | undefined; ... 276 more ...; className: string; }' is not assignable to type 'Omit<HTMLMotionProps<"div">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLDivElement> | undefined' is not assignable to type '((event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLDivElement>' is not assignable to type '(event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'MouseEvent | PointerEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLDivElement>'.
+            Type 'MouseEvent' is missing the following properties from type 'DragEvent<HTMLDivElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+client/src/components/ui/animated-skeleton.tsx(86,6): error TS2322: Type '{ defaultChecked?: boolean | undefined; defaultValue?: string | number | readonly string[] | undefined; suppressContentEditableWarning?: boolean | undefined; suppressHydrationWarning?: boolean | undefined; ... 276 more ...; className: string; }' is not assignable to type 'Omit<HTMLMotionProps<"div">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLDivElement> | undefined' is not assignable to type '((event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLDivElement>' is not assignable to type '(event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'MouseEvent | PointerEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLDivElement>'.
+            Type 'MouseEvent' is missing the following properties from type 'DragEvent<HTMLDivElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+client/src/components/ui/animated-spinner.tsx(143,9): error TS2322: Type '{ rotate: number; transition: { duration: number; repeat: number; ease: string; }; }' is not assignable to type 'boolean | TargetAndTransition | VariantLabels | LegacyAnimationControls | undefined'.
+  Type '{ rotate: number; transition: { duration: number; repeat: number; ease: string; }; }' is not assignable to type 'TargetAndTransition'.
+    Type '{ rotate: number; transition: { duration: number; repeat: number; ease: string; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues | undefined; }'.
+      Types of property 'transition' are incompatible.
+        Type '{ duration: number; repeat: number; ease: string; }' is not assignable to type 'Transition<any> | undefined'.
+          Type '{ duration: number; repeat: number; ease: string; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+            Type '{ duration: number; repeat: number; ease: string; }' is not assignable to type 'ValueAnimationTransition<any>'.
+              Types of property 'ease' are incompatible.
+                Type 'string' is not assignable to type 'Easing | Easing[] | undefined'.
+client/src/components/ui/animated-spinner.tsx(192,6): error TS2322: Type '{ children: string | number | bigint | boolean | Element | Iterable<ReactNode> | Promise<AwaitedReactNode> | null | undefined; ... 288 more ...; disabled: boolean | undefined; }' is not assignable to type 'Omit<HTMLMotionProps<"button">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLButtonElement> | undefined' is not assignable to type '((event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLButtonElement>' is not assignable to type '(event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'MouseEvent | PointerEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLButtonElement>'.
+            Type 'MouseEvent' is missing the following properties from type 'DragEvent<HTMLButtonElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+client/src/components/ui/aspect-ratio.tsx(1,39): error TS2307: Cannot find module '@radix-ui/react-aspect-ratio' or its corresponding type declarations.
+client/src/components/ui/calendar.tsx(55,9): error TS2353: Object literal may only specify known properties, and 'IconLeft' does not exist in type 'Partial<CustomComponents>'.
+client/src/components/ui/calendar.tsx(55,22): error TS7031: Binding element 'className' implicitly has an 'any' type.
+client/src/components/ui/calendar.tsx(58,23): error TS7031: Binding element 'className' implicitly has an 'any' type.
+client/src/components/ui/carousel.tsx(4,8): error TS2307: Cannot find module 'embla-carousel-react' or its corresponding type declarations.
+client/src/components/ui/chart.tsx(119,7): error TS2339: Property 'payload' does not exist on type 'Omit<Omit<Props<ValueType, NameType>, PropertiesReadFromContext> & { active?: boolean | undefined; includeHidden?: boolean | undefined; ... 17 more ...; axisId?: AxisId | undefined; } & ClassAttributes<...> & HTMLAttributes<...> & { ...; }, "ref">'.
+client/src/components/ui/chart.tsx(124,7): error TS2339: Property 'label' does not exist on type 'Omit<Omit<Props<ValueType, NameType>, PropertiesReadFromContext> & { active?: boolean | undefined; includeHidden?: boolean | undefined; ... 17 more ...; axisId?: AxisId | undefined; } & ClassAttributes<...> & HTMLAttributes<...> & { ...; }, "ref">'.
+client/src/components/ui/chart.tsx(188,25): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/src/components/ui/chart.tsx(188,31): error TS7006: Parameter 'index' implicitly has an 'any' type.
+client/src/components/ui/chart.tsx(264,41): error TS2344: Type '"payload" | "verticalAlign"' does not satisfy the constraint '"string" | "filter" | "fill" | "values" | "style" | "clipPath" | "mask" | "path" | "key" | "suppressHydrationWarning" | "className" | "id" | "lang" | "tabIndex" | "role" | "content" | ... 430 more ... | "portal"'.
+  Type '"payload"' is not assignable to type '"string" | "filter" | "fill" | "values" | "style" | "clipPath" | "mask" | "path" | "key" | "suppressHydrationWarning" | "className" | "id" | "lang" | "tabIndex" | "role" | "content" | ... 430 more ... | "portal"'.
+client/src/components/ui/chart.tsx(275,19): error TS2339: Property 'length' does not exist on type '{}'.
+client/src/components/ui/chart.tsx(288,18): error TS2339: Property 'map' does not exist on type '{}'.
+client/src/components/ui/chart.tsx(288,23): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/src/components/ui/collapsible.tsx(3,39): error TS2307: Cannot find module '@radix-ui/react-collapsible' or its corresponding type declarations.
+client/src/components/ui/context-menu.tsx(2,39): error TS2307: Cannot find module '@radix-ui/react-context-menu' or its corresponding type declarations.
+client/src/components/ui/drawer.tsx(4,43): error TS2307: Cannot find module 'vaul' or its corresponding type declarations.
+client/src/components/ui/empty-state.tsx(78,9): error TS2322: Type '{ y: number[]; transition: { duration: number; repeat: number; ease: string; }; } | undefined' is not assignable to type 'boolean | TargetAndTransition | VariantLabels | LegacyAnimationControls | undefined'.
+  Type '{ y: number[]; transition: { duration: number; repeat: number; ease: string; }; }' is not assignable to type 'boolean | TargetAndTransition | VariantLabels | LegacyAnimationControls | undefined'.
+    Type '{ y: number[]; transition: { duration: number; repeat: number; ease: string; }; }' is not assignable to type 'TargetAndTransition'.
+      Type '{ y: number[]; transition: { duration: number; repeat: number; ease: string; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues | undefined; }'.
+        Types of property 'transition' are incompatible.
+          Type '{ duration: number; repeat: number; ease: string; }' is not assignable to type 'Transition<any> | undefined'.
+            Type '{ duration: number; repeat: number; ease: string; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+              Type '{ duration: number; repeat: number; ease: string; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                Types of property 'ease' are incompatible.
+                  Type 'string' is not assignable to type 'Easing | Easing[] | undefined'.
+client/src/components/ui/hover-card.tsx(4,37): error TS2307: Cannot find module '@radix-ui/react-hover-card' or its corresponding type declarations.
+client/src/components/ui/input-otp.tsx(2,43): error TS2307: Cannot find module 'input-otp' or its corresponding type declarations.
+client/src/components/ui/input-otp.tsx(36,44): error TS18046: 'inputOTPContext' is of type 'unknown'.
+client/src/components/ui/menubar.tsx(4,35): error TS2307: Cannot find module '@radix-ui/react-menubar' or its corresponding type declarations.
+client/src/components/ui/navigation-menu.tsx(2,42): error TS2307: Cannot find module '@radix-ui/react-navigation-menu' or its corresponding type declarations.
+client/src/components/ui/radio-group.tsx(2,38): error TS2307: Cannot find module '@radix-ui/react-radio-group' or its corresponding type declarations.
+client/src/components/ui/resizable.tsx(4,37): error TS2307: Cannot find module 'react-resizable-panels' or its corresponding type declarations.
+client/src/components/ui/responsive-utils.tsx(225,6): error TS2322: Type '{ children: ReactNode; disabled?: boolean | undefined; form?: string | undefined; formAction?: string | ((formData: FormData) => void | Promise<void>) | undefined; ... 284 more ...; className: string; }' is not assignable to type 'Omit<HTMLMotionProps<"button">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLButtonElement> | undefined' is not assignable to type '((event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLButtonElement>' is not assignable to type '(event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'MouseEvent | PointerEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLButtonElement>'.
+            Type 'MouseEvent' is missing the following properties from type 'DragEvent<HTMLButtonElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+client/src/components/ui/slider.tsx(2,34): error TS2307: Cannot find module '@radix-ui/react-slider' or its corresponding type declarations.
+client/src/components/ui/toggle-group.tsx(4,39): error TS2307: Cannot find module '@radix-ui/react-toggle-group' or its corresponding type declarations.
+client/src/components/ui/toggle.tsx(2,34): error TS2307: Cannot find module '@radix-ui/react-toggle' or its corresponding type declarations.
+client/src/hooks/useCalendarEvents.ts(14,3): error TS2322: Type '(CalendarEvent | { id: any; title: any; startTime: Date; endTime: Date; googleEventId: any; status: "confirmed"; attendees: never[]; isAllDay: false; })[]' is not assignable to type 'CalendarEvent[]'.
+  Type 'CalendarEvent | { id: any; title: any; startTime: Date; endTime: Date; googleEventId: any; status: "confirmed"; attendees: never[]; isAllDay: false; }' is not assignable to type 'CalendarEvent'.
+    Type '{ id: any; title: any; startTime: Date; endTime: Date; googleEventId: any; status: "confirmed"; attendees: never[]; isAllDay: false; }' is missing the following properties from type 'CalendarEvent': type, therapistId
+client/src/hooks/useCalendarEvents.ts(42,9): error TS2353: Object literal may only specify known properties, and 'googleEventId' does not exist in type 'CalendarEvent'.
+client/src/lib/apiEnhanced.ts(229,7): error TS2322: Type '(error: any) => boolean | "" | undefined' is not assignable to type '(error: any) => boolean'.
+  Type 'string | boolean | undefined' is not assignable to type 'boolean'.
+    Type 'undefined' is not assignable to type 'boolean'.
+client/src/lib/apiEnhanced.ts(424,11): error TS2353: Object literal may only specify known properties, and 'label' does not exist in type 'ReactElement<ForwardRefExoticComponent<Omit<ToastActionProps & RefAttributes<HTMLButtonElement>, "ref"> & RefAttributes<HTMLButtonElement>>, string | JSXElementConstructor<...>>'.
+client/src/lib/errorHandler.ts(286,13): error TS2353: Object literal may only specify known properties, and 'label' does not exist in type 'ReactElement<ForwardRefExoticComponent<Omit<ToastActionProps & RefAttributes<HTMLButtonElement>, "ref"> & RefAttributes<HTMLButtonElement>>, string | JSXElementConstructor<...>>'.
+client/src/lib/fileUploadHandler.ts(505,47): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+client/src/lib/fileUploadHandler.ts(506,43): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+client/src/lib/googleCalendar.ts(46,40): error TS2304: Cannot find name 'GoogleCalendarItem'.
+client/src/lib/websocketEnhanced.ts(362,41): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+client/src/lib/websocketEnhanced.ts(363,49): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+client/src/lib/websocketEnhanced.ts(365,3): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+client/src/main.tsx(43,10): error TS2339: Property '__vite_plugin_react_preamble_installed__' does not exist on type 'Window & typeof globalThis'.
+client/src/pages/ClientChart.tsx(1369,36): error TS2339: Property 'firstName' does not exist on type 'DefinedQueryObserverResult<Client, Error> | QueryObserverPlaceholderResult<Client, Error>'.
+  Property 'firstName' does not exist on type 'QueryObserverRefetchErrorResult<Client, Error>'.
+client/src/pages/ClientChart.tsx(1369,63): error TS2339: Property 'lastName' does not exist on type 'DefinedQueryObserverResult<Client, Error> | QueryObserverPlaceholderResult<Client, Error>'.
+  Property 'lastName' does not exist on type 'QueryObserverRefetchErrorResult<Client, Error>'.
+client/src/pages/ProcessingResults.tsx(66,45): error TS2339: Property 'length' does not exist on type '{}'.
+client/src/pages/ProcessingResults.tsx(196,37): error TS2339: Property 'map' does not exist on type '{}'.
+client/src/pages/ai-insights.tsx(286,84): error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'.
+client/src/pages/ai-insights.tsx(287,51): error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'.
+client/src/pages/ai-insights.tsx(363,84): error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'.
+client/src/pages/ai-insights.tsx(364,51): error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'.
+client/src/pages/analytics.tsx(55,33): error TS2339: Property 'attendanceRate' does not exist on type 'DashboardStats'.
+client/src/pages/analytics.tsx(56,33): error TS2339: Property 'monthlyRevenue' does not exist on type 'DashboardStats'.
+client/src/pages/analytics.tsx(57,32): error TS2339: Property 'revenueChange' does not exist on type 'DashboardStats'.
+client/src/pages/analytics.tsx(60,30): error TS2339: Property 'weeklySessionTrend' does not exist on type 'DashboardStats'.
+client/src/pages/analytics.tsx(66,41): error TS7006: Parameter 'a' implicitly has an 'any' type.
+client/src/pages/analytics.tsx(66,44): error TS7006: Parameter 'b' implicitly has an 'any' type.
+client/src/pages/analytics.tsx(67,32): error TS2339: Property 'lastWeekTotal' does not exist on type 'DashboardStats'.
+client/src/pages/analytics.tsx(107,32): error TS2339: Property 'locationBreakdown' does not exist on type 'DashboardStats'.
+client/src/pages/analytics.tsx(407,35): error TS7006: Parameter 'sessions' implicitly has an 'any' type.
+client/src/pages/analytics.tsx(407,45): error TS7006: Parameter 'index' implicitly has an 'any' type.
+client/src/pages/analytics.tsx(425,102): error TS7006: Parameter 'a' implicitly has an 'any' type.
+client/src/pages/analytics.tsx(425,105): error TS7006: Parameter 'b' implicitly has an 'any' type.
+client/src/pages/analytics.tsx(449,35): error TS7006: Parameter 'location' implicitly has an 'any' type.
+client/src/pages/analytics.tsx(449,45): error TS7006: Parameter 'index' implicitly has an 'any' type.
+client/src/pages/appointments.tsx(75,11): error TS7034: Variable 'calendarEvents' implicitly has type 'any[]' in some locations where its type cannot be determined.
+client/src/pages/appointments.tsx(120,36): error TS7005: Variable 'calendarEvents' implicitly has an 'any[]' type.
+client/src/pages/calendar.tsx(63,59): error TS2339: Property 'googleEventId' does not exist on type 'CalendarEvent'.
+client/src/pages/calendar.tsx(65,27): error TS2339: Property 'googleEventId' does not exist on type 'CalendarEvent'.
+client/src/pages/calendar.tsx(66,78): error TS2339: Property 'googleEventId' does not exist on type 'CalendarEvent'.
+client/src/pages/calendar.tsx(70,31): error TS2339: Property 'googleEventId' does not exist on type 'CalendarEvent'.
+client/src/pages/calendar.tsx(388,15): error TS2339: Property 'googleEventId' does not exist on type 'CalendarEvent'.
+client/src/pages/calendar.tsx(389,51): error TS2339: Property 'googleEventId' does not exist on type 'CalendarEvent'.
+client/src/pages/calendar.tsx(1022,36): error TS2339: Property 'googleEventId' does not exist on type 'CalendarEvent'.
+client/src/pages/calendar.tsx(1030,85): error TS2339: Property 'googleEventId' does not exist on type 'CalendarEvent'.
+client/src/pages/calendar.tsx(1040,37): error TS2339: Property 'googleEventId' does not exist on type 'CalendarEvent'.
+client/src/pages/client-chart.tsx(115,7): error TS2740: Type 'Response' is missing the following properties from type 'CaseConceptualization': overview, diagnosticImpression, presentingConcerns, strengths, and 6 more.
+client/src/pages/client-chart.tsx(129,7): error TS2740: Type 'Response' is missing the following properties from type 'TreatmentGuide': overview, recommendedInterventions, evidenceBasedTechniques, sessionStructure, and 4 more.
+client/src/pages/notes-management.tsx(44,30): error TS2339: Property 'get' does not exist on type 'typeof ApiClient'.
+client/src/pages/notes-management.tsx(50,30): error TS2339: Property 'get' does not exist on type 'typeof ApiClient'.
+client/src/pages/notes-management.tsx(55,47): error TS2339: Property 'delete' does not exist on type 'typeof ApiClient'.
+client/src/pages/notes-management.tsx(68,53): error TS2339: Property 'delete' does not exist on type 'typeof ApiClient'.
+client/src/pages/notes-management.tsx(99,37): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+client/src/pages/search-results.tsx(113,5): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(options: DefinedInitialDataOptions<SearchResponse, Error, SearchResponse, readonly unknown[]>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>', gave the following error.
+    Type '() => Promise<Response>' is not assignable to type 'QueryFunction<SearchResponse, readonly unknown[]>'.
+      Type 'Promise<Response>' is not assignable to type 'SearchResponse | Promise<SearchResponse>'.
+        Type 'Promise<Response>' is not assignable to type 'Promise<SearchResponse>'.
+          Type 'Response' is missing the following properties from type 'SearchResponse': results, totalCount
+  Overload 2 of 3, '(options: UndefinedInitialDataOptions<SearchResponse, Error, SearchResponse, readonly unknown[]>, queryClient?: QueryClient | undefined): UseQueryResult<...>', gave the following error.
+    Type '() => Promise<Response>' is not assignable to type 'unique symbol | QueryFunction<SearchResponse, readonly unknown[], never> | undefined'.
+      Type '() => Promise<Response>' is not assignable to type 'QueryFunction<SearchResponse, readonly unknown[], never>'.
+        Type 'Promise<Response>' is not assignable to type 'SearchResponse | Promise<SearchResponse>'.
+          Type 'Promise<Response>' is not assignable to type 'Promise<SearchResponse>'.
+            Type 'Response' is missing the following properties from type 'SearchResponse': results, totalCount
+  Overload 3 of 3, '(options: UseQueryOptions<SearchResponse, Error, SearchResponse, readonly unknown[]>, queryClient?: QueryClient | undefined): UseQueryResult<...>', gave the following error.
+    Type '() => Promise<Response>' is not assignable to type 'unique symbol | QueryFunction<SearchResponse, readonly unknown[], never> | undefined'.
+      Type '() => Promise<Response>' is not assignable to type 'QueryFunction<SearchResponse, readonly unknown[], never>'.
+        Type 'Promise<Response>' is not assignable to type 'SearchResponse | Promise<SearchResponse>'.
+          Type 'Promise<Response>' is not assignable to type 'Promise<SearchResponse>'.
+            Type 'Response' is missing the following properties from type 'SearchResponse': results, totalCount
+client/src/pages/search-results.tsx(132,31): error TS2339: Property 'totalCount' does not exist on type 'Response'.
+client/src/pages/search-results.tsx(142,5): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(options: DefinedInitialDataOptions<string[], Error, string[], readonly unknown[]>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<string[], Error>', gave the following error.
+    Type '() => Promise<Response>' is not assignable to type 'QueryFunction<string[], readonly unknown[]>'.
+      Type 'Promise<Response>' is not assignable to type 'string[] | Promise<string[]>'.
+        Type 'Promise<Response>' is not assignable to type 'Promise<string[]>'.
+          Type 'Response' is missing the following properties from type 'string[]': length, pop, push, concat, and 35 more.
+  Overload 2 of 3, '(options: UndefinedInitialDataOptions<string[], Error, string[], readonly unknown[]>, queryClient?: QueryClient | undefined): UseQueryResult<string[], Error>', gave the following error.
+    Type '() => Promise<Response>' is not assignable to type 'unique symbol | QueryFunction<string[], readonly unknown[], never> | undefined'.
+      Type '() => Promise<Response>' is not assignable to type 'QueryFunction<string[], readonly unknown[], never>'.
+        Type 'Promise<Response>' is not assignable to type 'string[] | Promise<string[]>'.
+          Type 'Promise<Response>' is not assignable to type 'Promise<string[]>'.
+            Type 'Response' is missing the following properties from type 'string[]': length, pop, push, concat, and 35 more.
+  Overload 3 of 3, '(options: UseQueryOptions<string[], Error, string[], readonly unknown[]>, queryClient?: QueryClient | undefined): UseQueryResult<string[], Error>', gave the following error.
+    Type '() => Promise<Response>' is not assignable to type 'unique symbol | QueryFunction<string[], readonly unknown[], never> | undefined'.
+      Type '() => Promise<Response>' is not assignable to type 'QueryFunction<string[], readonly unknown[], never>'.
+        Type 'Promise<Response>' is not assignable to type 'string[] | Promise<string[]>'.
+          Type 'Promise<Response>' is not assignable to type 'Promise<string[]>'.
+            Type 'Response' is missing the following properties from type 'string[]': length, pop, push, concat, and 35 more.
+client/src/pages/search-results.tsx(197,24): error TS2339: Property 'results' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(197,36): error TS7006: Parameter 'r' implicitly has an 'any' type.
+client/src/pages/search-results.tsx(234,41): error TS2339: Property 'results' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(234,57): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+client/src/pages/search-results.tsx(234,62): error TS7006: Parameter 'result' implicitly has an 'any' type.
+client/src/pages/search-results.tsx(280,45): error TS2339: Property 'results' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(380,43): error TS2339: Property 'length' does not exist on type 'Response'.
+client/src/pages/search-results.tsx(387,34): error TS2339: Property 'map' does not exist on type 'Response'.
+client/src/pages/search-results.tsx(411,43): error TS2339: Property 'length' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(418,34): error TS2339: Property 'map' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(418,39): error TS7006: Parameter 'query' implicitly has an 'any' type.
+client/src/pages/search-results.tsx(418,46): error TS7006: Parameter 'index' implicitly has an 'any' type.
+client/src/pages/search-results.tsx(456,84): error TS2339: Property 'results' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(468,43): error TS2339: Property 'results' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(473,72): error TS2339: Property 'totalCount' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(474,34): error TS2339: Property 'executionTime' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(476,41): error TS2339: Property 'executionTime' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(497,41): error TS2339: Property 'results' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(503,42): error TS18046: 'results' is of type 'unknown'.
+client/src/pages/search-results.tsx(510,34): error TS2339: Property 'results' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(510,47): error TS7006: Parameter 'result' implicitly has an 'any' type.
+client/src/pages/search-results.tsx(524,22): error TS18046: 'results' is of type 'unknown'.
+client/src/pages/search-results.tsx(524,35): error TS7006: Parameter 'result' implicitly has an 'any' type.
+client/src/pages/search-results.tsx(539,30): error TS2339: Property 'totalCount' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(549,82): error TS2339: Property 'totalCount' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(549,113): error TS2339: Property 'totalCount' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(554,63): error TS2339: Property 'totalCount' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(564,27): error TS2339: Property 'suggestions' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(564,56): error TS2339: Property 'suggestions' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(571,34): error TS2339: Property 'suggestions' does not exist on type 'NonNullable<NoInfer<TQueryFnData>>'.
+client/src/pages/search-results.tsx(571,51): error TS7006: Parameter 'suggestion' implicitly has an 'any' type.
+client/src/pages/search-results.tsx(571,63): error TS7006: Parameter 'index' implicitly has an 'any' type.
+client/src/pages/settings.tsx(56,42): error TS2551: Property 'therapistId' does not exist on type 'typeof ApiClient'. Did you mean 'setTherapistId'?
+client/src/pages/settings.tsx(57,48): error TS2551: Property 'therapistId' does not exist on type 'typeof ApiClient'. Did you mean 'setTherapistId'?
+client/src/pages/settings.tsx(58,26): error TS2551: Property 'therapistId' does not exist on type 'typeof ApiClient'. Did you mean 'setTherapistId'?
+client/src/pages/settings.tsx(97,45): error TS2551: Property 'therapistId' does not exist on type 'typeof ApiClient'. Did you mean 'setTherapistId'?
+client/src/pages/settings.tsx(100,37): error TS2559: Type 'string[]' has no properties in common with type 'InvalidateQueryFilters<readonly unknown[]>'.
+client/src/utils/bidirectionalWeeklyPackage.ts(234,13): error TS2367: This comparison appears to be unintentional because the types '"manual" | "system" | "google" | undefined' and '"simplepractice"' have no overlap.
+client/src/utils/bidirectionalWeeklyPackage.ts(409,11): error TS2367: This comparison appears to be unintentional because the types '"manual" | "system" | "google" | undefined' and '"simplepractice"' have no overlap.
+client/src/utils/bidirectionalWeeklyPackage.ts(418,13): error TS2339: Property 'setLineDash' does not exist on type 'jsPDF'.
+client/src/utils/bidirectionalWeeklyPackage.ts(420,13): error TS2339: Property 'setLineDash' does not exist on type 'jsPDF'.
+client/src/utils/calendarExport.ts(80,20): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+client/src/utils/calendarExport.ts(96,20): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+client/src/utils/calendarExport.ts(104,9): error TS7034: Variable 'weekDays' implicitly has type 'any[]' in some locations where its type cannot be determined.
+client/src/utils/calendarExport.ts(112,20): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+client/src/utils/calendarExport.ts(115,20): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+client/src/utils/calendarExport.ts(133,20): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+client/src/utils/calendarExport.ts(158,5): error TS7005: Variable 'weekDays' implicitly has an 'any[]' type.
+client/src/utils/calendarExport.ts(194,26): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+client/src/utils/calendarExport.ts(242,20): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+client/src/utils/calendarExport.ts(245,20): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+client/src/utils/calendarExport.ts(266,22): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+client/src/utils/calendarExport.ts(289,24): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+client/src/utils/calendarExport.ts(293,24): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+client/src/utils/calendarExport.ts(397,22): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+client/src/utils/calendarExport.ts(409,22): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+client/src/utils/currentWeeklyExport.ts(197,43): error TS2339: Property 'start' does not exist on type 'CalendarEvent'.
+client/src/utils/currentWeeklyExport.ts(198,41): error TS2339: Property 'end' does not exist on type 'CalendarEvent'.
+client/src/utils/currentWeeklyExport.ts(231,13): error TS2367: This comparison appears to be unintentional because the types '"manual" | "system" | "google" | undefined' and '"SimplePractice"' have no overlap.
+client/src/utils/currentWeeklyExport.ts(233,20): error TS2367: This comparison appears to be unintentional because the types '"manual" | "system" | "google" | undefined' and '"Google Calendar"' have no overlap.
+client/src/utils/currentWeeklyExport.ts(236,20): error TS2367: This comparison appears to be unintentional because the types '"manual" | "system" | "google" | undefined' and '"Holiday"' have no overlap.
+client/src/utils/perfectDashboardExport.ts(213,9): error TS7034: Variable 'weekDays' implicitly has type 'any[]' in some locations where its type cannot be determined.
+client/src/utils/perfectDashboardExport.ts(260,5): error TS7005: Variable 'weekDays' implicitly has an 'any[]' type.
+client/src/utils/perfectDashboardExport.ts(276,26): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+client/src/utils/perfectDashboardExport.ts(279,26): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+client/src/utils/textWrappers.ts(45,40): error TS2304: Cannot find name 'CalendarEvent'.
+client/src/utils/utils.ts(239,10): error TS2300: Duplicate identifier 'useState'.
+client/src/utils/utils.ts(239,20): error TS2300: Duplicate identifier 'useEffect'.
+client/src/utils/utils.ts(329,10): error TS2300: Duplicate identifier 'useEffect'.
+client/src/utils/utils.ts(329,21): error TS2300: Duplicate identifier 'useState'.
+server/ai-automation-enhanced.ts(286,7): error TS2353: Object literal may only specify known properties, and 'insightType' does not exist in type '{ title: string; content: string; type: string; therapistId: string; metadata?: Json | undefined; clientId?: string | null | undefined; confidence?: string | null | undefined; isRead?: boolean | ... 1 more ... | undefined; }'.
+server/ai-automation-enhanced.ts(384,7): error TS2353: Object literal may only specify known properties, and 'insightType' does not exist in type '{ title: string; content: string; type: string; therapistId: string; metadata?: Json | undefined; clientId?: string | null | undefined; confidence?: string | null | undefined; isRead?: boolean | ... 1 more ... | undefined; }'.
+server/ai-automation-enhanced.ts(486,7): error TS2353: Object literal may only specify known properties, and 'appointmentId' does not exist in type '{ title: string; clientId: string; dateRange: Json; therapistId: string; sessionNoteIds: Json; timeframe: string; keyInsights: Json; progressMetrics: Json; visualData: Json; ... 11 more ...; aiModel?: string | undefined; }'.
+server/ai-automation-enhanced.ts(575,7): error TS2353: Object literal may only specify known properties, and 'insightType' does not exist in type '{ title: string; content: string; type: string; therapistId: string; metadata?: Json | undefined; clientId?: string | null | undefined; confidence?: string | null | undefined; isRead?: boolean | ... 1 more ... | undefined; }'.
+server/ai-automation-enhanced.ts(669,7): error TS2353: Object literal may only specify known properties, and 'insightType' does not exist in type '{ title: string; content: string; type: string; therapistId: string; metadata?: Json | undefined; clientId?: string | null | undefined; confidence?: string | null | undefined; isRead?: boolean | ... 1 more ... | undefined; }'.
+server/ai-automation-enhanced.ts(741,9): error TS2353: Object literal may only specify known properties, and 'insightType' does not exist in type '{ title: string; content: string; type: string; therapistId: string; metadata?: Json | undefined; clientId?: string | null | undefined; confidence?: string | null | undefined; isRead?: boolean | ... 1 more ... | undefined; }'.
+server/ai-automation-enhanced.ts(832,7): error TS2353: Object literal may only specify known properties, and 'insightType' does not exist in type '{ title: string; content: string; type: string; therapistId: string; metadata?: Json | undefined; clientId?: string | null | undefined; confidence?: string | null | undefined; isRead?: boolean | ... 1 more ... | undefined; }'.
+server/ai-automation-enhanced.ts(963,7): error TS2353: Object literal may only specify known properties, and 'insightType' does not exist in type '{ title: string; content: string; type: string; therapistId: string; metadata?: Json | undefined; clientId?: string | null | undefined; confidence?: string | null | undefined; isRead?: boolean | ... 1 more ... | undefined; }'.
+server/ai-automation-enhanced.ts(1035,32): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+server/ai-automation-enhanced.ts(1231,27): error TS2339: Property 'forEach' does not exist on type '{}'.
+server/ai-automation-enhanced.ts(1285,7): error TS2353: Object literal may only specify known properties, and 'insightType' does not exist in type '{ title: string; content: string; type: string; therapistId: string; metadata?: Json | undefined; clientId?: string | null | undefined; confidence?: string | null | undefined; isRead?: boolean | ... 1 more ... | undefined; }'.
+server/ai-automation-enhanced.ts(1392,32): error TS2345: Argument of type 'Date | null | undefined' is not assignable to parameter of type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+server/ai-automation-enhanced.ts(1417,7): error TS2353: Object literal may only specify known properties, and 'insightType' does not exist in type '{ title: string; content: string; type: string; therapistId: string; metadata?: Json | undefined; clientId?: string | null | undefined; confidence?: string | null | undefined; isRead?: boolean | ... 1 more ... | undefined; }'.
+server/ai-integration-service.ts(51,9): error TS2353: Object literal may only specify known properties, and 'insightType' does not exist in type '{ title: string; content: string; type: string; therapistId: string; metadata?: Json | undefined; clientId?: string | null | undefined; confidence?: string | null | undefined; isRead?: boolean | ... 1 more ... | undefined; }'.
+server/ai-integration-service.ts(120,9): error TS2353: Object literal may only specify known properties, and 'appointmentId' does not exist in type '{ title: string; clientId: string; description: string; therapistId: string; confidence: string; recommendationType: string; rationale: string; status?: string | undefined; feedback?: string | null | undefined; ... 10 more ...; generationContext?: Json | undefined; }'.
+server/ai-integration-service.ts(184,11): error TS2353: Object literal may only specify known properties, and 'progressMetrics' does not exist in type 'Partial<{ progress: unknown; id: string; status: string; clientId: string; therapistId: string; interventions: unknown; createdAt: Date | null; updatedAt: Date | null; startDate: Date | null; goals: unknown; reviewDate: Date | null; }>'.
+server/ai-integration-service.ts(199,11): error TS2353: Object literal may only specify known properties, and 'progressMetrics' does not exist in type '{ clientId: string; therapistId: string; goals: Json; progress?: Json | undefined; status?: string | undefined; interventions?: Json | undefined; startDate?: Date | null | undefined; reviewDate?: Date | ... 1 more ... | undefined; }'.
+server/ai-integration-service.ts(248,9): error TS2353: Object literal may only specify known properties, and 'appointmentId' does not exist in type '{ title: string; clientId: string; dateRange: Json; therapistId: string; sessionNoteIds: Json; timeframe: string; keyInsights: Json; progressMetrics: Json; visualData: Json; ... 11 more ...; aiModel?: string | undefined; }'.
+server/ai-integration-service.ts(320,11): error TS2353: Object literal may only specify known properties, and 'insightType' does not exist in type '{ title: string; content: string; type: string; therapistId: string; metadata?: Json | undefined; clientId?: string | null | undefined; confidence?: string | null | undefined; isRead?: boolean | ... 1 more ... | undefined; }'.
+server/ai-integration-service.ts(448,9): error TS2353: Object literal may only specify known properties, and 'insightType' does not exist in type '{ title: string; content: string; type: string; therapistId: string; metadata?: Json | undefined; clientId?: string | null | undefined; confidence?: string | null | undefined; isRead?: boolean | ... 1 more ... | undefined; }'.
+server/ai-integration-service.ts(476,51): error TS2339: Property 'join' does not exist on type '{}'.
+server/ai-integration-service.ts(550,68): error TS2339: Property 'join' does not exist on type '{}'.
+server/ai-multi-model.ts(3,10): error TS2305: Module '"@google/generative-ai"' has no exported member 'GoogleGenAI'.
+server/ai-pattern-recognition.ts(97,56): error TS2345: Argument of type '{ title: string | null; id: string; content: string; duration: number | null; clientId: string | null; keyPoints: unknown; therapistId: string | null; location: string | null; assessment: string | null; ... 20 more ...; manualEntry: boolean | null; }[]' is not assignable to parameter of type 'SessionData[]'.
+  Property 'date' is missing in type '{ title: string | null; id: string; content: string; duration: number | null; clientId: string | null; keyPoints: unknown; therapistId: string | null; location: string | null; assessment: string | null; ... 20 more ...; manualEntry: boolean | null; }' but required in type 'SessionData'.
+server/ai-pattern-recognition.ts(98,60): error TS2345: Argument of type '{ title: string | null; id: string; content: string; duration: number | null; clientId: string | null; keyPoints: unknown; therapistId: string | null; location: string | null; assessment: string | null; ... 20 more ...; manualEntry: boolean | null; }[]' is not assignable to parameter of type 'SessionData[]'.
+  Property 'date' is missing in type '{ title: string | null; id: string; content: string; duration: number | null; clientId: string | null; keyPoints: unknown; therapistId: string | null; location: string | null; assessment: string | null; ... 20 more ...; manualEntry: boolean | null; }' but required in type 'SessionData'.
+server/ai-pattern-recognition.ts(99,63): error TS2345: Argument of type '{ title: string | null; id: string; content: string; duration: number | null; clientId: string | null; keyPoints: unknown; therapistId: string | null; location: string | null; assessment: string | null; ... 20 more ...; manualEntry: boolean | null; }[]' is not assignable to parameter of type 'SessionData[]'.
+  Property 'date' is missing in type '{ title: string | null; id: string; content: string; duration: number | null; clientId: string | null; keyPoints: unknown; therapistId: string | null; location: string | null; assessment: string | null; ... 20 more ...; manualEntry: boolean | null; }' but required in type 'SessionData'.
+server/ai-pattern-recognition.ts(110,3): error TS18047: 'session.createdAt' is possibly 'null'.
+server/ai-pattern-recognition.ts(110,40): error TS18047: 'session.createdAt' is possibly 'null'.
+server/ai-pattern-recognition.ts(165,25): error TS18047: 'session.createdAt' is possibly 'null'.
+server/ai-personalized-therapy.ts(47,63): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+server/ai-personalized-therapy.ts(48,52): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+server/ai-practice-intelligence.ts(86,40): error TS2551: Property 'getAppointmentsByClientId' does not exist on type 'DatabaseStorage'. Did you mean 'getAppointmentsByClient'?
+server/ai-practice-intelligence.ts(98,25): error TS18047: 'session.createdAt' is possibly 'null'.
+server/ai-practice-intelligence.ts(341,50): error TS2304: Cannot find name 'SessionData'.
+server/ai-practice-intelligence.ts(371,46): error TS2304: Cannot find name 'SessionData'.
+server/ai-practice-intelligence.ts(397,44): error TS2304: Cannot find name 'SessionData'.
+server/ai-practice-intelligence.ts(453,41): error TS2304: Cannot find name 'SessionData'.
+server/ai-predictive-models.ts(28,25): error TS18047: 'session.createdAt' is possibly 'null'.
+server/ai-service-fallback.ts(123,50): error TS2339: Property 'text' does not exist on type 'ContentBlock'.
+  Property 'text' does not exist on type 'ThinkingBlock'.
+server/ai-service-fallback.ts(332,33): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+server/ai-service-wrapper.ts(32,72): error TS18046: 'error' is of type 'unknown'.
+server/auth-old.ts(160,9): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+server/auth-old.ts(163,11): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+server/auth-old.ts(167,11): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+server/auth-old.ts(170,9): error TS2322: Type '{ email: string; displayName: string | null | undefined; responseStatus: string; }[] | undefined' is not assignable to type '{ email: string; displayName?: string | undefined; responseStatus: string; }[] | undefined'.
+  Type '{ email: string; displayName: string | null | undefined; responseStatus: string; }[]' is not assignable to type '{ email: string; displayName?: string | undefined; responseStatus: string; }[]'.
+    Type '{ email: string; displayName: string | null | undefined; responseStatus: string; }' is not assignable to type '{ email: string; displayName?: string | undefined; responseStatus: string; }'.
+      Types of property 'displayName' are incompatible.
+        Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+          Type 'null' is not assignable to type 'string | undefined'.
+server/auth-old.ts(193,9): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+server/auth-old.ts(196,11): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+server/auth-old.ts(200,11): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+server/auth-old.ts(203,9): error TS2322: Type '{ email: string; displayName: string | null | undefined; responseStatus: string; }[] | undefined' is not assignable to type '{ email: string; displayName?: string | undefined; responseStatus: string; }[] | undefined'.
+  Type '{ email: string; displayName: string | null | undefined; responseStatus: string; }[]' is not assignable to type '{ email: string; displayName?: string | undefined; responseStatus: string; }[]'.
+    Type '{ email: string; displayName: string | null | undefined; responseStatus: string; }' is not assignable to type '{ email: string; displayName?: string | undefined; responseStatus: string; }'.
+      Types of property 'displayName' are incompatible.
+        Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+          Type 'null' is not assignable to type 'string | undefined'.
+server/calendar-bidirectional-sync.ts(143,23): error TS2339: Property 'recurrenceRule' does not exist on type '{ id: string; status: string; type: string; clientId: string; therapistId: string; location: string | null; notes: string | null; completedAt: Date | null; googleEventId: string | null; ... 16 more ...; insuranceClaim: unknown; }'.
+server/calendar-bidirectional-sync.ts(144,45): error TS2339: Property 'recurrenceRule' does not exist on type '{ id: string; status: string; type: string; clientId: string; therapistId: string; location: string | null; notes: string | null; completedAt: Date | null; googleEventId: string | null; ... 16 more ...; insuranceClaim: unknown; }'.
+server/calendar-bidirectional-sync.ts(317,17): error TS7022: 'response' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+server/calendar-bidirectional-sync.ts(501,22): error TS2339: Property 'firstName' does not exist on type '{ name: string; email?: string | undefined; }'.
+server/calendar-bidirectional-sync.ts(501,46): error TS2339: Property 'lastName' does not exist on type '{ name: string; email?: string | undefined; }'.
+server/calendar-bidirectional-sync.ts(504,50): error TS2339: Property 'firstName' does not exist on type '{ name: string; email?: string | undefined; }'.
+server/calendar-bidirectional-sync.ts(504,74): error TS2339: Property 'lastName' does not exist on type '{ name: string; email?: string | undefined; }'.
+server/calendar-bidirectional-sync.ts(566,35): error TS2339: Property 'videoLink' does not exist on type '{ id: string; status: string; type: string; clientId: string; therapistId: string; location: string | null; notes: string | null; completedAt: Date | null; googleEventId: string | null; ... 16 more ...; insuranceClaim: unknown; }'.
+server/calendar-bidirectional-sync.ts(579,41): error TS2339: Property 'reminderMinutes' does not exist on type '{ id: string; status: string; type: string; clientId: string; therapistId: string; location: string | null; notes: string | null; completedAt: Date | null; googleEventId: string | null; ... 16 more ...; insuranceClaim: unknown; }'.
+server/calendar-bidirectional-sync.ts(602,9): error TS2353: Object literal may only specify known properties, and 'videoLink' does not exist in type 'Partial<{ id: string; status: string; type: string; clientId: string; therapistId: string; location: string | null; notes: string | null; completedAt: Date | null; googleEventId: string | null; ... 16 more ...; insuranceClaim: unknown; }>'.
+server/calendar-bidirectional-sync.ts(608,62): error TS2339: Property 'recurrenceRule' does not exist on type '{ id: string; status: string; type: string; clientId: string; therapistId: string; location: string | null; notes: string | null; completedAt: Date | null; googleEventId: string | null; ... 16 more ...; insuranceClaim: unknown; }'.
+server/calendar-bidirectional-sync.ts(609,61): error TS2339: Property 'recurrenceId' does not exist on type '{ id: string; status: string; type: string; clientId: string; therapistId: string; location: string | null; notes: string | null; completedAt: Date | null; googleEventId: string | null; ... 16 more ...; insuranceClaim: unknown; }'.
+server/calendar-bidirectional-sync.ts(679,9): error TS2353: Object literal may only specify known properties, and 'videoLink' does not exist in type '{ type: string; clientId: string; therapistId: string; startTime: Date; endTime: Date; status?: string | undefined; location?: string | null | undefined; notes?: string | null | undefined; ... 14 more ...; insuranceClaim?: Json | undefined; }'.
+server/calendar-bidirectional-sync.ts(720,61): error TS18046: 'error' is of type 'unknown'.
+server/calendar-sync-service.ts(44,60): error TS2345: Argument of type 'Date' is not assignable to parameter of type 'string'.
+server/calendar-sync-service.ts(68,75): error TS18046: 'error' is of type 'unknown'.
+server/calendar-sync-service.ts(79,42): error TS18046: 'error' is of type 'unknown'.
+server/calendar-sync-service.ts(118,7): error TS2353: Object literal may only specify known properties, and 'id' does not exist in type '{ type: string; clientId: string; therapistId: string; startTime: Date; endTime: Date; status?: string | undefined; location?: string | null | undefined; notes?: string | null | undefined; ... 14 more ...; insuranceClaim?: Json | undefined; }'.
+server/calendar-sync-service.ts(258,7): error TS2353: Object literal may only specify known properties, and 'metadata' does not exist in type '{ firstName: string; lastName: string; address?: Json | undefined; status?: string | undefined; email?: string | null | undefined; therapistId?: string | null | undefined; riskLevel?: string | ... 1 more ... | undefined; ... 16 more ...; lastContact?: Date | ... 1 more ... | undefined; }'.
+server/calendar-sync-service.ts(414,60): error TS2345: Argument of type 'Date' is not assignable to parameter of type 'string'.
+server/calendar-sync-service.ts(430,58): error TS18046: 'error' is of type 'unknown'.
+server/calendar-sync-service.ts(436,42): error TS18046: 'error' is of type 'unknown'.
+server/client-chart-manager.ts(169,9): error TS2322: Type '{ age: number | null; gender: any; contact: { email: any; phone: any; address: any; }; emergencyContact: any; insurance: any; }' is not assignable to type '{ age: number; gender: string; contact: { email: string; phone: string; address: any; }; emergencyContact: any; insurance: any; }'.
+  Types of property 'age' are incompatible.
+    Type 'number | null' is not assignable to type 'number'.
+      Type 'null' is not assignable to type 'number'.
+server/client-chart-manager.ts(172,11): error TS2322: Type '{ date: Date; type: "document" | "assessment" | "session" | "crisis" | "milestone" | "termination"; title: string; summary: string; tags: string[]; sentiment: "positive" | "negative" | "mixed" | "neutral"; clinicalSignificance: "low" | ... 1 more ... | "medium"; }[]' is not assignable to type '{ date: Date; type: string; title: string; summary: string; tags: string[]; significance: string; }[]'.
+  Property 'significance' is missing in type '{ date: Date; type: "document" | "assessment" | "session" | "crisis" | "milestone" | "termination"; title: string; summary: string; tags: string[]; sentiment: "positive" | "negative" | "mixed" | "neutral"; clinicalSignificance: "low" | ... 1 more ... | "medium"; }' but required in type '{ date: Date; type: string; title: string; summary: string; tags: string[]; significance: string; }'.
+server/client-chart-manager.ts(184,51): error TS7006: Parameter 'a' implicitly has an 'any' type.
+server/client-chart-manager.ts(190,45): error TS7006: Parameter 'a' implicitly has an 'any' type.
+server/client-chart-manager.ts(191,43): error TS7006: Parameter 'a' implicitly has an 'any' type.
+server/client-chart-manager.ts(523,40): error TS7006: Parameter 'a' implicitly has an 'any' type.
+server/client-chart-manager.ts(524,40): error TS7006: Parameter 'a' implicitly has an 'any' type.
+server/client-chart-manager.ts(525,37): error TS7006: Parameter 'a' implicitly has an 'any' type.
+server/client-chart-manager.ts(539,37): error TS7006: Parameter 'a' implicitly has an 'any' type.
+server/client-chart-manager.ts(540,35): error TS7006: Parameter 'a' implicitly has an 'any' type.
+server/client-chart-manager.ts(568,15): error TS2304: Cannot find name 'like'.
+server/client-chart-manager.ts(569,15): error TS2304: Cannot find name 'like'.
+server/client-chart-manager.ts(570,15): error TS2304: Cannot find name 'like'.
+server/client-chart-manager.ts(571,15): error TS2304: Cannot find name 'like'.
+server/client-chart-manager.ts(572,15): error TS2304: Cannot find name 'like'.
+server/client-chart-manager.ts(582,15): error TS2304: Cannot find name 'like'.
+server/client-chart-manager.ts(583,15): error TS2304: Cannot find name 'like'.
+server/client-chart-manager.ts(584,15): error TS2304: Cannot find name 'like'.
+server/comprehensive-progress-parser-july.ts(57,31): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+server/comprehensive-progress-parser-july.ts(61,56): error TS18046: 'error' is of type 'unknown'.
+server/comprehensiveProgressNotesParser-optimized.ts(582,31): error TS2339: Property 'duration' does not exist on type 'ExtractedSession'.
+server/comprehensiveProgressNotesParser-optimized.ts(639,53): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+server/comprehensiveProgressNotesParser-optimized.ts(654,42): error TS2339: Property 'extractedText' does not exist on type 'DocumentTaggingResult'.
+server/comprehensiveProgressNotesParser.ts(1,21): error TS2307: Cannot find module 'mammoth' or its corresponding type declarations.
+server/comprehensiveProgressNotesParser.ts(4,10): error TS2724: '"../shared/schema"' has no exported member named 'insertProgressNoteSchema'. Did you mean 'insertSessionNoteSchema'?
+server/comprehensiveProgressNotesParser.ts(97,58): error TS18046: 'error' is of type 'unknown'.
+server/comprehensiveProgressNotesParser.ts(197,62): error TS18046: 'error' is of type 'unknown'.
+server/comprehensiveProgressNotesParser.ts(561,14): error TS2339: Property 'extractedName' does not exist on type '{ extractedClient: ExtractedClient; matchedClientId: string; matchedClientName: string; sessionsProcessed: number; }'.
+server/database-recovery.ts(2,22): error TS2307: Cannot find module '@neondatabase/serverless' or its corresponding type declarations.
+server/database-recovery.ts(4,52): error TS2307: Cannot find module '@shared/types' or its corresponding type declarations.
+server/database-recovery.ts(281,46): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'true' is not assignable to parameter of type 'Signals | undefined'.
+server/database-recovery.ts(350,33): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+server/db-enhanced.ts(3,46): error TS2307: Cannot find module '@neondatabase/serverless' or its corresponding type declarations.
+server/db-enhanced.ts(4,32): error TS7016: Could not find a declaration file for module 'pg'. '/home/runner/workspace/node_modules/pg/esm/index.mjs' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/pg` if it exists or add a new declaration (.d.ts) file containing `declare module 'pg';`
+server/db-enhanced.ts(6,16): error TS7016: Could not find a declaration file for module 'ws'. '/home/runner/workspace/node_modules/ws/wrapper.mjs' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/ws` if it exists or add a new declaration (.d.ts) file containing `declare module 'ws';`
+server/db-enhanced.ts(50,29): error TS7006: Parameter 'host' implicitly has an 'any' type.
+server/db-postgres.ts(2,22): error TS7016: Could not find a declaration file for module 'pg'. '/home/runner/workspace/node_modules/pg/esm/index.mjs' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/pg` if it exists or add a new declaration (.d.ts) file containing `declare module 'pg';`
+server/db-wrapper.ts(2,22): error TS7016: Could not find a declaration file for module 'pg'. '/home/runner/workspace/node_modules/pg/esm/index.mjs' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/pg` if it exists or add a new declaration (.d.ts) file containing `declare module 'pg';`
+server/db-wrapper.ts(36,44): error TS18046: 'err' is of type 'unknown'.
+server/db-wrapper.ts(46,50): error TS18046: 'err' is of type 'unknown'.
+server/db.ts(4,34): error TS2307: Cannot find module '@neondatabase/serverless' or its corresponding type declarations.
+server/db.ts(6,16): error TS7016: Could not find a declaration file for module 'ws'. '/home/runner/workspace/node_modules/ws/wrapper.mjs' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/ws` if it exists or add a new declaration (.d.ts) file containing `declare module 'ws';`
+server/document-fix.ts(104,18): error TS18046: 'error' is of type 'unknown'.
+server/document-fix.ts(163,18): error TS18046: 'error' is of type 'unknown'.
+server/document-fix.ts(206,18): error TS18046: 'error' is of type 'unknown'.
+server/document-fix.ts(239,18): error TS18046: 'error' is of type 'unknown'.
+server/document-fix.ts(270,44): error TS2339: Property 'processDocument' does not exist on type 'DocumentProcessor'.
+server/document-fix.ts(357,13): error TS2353: Object literal may only specify known properties, and 'documentId' does not exist in type '{ content: string; title?: string | null | undefined; duration?: number | null | undefined; clientId?: string | null | undefined; keyPoints?: Json | undefined; therapistId?: string | null | undefined; ... 20 more ...; manualEntry?: boolean | ... 1 more ... | undefined; }'.
+server/document-fix.ts(387,18): error TS18046: 'error' is of type 'unknown'.
+server/document-fix.ts(412,15): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(left: PgColumn<{ name: "extracted_text"; tableName: "documents"; dataType: "string"; columnType: "PgText"; data: string; driverParam: string; notNull: false; hasDefault: false; isPrimaryKey: false; isAutoincrement: false; ... 4 more ...; generated: undefined; }, {}, {}>, right: string | SQLWrapper): SQL<...>', gave the following error.
+    Argument of type 'null' is not assignable to parameter of type 'string | SQLWrapper'.
+  Overload 2 of 3, '(left: Aliased<null>, right: SQLWrapper | null): SQL<unknown>', gave the following error.
+    Argument of type 'PgColumn<{ name: "extracted_text"; tableName: "documents"; dataType: "string"; columnType: "PgText"; data: string; driverParam: string; notNull: false; hasDefault: false; isPrimaryKey: false; isAutoincrement: false; ... 4 more ...; generated: undefined; }, {}, {}>' is not assignable to parameter of type 'Aliased<null>'.
+      Type 'PgColumn<{ name: "extracted_text"; tableName: "documents"; dataType: "string"; columnType: "PgText"; data: string; driverParam: string; notNull: false; hasDefault: false; isPrimaryKey: false; isAutoincrement: false; ... 4 more ...; generated: undefined; }, {}, {}>' is missing the following properties from type 'Aliased<null>': sql, fieldAlias
+  Overload 3 of 3, '(left: never, right: unknown): SQL<unknown>', gave the following error.
+    Argument of type 'PgColumn<{ name: "extracted_text"; tableName: "documents"; dataType: "string"; columnType: "PgText"; data: string; driverParam: string; notNull: false; hasDefault: false; isPrimaryKey: false; isAutoincrement: false; ... 4 more ...; generated: undefined; }, {}, {}>' is not assignable to parameter of type 'never'.
+server/document-fix.ts(431,52): error TS2339: Property 'processDocument' does not exist on type 'DocumentProcessor'.
+server/document-fix.ts(460,33): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+server/document-fix.ts(464,31): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+server/document-fix.ts(464,73): error TS18046: 'error' is of type 'unknown'.
+server/document-fix.ts(478,18): error TS18046: 'error' is of type 'unknown'.
+server/document-fix.ts(509,18): error TS18046: 'error' is of type 'unknown'.
+server/document-fix.ts(545,18): error TS18046: 'error' is of type 'unknown'.
+server/document-fix.ts(578,18): error TS18046: 'error' is of type 'unknown'.
+server/document-fix.ts(599,13): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(left: PgColumn<{ name: "client_id"; tableName: "documents"; dataType: "string"; columnType: "PgUUID"; data: string; driverParam: string; notNull: false; hasDefault: false; isPrimaryKey: false; isAutoincrement: false; ... 4 more ...; generated: undefined; }, {}, {}>, right: string | SQLWrapper): SQL<...>', gave the following error.
+    Argument of type 'null' is not assignable to parameter of type 'string | SQLWrapper'.
+  Overload 2 of 3, '(left: Aliased<null>, right: SQLWrapper | null): SQL<unknown>', gave the following error.
+    Argument of type 'PgColumn<{ name: "client_id"; tableName: "documents"; dataType: "string"; columnType: "PgUUID"; data: string; driverParam: string; notNull: false; hasDefault: false; isPrimaryKey: false; isAutoincrement: false; ... 4 more ...; generated: undefined; }, {}, {}>' is not assignable to parameter of type 'Aliased<null>'.
+      Type 'PgColumn<{ name: "client_id"; tableName: "documents"; dataType: "string"; columnType: "PgUUID"; data: string; driverParam: string; notNull: false; hasDefault: false; isPrimaryKey: false; isAutoincrement: false; ... 4 more ...; generated: undefined; }, {}, {}>' is missing the following properties from type 'Aliased<null>': sql, fieldAlias
+  Overload 3 of 3, '(left: never, right: unknown): SQL<unknown>', gave the following error.
+    Argument of type 'PgColumn<{ name: "client_id"; tableName: "documents"; dataType: "string"; columnType: "PgUUID"; data: string; driverParam: string; notNull: false; hasDefault: false; isPrimaryKey: false; isAutoincrement: false; ... 4 more ...; generated: undefined; }, {}, {}>' is not assignable to parameter of type 'never'.
+server/document-fix.ts(684,34): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+server/document-fix.ts(689,33): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+server/document-fix.ts(694,35): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+server/document-fix.ts(699,33): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+server/document-processor-enhanced.ts(7,21): error TS2307: Cannot find module 'mammoth' or its corresponding type declarations.
+server/document-processor-enhanced.ts(8,18): error TS2307: Cannot find module 'xlsx' or its corresponding type declarations.
+server/document-processor-enhanced.ts(9,19): error TS2307: Cannot find module 'sharp' or its corresponding type declarations.
+server/document-processor-enhanced.ts(218,9): error TS2353: Object literal may only specify known properties, and 'metadata' does not exist in type '{ therapistId: string; fileName: string; fileType: string; documentType: string; originalName: string; filePath: string; clientId?: string | null | undefined; description?: string | null | undefined; ... 12 more ...; confidenceScore?: string | ... 1 more ... | undefined; }'.
+server/document-processor-enhanced.ts(239,24): error TS18046: 'error' is of type 'unknown'.
+server/document-processor-enhanced.ts(301,37): error TS2307: Cannot find module 'pdfjs-dist/legacy/build/pdf.mjs' or its corresponding type declarations.
+server/document-processor-enhanced.ts(316,52): error TS7006: Parameter 'page' implicitly has an 'any' type.
+server/document-processor-enhanced.ts(333,49): error TS18046: 'error' is of type 'unknown'.
+server/document-processor-enhanced.ts(359,25): error TS2345: Argument of type '(chunk: string) => void' is not assignable to parameter of type '(chunk: string | Buffer) => void'.
+  Types of parameters 'chunk' and 'chunk' are incompatible.
+    Type 'string | Buffer' is not assignable to type 'string'.
+      Type 'Buffer' is not assignable to type 'string'.
+server/document-processor-enhanced.ts(418,34): error TS7006: Parameter 'sheetName' implicitly has an 'any' type.
+server/document-processor-enhanced.ts(418,45): error TS7006: Parameter 'index' implicitly has an 'any' type.
+server/document-processor-enhanced.ts(434,37): error TS2307: Cannot find module 'csv-parser' or its corresponding type declarations.
+server/document-processor-enhanced.ts(441,22): error TS7006: Parameter 'data' implicitly has an 'any' type.
+server/document-processor-enhanced.ts(479,54): error TS18046: 'error' is of type 'unknown'.
+server/document-processor-enhanced.ts(653,7): error TS2353: Object literal may only specify known properties, and 'processed' does not exist in type 'any[]'.
+server/document-processor.ts(3,21): error TS2307: Cannot find module 'mammoth' or its corresponding type declarations.
+server/document-processor.ts(4,18): error TS2307: Cannot find module 'xlsx' or its corresponding type declarations.
+server/document-processor.ts(5,19): error TS2307: Cannot find module 'sharp' or its corresponding type declarations.
+server/document-processor.ts(17,33): error TS2307: Cannot find module 'csv-parser' or its corresponding type declarations.
+server/document-processor.ts(30,35): error TS2307: Cannot find module 'pdfjs-dist/legacy/build/pdf.mjs' or its corresponding type declarations.
+server/document-processor.ts(321,35): error TS7006: Parameter 'sheetName' implicitly has an 'any' type.
+server/document-processor.ts(1347,9): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ content: string; title?: string | null | undefined; duration?: number | null | undefined; clientId?: string | null | undefined; keyPoints?: Json | undefined; therapistId?: string | null | undefined; ... 20 more ...; manualEntry?: boolean | ... 1 more ... | undefined; }'.
+server/documentProcessor.ts(79,38): error TS2307: Cannot find module 'mammoth' or its corresponding type declarations.
+server/documentProcessor.ts(98,85): error TS18046: 'mammothError' is of type 'unknown'.
+server/documentProcessor.ts(102,39): error TS2307: Cannot find module 'adm-zip' or its corresponding type declarations.
+server/documentProcessor.ts(122,57): error TS18046: 'zipError' is of type 'unknown'.
+server/documentProcessor.ts(142,84): error TS18046: 'mammothError' is of type 'unknown'.
+server/documentProcessor.ts(198,38): error TS2307: Cannot find module 'pdf-parse' or its corresponding type declarations.
+server/documentProcessor.ts(342,15): error TS2322: Type 'unknown' is not assignable to type 'any[]'.
+server/documentProcessor.ts(373,15): error TS2322: Type 'unknown' is not assignable to type 'any[]'.
+server/email-service.ts(1,20): error TS2307: Cannot find module '@sendgrid/mail' or its corresponding type declarations.
+server/enhanced-document-processor.ts(157,54): error TS18046: 'error' is of type 'unknown'.
+server/enhanced-document-processor.ts(301,47): error TS7006: Parameter 'd' implicitly has an 'any' type.
+server/enhanced-document-processor.ts(302,45): error TS7006: Parameter 'd' implicitly has an 'any' type.
+server/enhanced-document-processor.ts(437,43): error TS7006: Parameter 's' implicitly has an 'any' type.
+server/enhanced-document-processor.ts(451,44): error TS7006: Parameter 'a' implicitly has an 'any' type.
+server/enhanced-document-processor.ts(496,62): error TS7006: Parameter 't' implicitly has an 'any' type.
+server/google-calendar.ts(176,7): error TS2322: Type '{ id: string; summary: string; description: string | null | undefined; primary: boolean | null | undefined; }[]' is not assignable to type 'GoogleCalendarInfo[]'.
+  Type '{ id: string; summary: string; description: string | null | undefined; primary: boolean | null | undefined; }' is not assignable to type 'GoogleCalendarInfo'.
+    Types of property 'description' are incompatible.
+      Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+        Type 'null' is not assignable to type 'string | undefined'.
+server/google-calendar.ts(212,15): error TS7022: 'response' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+server/google-calendar.ts(271,9): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+server/google-calendar.ts(274,11): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+server/google-calendar.ts(278,11): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+server/google-calendar.ts(280,9): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+server/google-calendar.ts(309,9): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+server/google-calendar.ts(312,11): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+server/google-calendar.ts(316,11): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+server/google-calendar.ts(318,9): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+server/health-check.ts(1,10): error TS2305: Module '"@google/generative-ai"' has no exported member 'GoogleGenAI'.
+server/historical-appointment-utils.ts(58,17): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ january: string; jan: string; february: string; feb: string; march: string; mar: string; april: string; apr: string; may: string; june: string; jun: string; july: string; jul: string; august: string; aug: string; ... 7 more ...; dec: string; }'.
+  No index signature with a parameter of type 'string' was found on type '{ january: string; jan: string; february: string; feb: string; march: string; mar: string; april: string; apr: string; may: string; june: string; jun: string; july: string; jul: string; august: string; aug: string; ... 7 more ...; dec: string; }'.
+server/historical-appointment-utils.ts(74,17): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ january: string; jan: string; february: string; feb: string; march: string; mar: string; april: string; apr: string; may: string; june: string; jun: string; july: string; jul: string; august: string; aug: string; ... 7 more ...; dec: string; }'.
+  No index signature with a parameter of type 'string' was found on type '{ january: string; jan: string; february: string; feb: string; march: string; mar: string; april: string; apr: string; may: string; june: string; jun: string; july: string; jul: string; august: string; aug: string; ... 7 more ...; dec: string; }'.
+server/historical-appointment-utils.ts(422,51): error TS18046: 'error' is of type 'unknown'.
+server/middleware/compression.ts(2,25): error TS2307: Cannot find module 'compression' or its corresponding type declarations.
+server/notion.ts(1,24): error TS2307: Cannot find module '@notionhq/client' or its corresponding type declarations.
+server/notion.ts(35,19): error TS7022: 'response' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+server/oauth-refresh-service.ts(292,24): error TS1064: The return type of an async function or method must be the global Promise<T> type. Did you mean to write 'Promise<boolean>'?
+server/oauth-simple.ts(81,25): error TS2341: Property 'redirectUri' is private and only accessible within class 'OAuth2Client'.
+server/oauth-simple.ts(138,27): error TS2341: Property 'redirectUri' is private and only accessible within class 'OAuth2Client'.
+server/performance-monitor.ts(92,48): error TS2339: Property 'message' does not exist on type '{}'.
+server/routes-oauth-fix.ts(89,29): error TS2551: Property 'clearTokens' does not exist on type 'OAuthTokenManager'. Did you mean 'clearAllTokens'?
+server/routes/document-batch-routes.ts(6,33): error TS7016: Could not find a declaration file for module 'ws'. '/home/runner/workspace/node_modules/ws/wrapper.mjs' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/ws` if it exists or add a new declaration (.d.ts) file containing `declare module 'ws';`
+server/routes/document-batch-routes.ts(10,20): error TS2307: Cannot find module 'adm-zip' or its corresponding type declarations.
+server/routes/document-batch-routes.ts(48,25): error TS7006: Parameter 'ws' implicitly has an 'any' type.
+server/routes/document-batch-routes.ts(48,29): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/routes/document-batch-routes.ts(151,18): error TS18046: 'error' is of type 'unknown'.
+server/routes/document-batch-routes.ts(243,18): error TS18046: 'error' is of type 'unknown'.
+server/routes/document-batch-routes.ts(269,41): error TS2307: Cannot find module 'csv-parser' or its corresponding type declarations.
+server/routes/document-batch-routes.ts(275,26): error TS7006: Parameter 'data' implicitly has an 'any' type.
+server/routes/document-batch-routes.ts(281,35): error TS2307: Cannot find module 'xlsx' or its corresponding type declarations.
+server/routes/document-batch-routes.ts(322,20): error TS18046: 'error' is of type 'unknown'.
+server/routes/document-batch-routes.ts(337,18): error TS18046: 'error' is of type 'unknown'.
+server/routes/document-batch-routes.ts(420,11): error TS2353: Object literal may only specify known properties, and 'noteType' does not exist in type '{ content: string; title?: string | null | undefined; duration?: number | null | undefined; clientId?: string | null | undefined; keyPoints?: Json | undefined; therapistId?: string | null | undefined; ... 20 more ...; manualEntry?: boolean | ... 1 more ... | undefined; }'.
+server/routes/document-batch-routes.ts(432,16): error TS2339: Property 'sessionNoteId' does not exist on type 'DocumentMetadata & { documentId: string; }'.
+server/routes/document-batch-routes.ts(438,31): error TS2339: Property 'sessionNoteId' does not exist on type 'DocumentMetadata & { documentId: string; }'.
+server/routes/document-batch-routes.ts(445,18): error TS18046: 'error' is of type 'unknown'.
+server/routes/document-batch-routes.ts(462,25): error TS7006: Parameter 'id' implicitly has an 'any' type.
+server/routes/document-batch-routes.ts(492,32): error TS2304: Cannot find name 'multiModelAI'.
+server/routes/document-batch-routes.ts(495,81): error TS7006: Parameter 'm' implicitly has an 'any' type.
+server/routes/document-batch-routes.ts(496,79): error TS7006: Parameter 'm' implicitly has an 'any' type.
+server/routes/document-batch-routes.ts(497,86): error TS7006: Parameter 'm' implicitly has an 'any' type.
+server/routes/document-batch-routes.ts(498,96): error TS7006: Parameter 'm' implicitly has an 'any' type.
+server/routes/document-batch-routes.ts(509,18): error TS18046: 'error' is of type 'unknown'.
+server/routes/document-batch-routes.ts(532,18): error TS18046: 'error' is of type 'unknown'.
+server/routes/enhanced-chart-routes.ts(31,18): error TS18046: 'error' is of type 'unknown'.
+server/routes/enhanced-chart-routes.ts(57,18): error TS18046: 'error' is of type 'unknown'.
+server/routes/enhanced-chart-routes.ts(75,18): error TS18046: 'error' is of type 'unknown'.
+server/routes/enhanced-chart-routes.ts(98,18): error TS18046: 'error' is of type 'unknown'.
+server/routes/enhanced-chart-routes.ts(147,9): error TS2322: Type 'number' is not assignable to type 'string'.
+server/routes/enhanced-chart-routes.ts(157,25): error TS2488: Type '{}' must have a '[Symbol.iterator]()' method that returns an iterator.
+server/routes/enhanced-chart-routes.ts(172,18): error TS18046: 'error' is of type 'unknown'.
+server/routes/enhanced-chart-routes.ts(203,18): error TS18046: 'error' is of type 'unknown'.
+server/routes/enhanced-chart-routes.ts(232,18): error TS18046: 'error' is of type 'unknown'.
+server/routes/enhanced-chart-routes.ts(264,39): error TS2345: Argument of type '{ date: Date | null; note: string; }' is not assignable to parameter of type 'never'.
+server/routes/enhanced-chart-routes.ts(273,37): error TS2345: Argument of type '{ date: Date | null; note: string; }' is not assignable to parameter of type 'never'.
+server/routes/enhanced-chart-routes.ts(286,18): error TS18046: 'error' is of type 'unknown'.
+server/session-document-processor.ts(446,7): error TS2353: Object literal may only specify known properties, and 'type' does not exist in type '{ content: string; title?: string | null | undefined; duration?: number | null | undefined; clientId?: string | null | undefined; keyPoints?: Json | undefined; therapistId?: string | null | undefined; ... 20 more ...; manualEntry?: boolean | ... 1 more ... | undefined; }'.
+server/session-document-processor.ts(561,47): error TS2551: Property 'getAppointmentsByClientId' does not exist on type 'DatabaseStorage'. Did you mean 'getAppointmentsByClient'?
+server/steven-deluca-processor.ts(69,42): error TS2345: Argument of type '{ id: string; clientId: string; therapistId: string; appointmentId: any; sessionDate: Date; sessionType: string; duration: number; content: string; subjective: string; objective: string; ... 7 more ...; updatedAt: Date; }' is not assignable to parameter of type '{ clientId: string; therapistId: string; title: string; subjective: string; objective: string; assessment: string; plan: string; tonalAnalysis: string; keyPoints: string[]; significantQuotes: string[]; narrativeSummary: string; sessionDate: Date; appointmentId?: string | undefined; }'.
+  Type '{ id: string; clientId: string; therapistId: string; appointmentId: any; sessionDate: Date; sessionType: string; duration: number; content: string; subjective: string; objective: string; ... 7 more ...; updatedAt: Date; }' is missing the following properties from type '{ clientId: string; therapistId: string; title: string; subjective: string; objective: string; assessment: string; plan: string; tonalAnalysis: string; keyPoints: string[]; significantQuotes: string[]; narrativeSummary: string; sessionDate: Date; appointmentId?: string | undefined; }': title, tonalAnalysis
+server/storage-ai-methods.ts(15,24): error TS2304: Cannot find name 'count'.
+server/storage-ai-methods.ts(183,35): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+server/storage-ai-methods.ts(183,40): error TS7006: Parameter 'record' implicitly has an 'any' type.
+server/storage-ai-methods.ts(184,33): error TS7006: Parameter 'r' implicitly has an 'any' type.
+server/storage-ai-methods.ts(184,67): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+server/storage-ai-methods.ts(184,72): error TS7006: Parameter 'r' implicitly has an 'any' type.
+server/storage-ai-methods.ts(185,40): error TS7006: Parameter 'r' implicitly has an 'any' type.
+server/storage-ai-methods.ts(185,77): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+server/storage-ai-methods.ts(185,82): error TS7006: Parameter 'r' implicitly has an 'any' type.
+server/storage-ai-methods.ts(208,42): error TS7006: Parameter 'c' implicitly has an 'any' type.
+server/storage-ai-methods.ts(213,45): error TS7006: Parameter 'c' implicitly has an 'any' type.
+server/storage-ai-methods.ts(218,49): error TS7006: Parameter 'c' implicitly has an 'any' type.
+server/storage-ai-methods.ts(224,56): error TS7006: Parameter 'c' implicitly has an 'any' type.
+server/storage-ai-methods.ts(237,16): error TS2304: Cannot find name 'count'.
+server/storage-ai-methods.ts(250,35): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+server/storage-ai-methods.ts(250,40): error TS7006: Parameter 'a' implicitly has an 'any' type.
+server/storage-ai-methods.ts(298,29): error TS7006: Parameter 'insight' implicitly has an 'any' type.
+server/storage-ai-methods.ts(346,25): error TS2339: Property 'insightType' does not exist on type 'PgTableWithColumns<{ name: "ai_insights"; schema: undefined; columns: { id: PgColumn<{ name: "id"; tableName: "ai_insights"; dataType: "string"; columnType: "PgUUID"; data: string; driverParam: string; notNull: true; hasDefault: true; ... 6 more ...; generated: undefined; }, {}, {}>; ... 8 more ...; createdAt: PgCol...'.
+server/storage-optimized.ts(148,48): error TS2554: Expected 1 arguments, but got 2.
+server/storage.ts(363,14): error TS2420: Class 'DatabaseStorage' incorrectly implements interface 'IStorage'.
+  Type 'DatabaseStorage' is missing the following properties from type 'IStorage': getSessionNoteCount, deactivateAssessmentCatalogItem, getAssessmentResponse, updateAssessmentResponse, and 17 more.
+server/storage.ts(408,7): error TS2353: Object literal may only specify known properties, and 'clientFirstName' does not exist in type '{ title: string | null; id: string; content: string; duration: number | null; clientId: string | null; keyPoints: unknown; therapistId: string | null; location: string | null; assessment: string | null; ... 20 more ...; manualEntry: boolean | null; }'.
+server/storage.ts(760,42): error TS7006: Parameter 'apt' implicitly has an 'any' type.
+server/storage.ts(792,40): error TS7006: Parameter 'apt' implicitly has an 'any' type.
+server/storage.ts(832,40): error TS7006: Parameter 'apt' implicitly has an 'any' type.
+server/storage.ts(1547,44): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+server/storage.ts(1547,49): error TS7006: Parameter 'doc' implicitly has an 'any' type.
+server/storage.ts(1549,33): error TS7006: Parameter 'c' implicitly has an 'any' type.
+server/storage.ts(1558,47): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+server/storage.ts(1558,52): error TS7006: Parameter 'doc' implicitly has an 'any' type.
+server/storage.ts(1560,33): error TS7006: Parameter 'c' implicitly has an 'any' type.
+server/storage.ts(1694,7): error TS7006: Parameter 'apt' implicitly has an 'any' type.
+server/storage.ts(1719,45): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+server/storage.ts(1719,50): error TS7006: Parameter 'bill' implicitly has an 'any' type.
+server/storage.ts(3722,9): error TS2322: Type 'number' is not assignable to type 'string'.
+server/storage.ts(3723,22): error TS18004: No value exists in scope for the shorthand property 'startDate'. Either declare one or provide an initializer.
+server/storage.ts(3723,33): error TS18004: No value exists in scope for the shorthand property 'endDate'. Either declare one or provide an initializer.
+server/storage.ts(3842,36): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+server/storage.ts(3842,41): error TS7006: Parameter 'doc' implicitly has an 'any' type.
+server/storage.ts(3847,18): error TS7006: Parameter 'a' implicitly has an 'any' type.
+server/storage.ts(3847,21): error TS7006: Parameter 'b' implicitly has an 'any' type.
+server/storage.ts(3849,16): error TS7006: Parameter 'doc' implicitly has an 'any' type.
+server/storage.ts(3871,14): error TS7006: Parameter 'doc' implicitly has an 'any' type.
+server/storage.ts(3878,17): error TS7006: Parameter 'time' implicitly has an 'any' type.
+server/storage.ts(3881,63): error TS7006: Parameter 'sum' implicitly has an 'any' type.
+server/storage.ts(3881,68): error TS7006: Parameter 'time' implicitly has an 'any' type.
+server/storage.ts(4035,5): error TS2322: Type '{ title: string | null; id: string; content: string; duration: number | null; clientId: string | null; keyPoints: unknown; therapistId: string | null; location: string | null; assessment: string | null; ... 20 more ...; manualEntry: boolean | null; } | null' is not assignable to type '{ title: string | null; id: string; content: string; duration: number | null; clientId: string | null; keyPoints: unknown; therapistId: string | null; location: string | null; assessment: string | null; ... 20 more ...; manualEntry: boolean | null; } | undefined'.
+  Type 'null' is not assignable to type '{ title: string | null; id: string; content: string; duration: number | null; clientId: string | null; keyPoints: unknown; therapistId: string | null; location: string | null; assessment: string | null; ... 20 more ...; manualEntry: boolean | null; } | undefined'.
+server/storage.ts(4103,30): error TS7006: Parameter 'row' implicitly has an 'any' type.
+server/storage.ts(4298,36): error TS2339: Property 'questionNumber' does not exist on type 'PgTableWithColumns<{ name: "assessment_responses"; schema: undefined; columns: { id: PgColumn<{ name: "id"; tableName: "assessment_responses"; dataType: "string"; columnType: "PgUUID"; data: string; driverParam: string; ... 8 more ...; generated: undefined; }, {}, {}>; ... 12 more ...; updatedAt: PgColumn<...>; }; d...'.
+server/test-server.ts(3,10): error TS2305: Module '"vite"' has no exported member 'createServer'.
+server/vite-backup.ts(4,10): error TS2305: Module '"vite"' has no exported member 'createServer'.
+server/vite-backup.ts(4,44): error TS2305: Module '"vite"' has no exported member 'createLogger'.
+server/vite-backup.ts(6,24): error TS2307: Cannot find module '../vite.config' or its corresponding type declarations.
+server/vite-backup.ts(37,15): error TS7006: Parameter 'msg' implicitly has an 'any' type.
+server/vite-backup.ts(37,20): error TS7006: Parameter 'options' implicitly has an 'any' type.
+server/vite.ts(2,10): error TS2305: Module '"vite"' has no exported member 'ViteDevServer'.
+server/vite.ts(68,13): error TS2339: Property 'createServer' does not exist on type '{ default: typeof import("vite"); }'.
+server/websocket/websocket-optimized.ts(3,44): error TS7016: Could not find a declaration file for module 'ws'. '/home/runner/workspace/node_modules/ws/wrapper.mjs' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/ws` if it exists or add a new declaration (.d.ts) file containing `declare module 'ws';`
+server/websocket/websocket-optimized.ts(69,47): error TS7006: Parameter 'req' implicitly has an 'any' type.
+server/websocket/websocket-optimized.ts(104,23): error TS7006: Parameter 'error' implicitly has an 'any' type.

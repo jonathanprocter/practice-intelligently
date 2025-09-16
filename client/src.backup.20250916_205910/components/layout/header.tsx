@@ -1,0 +1,74 @@
+import { Bell } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import IntegrationStatus from "@/components/ui/integration-status";
+import { WebSocketStatus } from "@/components/common/WebSocketStatus";
+import { GlobalSearchBar } from "@/components/search/GlobalSearchBar";
+import { useUrgentActionItems } from "@/hooks/useUrgentActionItems";
+// Temporarily using a placeholder for profile image until asset is available
+const profileImage = 'data:image/svg+xml,%3csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"%3e%3ccircle cx="20" cy="20" r="20" fill="%23ddd"/%3e%3ctext x="20" y="25" text-anchor="middle" fill="%23666" font-size="14"%3eJP%3c/text%3e%3c/svg%3e';
+
+export default function Header() {
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  // Get real notification count from urgent action items
+  const { count: notificationCount } = useUrgentActionItems();
+
+  return (
+    <header className="bg-white border-b border-therapy-border p-2 xs:p-3 sm:p-4 lg:p-6 header-safe sticky top-0 z-40 backdrop-blur-md bg-white/95">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2 xs:space-x-3 sm:space-x-4 lg:ml-0 ml-14 xs:ml-12 min-w-0 flex-1">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base xs:text-lg sm:text-xl lg:text-2xl font-bold text-therapy-text truncate">Practice Dashboard</h2>
+            <p className="text-xs xs:text-sm text-therapy-text/60 truncate">Today, {currentDate}</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-1 xs:space-x-2 sm:space-x-4 flex-shrink-0">
+          <div className="hidden md:block">
+            <GlobalSearchBar className="w-64" />
+          </div>
+          
+          <div className="hidden md:flex items-center gap-2">
+            <WebSocketStatus />
+            <IntegrationStatus />
+          </div>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="relative min-h-[48px] min-w-[48px] xs:min-h-[44px] xs:min-w-[44px] p-2 touch-manipulation iphone-button-enhanced rounded-xl"
+            data-testid="notifications-button"
+            style={{
+              WebkitTapHighlightColor: 'rgba(100, 149, 237, 0.1)',
+              WebkitTouchCallout: 'none'
+            }}
+          >
+            <Bell className="h-5 w-5 xs:h-4 xs:w-4 sm:h-5 sm:w-5" />
+            {notificationCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs w-6 h-6 xs:w-5 xs:h-5 rounded-full flex items-center justify-center font-medium shadow-lg">
+                {notificationCount > 99 ? '99+' : notificationCount}
+              </span>
+            )}
+          </Button>
+          
+          <div className="flex items-center space-x-2 xs:space-x-3">
+            <img 
+              src={profileImage} 
+              alt="Dr. Jonathan Procter" 
+              className="w-10 h-10 xs:w-8 xs:h-8 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-white shadow-sm"
+            />
+            <div className="hidden sm:block min-w-0">
+              <p className="font-medium text-therapy-text text-sm truncate">Dr. Jonathan Procter</p>
+              <p className="text-xs text-therapy-text/60">LMHC</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}

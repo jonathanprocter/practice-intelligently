@@ -1,0 +1,301 @@
+<!-- Save this as compass-avatar.svg -->
+<svg viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <filter id="shadow">
+            <feDropShadow dx="1" dy="1" stdDeviation="1" flood-opacity="0.3"/>
+        </filter>
+    </defs>
+    <style>
+        @keyframes normalSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes spinFast {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 3px rgba(220, 20, 60, 0.5)); }
+            50% { filter: drop-shadow(0 0 8px rgba(220, 20, 60, 0.8)); }
+        }
+        
+        @keyframes rotateCompass {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+            100% { transform: rotate(0deg); }
+        }
+        
+        @keyframes point {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
+        }
+        
+        @keyframes wiggleFinger {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            75% { transform: rotate(15deg); }
+        }
+        
+        @keyframes excitedSpin {
+            0% { 
+                transform: rotate(0deg) scale(1);
+            }
+            25% { 
+                transform: rotate(720deg) scale(1.1);
+            }
+            50% { 
+                transform: rotate(1080deg) scale(1.15);
+            }
+            75% { 
+                transform: rotate(1260deg) scale(1.1);
+            }
+            100% { 
+                transform: rotate(1440deg) scale(1);
+            }
+        }
+        
+        .pulse-direction {
+            animation: pulse 2s ease-in-out infinite;
+            transform-origin: center;
+        }
+        
+        .float-element {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .glow-north {
+            animation: glow 2s ease-in-out infinite;
+        }
+        
+        .compass-wobble {
+            animation: rotateCompass 4s ease-in-out infinite;
+            transform-origin: 100px 150px;
+        }
+        
+        .compass-needle {
+            animation: spin 4s linear infinite;
+            transform-origin: center;
+        }
+        
+        .pointing-hand {
+            animation: point 2s ease-in-out infinite;
+        }
+        
+        .wiggle-finger {
+            animation: wiggleFinger 1.5s ease-in-out infinite;
+            transform-origin: right center;
+        }
+        
+        .excited-needle {
+            animation: normalSpin 8s linear infinite;
+            transform-origin: center center;
+            transform-box: fill-box;
+        }
+        
+        /* For JavaScript activation */
+        .excited-needle.activated {
+            animation: excitedSpin 2s ease-in-out forwards !important;
+            transform-origin: center center;
+            transform-box: fill-box;
+        }
+    </style>
+    
+    <!-- Background -->
+    <rect width="200" height="260" fill="#f5e6d3"/>
+    
+    <!-- Animated outer ring -->
+    <g class="compass-wobble">
+        <circle cx="100" cy="150" r="85" fill="none" stroke="#4A3C28" stroke-width="1" opacity="0.3"/>
+        <circle cx="100" cy="150" r="82" fill="none" stroke="#8B6F47" stroke-width="0.5" stroke-dasharray="5,5"/>
+    </g>
+    
+    <!-- Body as compass base -->
+    <circle cx="100" cy="150" r="80" fill="#8B6F47"/>
+    <circle cx="100" cy="150" r="75" fill="#6B5637"/>
+    
+    <!-- Compass rose body with animations -->
+    <g transform="translate(100, 150)" class="compass-wobble">
+        <!-- Main directions with different animations -->
+        <g class="glow-north">
+            <path d="M 0,-70 L 15,-15 L 0,0 L -15,-15 Z" fill="#DC143C"/>
+            <!-- North hands pointing up -->
+            <g transform="translate(0, -70)" class="float-element">
+                <!-- Left hand -->
+                <g transform="translate(-10, 0)">
+                    <circle r="6" fill="#E8C5A0"/>
+                    <rect x="-2" y="-10" width="4" height="10" rx="2" fill="#E8C5A0" class="wiggle-finger" style="transform-origin: bottom center;"/>
+                    <circle cx="-4" cy="0" r="2" fill="#E8C5A0"/>
+                    <circle cx="4" cy="0" r="2" fill="#E8C5A0"/>
+                </g>
+                <!-- Right hand -->
+                <g transform="translate(10, 0)">
+                    <circle r="6" fill="#E8C5A0"/>
+                    <rect x="-2" y="-10" width="4" height="10" rx="2" fill="#E8C5A0" class="wiggle-finger" style="transform-origin: bottom center; animation-delay: 0.5s;"/>
+                    <circle cx="-4" cy="0" r="2" fill="#E8C5A0"/>
+                    <circle cx="4" cy="0" r="2" fill="#E8C5A0"/>
+                </g>
+            </g>
+        </g>
+        <g class="pulse-direction" style="animation-delay: 0.5s;">
+            <path d="M 0,70 L 15,15 L 0,0 L -15,15 Z" fill="#4A3C28"/>
+        </g>
+        
+        <!-- West arm with pointing hand -->
+        <g class="pulse-direction" style="animation-delay: 1s;">
+            <path d="M -70,0 L -15,-15 L 0,0 L -15,15 Z" fill="#8B6F47"/>
+            <!-- Arm extension -->
+            <rect x="-70" y="-5" width="20" height="10" rx="5" fill="#8B6F47"/>
+            <!-- Hand pointing left -->
+            <g transform="translate(-75, 0)" class="pointing-hand">
+                <circle r="8" fill="#E8C5A0"/>
+                <!-- Pointing finger -->
+                <rect x="-12" y="-2" width="12" height="4" rx="2" fill="#E8C5A0" class="wiggle-finger"/>
+                <!-- Other fingers -->
+                <rect x="-5" y="2" width="8" height="3" rx="1.5" fill="#E8C5A0"/>
+                <rect x="-5" y="-5" width="8" height="3" rx="1.5" fill="#E8C5A0"/>
+                <!-- Thumb -->
+                <circle cx="5" cy="-3" r="2" fill="#E8C5A0"/>
+                <!-- Cuff detail -->
+                <rect x="6" y="-6" width="4" height="12" rx="2" fill="#6B5637"/>
+            </g>
+        </g>
+        
+        <!-- East arm with pointing hand -->
+        <g class="pulse-direction" style="animation-delay: 1.5s;">
+            <path d="M 70,0 L 15,-15 L 0,0 L 15,15 Z" fill="#8B6F47"/>
+            <!-- Arm extension -->
+            <rect x="50" y="-5" width="20" height="10" rx="5" fill="#8B6F47"/>
+            <!-- Hand pointing right -->
+            <g transform="translate(75, 0)" class="pointing-hand" style="animation-delay: 0.5s;">
+                <circle r="8" fill="#E8C5A0"/>
+                <!-- Pointing finger -->
+                <rect x="0" y="-2" width="12" height="4" rx="2" fill="#E8C5A0" class="wiggle-finger" style="transform-origin: left center;"/>
+                <!-- Other fingers -->
+                <rect x="-3" y="2" width="8" height="3" rx="1.5" fill="#E8C5A0"/>
+                <rect x="-3" y="-5" width="8" height="3" rx="1.5" fill="#E8C5A0"/>
+                <!-- Thumb -->
+                <circle cx="-5" cy="-3" r="2" fill="#E8C5A0"/>
+                <!-- Cuff detail -->
+                <rect x="-10" y="-6" width="4" height="12" rx="2" fill="#6B5637"/>
+            </g>
+        </g>
+        
+        <!-- Diagonal directions with floating animation -->
+        <g class="float-element" style="animation-delay: 0.3s;">
+            <path d="M -50,-50 L -10,-10 L 0,0 Z" fill="#6B5637" opacity="0.7"/>
+        </g>
+        <g class="float-element" style="animation-delay: 0.6s;">
+            <path d="M 50,-50 L 10,-10 L 0,0 Z" fill="#6B5637" opacity="0.7"/>
+        </g>
+        <g class="float-element" style="animation-delay: 0.9s;">
+            <path d="M -50,50 L -10,10 L 0,0 Z" fill="#6B5637" opacity="0.7"/>
+        </g>
+        <g class="float-element" style="animation-delay: 1.2s;">
+            <path d="M 50,50 L 10,10 L 0,0 Z" fill="#6B5637" opacity="0.7"/>
+        </g>
+    </g>
+    
+    <!-- Face circle with subtle pulse -->
+    <circle cx="100" cy="150" r="30" fill="#E8C5A0" class="pulse-direction" style="animation-duration: 4s;"/>
+    
+    <!-- Hat as compass top with float -->
+    <g class="float-element">
+        <path d="M 100,80 L 120,110 L 100,120 L 80,110 Z" fill="#6B5637"/>
+        <ellipse cx="100" cy="110" rx="25" ry="10" fill="#4A3C28"/>
+    </g>
+    
+    <!-- Animated face features -->
+    <g>
+        <!-- Blinking eyes -->
+        <ellipse cx="90" cy="145" rx="3" ry="3" fill="#4A3C28">
+            <animate attributeName="ry" values="3;0.5;3" dur="4s" repeatCount="indefinite"/>
+        </ellipse>
+        <ellipse cx="110" cy="145" rx="3" ry="3" fill="#4A3C28">
+            <animate attributeName="ry" values="3;0.5;3" dur="4s" repeatCount="indefinite"/>
+        </ellipse>
+        
+        <!-- Animated smile -->
+        <path d="M 85 155 Q 100 160 115 155" fill="none" stroke="#4A3C28" stroke-width="2">
+            <animate attributeName="d" 
+                values="M 85 155 Q 100 160 115 155;
+                        M 85 155 Q 100 162 115 155;
+                        M 85 155 Q 100 160 115 155" 
+                dur="3s" 
+                repeatCount="indefinite"/>
+        </path>
+    </g>
+    
+    <!-- Direction labels - ALL VISIBLE NOW -->
+    <text x="100" y="45" text-anchor="middle" font-size="18" font-weight="bold" fill="#DC143C" class="glow-north">N</text>
+    <text x="100" y="250" text-anchor="middle" font-size="18" font-weight="bold" fill="#4A3C28">S</text>
+    <text x="15" y="155" text-anchor="middle" font-size="18" font-weight="bold" fill="#4A3C28">W</text>
+    <text x="185" y="155" text-anchor="middle" font-size="18" font-weight="bold" fill="#4A3C28">E</text>
+    
+    <!-- Additional animated details -->
+    <g opacity="0.5">
+        <circle cx="100" cy="150" r="5" fill="#B8860B">
+            <animate attributeName="r" values="5;7;5" dur="2s" repeatCount="indefinite"/>
+        </circle>
+    </g>
+    
+    <!-- Rotating degree markers -->
+    <g transform="translate(100, 150)" class="compass-needle">
+        <g opacity="0.3">
+            <line x1="0" y1="-72" x2="0" y2="-68" stroke="#4A3C28" stroke-width="1"/>
+            <line x1="0" y1="72" x2="0" y2="68" stroke="#4A3C28" stroke-width="1"/>
+            <line x1="-72" y1="0" x2="-68" y2="0" stroke="#4A3C28" stroke-width="1"/>
+            <line x1="72" y1="0" x2="68" y2="0" stroke="#4A3C28" stroke-width="1"/>
+        </g>
+    </g>
+    <!-- Information sparkles around hands -->
+    <g class="float-element" opacity="0.7" id="compass-sparkles" style="opacity: 0; transition: opacity 0.3s;">
+        <circle cx="20" cy="150" r="2" fill="#FFD700">
+            <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="15" cy="140" r="1.5" fill="#FFD700">
+            <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite" begin="0.5s"/>
+        </circle>
+        <circle cx="180" cy="150" r="2" fill="#FFD700">
+            <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite" begin="1s"/>
+        </circle>
+        <circle cx="185" cy="160" r="1.5" fill="#FFD700">
+            <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite" begin="1.5s"/>
+        </circle>
+        <circle cx="100" cy="70" r="2" fill="#FFD700">
+            <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite" begin="0.3s"/>
+        </circle>
+    </g>
+    
+    <!-- Optional: Speech bubble showing he's helping -->
+    <g opacity="0.8">
+        <ellipse cx="140" cy="110" rx="30" ry="20" fill="white" stroke="#4A3C28" stroke-width="1">
+            <animate attributeName="opacity" values="0;1;1;0" dur="4s" repeatCount="indefinite"/>
+        </ellipse>
+        <path d="M 125 125 L 120 130 L 130 125" fill="white" stroke="#4A3C28" stroke-width="1">
+            <animate attributeName="opacity" values="0;1;1;0" dur="4s" repeatCount="indefinite"/>
+        </path>
+        <text x="140" y="115" text-anchor="middle" font-size="10" fill="#4A3C28">
+            <animate attributeName="opacity" values="0;1;1;0" dur="4s" repeatCount="indefinite"/>
+            This way!
+        </text>
+    </g>
+</svg>
