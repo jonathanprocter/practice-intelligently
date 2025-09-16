@@ -1,0 +1,228 @@
+479   }, [voiceActivation, continuousMode, wakeWordMode, isOpen, isSpeaking]);
+       ~
+
+client/src/components/Compass.tsx:479:73 - error TS1005: ';' expected.
+
+479   }, [voiceActivation, continuousMode, wakeWordMode, isOpen, isSpeaking]);
+                                                                            ~
+
+client/src/components/Compass.tsx:491:4 - error TS1128: Declaration or statement expected.
+
+491   }, [voiceActivation, speechRecognition, isListening]);
+       ~
+
+client/src/components/Compass.tsx:491:55 - error TS1005: ';' expected.
+
+491   }, [voiceActivation, speechRecognition, isListening]);
+                                                          ~
+
+client/src/components/Compass.tsx:587:14 - error TS1128: Declaration or statement expected.
+
+587             }, 500); // Brief pause before resuming listening
+                 ~
+
+client/src/components/Compass.tsx:587:19 - error TS1005: ';' expected.
+
+587             }, 500); // Brief pause before resuming listening
+                      ~
+
+client/src/components/Compass.tsx:615:7 - error TS1005: 'try' expected.
+
+615     } catch (error) {
+          ~~~~~
+
+client/src/components/Compass.tsx:619:4 - error TS1472: 'catch' or 'finally' expected.
+
+619   };
+       ~
+
+client/src/components/Compass.tsx:892:28 - error TS1136: Property assignment expected.
+
+892                 className={`w-7 h-7 p-0 ${voiceActivation ? 'bg-green-100 text-green-600' : 'bg-gray-100'}`}
+                               ~~~~~~~~~~~~~~~
+
+client/src/components/Compass.tsx:893:17 - error TS1005: '}' expected.
+
+893                 title={voiceActivation ? "Disable Voice Activation" : "Enable Voice Activation"}
+                    ~~~~~
+
+client/src/components/Compass.tsx:1162:2 - error TS1005: '}' expected.
+
+1162 }
+      
+
+  client/src/components/Compass.tsx:524:33
+    524   const interruptSpeech = () => {
+                                        ~
+    The parser expected to find a '}' to match the '{' token here.
+
+client/src/utils/perfectDashboardExport.ts:188:9 - error TS1005: ';' expected.
+
+188     unit: 'pt',
+            ~
+
+client/src/utils/perfectDashboardExport.ts:189:11 - error TS1005: ';' expected.
+
+189     format: [PERFECT_WEEKLY_CONFIG.pageWidth, PERFECT_WEEKLY_CONFIG.pageHeight]
+              ~
+
+client/src/utils/perfectDashboardExport.ts:190:4 - error TS1128: Declaration or statement expected.
+
+190   });
+       ~
+
+client/src/utils/perfectDashboardExport.ts:203:1 - error TS1128: Declaration or statement expected.
+
+203 }
+    ~
+
+client/src/utils/perfectDashboardExport.ts:337:9 - error TS1005: ';' expected.
+
+337     unit: 'pt',
+            ~
+
+client/src/utils/perfectDashboardExport.ts:338:11 - error TS1005: ';' expected.
+
+338     format: [PERFECT_DAILY_CONFIG.pageWidth, PERFECT_DAILY_CONFIG.pageHeight]
+              ~
+
+client/src/utils/perfectDashboardExport.ts:339:4 - error TS1128: Declaration or statement expected.
+
+339   });
+       ~
+
+client/src/utils/perfectDashboardExport.ts:352:1 - error TS1128: Declaration or statement expected.
+
+352 }
+    ~
+
+
+Found 20 errors in 2 files.
+
+Errors  Files
+    12  client/src/components/Compass.tsx:471
+     8  client/src/utils/perfectDashboardExport.ts:188
+~/workspace$ bash replit-init.sh
+🚀 Starting Practice Intelligence Initialization...
+📦 Installing npm dependencies...
+
+changed 1 package, and audited 387 packages in 2s
+
+43 packages are looking for funding
+  run `npm fund` for details
+
+1 low severity vulnerability
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+✅ .env file already exists.
+🗄️ Setting up SQLite database for development...
+Database connection established.
+Executing database schema...
+Schema executed successfully.
+Seeding data...
+Data seeding complete.
+Database connection closed.
+🩺 Running comprehensive system audit...
+
+--- 🩺 Running Comprehensive System Audit ---
+
+✅ uploads/ directory exists
+✅ Database file exists
+✅ Can connect to database and read schema
+❌ API server is running and /api/health returns 200 - Failed to connect to server: connect ECONNREFUSED 127.0.0.1:3000
+❌ /api/therapists/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c/clients returns client data - connect ECONNREFUSED 127.0.0.1:3000
+
+--- Audit Summary ---
+ℹ️ Tests Passed: 3
+ℹ️ Tests Failed: 2
+---------------------
+
+❌ Audit finished with errors. Please review the logs above.
+🚀 Launching application with PM2...
+[PM2][WARN] practice-intelligence doesn't exist
+~/workspace$ bash replit-init.sh
+🚀 Starting Practice Intelligence Initialization...
+📦 Installing npm dependencies...
+
+up to date, audited 387 packages in 1s
+
+43 packages are looking for funding
+  run `npm fund` for details
+
+1 low severity vulnerability
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+✅ .env file already exists.
+🗄️ Setting up SQLite database for development...
+Database connection established.
+Executing database schema...
+Schema executed successfully.
+Seeding data...
+Data already seeded. Skipping.
+Database connection closed.
+🩺 Running comprehensive system audit...
+
+--- 🩺 Running Comprehensive System Audit ---
+
+✅ uploads/ directory exists
+✅ Database file exists
+✅ Can connect to database and read schema
+❌ API server is running and /api/health returns 200 - Failed to connect to server: connect ECONNREFUSED 127.0.0.1:3000
+❌ /api/therapists/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c/clients returns client data - connect ECONNREFUSED 127.0.0.1:3000
+
+--- Audit Summary ---
+ℹ️ Tests Passed: 3
+ℹ️ Tests Failed: 2
+---------------------
+
+❌ Audit finished with errors. Please review the logs above.
+🚀 Launching application with PM2...
+[PM2][WARN] practice-intelligence doesn't exist
+~/workspace$ bash replit-init.sh
+🚀 Starting Practice Intelligence Initialization...
+📦 Installing npm dependencies...
+
+up to date, audited 387 packages in 1s
+
+43 packages are looking for funding
+  run `npm fund` for details
+
+1 low severity vulnerability
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+✅ .env file already exists.
+🗄️ Setting up SQLite database for development...
+Database connection established.
+Executing database schema...
+Schema executed successfully.
+Seeding data...
+Data already seeded. Skipping.
+Database connection closed.
+🩺 Running comprehensive system audit...
+
+--- 🩺 Running Comprehensive System Audit ---
+
+✅ uploads/ directory exists
+✅ Database file exists
+✅ Can connect to database and read schema
+❌ API server is running and /api/health returns 200 - Failed to connect to server: connect ECONNREFUSED 127.0.0.1:3000
+❌ /api/therapists/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c/clients returns client data - connect ECONNREFUSED 127.0.0.1:3000
+
+--- Audit Summary ---
+ℹ️ Tests Passed: 3
+ℹ️ Tests Failed: 2
+---------------------
+
+❌ Audit finished with errors. Please review the logs above.
+🚀 Launching application with PM2...
+[PM2][WARN] practice-intelligence doesn't exist
+~/workspace$ 

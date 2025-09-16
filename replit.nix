@@ -1,5 +1,6 @@
 { pkgs }: {
   deps = [
+    pkgs.unzip
     pkgs.nodejs_20
     pkgs.nano
     pkgs.lsof

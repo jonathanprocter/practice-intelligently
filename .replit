@@ -1,118 +1,18 @@
-modules = ["web", "postgresql-16", "python-3.11", "python3", "nodejs-20"]
+hidden = [".config", "node_modules", ".env"]
 run = "bash replit-init.sh"
-hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
+entrypoint = "server/index.ts"
 
 [nix]
-channel = "stable-24_05"
-packages = ["ghostscript", "graphicsmagick", "imagemagick", "poppler_utils"]
+channel = "stable-23_11"
 
 [deployment]
-deploymentTarget = "autoscale"
-build = ["sh", "-c", "NPM_CONFIG_CACHE=/tmp/.npm-cache NODE_OPTIONS=--max-old-space-size=4096 npm run build"]
-run = ["sh", "-c", "npm start"]
+run = ["bash", "replit-init.sh"]
+build = ["npm", "run", "build"]
 
-[env]
-PORT = "3000"
-PATH = "/nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin:$PATH"
-NODE_ENV = "production"
-CI = "true"
+[packager]
+language = "typescript"
 
-[workflows]
-runButton = "Clean Start Server"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Start application"
-
-[[workflows.workflow]]
-name = "Start application"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "bash replit-init.sh"
-waitForPort = 3000
-
-[[workflows.workflow]]
-name = "Start Development Server"
-author = 37925715
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "/nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin/npm run dev"
-
-[[workflows.workflow]]
-name = "Development Server"
-author = 37925715
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "/nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin/npm run dev"
-
-[[workflows.workflow]]
-name = "Start App"
-author = 37925715
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "/nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin/npm run dev"
-
-[[workflows.workflow]]
-name = "Restart Server"
-author = 37925715
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pkill -f \"tsx server/index.ts\" || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "sleep 2"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "/nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin/npm run dev"
-
-[[workflows.workflow]]
-name = "Clean Start Server"
-author = 37925715
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "fuser -k 5000/tcp || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "fuser -k 3000/tcp || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "sleep 3"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-
-[[ports]]
-localPort = 3000
-externalPort = 80
-
-[[ports]]
-localPort = 3001
-externalPort = 3001
-
-[[ports]]
-localPort = 44411
-externalPort = 3002
-
-[agent]
+[packager.features]
+packageSearch = true
+guessImports = true
+enabledForHosting = true
