@@ -1,0 +1,91 @@
+~/workspace$ bash replit-init.sh
+🚀 Starting Practice Intelligence Initialization...
+📦 Installing npm dependencies...
+
+up to date, audited 387 packages in 1s
+
+43 packages are looking for funding
+  run `npm fund` for details
+
+1 low severity vulnerability
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+✅ .env file already exists.
+🗄️ Setting up SQLite database for development...
+Database connection established.
+Executing database schema...
+Schema executed successfully.
+Seeding data...
+Data already seeded. Skipping.
+Database connection closed.
+🚀 Launching application with PM2...
+
+>>>> In-memory PM2 is out-of-date, do:
+>>>> $ pm2 update
+In memory PM2 version: 6.0.9
+Local PM2 version: 5.4.3
+
+
+>>>> In-memory PM2 is out-of-date, do:
+>>>> $ pm2 update
+In memory PM2 version: 6.0.9
+Local PM2 version: 5.4.3
+
+[PM2] Starting /nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin/npm in fork_mode (1 instance)
+[PM2] Done.
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ practice-intellig… │ fork     │ 0    │ online    │ 0%       │ 41.5mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+⏳ Waiting for server to start...
+
+>>>> In-memory PM2 is out-of-date, do:
+>>>> $ pm2 update
+In memory PM2 version: 6.0.9
+Local PM2 version: 5.4.3
+
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+/home/runner/.pm2/pm2.log last 15 lines:
+PM2        | 2025-09-14T21:41:29: PM2 log: PM2 home             : /home/runner/.pm2
+PM2        | 2025-09-14T21:41:29: PM2 log: PM2 PID file         : /home/runner/.pm2/pm2.pid
+PM2        | 2025-09-14T21:41:29: PM2 log: RPC socket file      : /home/runner/.pm2/rpc.sock
+PM2        | 2025-09-14T21:41:29: PM2 log: BUS socket file      : /home/runner/.pm2/pub.sock
+PM2        | 2025-09-14T21:41:29: PM2 log: Application log path : /home/runner/.pm2/logs
+PM2        | 2025-09-14T21:41:29: PM2 log: Worker Interval      : 30000
+PM2        | 2025-09-14T21:41:29: PM2 log: Process dump file    : /home/runner/.pm2/dump.pm2
+PM2        | 2025-09-14T21:41:29: PM2 log: Concurrent actions   : 2
+PM2        | 2025-09-14T21:41:29: PM2 log: SIGTERM timeout      : 1600
+PM2        | 2025-09-14T21:41:29: PM2 log: Runtime Binary       : /nix/store/ws50yvm6vzlzf7jzz6n7xh4szddrack1-nodejs-20.19.1/bin/node
+PM2        | 2025-09-14T21:41:29: PM2 log: ===============================================================================
+PM2        | 2025-09-15T21:41:30: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2025-09-15T21:41:30: PM2 log: [PM2] Upgrade to version 6.0.11
+PM2        | 2025-09-16T00:20:18: PM2 log: App [practice-intelligence:0] starting in -fork mode-
+PM2        | 2025-09-16T00:20:18: PM2 log: App [practice-intelligence:0] online
+
+/home/runner/.pm2/logs/practice-intelligence-out.log last 15 lines:
+0|practice | 
+0|practice | > practice-intelligence-app@1.0.0 dev
+0|practice | > NODE_ENV=development tsx watch server/index.ts
+0|practice | 
+
+/home/runner/.pm2/logs/practice-intelligence-error.log last 15 lines:
+0|practice | Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'socket.io' imported from /home/runner/workspace/server/websocket/websocket.server.ts
+0|practice |     at new NodeError (node:internal/errors:405:5)
+0|practice |     at packageResolve (node:internal/modules/esm/resolve:916:9)
+0|practice |     at moduleResolve (node:internal/modules/esm/resolve:973:20)
+0|practice |     at defaultResolve (node:internal/modules/esm/resolve:1206:11)
+0|practice |     at nextResolve (node:internal/modules/esm/hooks:864:28)
+0|practice |     at resolveBase (file:///home/runner/workspace/node_modules/tsx/dist/esm/index.mjs?1757982019172:2:3744)
+0|practice |     at resolveDirectory (file:///home/runner/workspace/node_modules/tsx/dist/esm/index.mjs?1757982019172:2:4243)
+0|practice |     at resolveTsPaths (file:///home/runner/workspace/node_modules/tsx/dist/esm/index.mjs?1757982019172:2:4984)
+0|practice |     at async resolve (file:///home/runner/workspace/node_modules/tsx/dist/esm/index.mjs?1757982019172:2:5355)
+0|practice |     at async nextResolve (node:internal/modules/esm/hooks:864:22) {
+0|practice |   code: 'ERR_MODULE_NOT_FOUND'
+0|practice | }
+0|practice | 
+0|practice | Node.js v18.20.8
+
