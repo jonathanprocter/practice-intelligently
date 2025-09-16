@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from '@google/generative-ai';
 import { perplexityClient } from './perplexity';
 
 // Initialize AI clients

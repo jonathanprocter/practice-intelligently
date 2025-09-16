@@ -94,7 +94,7 @@ export class AIIntegrationService {
         storage.getClient(clientId),
         storage.getSessionNotes(clientId),
         storage.getAppointmentsByClient(clientId),
-        storage.getTreatmentPlansByClient(clientId)
+        storage.getTreatmentPlans(clientId)
       ]);
       
       // Analyze patterns and progress
@@ -153,8 +153,8 @@ export class AIIntegrationService {
       const [client, sessionNotes, assessments, existingPlans] = await Promise.all([
         storage.getClient(clientId),
         storage.getSessionNotes(clientId),
-        storage.getAssessmentsByClient(clientId),
-        storage.getTreatmentPlansByClient(clientId)
+        storage.getAssessments(clientId),
+        storage.getTreatmentPlans(clientId)
       ]);
       
       // Build treatment planning prompt

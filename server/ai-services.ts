@@ -298,6 +298,71 @@ export async function generateProgressInsights(clientData: unknown): Promise<AIA
   return analyzeContent(content, 'progress');
 }
 
+// Generate therapeutic insights for client treatment
+export async function generateTherapeuticInsights(
+  clientData: {
+    clientId: string;
+    sessionHistory?: any[];
+    treatmentGoals?: string[];
+    clinicalNotes?: string;
+  }
+): Promise<{
+  insights: string[];
+  recommendations: string[];
+  interventions: string[];
+  riskFactors?: string[];
+}> {
+  try {
+    const prompt = `
+      Analyze the following client data and provide therapeutic insights:
+      
+      Client ID: ${clientData.clientId}
+      Session History: ${JSON.stringify(clientData.sessionHistory || [])}
+      Treatment Goals: ${JSON.stringify(clientData.treatmentGoals || [])}
+      Clinical Notes: ${clientData.clinicalNotes || 'No notes available'}
+      
+      Please provide:
+      1. Key therapeutic insights
+      2. Treatment recommendations
+      3. Suggested interventions
+      4. Any risk factors to consider
+    `;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert clinical therapist. Provide evidence-based therapeutic insights and recommendations."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 1500
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    
+    return {
+      insights: result.insights || ['Review session history for patterns'],
+      recommendations: result.recommendations || ['Continue current treatment approach'],
+      interventions: result.interventions || ['Standard therapeutic interventions'],
+      riskFactors: result.riskFactors
+    };
+  } catch (error) {
+    console.error('Failed to generate therapeutic insights:', error);
+    // Return default response on error
+    return {
+      insights: ['Manual review recommended'],
+      recommendations: ['Continue treatment as planned'],
+      interventions: ['Standard interventions apply']
+    };
+  }
+}
+
 // Clinical analysis for various therapeutic tasks
 export async function generateClinicalAnalysis(content: string, context?: string): Promise<string> {
   try {

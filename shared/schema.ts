@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { pgTable, text, varchar, timestamp, integer, boolean, jsonb, uuid, decimal, index } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -666,7 +666,7 @@ export const assessmentAuditLog = pgTable("assessment_audit_log", {
 }));
 
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many }: any) => ({
   clients: many(clients),
   appointments: many(appointments),
   sessionNotes: many(sessionNotes),
@@ -682,7 +682,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   auditLogs: many(auditLogs),
 }));
 
-export const clientsRelations = relations(clients, ({ one, many }) => ({
+export const clientsRelations = relations(clients, ({ one, many }: any) => ({
   therapist: one(users, {
     fields: [clients.therapistId],
     references: [users.id],
@@ -701,7 +701,7 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   documents: many(documents),
 }));
 
-export const appointmentsRelations = relations(appointments, ({ one, many }) => ({
+export const appointmentsRelations = relations(appointments, ({ one, many }: any) => ({
   client: one(clients, {
     fields: [appointments.clientId],
     references: [clients.id],
@@ -715,7 +715,7 @@ export const appointmentsRelations = relations(appointments, ({ one, many }) => 
   assessments: many(assessments),
 }));
 
-export const sessionNotesRelations = relations(sessionNotes, ({ one }) => ({
+export const sessionNotesRelations = relations(sessionNotes, ({ one }: any) => ({
   appointment: one(appointments, {
     fields: [sessionNotes.appointmentId],
     references: [appointments.id],
@@ -730,7 +730,7 @@ export const sessionNotesRelations = relations(sessionNotes, ({ one }) => ({
   }),
 }));
 
-export const actionItemsRelations = relations(actionItems, ({ one }) => ({
+export const actionItemsRelations = relations(actionItems, ({ one }: any) => ({
   client: one(clients, {
     fields: [actionItems.clientId],
     references: [clients.id],
@@ -741,7 +741,7 @@ export const actionItemsRelations = relations(actionItems, ({ one }) => ({
   }),
 }));
 
-export const treatmentPlansRelations = relations(treatmentPlans, ({ one }) => ({
+export const treatmentPlansRelations = relations(treatmentPlans, ({ one }: any) => ({
   client: one(clients, {
     fields: [treatmentPlans.clientId],
     references: [clients.id],
@@ -752,7 +752,7 @@ export const treatmentPlansRelations = relations(treatmentPlans, ({ one }) => ({
   }),
 }));
 
-export const aiInsightsRelations = relations(aiInsights, ({ one }) => ({
+export const aiInsightsRelations = relations(aiInsights, ({ one }: any) => ({
   client: one(clients, {
     fields: [aiInsights.clientId],
     references: [clients.id],
@@ -763,7 +763,7 @@ export const aiInsightsRelations = relations(aiInsights, ({ one }) => ({
   }),
 }));
 
-export const sessionSummariesRelations = relations(sessionSummaries, ({ one }) => ({
+export const sessionSummariesRelations = relations(sessionSummaries, ({ one }: any) => ({
   client: one(clients, {
     fields: [sessionSummaries.clientId],
     references: [clients.id],
@@ -774,7 +774,7 @@ export const sessionSummariesRelations = relations(sessionSummaries, ({ one }) =
   }),
 }));
 
-export const sessionRecommendationsRelations = relations(sessionRecommendations, ({ one }) => ({
+export const sessionRecommendationsRelations = relations(sessionRecommendations, ({ one }: any) => ({
   client: one(clients, {
     fields: [sessionRecommendations.clientId],
     references: [clients.id],
@@ -786,7 +786,7 @@ export const sessionRecommendationsRelations = relations(sessionRecommendations,
 }));
 
 // New table relations
-export const billingRecordsRelations = relations(billingRecords, ({ one }) => ({
+export const billingRecordsRelations = relations(billingRecords, ({ one }: any) => ({
   client: one(clients, {
     fields: [billingRecords.clientId],
     references: [clients.id],
@@ -801,7 +801,7 @@ export const billingRecordsRelations = relations(billingRecords, ({ one }) => ({
   }),
 }));
 
-export const assessmentsRelations = relations(assessments, ({ one }) => ({
+export const assessmentsRelations = relations(assessments, ({ one }: any) => ({
   client: one(clients, {
     fields: [assessments.clientId],
     references: [clients.id],
@@ -818,14 +818,14 @@ export const assessmentsRelations = relations(assessments, ({ one }) => ({
 
 // Progress notes relations merged into sessionNotesRelations above
 
-export const medicationsRelations = relations(medications, ({ one }) => ({
+export const medicationsRelations = relations(medications, ({ one }: any) => ({
   client: one(clients, {
     fields: [medications.clientId],
     references: [clients.id],
   }),
 }));
 
-export const communicationLogsRelations = relations(communicationLogs, ({ one }) => ({
+export const communicationLogsRelations = relations(communicationLogs, ({ one }: any) => ({
   client: one(clients, {
     fields: [communicationLogs.clientId],
     references: [clients.id],
@@ -836,7 +836,7 @@ export const communicationLogsRelations = relations(communicationLogs, ({ one })
   }),
 }));
 
-export const documentsRelations = relations(documents, ({ one }) => ({
+export const documentsRelations = relations(documents, ({ one }: any) => ({
   client: one(clients, {
     fields: [documents.clientId],
     references: [clients.id],
@@ -847,21 +847,21 @@ export const documentsRelations = relations(documents, ({ one }) => ({
   }),
 }));
 
-export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+export const auditLogsRelations = relations(auditLogs, ({ one }: any) => ({
   user: one(users, {
     fields: [auditLogs.userId],
     references: [users.id],
   }),
 }));
 
-export const compassConversationsRelations = relations(compassConversations, ({ one }) => ({
+export const compassConversationsRelations = relations(compassConversations, ({ one }: any) => ({
   therapist: one(users, {
     fields: [compassConversations.therapistId],
     references: [users.id],
   }),
 }));
 
-export const compassMemoryRelations = relations(compassMemory, ({ one }) => ({
+export const compassMemoryRelations = relations(compassMemory, ({ one }: any) => ({
   therapist: one(users, {
     fields: [compassMemory.therapistId],
     references: [users.id],
@@ -869,11 +869,11 @@ export const compassMemoryRelations = relations(compassMemory, ({ one }) => ({
 }));
 
 // Assessment Management System Relations
-export const assessmentCatalogRelations = relations(assessmentCatalog, ({ many }) => ({
+export const assessmentCatalogRelations = relations(assessmentCatalog, ({ many }: any) => ({
   clientAssessments: many(clientAssessments),
 }));
 
-export const clientAssessmentsRelations = relations(clientAssessments, ({ one, many }) => ({
+export const clientAssessmentsRelations = relations(clientAssessments, ({ one, many }: any) => ({
   client: one(clients, {
     fields: [clientAssessments.clientId],
     references: [clients.id],
@@ -894,14 +894,14 @@ export const clientAssessmentsRelations = relations(clientAssessments, ({ one, m
   scores: many(assessmentScores),
 }));
 
-export const assessmentResponsesRelations = relations(assessmentResponses, ({ one }) => ({
+export const assessmentResponsesRelations = relations(assessmentResponses, ({ one }: any) => ({
   clientAssessment: one(clientAssessments, {
     fields: [assessmentResponses.clientAssessmentId],
     references: [clientAssessments.id],
   }),
 }));
 
-export const assessmentScoresRelations = relations(assessmentScores, ({ one }) => ({
+export const assessmentScoresRelations = relations(assessmentScores, ({ one }: any) => ({
   clientAssessment: one(clientAssessments, {
     fields: [assessmentScores.clientAssessmentId],
     references: [clientAssessments.id],
@@ -912,14 +912,14 @@ export const assessmentScoresRelations = relations(assessmentScores, ({ one }) =
   }),
 }));
 
-export const assessmentPackagesRelations = relations(assessmentPackages, ({ one }) => ({
+export const assessmentPackagesRelations = relations(assessmentPackages, ({ one }: any) => ({
   createdBy: one(users, {
     fields: [assessmentPackages.createdBy],
     references: [users.id],
   }),
 }));
 
-export const assessmentAuditLogRelations = relations(assessmentAuditLog, ({ one }) => ({
+export const assessmentAuditLogRelations = relations(assessmentAuditLog, ({ one }: any) => ({
   user: one(users, {
     fields: [assessmentAuditLog.userId],
     references: [users.id],

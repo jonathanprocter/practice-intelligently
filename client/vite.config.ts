@@ -54,7 +54,6 @@ export default defineConfig(async () => {
         allow: ['.'],
       },
       host: "0.0.0.0",
-      allowedHosts: "all",
       cors: true,
     },
   };

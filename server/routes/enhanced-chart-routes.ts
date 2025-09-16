@@ -333,7 +333,7 @@ export function registerEnhancedChartRoutes(app: Express) {
       console.error('Error fetching clinical themes:', error);
       res.status(500).json({ 
         error: 'Failed to fetch clinical themes',
-        message: error.message 
+        message: error instanceof Error ? error.message : 'Unknown error' 
       });
     }
   });
@@ -350,8 +350,8 @@ export function registerEnhancedChartRoutes(app: Express) {
       // Calculate statistics
       const stats = {
         total: documents.length,
-        byCategory: {},
-        bySensitivity: {},
+        byCategory: {} as Record<string, number>,
+        bySensitivity: {} as Record<string, number>,
         recentlyProcessed: documents.slice(0, 5).map(d => ({
           id: d.id,
           fileName: d.fileName,
@@ -374,7 +374,7 @@ export function registerEnhancedChartRoutes(app: Express) {
       console.error('Error fetching document statistics:', error);
       res.status(500).json({ 
         error: 'Failed to fetch document statistics',
-        message: error.message 
+        message: error instanceof Error ? error.message : 'Unknown error' 
       });
     }
   });
@@ -412,7 +412,7 @@ export function registerEnhancedChartRoutes(app: Express) {
         } catch (error) {
           errors.push({
             fileName: file.originalname,
-            error: error.message
+            error: error instanceof Error ? error.message : 'Unknown error'
           });
         }
       }
@@ -427,7 +427,7 @@ export function registerEnhancedChartRoutes(app: Express) {
       console.error('Error in batch processing:', error);
       res.status(500).json({ 
         error: 'Failed to batch process documents',
-        message: error.message 
+        message: error instanceof Error ? error.message : 'Unknown error' 
       });
     }
   });

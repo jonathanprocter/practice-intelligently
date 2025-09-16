@@ -1118,6 +1118,26 @@ export class DatabaseStorage implements IStorage {
     return updatedInsight;
   }
 
+  // Additional AI insights methods
+  async getAiInsightsByClient(clientId: string): Promise<AiInsight[]> {
+    // This is an alias for getClientAiInsights to match the interface
+    return await this.getClientAiInsights(clientId);
+  }
+
+  async getAiInsightsByDateRange(therapistId: string, startDate: Date, endDate: Date): Promise<AiInsight[]> {
+    return await db
+      .select()
+      .from(aiInsights)
+      .where(
+        and(
+          eq(aiInsights.therapistId, therapistId),
+          gte(aiInsights.createdAt, startDate),
+          lte(aiInsights.createdAt, endDate)
+        )
+      )
+      .orderBy(desc(aiInsights.createdAt));
+  }
+
   // Billing methods
   async getBillingRecords(therapistId: string): Promise<BillingRecord[]> {
     return await db
@@ -1249,6 +1269,26 @@ export class DatabaseStorage implements IStorage {
       .from(sessionNotes)
       .where(eq(sessionNotes.therapistId, therapistId))
       .orderBy(desc(sessionNotes.createdAt));
+  }
+
+  // Session notes methods matching interface
+  async getSessionNotesByAppointmentId(appointmentId: string): Promise<SessionNote[]> {
+    // This is an alias for getProgressNotesByAppointmentId
+    return await this.getProgressNotesByAppointmentId(appointmentId);
+  }
+
+  async getSessionNotesByDateRange(therapistId: string, startDate: Date, endDate: Date): Promise<SessionNote[]> {
+    return await db
+      .select()
+      .from(sessionNotes)
+      .where(
+        and(
+          eq(sessionNotes.therapistId, therapistId),
+          gte(sessionNotes.sessionDate, startDate),
+          lte(sessionNotes.sessionDate, endDate)
+        )
+      )
+      .orderBy(desc(sessionNotes.sessionDate));
   }
 
 

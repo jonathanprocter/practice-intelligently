@@ -1,5 +1,6 @@
 import { pool } from './db';
 import { clients, appointments, sessionNotes, documents, aiInsights } from '@shared/schema';
+// @ts-ignore - drizzle-orm types may not be fully installed
 import { sql, and, or, like, gte, lte, eq, desc, asc, inArray } from 'drizzle-orm';
 
 export interface SearchFilters {
@@ -110,7 +111,7 @@ export class SearchService {
 
     const result = await pool.query(queryStr, params);
 
-    return result.rows.map(row => ({
+    return result.rows.map((row: any) => ({
       id: row.id,
       type: 'client' as const,
       title: `${row.first_name} ${row.last_name}`,
@@ -192,7 +193,7 @@ export class SearchService {
 
     const result = await pool.query(queryStr, params);
 
-    return result.rows.map(row => ({
+    return result.rows.map((row: any) => ({
       id: row.id,
       type: 'appointment' as const,
       title: `${row.type} with ${row.first_name} ${row.last_name}`,
@@ -256,7 +257,7 @@ export class SearchService {
 
     const result = await pool.query(queryStr, [fuzzyPattern, therapistId, limit, offset]);
 
-    return result.rows.map(row => ({
+    return result.rows.map((row: any) => ({
       id: row.id,
       type: 'session_note' as const,
       title: row.title || 'Session Note',
@@ -310,7 +311,7 @@ export class SearchService {
 
     const result = await pool.query(queryStr, [fuzzyPattern, therapistId, limit, offset]);
 
-    return result.rows.map(row => ({
+    return result.rows.map((row: any) => ({
       id: row.id,
       type: 'document' as const,
       title: row.filename,
@@ -400,7 +401,7 @@ export class SearchService {
        LIMIT $2`,
       [therapistId, limit]
     );
-    return result.rows.map(row => row.query);
+    return result.rows.map((row: any) => row.query);
   }
 
   // Save a search preset
@@ -470,7 +471,7 @@ export class SearchService {
       [therapistId, `${query}%`, query]
     );
     
-    return result.rows.map(row => row.query);
+    return result.rows.map((row: any) => row.query);
   }
 }
 

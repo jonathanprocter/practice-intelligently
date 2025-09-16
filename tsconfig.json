@@ -1,18 +1,20 @@
 {
-  "include": ["client/src/**/*", "shared/**/*", "server/**/*"],
+  "include": ["client/src/**/*", "shared/**/*", "server/**/*", "types/**/*", "vite-env.d.ts"],
   "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
   "compilerOptions": {
     "incremental": true,
     "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
     "noEmit": true,
     "module": "ESNext",
+    "target": "ES2018",
     "strict": true,
-    "lib": ["esnext", "dom", "dom.iterable"],
+    "lib": ["ES2018", "esnext", "dom", "dom.iterable"],
     "jsx": "preserve",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
     "moduleResolution": "bundler",
+    "downlevelIteration": true,
     "baseUrl": ".",
     "types": ["node", "vite/client"],
     "paths": {

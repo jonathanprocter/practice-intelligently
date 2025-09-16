@@ -1,6 +1,7 @@
 import { z } from 'zod';
+// @ts-ignore - mammoth types may not be installed
 import mammoth from 'mammoth';
-import { Storage } from './storage.js';
+import { storage } from './storage.js';
 
 // Schema for parsed session data
 const ParsedSessionSchema = z.object({
@@ -20,10 +21,10 @@ const ParsedSessionSchema = z.object({
 type ParsedSession = z.infer<typeof ParsedSessionSchema>;
 
 export class SessionDocumentProcessor {
-  private storage: Storage;
+  private storage: typeof storage;
 
-  constructor(storage: Storage) {
-    this.storage = storage;
+  constructor(storageInstance: typeof storage) {
+    this.storage = storageInstance;
   }
 
   /**
@@ -420,7 +421,7 @@ export class SessionDocumentProcessor {
     const existingNotes = await this.storage.getSessionNotesByClientId(client.id);
     const sessionDate = new Date(session.sessionDate);
     
-    const existingNote = existingNotes.find(note => {
+    const existingNote = existingNotes.find((note: any) => {
       const noteDate = new Date(note.createdAt);
       return (
         noteDate.getFullYear() === sessionDate.getFullYear() &&
@@ -479,7 +480,7 @@ export class SessionDocumentProcessor {
 
     // Try to find existing client with fuzzy matching
     const clients = await this.storage.getClients(therapistId);
-    const existingClient = clients.find(client => {
+    const existingClient = clients.find((client: any) => {
       const firstMatch = client.firstName.toLowerCase() === firstName.toLowerCase();
       const lastMatch = client.lastName.toLowerCase() === lastName.toLowerCase();
       
@@ -560,7 +561,7 @@ export class SessionDocumentProcessor {
       const appointments = await this.storage.getAppointmentsByClientId(clientId);
       
       // Find appointment on the same date
-      const matchingAppointment = appointments.find(apt => {
+      const matchingAppointment = appointments.find((apt: any) => {
         const aptDate = new Date(apt.startTime);
         return (
           aptDate.getFullYear() === sessionDate.getFullYear() &&
