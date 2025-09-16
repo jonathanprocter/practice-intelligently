@@ -5,8 +5,8 @@ import { MessageCircle, X, Send, Loader2, Minimize2, Maximize2, Mic, MicOff, Vol
 const Button = ({ children, className = '', variant = 'default', size = 'default', disabled = false, onClick, type = 'button', title, ...props }) => (
   <button
     className={`inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 ${
-      variant === 'ghost' ? 'hover:bg-gray-100' : 
-      variant === 'outline' ? 'border border-gray-300 bg-white hover:bg-gray-50' : 
+      variant === 'ghost' ? 'hover:bg-gray-100' :
+      variant === 'outline' ? 'border border-gray-300 bg-white hover:bg-gray-50' :
       'bg-purple-600 text-white hover:bg-purple-700'
     } ${
       size === 'sm' ? 'h-9 px-3 text-sm' : 'h-10 px-4'
@@ -89,33 +89,33 @@ const compassStyles = `
   }
 
   @keyframes statusPulse {
-    0%, 100% { 
+    0%, 100% {
       box-shadow: 0 0 8px rgba(139, 92, 246, 0.4);
       transform: scale(1);
     }
-    50% { 
+    50% {
       box-shadow: 0 0 16px rgba(139, 92, 246, 0.6);
       transform: scale(1.1);
     }
   }
 
   @keyframes listeningPulse {
-    0%, 100% { 
+    0%, 100% {
       transform: scale(0.8);
       opacity: 0;
     }
-    50% { 
+    50% {
       transform: scale(1.2);
       opacity: 1;
     }
   }
 
   @keyframes listeningDot {
-    0%, 100% { 
+    0%, 100% {
       transform: scale(1);
       box-shadow: 0 0 8px rgba(167, 139, 250, 0.5);
     }
-    50% { 
+    50% {
       transform: scale(1.3);
       box-shadow: 0 0 20px rgba(167, 139, 250, 0.9);
     }
@@ -127,11 +127,11 @@ const compassStyles = `
   }
 
   @keyframes thinkingDot {
-    0%, 100% { 
+    0%, 100% {
       transform: scale(1) rotate(0deg);
       box-shadow: 0 0 8px rgba(147, 51, 234, 0.5);
     }
-    50% { 
+    50% {
       transform: scale(1.2) rotate(180deg);
       box-shadow: 0 0 16px rgba(147, 51, 234, 0.9);
     }
@@ -387,7 +387,7 @@ export function Compass({ className = '' }) {
 
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript.trim();
-//// Immediately stop any current speech to prevent overlapping
+        // Immediately stop any current speech to prevent overlapping
         if (isSpeaking) {
           interruptSpeech();
         }
@@ -396,8 +396,8 @@ export function Compass({ className = '' }) {
         if (isSpeaking && allowInterruption) {
           const interruptKeywords = ['stop', 'pause', 'wait', 'hold on', 'interrupt', 'hey compass'];
           if (interruptKeywords.some(keyword => transcript.toLowerCase().includes(keyword))) {
-//interruptSpeech();
-            
+            // interruptSpeech(); // Already handled by early return if needed
+
             // If it's "hey compass", process the follow-up command
             if (transcript.toLowerCase().includes('hey compass')) {
               const query = transcript.toLowerCase().replace('hey compass', '').trim();
@@ -405,8 +405,8 @@ export function Compass({ className = '' }) {
                 sendMessage(query);
               }
             }
-            
-            // Don't set listening to false if in continuous/wake word mode
+
+            // Don't stop listening in continuous/wake word mode
             if (!continuousMode && !wakeWordMode) {
               setIsListening(false);
               setCompassState('normal');
@@ -417,7 +417,7 @@ export function Compass({ className = '' }) {
 
         // Handle wake word detection
         if ((voiceActivation || wakeWordMode) && transcript.toLowerCase().includes('hey compass')) {
-//const query = transcript.toLowerCase().replace('hey compass', '').trim();
+          const query = transcript.toLowerCase().replace('hey compass', '').trim();
           if (query && query.length > 0) {
             sendMessage(query);
           }
@@ -431,7 +431,7 @@ export function Compass({ className = '' }) {
 
         // Handle continuous mode - process any speech directly
         if (continuousMode && transcript && transcript.length > 2) {
-//sendMessage(transcript);
+          sendMessage(transcript);
           setInputMessage('');
           // Keep listening for next input
           return;
@@ -439,7 +439,7 @@ export function Compass({ className = '' }) {
 
         // Regular mode - just capture the transcript
         setInputMessage(transcript);
-        
+
         // Don't stop listening in continuous modes
         if (!continuousMode && !wakeWordMode) {
           setIsListening(false);
@@ -448,26 +448,28 @@ export function Compass({ className = '' }) {
       };
 
       recognition.onerror = (event) => {
-//// Don't stop listening on errors in continuous modes, just log them
+        // Don't stop listening on errors in continuous modes, just log them
         if (event.error !== 'no-speech' && event.error !== 'aborted') {
-          if (!continuousMode && !wakeWordMode) {
-            setIsListening(false);
-            setCompassState('normal');
-          }
+          console.error('Speech recognition error:', event.error);
+        }
+        if (!continuousMode && !wakeWordMode) {
+          setIsListening(false);
+          setCompassState('normal');
         }
       };
 
       recognition.onend = () => {
-//// Auto-restart in continuous/wake word modes for natural conversation
+        // Auto-restart in continuous/wake word modes for natural conversation
         if ((continuousMode || wakeWordMode) && voiceActivation && !isSpeaking && isOpen) {
           try {
             setTimeout(() => {
               if (speechRecognition && voiceActivation) {
-//speechRecognition.start();
+                speechRecognition.start();
               }
             }, 100); // Small delay to prevent rapid restarts
           } catch (error) {
-//}
+            console.error('Error restarting speech recognition:', error);
+          }
         } else {
           setIsListening(false);
           setCompassState('normal');
@@ -486,9 +488,12 @@ export function Compass({ className = '' }) {
         setIsListening(false);
         setCompassState('normal');
       } catch (error) {
-//}
+        console.error('Error stopping speech recognition:', error);
+      }
     }
+    // Dependency on voiceActivation, speechRecognition, and isListening
   }, [voiceActivation, speechRecognition, isListening]);
+
 
   // Enhanced voice input controls with natural conversation flow
   const startListening = () => {
@@ -498,12 +503,13 @@ export function Compass({ className = '' }) {
         if (isSpeaking) {
           interruptSpeech();
         }
-        
-//setIsListening(true);
+
+        setIsListening(true);
         setCompassState('listening');
         speechRecognition.start();
       } catch (error) {
-//setIsListening(false);
+        console.error('Error starting speech recognition:', error);
+        setIsListening(false);
         setCompassState('normal');
       }
     }
@@ -516,22 +522,44 @@ export function Compass({ className = '' }) {
         setIsListening(false);
         setCompassState('normal');
       } catch (error) {
-//}
+        console.error('Error stopping speech recognition:', error);
+      }
     }
   };
 
   // Enhanced speech interruption with immediate response
   const interruptSpeech = () => {
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0; // Reset to beginning
-      setCurrentAudio(null);
+    try {
+      // Stop current audio playback
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0; // Reset to beginning
+        setCurrentAudio(null);
+      }
+
       setIsSpeaking(false);
-//}
-    
-    // Immediately clear any speech synthesis
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+
+      // Immediately clear any speech synthesis
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+
+      // Resume listening if in continuous/wake word mode, after a brief delay
+      if ((continuousMode || wakeWordMode) && voiceActivation && isOpen) {
+        setTimeout(() => {
+          if (!isListening && speechRecognition) {
+            try {
+              setIsListening(true);
+              setCompassState('listening');
+              speechRecognition.start();
+            } catch (error) {
+              console.error('Error resuming speech recognition after interruption:', error);
+            }
+          }
+        }, 500); // Brief pause before resuming listening
+      }
+    } catch (error) {
+      console.error('Error in interruptSpeech:', error);
     }
   };
 
@@ -546,7 +574,7 @@ export function Compass({ className = '' }) {
       }
 
       setIsSpeaking(true);
-//       console.log('🎤 Speaking:', text.substring(0, 50) + '...');
+      // console.log('🎤 Speaking:', text.substring(0, 50) + '...');
 
       // Use ElevenLabs API for high-quality voice synthesis
       const response = await fetch('/api/compass/speak', {
@@ -554,7 +582,7 @@ export function Compass({ className = '' }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           text,
           voice: selectedVoice,
           speed: speechRate,
@@ -569,20 +597,21 @@ export function Compass({ className = '' }) {
 
         // Enhanced audio event handling for natural conversation
         audio.onended = () => {
-//setIsSpeaking(false);
+          setIsSpeaking(false);
           setCurrentAudio(null);
           URL.revokeObjectURL(audioUrl);
-          
+
           // Resume listening in continuous modes for natural conversation
           if ((continuousMode || wakeWordMode) && voiceActivation && isOpen) {
             setTimeout(() => {
               if (!isListening && speechRecognition) {
                 try {
-//setIsListening(true);
+                  setIsListening(true);
                   setCompassState('listening');
                   speechRecognition.start();
                 } catch (error) {
-//}
+                  console.error('Error restarting speech recognition after speaking:', error);
+                }
               }
             }, 500); // Brief pause before resuming listening
           }
@@ -590,14 +619,15 @@ export function Compass({ className = '' }) {
 
         // Immediate interruption handling
         audio.onpause = () => {
-//setIsSpeaking(false);
+          setIsSpeaking(false);
           setCurrentAudio(null);
           URL.revokeObjectURL(audioUrl);
         };
 
         // Handle loading and playback errors gracefully
         audio.onerror = (error) => {
-//setIsSpeaking(false);
+          console.error('Audio playback error:', error);
+          setIsSpeaking(false);
           setCurrentAudio(null);
           URL.revokeObjectURL(audioUrl);
         };
@@ -605,7 +635,8 @@ export function Compass({ className = '' }) {
         // Log voice context for debugging
         const voiceContext = response.headers.get('X-Voice-Context');
         if (voiceContext) {
-//}
+          // console.log('Voice context:', voiceContext);
+        }
 
         setCurrentAudio(audio);
         await audio.play();
@@ -613,7 +644,8 @@ export function Compass({ className = '' }) {
         throw new Error(`Voice API failed: ${response.status}`);
       }
     } catch (error) {
-//setIsSpeaking(false);
+      console.error('Error in speakText:', error);
+      setIsSpeaking(false);
       setCurrentAudio(null);
     }
   };
@@ -726,7 +758,7 @@ export function Compass({ className = '' }) {
             title="Click to open Compass AI Assistant"
           >
             {/* Outer ring with enhanced shadow */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-gray-100 to-gray-200" 
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-gray-100 to-gray-200"
                  style={{ boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.1)' }}>
               {/* Inner compass purple ring */}
               <div className="absolute inset-2 rounded-full bg-gradient-to-br from-purple-600 to-purple-400 shadow-inner">
@@ -746,10 +778,10 @@ export function Compass({ className = '' }) {
                           <stop offset="100%" style={{stopColor: '#8b5cf6', stopOpacity: 1}} />
                         </linearGradient>
                       </defs>
-                      <path 
-                        d="M50,15 L58,35 L80,35 L62,48 L70,68 L50,53 L30,68 L38,48 L20,35 L42,35 Z" 
-                        fill="url(#starGradient)" 
-                        stroke="#6b21a8" 
+                      <path
+                        d="M50,15 L58,35 L80,35 L62,48 L70,68 L50,53 L30,68 L38,48 L20,35 L42,35 Z"
+                        fill="url(#starGradient)"
+                        stroke="#6b21a8"
                         strokeWidth="1"
                         style={{filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))'}}
                       />
@@ -829,8 +861,8 @@ export function Compass({ className = '' }) {
                 <div className="absolute w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-purple-400">
                   <div className="absolute top-0.5 left-0.5 right-0.5 bottom-0.5 rounded-full bg-white flex justify-center items-center">
                     <svg className="w-3.5 h-3.5" viewBox="0 0 100 100">
-                      <path 
-                        d="M50,20 L55,40 L70,40 L58,50 L63,70 L50,58 L37,70 L42,50 L30,40 L45,40 Z" 
+                      <path
+                        d="M50,20 L55,40 L70,40 L58,50 L63,70 L50,58 L37,70 L42,50 L30,40 L45,40 Z"
                         fill="#7c3aed"
                       />
                     </svg>
@@ -866,7 +898,7 @@ export function Compass({ className = '' }) {
                 onClick={() => {
                   const newVoiceActivation = !voiceActivation;
                   setVoiceActivation(newVoiceActivation);
-                  
+
                   if (newVoiceActivation) {
                     // Enable voice activation
                     if (speechRecognition && !isListening && wakeWordMode) {
@@ -875,7 +907,8 @@ export function Compass({ className = '' }) {
                         setIsListening(true);
                         setCompassState('listening');
                       } catch (error) {
-//}
+                        console.error('Error starting speech recognition for voice activation:', error);
+                      }
                     }
                   } else {
                     // Disable voice activation
@@ -885,7 +918,8 @@ export function Compass({ className = '' }) {
                         setIsListening(false);
                         setCompassState('normal');
                       } catch (error) {
-//}
+                        console.error('Error stopping speech recognition for voice activation:', error);
+                      }
                     }
                   }
                 }}
@@ -954,7 +988,7 @@ export function Compass({ className = '' }) {
                     <SelectItem value="manual">Manual (Fixed)</SelectItem>
                   </Select>
                   <div className="text-xs text-gray-500 mt-1">
-                    {voiceModulation === 'auto' 
+                    {voiceModulation === 'auto'
                       ? 'AI analyzes content for optimal voice characteristics'
                       : 'Uses consistent voice settings for all content'
                     }
@@ -967,7 +1001,7 @@ export function Compass({ className = '' }) {
                     <SelectItem value="push">Push to Talk</SelectItem>
                   </Select>
                   <div className="text-xs text-gray-500 mt-1">
-                    {wakeWordMode 
+                    {wakeWordMode
                       ? 'Say "Hey Compass" to activate voice commands'
                       : 'Hold the microphone button to speak'
                     }
