@@ -1,7 +1,7 @@
 hidden = [".config", "node_modules", ".env"]
 run = "bash replit-init.sh"
 entrypoint = "server/index.ts"
-modules = ["nodejs-20"]
+modules = ["nodejs-18"]
 
 [nix]
 channel = "stable-23_11"
