@@ -1,0 +1,119 @@
+
+0|practice-intelligence  | ✅ OpenAI service initialized.
+0|practice-intelligence  | 8:22:33 PM [error] Failed to initialize Vite server: Error: Cannot find package 'vite' imported from /home/runner/workspace/server/vite.ts
+0|practice-intelligence  | 8:22:33 PM [vite] serving on port 3000
+0|practice-intelligence  | 8:22:33 PM [vite] GET /api/dashboard/stats/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c 404 in 4ms
+0|practice-intelligence  | 8:22:34 PM [vite] GET /api/session-notes/today/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c 404 in 1ms
+0|practice-intelligence  | 8:22:36 PM [vite] GET /api/dashboard/stats/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c 404 in 1ms
+0|practice-intelligence  | 8:22:36 PM [vite] GET /api/health/ai-services 404 in 1ms
+0|practice-intelligence  | 8:22:37 PM [vite] GET /api/health 200 in 8ms :: {"status":"ok","timestamp":"2025-09-16T00:22:37.1…
+^C
+~/workspace$ bash replit-init.sh
+🚀 Starting Practice Intelligence Initialization...
+📦 Installing npm dependencies...
+
+up to date, audited 403 packages in 1s
+
+43 packages are looking for funding
+  run `npm fund` for details
+
+1 low severity vulnerability
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+✅ .env file already exists.
+🗄️ Setting up SQLite database for development...
+Database connection established.
+Executing database schema...
+Schema executed successfully.
+Seeding data...
+Data already seeded. Skipping.
+Database connection closed.
+🚀 Launching application with PM2...
+
+>>>> In-memory PM2 is out-of-date, do:
+>>>> $ pm2 update
+In memory PM2 version: 6.0.9
+Local PM2 version: 5.4.3
+
+[PM2] Applying action deleteProcessId on app [practice-intelligence](ids: [ 0 ])
+[PM2] [practice-intelligence](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+
+>>>> In-memory PM2 is out-of-date, do:
+>>>> $ pm2 update
+In memory PM2 version: 6.0.9
+Local PM2 version: 5.4.3
+
+[PM2] Starting /nix/store/ys5qb8fr8gq3ifk2knndn5lgm5lvhabb-nodejs-18.20.8/bin/npm in fork_mode (1 instance)
+[PM2] Done.
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ practice-intellig… │ fork     │ 0    │ online    │ 0%       │ 24.1mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+⏳ Waiting for server to start...
+
+>>>> In-memory PM2 is out-of-date, do:
+>>>> $ pm2 update
+In memory PM2 version: 6.0.9
+Local PM2 version: 5.4.3
+
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+/home/runner/.pm2/pm2.log last 15 lines:
+PM2        | 2025-09-16T00:21:30: PM2 log: Stopping app:practice-intelligence id:0
+PM2        | 2025-09-16T00:21:30: PM2 log: App [practice-intelligence:0] exited with code [2] via signal [SIGINT]
+PM2        | 2025-09-16T00:21:31: PM2 log: pid=11433 msg=process killed
+PM2        | 2025-09-16T00:21:31: PM2 log: App [practice-intelligence:0] starting in -fork mode-
+PM2        | 2025-09-16T00:21:31: PM2 log: App [practice-intelligence:0] online
+PM2        | 2025-09-16T00:21:48: PM2 log: Stopping app:practice-intelligence id:0
+PM2        | 2025-09-16T00:21:48: PM2 log: App [practice-intelligence:0] exited with code [2] via signal [SIGINT]
+PM2        | 2025-09-16T00:21:48: PM2 log: pid=11982 msg=process killed
+PM2        | 2025-09-16T00:21:50: PM2 log: App [practice-intelligence:0] starting in -fork mode-
+PM2        | 2025-09-16T00:21:50: PM2 log: App [practice-intelligence:0] online
+PM2        | 2025-09-16T00:23:01: PM2 log: Stopping app:practice-intelligence id:0
+PM2        | 2025-09-16T00:23:01: PM2 log: App [practice-intelligence:0] exited with code [0] via signal [SIGINT]
+PM2        | 2025-09-16T00:23:01: PM2 log: pid=12403 msg=process killed
+PM2        | 2025-09-16T00:23:03: PM2 log: App [practice-intelligence:0] starting in -fork mode-
+PM2        | 2025-09-16T00:23:03: PM2 log: App [practice-intelligence:0] online
+
+/home/runner/.pm2/logs/practice-intelligence-error.log last 15 lines:
+0|practice |     at async handleMainPromise (node:internal/modules/run_main:106:12)
+0|practice | 
+0|practice | Node.js v18.20.8
+0|practice | /home/runner/workspace/server/index.ts:21
+0|practice | import { registerRoutes } from "./routes";
+0|practice |          ^
+0|practice | 
+0|practice | SyntaxError: The requested module './routes' does not provide an export named 'registerRoutes'
+0|practice |     at ModuleJob._instantiate (node:internal/modules/esm/module_job:123:21)
+0|practice |     at async ModuleJob.run (node:internal/modules/esm/module_job:191:5)
+0|practice |     at async ModuleLoader.import (node:internal/modules/esm/loader:337:24)
+0|practice |     at async loadESM (node:internal/process/esm_loader:34:7)
+0|practice |     at async handleMainPromise (node:internal/modules/run_main:106:12)
+0|practice | 
+0|practice | Node.js v18.20.8
+
+/home/runner/.pm2/logs/practice-intelligence-out.log last 15 lines:
+0|practice | 8:22:33 PM [vite] serving on port 3000
+0|practice | 8:22:33 PM [vite] GET /api/dashboard/stats/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c 404 in 4ms
+0|practice | 8:22:34 PM [vite] GET /api/session-notes/today/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c 404 in 1ms
+0|practice | 8:22:36 PM [vite] GET /api/dashboard/stats/e66b8b8e-e7a2-40b9-ae74-00c93ffe503c 404 in 1ms
+0|practice | 8:22:36 PM [vite] GET /api/health/ai-services 404 in 1ms
+0|practice | 8:22:37 PM [vite] GET /api/health 200 in 8ms :: {"status":"ok","timestamp":"2025-09-16T00:22:37.1…
+0|practice | SIGINT received, shutting down gracefully
+0|practice | 12:23:01 AM [tsx] Previous process hasn't exited yet. Force killing...
+0|practice | 
+0|practice | > practice-intelligence-app@1.0.0 dev
+0|practice | > NODE_ENV=development tsx watch server/index.ts
+0|practice | 
+0|practice | ✅ OpenAI service initialized.
+0|practice | 8:23:05 PM [error] Failed to initialize Vite server: Error: Cannot find package 'vite' imported from /home/runner/workspace/server/vite.ts
+0|practice | 8:23:05 PM [vite] serving on port 3000
+
+^C
+~/workspace$ 

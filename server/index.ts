@@ -18,7 +18,7 @@ if (typeof import.meta.dirname === 'undefined') {
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from 'http';
 import { exec } from 'child_process';
-import { registerRoutes } from "./routes";
+import router from "./routes";
 import { setupVite, log } from "./vite";
 import { setupWebSocketServer } from './websocket/websocket.server';
 
@@ -100,7 +100,7 @@ const app = express();
     app.set('wsManager', wsManager);
 
     // THEN register API routes BEFORE Vite (so API routes are handled first)
-    await registerRoutes(app);
+    app.use('/api', router);
 
     // FINALLY setup Vite (this should be last as it catches all non-API routes)
     // This handles both development and production modes
