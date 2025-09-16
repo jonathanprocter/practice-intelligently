@@ -1,0 +1,85 @@
+#!/bin/bash
+# fix-server-startup.sh
+
+echo "Fixing server startup issues..."
+
+# Fix the server index.ts to properly serve client
+cat > /tmp/fix-server.js << 'EOF'
+const fs = require('fs');
+const serverPath = 'server/index.ts';
+
+if (fs.existsSync(serverPath)) {
+  let content = fs.readFileSync(serverPath, 'utf8');
+  
+  // Check if Vite middleware is properly configured
+  if (!content.includes('app.get("*"')) {
+    // Add catch-all route for client
+    const apiRoutesEnd = content.lastIndexOf('app.use("/api"');
+    const insertPoint = content.indexOf('\n', apiRoutesEnd) + 1;
+    
+    const clientServing = `
+// Serve client application
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../dist')));
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(__dirname, '../dist/index.html'));
+    }
+  });
+} else {
+  // Development: Vite will handle client serving
+  app.get('/', (req, res) => {
+    res.send(\`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Practice Intelligence</title>
+          <script type="module">
+            window.location.href = 'http://localhost:5173';
+          </script>
+        </head>
+        <body>
+          <p>Redirecting to development server...</p>
+        </body>
+      </html>
+    \`);
+  });
+}
+`;
+    
+    content = content.slice(0, insertPoint) + clientServing + content.slice(insertPoint);
+  }
+  
+  fs.writeFileSync(serverPath, content);
+  console.log('Fixed server startup');
+}
+EOF
+
+node /tmp/fix-server.js
+
+# Update package.json for proper dev/prod scripts
+cat > /tmp/update-scripts.js << 'EOF'
+const fs = require('fs');
+const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+
+pkg.scripts = {
+  ...pkg.scripts,
+  "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+  "dev:server": "nodemon --watch server --ext ts --exec 'ts-node --transpile-only' server/index.ts",
+  "dev:client": "vite",
+  "build": "vite build",
+  "preview": "vite preview",
+  "start": "NODE_ENV=production node server/index.js || ts-node --transpile-only server/index.ts",
+  "start:dev": "npm run dev"
+};
+
+fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+console.log('Updated package.json scripts');
+EOF
+
+node /tmp/update-scripts.js
+
+echo "Installing required packages..."
+npm install --legacy-peer-deps concurrently nodemon
+
+echo "✅ Server startup fixed!"

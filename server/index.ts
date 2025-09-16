@@ -111,11 +111,50 @@ const app = express();
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         environment: process.env.NODE_ENV || 'development',
-        viteStatus: app.get('viteStatus') || 'initializing'
+        viteEnabled: !!app.get('viteServer')
       });
     });
 
-    // Error handler (register before Vite but don't block on it)
+    // Simple handler to serve index.html for client-side routes
+    // This works with Vite middleware which handles assets
+    app.get('*', async (req, res, next) => {
+      // Skip API routes, auth routes, WebSocket routes, and health check
+      if (req.path.startsWith('/api') || 
+          req.path.startsWith('/auth') || 
+          req.path.startsWith('/socket.io') ||
+          req.path === '/health' ||
+          req.path.includes('.')) { // Skip file requests (let Vite handle them)
+        return next();
+      }
+
+      try {
+        // Get the Vite server instance if available
+        const viteServer = app.get('viteServer');
+        const indexPath = path.resolve(process.cwd(), 'client', 'index.html');
+        
+        // Read the index.html file
+        let html = fs.readFileSync(indexPath, 'utf-8');
+        
+        // If Vite server is available, transform the HTML
+        if (viteServer && typeof viteServer.transformIndexHtml === 'function') {
+          try {
+            html = await viteServer.transformIndexHtml(req.url, html);
+          } catch (e) {
+            // If transform fails, serve the raw HTML
+            console.log('Vite transform failed, serving raw HTML:', e.message);
+          }
+        }
+        
+        // Send the HTML
+        res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
+      } catch (e) {
+        console.error('Error serving index.html:', e);
+        // If all else fails, return 404
+        res.status(404).send('Not Found');
+      }
+    });
+
+    // Error handler (register after the client route handler)
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
@@ -155,33 +194,20 @@ const app = express();
     }, () => {
       log(`Server listening on port ${port} - HTTP endpoints ready`);
       
-      // NOW setup Vite in the background (non-blocking)
-      // This allows the server to respond to requests immediately
-      log('Starting Vite initialization in background...');
-      app.set('viteStatus', 'initializing');
+      // Setup Vite in the background (non-blocking)
+      log('Starting Vite initialization...');
       
-      // Create a timeout promise
-      const viteTimeout = new Promise<null>((_, reject) => {
-        setTimeout(() => reject(new Error('Vite initialization timeout after 10 seconds')), 10000);
-      });
-      
-      // Setup Vite with timeout
-      Promise.race([
-        setupVite(app, server),
-        viteTimeout
-      ])
+      setupVite(app, server)
       .then((viteServer) => {
         if (viteServer) {
           log('Vite development server initialized successfully');
-          app.set('viteStatus', 'ready');
+          app.set('viteServer', viteServer);
         } else {
-          log('Vite server running in production mode or disabled');
-          app.set('viteStatus', 'production');
+          log('Running without Vite development server');
         }
       })
       .catch((err) => {
-        console.error('Failed to initialize Vite (server continues running):', err.message);
-        app.set('viteStatus', 'failed');
+        console.error('Vite initialization error (server continues without HMR):', err.message || err);
         
         // Add fallback middleware for serving static files if Vite fails
         const distPath = path.resolve(process.cwd(), 'dist');
