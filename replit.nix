@@ -29,6 +29,6 @@
     ];
 
     NODE_ENV = "development";
-    PATH = "${pkgs.nodejs_18}/bin:${pkgs.yarn}/bin:${pkgs.git}/bin:$PATH";  # Updated to nodejs_18
+    PATH = "${pkgs.nodejs_20}/bin:${pkgs.yarn}/bin:${pkgs.git}/bin:$PATH";  # Updated to nodejs_20
   };
 }
