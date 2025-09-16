@@ -42,7 +42,7 @@ interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
-  aiProvider?: string;
+  
 }
 
 // Your original compass styles
