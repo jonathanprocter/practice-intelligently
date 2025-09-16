@@ -22,7 +22,7 @@ interface MetadataReviewModalProps {
     alternatives?: { names: string[]; dates: string[] };
   };
   availableClients: Array<{ id: string; firstName: string; lastName: string }>;
-  onConfirm: (finalMetadata: any, createNote: boolean) => void;
+  onConfirm: (finalMetadata: { finalMetadata: { clientName?: string; sessionDate?: string }; manualOverrides?: Record<string, string> }, createNote: boolean) => void;
   isProcessing?: boolean;
 }
 

@@ -216,7 +216,7 @@ export function Compass({ className = '' }: CompassProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [sessionId, setSessionId] = useState('');
+  const [sessionId, setSessionId] = useState<string>('');
   const [inputMessage, setInputMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -368,7 +368,7 @@ export function Compass({ className = '' }: CompassProps) {
       recognition.interimResults = false;
       recognition.lang = 'en-US';
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = event.results[0][0].transcript.trim();
         // Immediately stop any current speech to prevent overlapping
         if (isSpeaking) {
@@ -430,7 +430,7 @@ export function Compass({ className = '' }: CompassProps) {
         }
       };
 
-      recognition.onerror = (event: any) => {
+      recognition.onerror = (event: Event & { error?: string }) => {
         // Don't stop listening on errors in continuous modes, just log them
         if (event.error !== 'no-speech' && event.error !== 'aborted') {
           console.error('Speech recognition error:', event.error);

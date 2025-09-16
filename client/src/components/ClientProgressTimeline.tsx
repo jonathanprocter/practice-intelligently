@@ -28,9 +28,22 @@ interface TimelineEvent {
   title: string;
   description?: string;
   status?: string;
-  sessionNote?: any;
-  metrics?: any;
-  aiInsights?: any;
+  sessionNote?: {
+    id: string;
+    content: string;
+    createdAt: string;
+  };
+  metrics?: {
+    progress?: number;
+    mood?: string;
+    engagement?: number;
+  };
+  aiInsights?: Array<{
+    id: string;
+    title: string;
+    content: string;
+    confidence?: number;
+  }>;
 }
 
 export default function ClientProgressTimeline({ clientId, clientName }: ClientProgressTimelineProps) {

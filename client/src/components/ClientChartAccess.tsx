@@ -205,13 +205,13 @@ export const ClientChartAccess: React.FC<ClientChartAccessProps> = ({
                 Found {searchResults.totalResults} results
               </p>
               <div className="space-y-2">
-                {searchResults.sessions?.slice(0, 3).map((session: any) => (
+                {searchResults.sessions?.slice(0, 3).map((session) => (
                   <div key={session.id} className="text-sm">
                     <Badge variant="outline" className="mr-2">Session</Badge>
                     {session.title || format(new Date(session.sessionDate), 'MMM d, yyyy')}
                   </div>
                 ))}
-                {searchResults.documents?.slice(0, 3).map((doc: any) => (
+                {searchResults.documents?.slice(0, 3).map((doc) => (
                   <div key={doc.id} className="text-sm">
                     <Badge variant="outline" className="mr-2">Document</Badge>
                     {doc.fileName}
@@ -253,7 +253,7 @@ export const ClientChartAccess: React.FC<ClientChartAccessProps> = ({
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Current Medications</p>
                   <div className="space-y-1 mt-1">
-                    {clinicalOverview.currentMedications.map((med: any, i) => (
+                    {clinicalOverview.currentMedications.map((med, i) => (
                       <div key={i} className="text-sm">
                         {med.name} - {med.dosage}
                       </div>
@@ -276,7 +276,7 @@ export const ClientChartAccess: React.FC<ClientChartAccessProps> = ({
               <CardContent>
                 <ScrollArea className="h-[200px]">
                   <div className="space-y-3">
-                    {sessionHistory.recentSessions.map((session: any) => (
+                    {sessionHistory.recentSessions.map((session) => (
                       <div key={session.id} className="flex items-start gap-3">
                         <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
                         <div className="flex-1">
@@ -309,7 +309,7 @@ export const ClientChartAccess: React.FC<ClientChartAccessProps> = ({
               <CardContent>
                 <ScrollArea className="h-[500px]">
                   <div className="space-y-4">
-                    {longitudinalData.timelineEvents?.map((event: any, i: number) => (
+                    {longitudinalData.timelineEvents?.map((event, i) => (
                       <div key={i} className="flex gap-4">
                         <div className="flex flex-col items-center">
                           <div className={cn(
@@ -376,7 +376,7 @@ export const ClientChartAccess: React.FC<ClientChartAccessProps> = ({
                       <Badge variant="secondary">{docs.length}</Badge>
                     </div>
                     <div className="space-y-2">
-                      {docs.slice(0, 3).map((doc: any) => (
+                      {docs.slice(0, 3).map((doc) => (
                         <div key={doc.id} className="flex items-center gap-3 p-2 hover:bg-muted rounded-lg cursor-pointer">
                           <FileText className="h-4 w-4 text-muted-foreground" />
                           <div className="flex-1">
@@ -388,7 +388,7 @@ export const ClientChartAccess: React.FC<ClientChartAccessProps> = ({
                                   High Sensitivity
                                 </Badge>
                               )}
-                              {doc.aiTags?.slice(0, 2).map((tag: any, i: number) => (
+                              {doc.aiTags?.slice(0, 2).map((tag, i) => (
                                 <Badge key={i} variant="outline" className="text-xs">
                                   <Tag className="h-3 w-3 mr-1" />
                                   {typeof tag === 'string' ? tag : tag.tag}
@@ -437,7 +437,7 @@ export const ClientChartAccess: React.FC<ClientChartAccessProps> = ({
 
               <div className="space-y-3">
                 <h4 className="font-medium">Recent Insights</h4>
-                {aiAnalysis.insights.map((insight: any) => (
+                {aiAnalysis.insights.map((insight) => (
                   <div key={insight.id} className="p-3 border rounded-lg">
                     <div className="flex items-start justify-between">
                       <div>
@@ -454,7 +454,7 @@ export const ClientChartAccess: React.FC<ClientChartAccessProps> = ({
 
               <div className="space-y-3">
                 <h4 className="font-medium">Active Recommendations</h4>
-                {aiAnalysis.recommendations.map((rec: any) => (
+                {aiAnalysis.recommendations.map((rec) => (
                   <div key={rec.id} className="p-3 border rounded-lg">
                     <div className="flex items-start gap-3">
                       <Brain className="h-4 w-4 mt-0.5 text-primary" />
@@ -466,13 +466,13 @@ export const ClientChartAccess: React.FC<ClientChartAccessProps> = ({
                         <div className="flex gap-2 mt-2">
                           <Badge variant={
                             rec.priority === 'high' ? 'destructive' :
-                            rec.priority === 'medium' ? 'warning' :
-                            'secondary'
+                            rec.priority === 'medium' ? 'secondary' :
+                            'default'
                           }>
                             {rec.priority} priority
                           </Badge>
                           <Badge variant="outline">
-                            {Math.round(rec.confidence * 100)}% confidence
+                            {rec.category}
                           </Badge>
                         </div>
                       </div>

@@ -65,7 +65,7 @@ export function SimpleDocumentsView({ clientId, therapistId, clientName }: Simpl
       </div>
 
       <div className="grid gap-4">
-        {documents.map((doc: any) => (
+        {documents.map((doc) => (
           <div key={doc.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
               <div className="flex items-start space-x-3">
@@ -91,7 +91,7 @@ export function SimpleDocumentsView({ clientId, therapistId, clientName }: Simpl
 
                   {doc.aiTags && doc.aiTags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
-                      {doc.aiTags.slice(0, 5).map((tag: any, index: number) => (
+                      {doc.aiTags.slice(0, 5).map((tag, index) => (
                         <span 
                           key={index}
                           className="inline-flex items-center px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full"
