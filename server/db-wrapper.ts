@@ -1,7 +1,7 @@
 import { Database as SqliteDatabase } from 'better-sqlite3';
 import { Pool } from 'pg';
 import { getSqliteDb } from './db-sqlite.js';
-import { getPostgresPool } from './db-postgres.js'; // Assuming you have a postgres setup file
+import { getPostgresPool } from './db-postgres.js';
 
 type DatabaseClient = SqliteDatabase | Pool;
 
