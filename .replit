@@ -1,5 +1,5 @@
 hidden = [".config", "node_modules", ".env"]
-run = "bash replit-init.sh"
+run = "npm run start:production 2>/dev/null || npx ts-node --transpile-only server/index.ts"
 entrypoint = "server/index.ts"
 modules = ["nodejs-18"]
 
@@ -7,8 +7,8 @@ modules = ["nodejs-18"]
 channel = "stable-23_11"
 
 [deployment]
-run = ["bash", "replit-init.sh"]
-build = ["npm", "run", "build"]
+run = ["sh", "-c", "npm run start:production 2>/dev/null || npx ts-node --transpile-only server/index.ts"]
+build = ["sh", "-c", "npx vite build --mode production && echo 'Client built successfully'"]
 
 [packager]
 language = "typescript"
@@ -19,17 +19,33 @@ guessImports = true
 enabledForHosting = true
 
 [[ports]]
-localPort = 3000
+localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 3000
+externalPort = 3000
 
 [[ports]]
 localPort = 3001
 externalPort = 3001
 
 [[ports]]
-localPort = 5000
-externalPort = 5000
-
-[[ports]]
 localPort = 44411
 externalPort = 3002
+
+[workflows]
+runButton = "Run Application"
+
+[[workflows.workflow]]
+name = "Run Application"
+author = 37925715
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
