@@ -1,70 +1,49 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { MessageCircle, X, Send, Loader2, Minimize2, Maximize2, Mic, MicOff, Volume2, VolumeX, Settings, Play, Square } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 
-// Mock UI components (replace with your actual shadcn/ui imports)
-const Button = ({ children, className = '', variant = 'default', size = 'default', disabled = false, onClick, type = 'button', title, ...props }) => (
-  <button
-    className={`inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 ${
-      variant === 'ghost' ? 'hover:bg-gray-100' :
-      variant === 'outline' ? 'border border-gray-300 bg-white hover:bg-gray-50' :
-      'bg-purple-600 text-white hover:bg-purple-700'
-    } ${
-      size === 'sm' ? 'h-9 px-3 text-sm' : 'h-10 px-4'
-    } ${className}`}
-    disabled={disabled}
-    onClick={onClick}
-    type={type}
-    title={title}
-    {...props}
-  >
-    {children}
-  </button>
-);
+// Type definitions for WebSpeech API
+interface SpeechRecognitionResult {
+  transcript: string;
+  confidence: number;
+}
 
-const Input = React.forwardRef(({ value, onChange, placeholder, disabled, className = '', ...props }, ref) => (
-  <input
-    ref={ref}
-    type="text"
-    value={value}
-    onChange={onChange}
-    placeholder={placeholder}
-    disabled={disabled}
-    className={`flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-600 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
-    {...props}
-  />
-));
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResult[][];
+}
 
-const Select = ({ value, onValueChange, children }) => (
-  <select
-    value={value}
-    onChange={(e) => onValueChange(e.target.value)}
-    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-  >
-    {children}
-  </select>
-);
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: Event) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
+}
 
-const SelectItem = ({ value, children }) => (
-  <option value={value}>{children}</option>
-);
+interface SpeechRecognitionConstructor {
+  new(): SpeechRecognition;
+}
 
-const Slider = ({ value, onValueChange, min, max, step, className = '' }) => (
-  <input
-    type="range"
-    value={value[0]}
-    onChange={(e) => onValueChange([parseFloat(e.target.value)])}
-    min={min}
-    max={max}
-    step={step}
-    className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer ${className}`}
-  />
-);
+declare global {
+  interface Window {
+    webkitSpeechRecognition: SpeechRecognitionConstructor;
+  }
+}
 
-const Badge = ({ children, className = '' }) => (
-  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${className}`}>
-    {children}
-  </span>
-);
+interface Message {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: Date;
+  aiProvider?: string;
+}
 
 // Your original compass styles
 const compassStyles = `
@@ -206,7 +185,7 @@ const compassStyles = `
 `;
 
 // Format rich text helper
-const formatRichText = (content) => {
+const formatRichText = (content: string) => {
   const lines = content.split('\n');
   const elements = [];
 
@@ -229,16 +208,20 @@ const formatRichText = (content) => {
   return <div>{elements}</div>;
 };
 
-export function Compass({ className = '' }) {
+interface CompassProps {
+  className?: string;
+}
+
+export function Compass({ className = '' }: CompassProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [sessionId, setSessionId] = useState('');
   const [inputMessage, setInputMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [speechRecognition, setSpeechRecognition] = useState(null);
-  const [currentAudio, setCurrentAudio] = useState(null);
+  const [speechRecognition, setSpeechRecognition] = useState<SpeechRecognition | null>(null);
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [continuousMode, setContinuousMode] = useState(false);
   const [voiceActivation, setVoiceActivation] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState('rachel');
@@ -287,7 +270,7 @@ export function Compass({ className = '' }) {
   };
 
   // Chat function with fallback
-  const sendMessage = async (message) => {
+  const sendMessage = async (message: string) => {
     if (!message.trim() || isLoading) return;
 
     setCompassState('thinking');
@@ -358,7 +341,7 @@ export function Compass({ className = '' }) {
   };
 
   // Fallback responses for demo/offline mode
-  const generateFallbackResponse = (query) => {
+  const generateFallbackResponse = (query: string) => {
     const lowerQuery = query.toLowerCase();
 
     if (lowerQuery.includes('hello') || lowerQuery.includes('hi')) {
@@ -380,12 +363,12 @@ export function Compass({ className = '' }) {
   // Initialize speech recognition with improved conversation flow
   useEffect(() => {
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
-      const recognition = new window.webkitSpeechRecognition();
+      const recognition = new window.webkitSpeechRecognition() as SpeechRecognition;
       recognition.continuous = continuousMode || wakeWordMode; // Enable continuous for natural flow
       recognition.interimResults = false;
       recognition.lang = 'en-US';
 
-      recognition.onresult = (event) => {
+      recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript.trim();
         // Immediately stop any current speech to prevent overlapping
         if (isSpeaking) {
@@ -447,7 +430,7 @@ export function Compass({ className = '' }) {
         }
       };
 
-      recognition.onerror = (event) => {
+      recognition.onerror = (event: any) => {
         // Don't stop listening on errors in continuous modes, just log them
         if (event.error !== 'no-speech' && event.error !== 'aborted') {
           console.error('Speech recognition error:', event.error);
@@ -564,7 +547,7 @@ export function Compass({ className = '' }) {
   };
 
   // Enhanced text to speech with natural conversation flow
-  const speakText = async (text) => {
+  const speakText = async (text: string) => {
     try {
       // Always stop any existing audio first to prevent overlapping
       if (currentAudio) {

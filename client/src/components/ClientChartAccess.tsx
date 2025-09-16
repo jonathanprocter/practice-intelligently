@@ -14,6 +14,7 @@ import {
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import type { ClientChartData, LongitudinalData, SearchResults } from '@/types/clientChart';
 
 interface ClientChartAccessProps {
   clientId: string;
@@ -31,26 +32,35 @@ export const ClientChartAccess: React.FC<ClientChartAccessProps> = ({
   const [activeTab, setActiveTab] = useState('overview');
 
   // Fetch comprehensive chart data
-  const { data: chartData, isLoading, error } = useQuery({
+  const { data: chartData, isLoading, error } = useQuery<ClientChartData>({
     queryKey: ['client-chart', clientId, 'comprehensive'],
-    queryFn: () => apiRequest('GET', `/api/client-chart/${clientId}/comprehensive`),
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/client-chart/${clientId}/comprehensive`);
+      return response.json();
+    },
     enabled: !!clientId,
     staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  })
 
   // Fetch longitudinal journey
-  const { data: longitudinalData } = useQuery({
+  const { data: longitudinalData } = useQuery<LongitudinalData>({
     queryKey: ['client-chart', clientId, 'longitudinal'],
-    queryFn: () => apiRequest('GET', `/api/client-chart/${clientId}/longitudinal`),
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/client-chart/${clientId}/longitudinal`);
+      return response.json();
+    },
     enabled: !!clientId && activeTab === 'timeline',
-  });
+  })
 
   // Search within client data
-  const { data: searchResults, refetch: performSearch } = useQuery({
+  const { data: searchResults, refetch: performSearch } = useQuery<SearchResults>({
     queryKey: ['client-chart', clientId, 'search', searchQuery],
-    queryFn: () => apiRequest('GET', `/api/client-chart/${clientId}/search?q=${searchQuery}`),
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/client-chart/${clientId}/search?q=${searchQuery}`);
+      return response.json();
+    },
     enabled: false,
-  });
+  })
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -152,7 +162,7 @@ export const ClientChartAccess: React.FC<ClientChartAccessProps> = ({
           <CardContent>
             <Badge 
               variant={clinicalOverview.riskLevel === 'high' ? 'destructive' : 
-                      clinicalOverview.riskLevel === 'moderate' ? 'warning' : 'default'}
+                      clinicalOverview.riskLevel === 'moderate' ? 'secondary' : 'default'}
               className="text-lg px-3 py-1"
             >
               {clinicalOverview.riskLevel}
@@ -321,7 +331,7 @@ export const ClientChartAccess: React.FC<ClientChartAccessProps> = ({
                               </p>
                             </div>
                             <Badge variant={
-                              event.sentiment === 'positive' ? 'success' :
+                              event.sentiment === 'positive' ? 'default' :
                               event.sentiment === 'negative' ? 'destructive' :
                               'secondary'
                             }>
@@ -412,7 +422,7 @@ export const ClientChartAccess: React.FC<ClientChartAccessProps> = ({
                   </div>
                   <Badge variant={
                     aiAnalysis.riskAssessment.level === 'high' ? 'destructive' :
-                    aiAnalysis.riskAssessment.level === 'moderate' ? 'warning' :
+                    aiAnalysis.riskAssessment.level === 'moderate' ? 'secondary' :
                     'default'
                   }>
                     {aiAnalysis.riskAssessment.level} Risk
