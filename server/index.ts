@@ -18,6 +18,8 @@ if (typeof import.meta.dirname === 'undefined') {
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from 'http';
 import { exec } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 import router from "./routes";
 import { setupVite, log } from "./vite";
 import { setupWebSocketServer } from './websocket/websocket.server';
@@ -102,11 +104,18 @@ const app = express();
     // THEN register API routes BEFORE Vite (so API routes are handled first)
     app.use('/api', router);
 
-    // FINALLY setup Vite (this should be last as it catches all non-API routes)
-    // This handles both development and production modes
-    await setupVite(app, server);
+    // Add health check endpoint
+    app.get('/health', (req, res) => {
+      res.json({ 
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV || 'development',
+        viteStatus: app.get('viteStatus') || 'initializing'
+      });
+    });
 
-    // Error handler
+    // Error handler (register before Vite but don't block on it)
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
@@ -126,7 +135,7 @@ const app = express();
       }
     });
 
-    // Start the server
+    // Start the server FIRST (before Vite initialization)
     const port = parseInt(process.env.PORT || '5000', 10);
 
     server.on('error', (err: any) => {
@@ -144,7 +153,74 @@ const app = express();
       host: "0.0.0.0",
       reusePort: true,
     }, () => {
-      log(`serving on port ${port}`);
+      log(`Server listening on port ${port} - HTTP endpoints ready`);
+      
+      // NOW setup Vite in the background (non-blocking)
+      // This allows the server to respond to requests immediately
+      log('Starting Vite initialization in background...');
+      app.set('viteStatus', 'initializing');
+      
+      // Create a timeout promise
+      const viteTimeout = new Promise<null>((_, reject) => {
+        setTimeout(() => reject(new Error('Vite initialization timeout after 10 seconds')), 10000);
+      });
+      
+      // Setup Vite with timeout
+      Promise.race([
+        setupVite(app, server),
+        viteTimeout
+      ])
+      .then((viteServer) => {
+        if (viteServer) {
+          log('Vite development server initialized successfully');
+          app.set('viteStatus', 'ready');
+        } else {
+          log('Vite server running in production mode or disabled');
+          app.set('viteStatus', 'production');
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to initialize Vite (server continues running):', err.message);
+        app.set('viteStatus', 'failed');
+        
+        // Add fallback middleware for serving static files if Vite fails
+        const distPath = path.resolve(process.cwd(), 'dist');
+        const clientPath = path.resolve(process.cwd(), 'client/dist');
+        
+        // Try to serve from dist folders as fallback
+        [distPath, clientPath].forEach(fallbackPath => {
+          if (fs.existsSync(fallbackPath)) {
+            app.use(express.static(fallbackPath));
+            log(`Serving static files from ${fallbackPath} as fallback`);
+          }
+        });
+        
+        // Fallback for client-side routes
+        app.get('*', (req, res, next) => {
+          if (req.path.startsWith('/api') || 
+              req.path.startsWith('/auth') || 
+              req.path.startsWith('/socket.io')) {
+            return next();
+          }
+          
+          const indexPaths = [
+            path.join(distPath, 'index.html'),
+            path.join(clientPath, 'index.html')
+          ];
+          
+          for (const indexPath of indexPaths) {
+            if (fs.existsSync(indexPath)) {
+              res.sendFile(indexPath);
+              return;
+            }
+          }
+          
+          res.status(503).json({
+            message: 'Frontend unavailable - Vite initialization failed',
+            status: 'vite_failed'
+          });
+        });
+      });
     });
 
   } catch (error) {
