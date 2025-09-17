@@ -4,7 +4,7 @@ import {
   treatmentPlans, assessments, medications, aiInsights,
   sessionRecommendations, sessionSummaries, actionItems
 } from '@shared/schema';
-import { eq, desc, and, or, gte, lte, isNotNull } from 'drizzle-orm';
+import { eq, desc, and, or, gte, lte, isNotNull, like } from 'drizzle-orm';
 import { enhancedDocumentProcessor } from './enhanced-document-processor';
 
 export interface ComprehensiveClientChart {
@@ -38,7 +38,8 @@ export interface ComprehensiveClientChart {
       title: string;
       summary: string;
       tags: string[];
-      significance: string;
+      clinicalSignificance?: string;
+      sentiment?: string;
     }>;
     progressMetrics: {
       overallTrend: string;

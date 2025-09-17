@@ -129,7 +129,7 @@ export function registerEnhancedChartRoutes(app: Express) {
 
       // Store document in database
       const document = await storage.createDocument({
-        clientId,
+        clientId: clientId || undefined,
         therapistId,
         fileName: req.file.originalname,
         originalName: req.file.originalname,
@@ -144,7 +144,7 @@ export function registerEnhancedChartRoutes(app: Express) {
         subcategory: analysis.category.secondary,
         contentSummary: analysis.contentSummary,
         clinicalKeywords: analysis.clinicalKeywords,
-        confidenceScore: analysis.category.confidence,
+        confidenceScore: analysis.category.confidence ? String(analysis.category.confidence) : undefined,
         sensitivityLevel: analysis.sensitivityLevel,
         extractedText: fileContent.substring(0, 10000) // Store first 10k chars
       });

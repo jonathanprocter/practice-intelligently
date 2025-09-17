@@ -210,12 +210,12 @@ export class EnhancedDocumentProcessor extends EventEmitter {
         documentType: options.documentType || 'general',
         filePath: permanentPath,
         therapistId: options.therapistId,
-        clientId: options.clientId,
+        clientId: options.clientId || undefined,
         contentSummary: documentData.summary,
         aiTags: documentData.tags,
         clinicalKeywords: documentData.keywords,
         extractedText: extractedText.substring(0, 5000), // Store first 5000 chars
-        metadata: metadata
+        tags: { metadata } // Store metadata in tags field as JSONB
       });
 
       // Cache the file hash
