@@ -24,13 +24,15 @@ export default defineConfig({
     hmr: {
       overlay: false,
       port: 3001,
+      host: "0.0.0.0", // Ensure HMR also listens on all interfaces
     },
     fs: {
       strict: false,
       allow: ['.'],
     },
-    host: "0.0.0.0",
+    host: "0.0.0.0", // Listen on all network interfaces
     cors: true,
-    allowedHosts: "all", // Allow all hosts to access the dev server
+    // Note: allowedHosts is not needed when host is "0.0.0.0"
+    // The 0.0.0.0 host binding automatically allows access from any hostname
   },
 });

@@ -170,7 +170,24 @@ async function setupOptionalFeatures() {
             configFile: fs.existsSync(viteConfigPath) ? viteConfigPath : undefined,
             server: {
               middlewareMode: true,
-              allowedHosts: 'all',  // Allow all hosts including Replit domains
+              host: '0.0.0.0',
+              // Explicitly allow all Replit domains
+              allowedHosts: process.env.REPLIT_DEV_DOMAIN ? [
+                '.replit.dev',
+                '.repl.co',
+                '.replit.app',
+                'localhost',
+                '127.0.0.1',
+                '0.0.0.0',
+                process.env.REPLIT_DEV_DOMAIN,
+                // Allow wildcard domains
+                '*.replit.dev',
+                '*.repl.co',
+                // Extract base domain and allow it
+                process.env.REPLIT_DEV_DOMAIN.split('.')[0] + '.replit.dev',
+                // Allow the specific subdomain pattern
+                process.env.REPLIT_DEV_DOMAIN.replace(/^[^.]+/, '*')
+              ] : ['.replit.dev', '.repl.co', '*.replit.dev', '*.repl.co', 'localhost'],
               hmr: { 
                 port: 3001,
                 host: '0.0.0.0'
@@ -187,6 +204,10 @@ async function setupOptionalFeatures() {
           // Use Vite middleware FIRST to handle all module requests
           app.use(viteServer.middlewares);
           console.log('✅ Vite development server enabled with HMR on port 3001');
+          console.log('✅ Vite server configured with explicit allowed hosts for Replit domains');
+          if (process.env.REPLIT_DEV_DOMAIN) {
+            console.log(`✅ Current Replit domain allowed: ${process.env.REPLIT_DEV_DOMAIN}`);
+          }
           
           // Only serve public directory for static assets (not source files)
           const publicPath = path.join(clientPath, 'public');
