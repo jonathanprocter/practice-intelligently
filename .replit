@@ -41,17 +41,12 @@ runButton = "Start Application"
 
 [[workflows.workflow]]
 name = "Start Application"
-author = "replit"
+author = 37925715
 mode = "sequential"
-description = "Start Practice Intelligence App"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pkill -f 'node.*server' 2>/dev/null || true"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pkill -f 'tsx' 2>/dev/null || true"
+args = "pkill -f \"node.*server\" 2>/dev/null || true"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -59,7 +54,7 @@ args = "lsof -ti:5000 | xargs kill -9 2>/dev/null || true"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "[ -d node_modules ] || npm install --legacy-peer-deps"
+args = "sleep 2"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"

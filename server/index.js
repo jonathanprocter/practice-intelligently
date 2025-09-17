@@ -50,6 +50,7 @@ async function startServer() {
       console.log('✅ API routes loaded at /api');
     } catch (err) {
       console.log('⚠️ API routes not available, using basic endpoints only');
+      console.log('   Error:', err.message);
     }
 
     // Try to setup WebSocket
