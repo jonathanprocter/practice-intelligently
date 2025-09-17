@@ -42,9 +42,22 @@ app.get('/api/status', (req, res) => {
 // Main server initialization
 async function startServer() {
   try {
-    // Try to load API routes
+    // Try to load API routes with tsx/ts-node
     try {
-      const routesModule = await import('./routes.ts');
+      // First try to import compiled JS version
+      let routesModule;
+      try {
+        routesModule = await import('./routes.js');
+      } catch {
+        // Fallback to using tsx for TypeScript
+        const { spawn } = await import('child_process');
+        const { promisify } = await import('util');
+        
+        // Use dynamic import with tsx for TypeScript files
+        const tsx = await import('tsx/esm');
+        routesModule = await import('./routes.ts');
+      }
+      
       const router = routesModule.default || routesModule;
       app.use('/api', router);
       console.log('✅ API routes loaded at /api');
@@ -55,7 +68,13 @@ async function startServer() {
 
     // Try to setup WebSocket
     try {
-      const wsModule = await import('./websocket/websocket.server.ts');
+      let wsModule;
+      try {
+        wsModule = await import('./websocket/websocket.server.js');
+      } catch {
+        wsModule = await import('./websocket/websocket.server.ts');
+      }
+      
       if (wsModule.setupWebSocketServer) {
         wsModule.setupWebSocketServer(server);
         console.log('✅ WebSocket support enabled');

@@ -58,4 +58,4 @@ args = "sleep 2"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "NODE_ENV=development node server/index.js"
+args = "NODE_ENV=development npx tsx server/index.js"
