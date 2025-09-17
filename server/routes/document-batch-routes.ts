@@ -7,6 +7,7 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import path from 'path';
 import fs from 'fs';
+import { multiModelAI } from '../ai-multi-model';
 import AdmZip from 'adm-zip';
 
 // Configure multer for streaming uploads
