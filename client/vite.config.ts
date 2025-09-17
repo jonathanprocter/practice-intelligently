@@ -24,7 +24,8 @@ export default defineConfig({
     hmr: {
       overlay: false,
       port: 3001,
-      host: "0.0.0.0", // Ensure HMR also listens on all interfaces
+      // Remove explicit host to let HMR use relative connections
+      // This prevents SSL errors when connecting to wss://0.0.0.0
     },
     fs: {
       strict: false,

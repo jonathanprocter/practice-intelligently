@@ -2,10 +2,22 @@
 import { Router } from "express";
 var router = Router();
 router.get("/health", (req, res) => {
+  // Check if AI services are configured
+  const hasOpenAI = !!process.env.OPENAI_API_KEY;
+  const hasAnthropic = !!process.env.ANTHROPIC_API_KEY;
+  const hasDatabase = !!process.env.DATABASE_URL;
+  
   res.status(200).json({
     status: "ok",
     timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-    service: "Practice Intelligence API"
+    service: "Practice Intelligence API",
+    integrations: {
+      openai: hasOpenAI,
+      anthropic: hasAnthropic,
+      gemini: false, // Not configured
+      perplexity: false, // Not configured  
+      database: hasDatabase
+    }
   });
 });
 router.get("/status", (req, res) => {

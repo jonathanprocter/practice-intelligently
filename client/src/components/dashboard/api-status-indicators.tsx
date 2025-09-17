@@ -18,9 +18,21 @@ export default function ApiStatusIndicators() {
     refetchInterval: 30000, // Check every 30 seconds
   });
 
-  const statuses = apiStatuses || [];
+  // Ensure statuses is always an array, handling both object and array responses
+  let statuses: ApiStatus[] = [];
+  if (Array.isArray(apiStatuses)) {
+    statuses = apiStatuses;
+  } else if (apiStatuses && typeof apiStatuses === 'object') {
+    // Convert object format to array format
+    statuses = Object.entries(apiStatuses).map(([service, data]: [string, any]) => ({
+      service,
+      status: data?.status || 'offline',
+      lastChecked: data?.lastChecked,
+      error: data?.error
+    }));
+  }
 
-  if (isLoading || !apiStatuses) {
+  if (isLoading) {
     return (
       <div className="flex items-center space-x-2">
         <div className="flex items-center space-x-1">
@@ -43,10 +55,11 @@ export default function ApiStatusIndicators() {
     );
   }
 
-  const openaiStatus = statuses.find((s: ApiStatus) => s.service === 'openai');
-  const anthropicStatus = statuses.find((s: ApiStatus) => s.service === 'anthropic');
-  const perplexityStatus = statuses.find((s: ApiStatus) => s.service === 'perplexity');
-  const geminiStatus = statuses.find((s: ApiStatus) => s.service === 'gemini');
+  // Use safe array operations
+  const openaiStatus = Array.isArray(statuses) ? statuses.find((s: ApiStatus) => s.service === 'openai') : undefined;
+  const anthropicStatus = Array.isArray(statuses) ? statuses.find((s: ApiStatus) => s.service === 'anthropic') : undefined;
+  const perplexityStatus = Array.isArray(statuses) ? statuses.find((s: ApiStatus) => s.service === 'perplexity') : undefined;
+  const geminiStatus = Array.isArray(statuses) ? statuses.find((s: ApiStatus) => s.service === 'gemini') : undefined;
 
   const getStatusColor = (status: string) => {
     switch (status) {

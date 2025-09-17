@@ -41,7 +41,16 @@ router.get('/action-items/urgent/:therapistId', (req, res) => {
 
 router.get('/health/ai-services', (req, res) => {
   const status = aiServices.getStatus();
-  res.json(status);
+  
+  // Convert object format to array format that the frontend expects
+  const statusArray = [
+    { service: 'openai', status: status.openai?.status || 'offline', error: status.openai?.error },
+    { service: 'anthropic', status: status.anthropic?.status || 'offline', error: status.anthropic?.error },
+    { service: 'perplexity', status: status.perplexity?.status || 'offline', error: status.perplexity?.error },
+    { service: 'gemini', status: status.gemini?.status || 'offline', error: status.gemini?.error }
+  ];
+  
+  res.json(statusArray);
 });
 
 router.get('/dashboard/stats/:therapistId', (req, res) => {
@@ -140,8 +149,10 @@ router.delete('/session-notes/:id', (req, res) => {
 router.get('/api-status', (req, res) => {
   const status = aiServices.getStatus();
   res.json([
-    { service: 'openai', status: status.openai.status },
-    { service: 'anthropic', status: status.anthropic.status }
+    { service: 'openai', status: status.openai?.status || 'offline', error: status.openai?.error },
+    { service: 'anthropic', status: status.anthropic?.status || 'offline', error: status.anthropic?.error },
+    { service: 'perplexity', status: status.perplexity?.status || 'offline', error: status.perplexity?.error },
+    { service: 'gemini', status: status.gemini?.status || 'offline', error: status.gemini?.error }
   ]);
 });
 

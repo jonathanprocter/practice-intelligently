@@ -74,12 +74,18 @@ export interface ProgressNote {
 }
 
 export class DocumentProcessor {
-  private openai: OpenAI;
+  private openai: OpenAI | null;
 
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    // Only initialize OpenAI if API key is available
+    if (process.env.OPENAI_API_KEY) {
+      this.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+    } else {
+      this.openai = null;
+      console.warn('⚠️ OpenAI API key not provided - document processing AI features will be limited');
+    }
   }
 
   private async _fileExists(path: string): Promise<boolean> {
@@ -466,6 +472,10 @@ RESPOND WITH ONLY VALID JSON:
       let alternatives = { names: [], dates: [] };
 
       try {
+        if (!this.openai) {
+          console.warn('⚠️ OpenAI not configured - using fallback extraction');
+          throw new Error('OpenAI not configured');
+        }
         console.log('🤖 Using enhanced AI extraction with validation...');
         const result = await this.openai.chat.completions.create({
           model: "gpt-4o",
@@ -879,6 +889,11 @@ Client ID: ${clientId}
 Session Date: ${sessionDate}`;
 
     try {
+      // Check if OpenAI is configured
+      if (!this.openai) {
+        console.warn('⚠️ OpenAI not configured - cannot generate progress notes');
+        throw new Error('OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.');
+      }
       // Use OpenAI directly for reliable, fast analysis
       console.log('Using OpenAI for progress note generation...');
       const result = await this.openai.chat.completions.create({

@@ -55,7 +55,7 @@ export interface DocumentMetadata {
 }
 
 export class EnhancedDocumentProcessor extends EventEmitter {
-  private openai: OpenAI;
+  private openai: OpenAI | null;
   private processingQueue: Map<string, ProcessingProgress> = new Map();
   private fileHashCache: Map<string, string> = new Map();
   private processingWorkers: number = 0;
@@ -63,9 +63,15 @@ export class EnhancedDocumentProcessor extends EventEmitter {
 
   constructor() {
     super();
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    // Only initialize OpenAI if API key is available
+    if (process.env.OPENAI_API_KEY) {
+      this.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+    } else {
+      this.openai = null;
+      console.warn('⚠️ OpenAI API key not provided - enhanced document processing features will be limited');
+    }
   }
 
   /**
@@ -385,6 +391,9 @@ export class EnhancedDocumentProcessor extends EventEmitter {
       const base64Image = imageBuffer.toString('base64');
 
       // Use OpenAI Vision API for OCR
+      if (!this.openai) {
+        throw new Error('OpenAI not configured for OCR processing');
+      }
       const response = await this.openai.chat.completions.create({
         model: "gpt-4-vision-preview",
         messages: [
@@ -467,6 +476,9 @@ export class EnhancedDocumentProcessor extends EventEmitter {
       const audioStream = fs.createReadStream(filePath);
       
       // Use OpenAI Whisper API for transcription
+      if (!this.openai) {
+        throw new Error('OpenAI not configured for audio transcription');
+      }
       const transcription = await this.openai.audio.transcriptions.create({
         file: audioStream as any,
         model: "whisper-1",
@@ -543,6 +555,9 @@ export class EnhancedDocumentProcessor extends EventEmitter {
 
 Document excerpt: ${text.substring(0, 3000)}`;
 
+      if (!this.openai) {
+        throw new Error('OpenAI not configured for AI analysis');
+      }
       const response = await this.openai.chat.completions.create({
         model: "gpt-4-turbo-preview",
         messages: [{ role: "user", content: prompt }],
