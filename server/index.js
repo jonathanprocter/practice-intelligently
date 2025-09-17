@@ -17,6 +17,17 @@ app.use(express.urlencoded({ limit: '50mb', extended: false }));
 // Create HTTP server
 const server = createServer(app);
 
+// Start listening immediately - don't wait for optional setup
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server is running on http://0.0.0.0:${PORT}`);
+  console.log(`✅ Health check available at http://localhost:${PORT}/health`);
+  
+  // Set up optional features after binding
+  Promise.resolve().then(() => setupOptionalFeatures()).catch((err) => {
+    console.log('⚠️ Error setting up optional features:', err.message);
+  });
+});
+
 // Health check - always available
 app.get('/health', (req, res) => {
   res.json({ 
@@ -39,27 +50,52 @@ app.get('/api/status', (req, res) => {
   });
 });
 
-// Main server initialization
-async function startServer() {
+// Load fallback routes immediately to prevent 404 errors
+(async () => {
+  try {
+    const fallbackRoutes = await import('./routes-fallback.js');
+    const router = fallbackRoutes.default || fallbackRoutes;
+    app.use('/api', router);
+    console.log('✅ Fallback API routes loaded at /api');
+  } catch (err) {
+    console.log('⚠️ Could not load fallback routes:', err.message);
+  }
+})();
+
+// Optional feature setup (runs after server is already listening)
+async function setupOptionalFeatures() {
   try {
     // Try to load API routes (simplified)
     try {
       let routesModule;
+      let usingFallback = false;
+      
       try {
         // First try to import compiled JS version
         routesModule = await import('./routes.js');
+        console.log('Using compiled routes.js');
       } catch (jsErr) {
         try {
-          // Fallback to TypeScript version if available
+          // Try TypeScript version
           routesModule = await import('./routes.ts');
+          console.log('Using TypeScript routes');
         } catch (tsErr) {
-          throw new Error(`Could not load routes: ${jsErr.message}`);
+          try {
+            // Use fallback routes to prevent errors
+            routesModule = await import('./routes-fallback.js');
+            usingFallback = true;
+            console.log('Using fallback routes for basic functionality');
+          } catch (fallbackErr) {
+            throw new Error(`Could not load any routes: ${jsErr.message}`);
+          }
         }
       }
       
       const router = routesModule.default || routesModule;
       app.use('/api', router);
-      console.log('✅ API routes loaded at /api');
+      console.log(usingFallback ? 
+        '✅ Fallback API routes loaded at /api (basic functionality)' : 
+        '✅ Full API routes loaded at /api');
     } catch (err) {
       console.log('⚠️ API routes not available, using basic endpoints only');
       console.log('   Error:', err.message);
@@ -123,8 +159,8 @@ async function startServer() {
           app.use(express.static(publicPath));
         }
         
-        // Try to use Vite only in development with source files
-        if (process.env.DEV === 'true' || (process.env.NODE_ENV !== 'production' && !useBuiltAssets)) {
+        // Only try Vite if explicitly enabled via environment variable
+        if (process.env.ENABLE_VITE === 'true' && !useBuiltAssets) {
           console.log('Setting up development server...');
           
           try {
@@ -161,13 +197,13 @@ async function startServer() {
       }
       
       // Catch-all route for client-side routing (always needed)
-      app.get('*', (req, res) => {
+      app.get('*', (req, res, next) => {
         // Skip API and static file requests
         if (req.path.startsWith('/api') || 
             req.path.startsWith('/socket.io') ||
             req.path === '/health' ||
             req.path.includes('.')) {
-          return;
+          return next();
         }
 
         res.sendFile(indexPath, (err) => {
@@ -181,7 +217,7 @@ async function startServer() {
     } else {
       console.error('❌ Client files not found at:', clientPath);
       // Provide a simple app interface as fallback
-      app.get('*', (req, res) => {
+      app.get('*', (req, res, next) => {
         if (!req.path.startsWith('/api') && req.path !== '/health') {
           res.status(200).send(`
             <!DOCTYPE html>
@@ -243,6 +279,8 @@ async function startServer() {
               </body>
             </html>
           `);
+        } else {
+          return next();
         }
       });
     }
@@ -282,20 +320,7 @@ async function startServer() {
       });
     });
 
-    // Start listening
-    server.listen(PORT, '0.0.0.0', () => {
-      console.log(`
-╔═══════════════════════════════════════════╗
-║     Practice Intelligence Server          ║
-╠═══════════════════════════════════════════╣
-║  ✅ Status: Running                       ║
-║  🌐 URL: http://localhost:${PORT}            ║
-║  🏥 Environment: ${process.env.NODE_ENV || 'development'}           ║
-║  📊 Node: ${process.version}                     ║
-║  ❤️  Health: http://localhost:${PORT}/health ║
-╚═══════════════════════════════════════════╝
-      `);
-    });
+    // Server is already listening (started at line 24)
 
     // Handle server errors
     server.on('error', (err) => {
@@ -346,8 +371,4 @@ process.on('unhandledRejection', (reason, promise) => {
   }
 });
 
-// Start the server
-startServer().catch(err => {
-  console.error('Failed to initialize server:', err);
-  process.exit(1);
-});
+// Optional features are set up after server starts listening (see line 29)
