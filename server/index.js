@@ -42,20 +42,19 @@ app.get('/api/status', (req, res) => {
 // Main server initialization
 async function startServer() {
   try {
-    // Try to load API routes with tsx/ts-node
+    // Try to load API routes (simplified)
     try {
-      // First try to import compiled JS version
       let routesModule;
       try {
+        // First try to import compiled JS version
         routesModule = await import('./routes.js');
-      } catch {
-        // Fallback to using tsx for TypeScript
-        const { spawn } = await import('child_process');
-        const { promisify } = await import('util');
-        
-        // Use dynamic import with tsx for TypeScript files
-        const tsx = await import('tsx/esm');
-        routesModule = await import('./routes.ts');
+      } catch (jsErr) {
+        try {
+          // Fallback to TypeScript version if available
+          routesModule = await import('./routes.ts');
+        } catch (tsErr) {
+          throw new Error(`Could not load routes: ${jsErr.message}`);
+        }
       }
       
       const router = routesModule.default || routesModule;
@@ -130,7 +129,7 @@ async function startServer() {
           
           try {
             const vite = await import('vite');
-          const viteConfigPath = path.join(clientPath, 'vite.config.ts');
+            const viteConfigPath = path.join(clientPath, 'vite.config.ts');
           
           // Create Vite server with proper config
           const viteServer = await vite.createServer({
@@ -157,6 +156,7 @@ async function startServer() {
         } catch (viteError) {
           console.log('⚠️ Vite not available, using static file serving');
           console.log('   Error:', viteError.message);
+        }
         }
       }
       
