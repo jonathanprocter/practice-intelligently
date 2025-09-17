@@ -58,13 +58,15 @@ export default function ActionItems() {
     }
   });
 
-  const filteredItems = actionItems?.filter(item => {
+  // Ensure actionItems is an array before filtering
+  const safeActionItems = Array.isArray(actionItems) ? actionItems : [];
+  const filteredItems = safeActionItems.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesPriority = filterPriority === "all" || item.priority === filterPriority;
     const matchesStatus = filterStatus === "all" || item.status === filterStatus;
     return matchesSearch && matchesPriority && matchesStatus;
-  }) || [];
+  });
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
@@ -145,7 +147,7 @@ export default function ActionItems() {
           </Button>
         </div>
         <div className="grid gap-4">
-          {[...Array(6)].map((_, i) => (
+          {Array.from({ length: 6 }, (_, i) => (
             <div key={i} className="therapy-card p-6 animate-pulse">
               <div className="flex items-center space-x-4">
                 <div className="w-6 h-6 bg-gray-200 rounded-lg"></div>

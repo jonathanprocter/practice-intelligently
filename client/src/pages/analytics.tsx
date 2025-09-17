@@ -36,20 +36,24 @@ export default function Analytics() {
 
   const isLoading = statsLoading || clientsLoading || actionItemsLoading;
 
+  // Ensure arrays are properly handled
+  const clientsArray = Array.isArray(clients) ? clients : [];
+  const actionItemsArray = Array.isArray(actionItems) ? actionItems : [];
+  
   // Calculate analytics data
-  const totalClients = clients?.length || 0;
-  const activeClients = clients?.filter(c => c.status === 'active').length || 0;
-  const completedActionItems = actionItems?.filter(item => item.status === 'completed').length || 0;
-  const totalActionItems = actionItems?.length || 0;
+  const totalClients = clientsArray.length;
+  const activeClients = clientsArray.filter(c => c.status === 'active').length;
+  const completedActionItems = actionItemsArray.filter(item => item.status === 'completed').length;
+  const totalActionItems = actionItemsArray.length;
   const completionRate = totalActionItems > 0 ? Math.round((completedActionItems / totalActionItems) * 100) : 0;
   
   // Calculate additional metrics
-  const newClientsThisMonth = clients?.filter(c => {
+  const newClientsThisMonth = clientsArray.filter(c => {
     const createdDate = new Date(c.createdAt);
     const thisMonth = new Date();
     return createdDate.getMonth() === thisMonth.getMonth() && 
            createdDate.getFullYear() === thisMonth.getFullYear();
-  }).length || 0;
+  }).length;
   
   // Calculate real metrics from database data
   const attendanceRate = stats?.attendanceRate || 0;
@@ -57,13 +61,13 @@ export default function Analytics() {
   const revenueChange = stats?.revenueChange || 0;
   
   // Calculate weekly trend from actual session data
-  const weeklyTrend = stats?.weeklySessionTrend || [];
+  const weeklyTrend = Array.isArray(stats?.weeklySessionTrend) ? stats.weeklySessionTrend : [];
   const currentWeekSessions = weeklyTrend.length > 0 ? weeklyTrend[weeklyTrend.length - 1] : 0;
   const lastWeekSessions = weeklyTrend.length > 1 ? weeklyTrend[weeklyTrend.length - 2] : 0;
   const sessionChange = currentWeekSessions - lastWeekSessions;
   
   // Smart insights and alerts based on real data
-  const weekTotal = weeklyTrend.reduce((a, b) => a + b, 0);
+  const weekTotal = weeklyTrend.length > 0 ? weeklyTrend.reduce((a, b) => a + b, 0) : 0;
   const lastWeekTotal = stats?.lastWeekTotal || 0;
   const weeklyGrowth = lastWeekTotal > 0 ? Math.round(((weekTotal - lastWeekTotal) / lastWeekTotal) * 100) : 0;
   
@@ -92,11 +96,11 @@ export default function Analytics() {
   }
   
   // Calculate real referral sources from client data
-  const referralCounts = clients?.reduce((acc: Record<string, number>, client) => {
+  const referralCounts = clientsArray.reduce((acc: Record<string, number>, client) => {
     const source = client.referralSource || 'Unknown';
     acc[source] = (acc[source] || 0) + 1;
     return acc;
-  }, {}) || {};
+  }, {});
   
   const topReferrals = Object.entries(referralCounts)
     .map(([source, count]) => ({ source, count }))
@@ -104,7 +108,7 @@ export default function Analytics() {
     .slice(0, 4);
   
   // Location stats would need to be calculated from appointment/session data
-  const locationStats = stats?.locationBreakdown || [];
+  const locationStats = Array.isArray(stats?.locationBreakdown) ? stats.locationBreakdown : [];
 
   if (isLoading) {
     return (
@@ -404,11 +408,13 @@ export default function Analytics() {
             <div className="space-y-4">
               {/* Simple bar chart visualization */}
               <div className="flex items-end justify-between h-32 gap-1">
-                {weeklyTrend.map((sessions, index) => (
+                {weeklyTrend.map((sessions, index) => {
+                  const maxValue = weeklyTrend.length > 0 ? Math.max(...weeklyTrend) : 1;
+                  return (
                   <div key={index} className="flex flex-col items-center flex-1">
                     <div 
                       className="bg-blue-500 rounded-t w-full relative group hover:bg-blue-600 transition-colors"
-                      style={{ height: `${(sessions / Math.max(...weeklyTrend)) * 100}%` }}
+                      style={{ height: `${(sessions / maxValue) * 100}%` }}
                     >
                       <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                         {sessions}
@@ -418,11 +424,11 @@ export default function Analytics() {
                       {['M', 'T', 'W', 'T', 'F', 'S', 'S'][index]}
                     </span>
                   </div>
-                ))}
+                )})}
               </div>
               <div className="text-center">
                 <p className="text-sm font-medium text-therapy-text">Last 7 Days</p>
-                <p className="text-xs text-therapy-text/60">Average: {Math.round(weeklyTrend.reduce((a, b) => a + b, 0) / weeklyTrend.length)} sessions/day</p>
+                <p className="text-xs text-therapy-text/60">Average: {weeklyTrend.length > 0 ? Math.round(weeklyTrend.reduce((a, b) => a + b, 0) / weeklyTrend.length) : 0} sessions/day</p>
                 <Button 
                   variant="ghost" 
                   size="sm" 

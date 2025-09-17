@@ -66,7 +66,7 @@ function DashboardSkeleton({ section = 'full' }: { section?: string }) {
         animate="animate"
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
       >
-        {[...Array(4)].map((_, i) => (
+        {Array.from({ length: 4 }, (_, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 20 }}
@@ -257,7 +257,9 @@ export default function Dashboard() {
 
   // Calculate dashboard health metrics
   const dashboardHealth = useMemo(() => {
-    const loadedSections = sectionQueries.filter(q => !q.isLoading && !q.error).length;
+    const loadedSections = Array.isArray(sectionQueries) 
+      ? sectionQueries.filter(q => !q.isLoading && !q.error).length 
+      : 0;
     const totalSections = sectionQueries.length;
     const healthPercentage = (loadedSections / totalSections) * 100;
 
@@ -275,7 +277,7 @@ export default function Dashboard() {
     try {
       await Promise.all([
         statsQuery.refetch(),
-        ...sectionQueries.map(q => q.refetch())
+        ...(Array.isArray(sectionQueries) ? sectionQueries.map(q => q.refetch()) : [])
       ]);
       toast({
         title: "Dashboard refreshed",

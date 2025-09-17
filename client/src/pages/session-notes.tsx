@@ -65,11 +65,13 @@ export default function SessionNotesPage() {
     }
   });
 
-  const filteredNotes = sessionNotes.filter((note: SessionNote) => {
+  // Ensure sessionNotes is an array before filtering
+  const safeSessionNotes = Array.isArray(sessionNotes) ? sessionNotes : [];
+  const filteredNotes = safeSessionNotes.filter((note: SessionNote) => {
     const matchesSearch = 
       note.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       note.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      note.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+      (Array.isArray(note.tags) && note.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
     
     const matchesFilter = filterType === 'all' || note.meetingType === filterType;
     
@@ -177,7 +179,7 @@ export default function SessionNotesPage() {
       </div>
 
       {/* Recent Calendar Events Without Notes */}
-      {calendarEvents.length > 0 && (
+      {Array.isArray(calendarEvents) && calendarEvents.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -301,7 +303,7 @@ export default function SessionNotesPage() {
                     {note.content || 'No content available.'}
                   </p>
                   
-                  {note.tags && note.tags.length > 0 && (
+                  {Array.isArray(note.tags) && note.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {note.tags.map((tag, index) => (
                         <Badge key={index} variant="secondary" className="text-xs">
@@ -393,7 +395,7 @@ export default function SessionNotesPage() {
                 </div>
               </div>
               
-              {selectedNote.tags && selectedNote.tags.length > 0 && (
+              {Array.isArray(selectedNote.tags) && selectedNote.tags.length > 0 && (
                 <div className="border-t pt-4">
                   <h4 className="font-medium mb-2">Tags</h4>
                   <div className="flex flex-wrap gap-1">

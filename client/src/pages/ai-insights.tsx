@@ -68,9 +68,11 @@ export default function AiInsights() {
     }
   };
 
-  const filteredInsights = insights?.filter(insight => 
+  // Ensure insights is an array before filtering
+  const safeInsights = Array.isArray(insights) ? insights : [];
+  const filteredInsights = safeInsights.filter(insight => 
     filterType === "all" || insight.type === filterType
-  ) || [];
+  );
 
   const getConfidenceLevel = (confidence?: number) => {
     if (!confidence) return 'Unknown';
@@ -137,7 +139,7 @@ export default function AiInsights() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Clients</SelectItem>
-              {clients?.map((client) => (
+              {Array.isArray(clients) && clients.map((client) => (
                 <SelectItem key={client.id} value={client.id}>
                   {(client as any).name || `Client ${client.id}`}
                 </SelectItem>
@@ -193,7 +195,7 @@ export default function AiInsights() {
                 <Lightbulb className="text-therapy-primary" />
               </div>
               <Badge variant="secondary">
-                {insights?.filter(i => i.type === 'pattern').length || 0}
+                {safeInsights.filter(i => i.type === 'pattern').length || 0}
               </Badge>
             </div>
             <h3 className="font-semibold text-therapy-text">Pattern Analysis</h3>
@@ -208,7 +210,7 @@ export default function AiInsights() {
                 <TrendingUp className="text-therapy-success" />
               </div>
               <Badge variant="secondary">
-                {insights?.filter(i => i.type === 'progress').length || 0}
+                {safeInsights.filter(i => i.type === 'progress').length || 0}
               </Badge>
             </div>
             <h3 className="font-semibold text-therapy-text">Progress Tracking</h3>
@@ -223,7 +225,7 @@ export default function AiInsights() {
                 <AlertTriangle className="text-therapy-error" />
               </div>
               <Badge variant="secondary">
-                {insights?.filter(i => i.type === 'risk').length || 0}
+                {safeInsights.filter(i => i.type === 'risk').length || 0}
               </Badge>
             </div>
             <h3 className="font-semibold text-therapy-text">Risk Assessment</h3>
@@ -238,7 +240,7 @@ export default function AiInsights() {
                 <FileText className="text-therapy-warning" />
               </div>
               <Badge variant="secondary">
-                {insights?.filter(i => i.type === 'suggestion').length || 0}
+                {safeInsights.filter(i => i.type === 'suggestion').length || 0}
               </Badge>
             </div>
             <h3 className="font-semibold text-therapy-text">Recommendations</h3>
@@ -266,7 +268,7 @@ export default function AiInsights() {
       {/* Insights List */}
       <div className="grid gap-6">
         {filteredInsights.length > 0 ? (
-          filteredInsights.map((insight) => {
+          filteredInsights.length > 0 && filteredInsights.map((insight) => {
             const IconComponent = getInsightIcon(insight.type);
             return (
               <Card key={insight.id} className={`therapy-card border-0 border-l-4 ${getInsightColor(insight.type)}`}>

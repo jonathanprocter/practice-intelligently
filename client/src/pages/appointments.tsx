@@ -116,15 +116,18 @@ export default function Appointments() {
       }
 
       // Combine database appointments and calendar events, avoiding duplicates
-      const existingEventIds = new Set(dbAppointments.map((apt: any) => apt.googleEventId).filter(Boolean));
-      const uniqueCalendarEvents = calendarEvents.filter((event: any) => !existingEventIds.has(event.googleEventId));
+      const safeDbAppointments = Array.isArray(dbAppointments) ? dbAppointments : [];
+      const safeCalendarEvents = Array.isArray(calendarEvents) ? calendarEvents : [];
+      const existingEventIds = new Set(safeDbAppointments.map((apt: any) => apt.googleEventId).filter(Boolean));
+      const uniqueCalendarEvents = safeCalendarEvents.filter((event: any) => !existingEventIds.has(event.googleEventId));
       
-      return [...dbAppointments, ...uniqueCalendarEvents];
+      return [...safeDbAppointments, ...uniqueCalendarEvents];
     },
   });
 
   // Transform appointments data with client info
-  const appointments: ExtendedAppointment[] = (appointmentsData || []).map((apt: any) => {
+  const safeAppointmentsData = Array.isArray(appointmentsData) ? appointmentsData : [];
+  const appointments: ExtendedAppointment[] = safeAppointmentsData.map((apt: any) => {
     // Check if this is a calendar event (non-UUID ID or marked as calendar event)
     const isCalendarEvent = apt.isCalendarEvent || (apt.id && !apt.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i));
 
@@ -137,7 +140,7 @@ export default function Appointments() {
       ...apt,
       clientName,
       clientPhone: '', // Would be populated from client database records when available
-      clientInitials: clientName.split(' ').map((n: string) => n[0]).join('').substring(0, 2),
+      clientInitials: clientName ? clientName.split(' ').map((n: string) => n[0]).join('').substring(0, 2) : '??',
       isCustomType: apt.type !== 'Individual Counseling' && apt.type !== 'therapy_session',
       location: apt.location || 'Office',
       isCalendarEvent: Boolean(isCalendarEvent),
@@ -169,8 +172,8 @@ export default function Appointments() {
   // Quick stats - based on actual displayed data
   const todayAppointments = filteredAppointments.length; // Show actual filtered count
   const thisWeekAppointments = appointments.length; // Total for selected date
-  const noShows = appointments.filter(apt => apt.status === 'no_show').length;
-  const newClients = appointments.filter(apt => apt.status === 'confirmed' && apt.type?.includes('Initial')).length;
+  const noShows = Array.isArray(appointments) ? appointments.filter(apt => apt.status === 'no_show').length : 0;
+  const newClients = Array.isArray(appointments) ? appointments.filter(apt => apt.status === 'confirmed' && apt.type?.includes('Initial')).length : 0;
 
   const formatTime = (dateString: string | undefined | null) => {
     if (!dateString) return 'Unknown time';
@@ -259,8 +262,12 @@ export default function Appointments() {
   };
 
   // Get unique clients for filter dropdown
-  const uniqueClients = Array.from(new Set(appointments.map(apt => apt.clientName).filter(Boolean)));
-  const uniqueLocations = Array.from(new Set(appointments.map(apt => apt.location).filter(Boolean)));
+  const uniqueClients = Array.from(new Set(
+    Array.isArray(appointments) ? appointments.map(apt => apt.clientName).filter(Boolean) : []
+  ));
+  const uniqueLocations = Array.from(new Set(
+    Array.isArray(appointments) ? appointments.map(apt => apt.location).filter(Boolean) : []
+  ));
   const availableStatuses = ['confirmed', 'pending', 'completed', 'cancelled', 'no_show'];
 
   const handleMarkComplete = (appointmentId: string) => {
@@ -392,7 +399,7 @@ export default function Appointments() {
         <Card className="border-0 shadow-sm bg-gradient-to-r from-blue-50 to-purple-50">
           <CardContent className="p-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-pulse">
-              {[...Array(4)].map((_, i) => (
+              {Array.from({ length: 4 }, (_, i) => (
                 <div key={i} className="text-center">
                   <div className="h-8 w-16 bg-gray-200 rounded mx-auto mb-2"></div>
                   <div className="h-3 bg-gray-200 rounded w-20 mx-auto"></div>
@@ -402,7 +409,7 @@ export default function Appointments() {
           </CardContent>
         </Card>
         <div className="grid gap-4">
-          {[...Array(4)].map((_, i) => (
+          {Array.from({ length: 4 }, (_, i) => (
             <Card key={i} className="animate-pulse">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-4">
@@ -634,7 +641,7 @@ export default function Appointments() {
                 </div>
                 {uniqueClients.length > 0 && (
                   <div className="max-h-32 overflow-y-auto space-y-1">
-                    {uniqueClients
+                    {Array.isArray(uniqueClients) && uniqueClients
                       .filter(client => !clientFilter || client?.toLowerCase().includes(clientFilter.toLowerCase()))
                       .slice(0, 5)
                       .map(client => (
@@ -655,7 +662,7 @@ export default function Appointments() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-therapy-text">Status</label>
                 <div className="space-y-2">
-                  {availableStatuses.map(status => (
+                  {Array.isArray(availableStatuses) && availableStatuses.map(status => (
                     <label key={status} className="flex items-center space-x-2 text-sm">
                       <Checkbox
                         checked={statusFilter.includes(status)}
@@ -666,7 +673,7 @@ export default function Appointments() {
                         className={getStatusColor(status) + ' text-xs'}
                         variant="secondary"
                       >
-                        {appointments.filter(apt => apt.status === status).length}
+                        {Array.isArray(appointments) ? appointments.filter(apt => apt.status === status).length : 0}
                       </Badge>
                     </label>
                   ))}
@@ -687,7 +694,7 @@ export default function Appointments() {
                 </div>
                 {uniqueLocations.length > 0 && (
                   <div className="space-y-1">
-                    {uniqueLocations.map(location => (
+                    {Array.isArray(uniqueLocations) && uniqueLocations.map(location => (
                       <button
                         key={location}
                         onClick={() => setLocationFilter(location || '')}
@@ -736,7 +743,7 @@ export default function Appointments() {
       {/* Appointments List/Grid */}
       <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-4'}>
         {filteredAppointments.length > 0 ? (
-          filteredAppointments.map((appointment) => (
+          Array.isArray(filteredAppointments) && filteredAppointments.map((appointment) => (
             <Card key={appointment.id} className="hover:shadow-md transition-shadow border-l-4 border-l-therapy-primary">
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">

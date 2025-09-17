@@ -132,7 +132,8 @@ export default function Calendar() {
   });
 
   // Apply filtering to the already transformed calendar events
-  const filteredCalendarEvents = (googleEvents || []).filter((event: CalendarEvent) => {
+  const safeGoogleEvents = Array.isArray(googleEvents) ? googleEvents : [];
+  const filteredCalendarEvents = safeGoogleEvents.filter((event: CalendarEvent) => {
     try {
       // Ensure event exists and has required properties
       if (!event || !event.id) return false;
@@ -175,7 +176,8 @@ export default function Calendar() {
       const date = new Date(startOfWeek);
       date.setDate(startOfWeek.getDate() + i);
 
-      const dayEvents = calendarEvents.filter(event => {
+      const dayEvents = Array.isArray(calendarEvents) 
+        ? calendarEvents.filter(event => {
         if (!event || !event.startTime) {
           return false;
         }
@@ -202,7 +204,8 @@ export default function Calendar() {
           console.error('Error processing event date:', error, event);
           return false;
         }
-      });
+      })
+      : [];
 
       days.push({
         date,
@@ -216,7 +219,9 @@ export default function Calendar() {
   }, [currentWeek, calendarEvents]);
 
   // Log statistics for both total events and current week
-  const weekEventCount = calendarDays.reduce((total, day) => total + day.events.length, 0);
+  const weekEventCount = Array.isArray(calendarDays) 
+    ? calendarDays.reduce((total, day) => total + day.events.length, 0) 
+    : 0;
 
   // Navigation handlers
   const handlePreviousWeek = () => {
@@ -342,7 +347,8 @@ export default function Calendar() {
         case 'daily':
           const { exportDailyToPDF } = await import('@/utils/pdfExport');
           // Convert calendar events to appointment format for daily PDF export
-          const dailyAppointmentData = calendarEvents.map(event => ({
+          const dailyAppointmentData = Array.isArray(calendarEvents) 
+            ? calendarEvents.map(event => ({
             id: event.id,
             clientName: event.clientName || 'Unknown',
             type: event.type,
@@ -351,7 +357,8 @@ export default function Calendar() {
             status: event.status,
             notes: event.notes || '',
             attendees: event.attendees || ''
-          }));
+          }))
+          : [];
           await exportDailyToPDF({
             appointments: dailyAppointmentData,
             date: selectedDate,
@@ -361,7 +368,8 @@ export default function Calendar() {
         case 'appointments':
           const { exportToPDF } = await import('@/utils/pdfExport');
           // Convert calendar events to appointment format for appointment list export
-          const appointmentData = calendarEvents.map(event => ({
+          const appointmentData = Array.isArray(calendarEvents) 
+            ? calendarEvents.map(event => ({
             id: event.id,
             clientName: event.clientName || 'Unknown',
             type: event.type,
@@ -370,7 +378,8 @@ export default function Calendar() {
             status: event.status,
             notes: event.notes || '',
             attendees: event.attendees || ''
-          }));
+          }))
+          : [];
           await exportToPDF({
             appointments: appointmentData,
             weekStart: currentWeek,
@@ -409,8 +418,12 @@ export default function Calendar() {
   };
 
   // Get unique calendar types and locations for filtering
-  const uniqueCalendarTypes = Array.from(new Set(googleEvents.map((event: any) => event.calendarName).filter(Boolean))) as string[];
-  const uniqueLocations = Array.from(new Set(googleEvents.map((event: any) => event.location).filter(Boolean))) as string[];
+  const uniqueCalendarTypes = Array.from(new Set(
+    Array.isArray(googleEvents) ? googleEvents.map((event: any) => event.calendarName).filter(Boolean) : []
+  )) as string[];
+  const uniqueLocations = Array.from(new Set(
+    Array.isArray(googleEvents) ? googleEvents.map((event: any) => event.location).filter(Boolean) : []
+  )) as string[];
 
   const getDefaultLocationForDate = (date: Date) => {
     return getOfficeLocationByDay(date);
@@ -612,8 +625,12 @@ export default function Calendar() {
               </span>
               {googleEvents.length > 0 && (
                 <div className="text-xs text-gray-500 mt-1">
-                  Earliest: {new Date(Math.min(...googleEvents.map((e: any) => new Date(e.startTime).getTime()))).toLocaleDateString()} • 
-                  Latest: {new Date(Math.max(...googleEvents.map((e: any) => new Date(e.startTime).getTime()))).toLocaleDateString()}
+                  Earliest: {Array.isArray(googleEvents) && googleEvents.length > 0 
+                    ? new Date(Math.min(...googleEvents.map((e: any) => new Date(e.startTime).getTime()))).toLocaleDateString()
+                    : 'N/A'} • 
+                  Latest: {Array.isArray(googleEvents) && googleEvents.length > 0
+                    ? new Date(Math.max(...googleEvents.map((e: any) => new Date(e.startTime).getTime()))).toLocaleDateString()
+                    : 'N/A'}
                 </div>
               )}
             </div>
@@ -626,11 +643,13 @@ export default function Calendar() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Calendars ({googleEvents.length} events)</SelectItem>
-                  {calendars?.map((cal: any) => {
-                    const calendarEventCount = googleEvents.filter((event: any) => 
+                  {Array.isArray(calendars) && calendars.map((cal: any) => {
+                    const calendarEventCount = Array.isArray(googleEvents) 
+                      ? googleEvents.filter((event: any) => 
                       event.calendarName === cal.summary || 
                       event.calendarId === cal.id
-                    ).length;
+                    ).length
+                      : 0;
                     return (
                       <SelectItem key={cal.id} value={cal.id}>
                         {cal.summary} ({calendarEventCount} events)
@@ -801,7 +820,7 @@ export default function Calendar() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-therapy-text">Calendar Source</label>
                     <div className="space-y-2">
-                      {uniqueCalendarTypes.map((calendarName: string) => (
+                      {Array.isArray(uniqueCalendarTypes) && uniqueCalendarTypes.map((calendarName: string) => (
                         <label key={calendarName} className="flex items-center space-x-2 text-sm">
                           <Checkbox
                             checked={calendarTypeFilter.includes(calendarName)}
@@ -812,7 +831,9 @@ export default function Calendar() {
                             variant="secondary"
                             className="text-xs"
                           >
-                            {googleEvents.filter((event: any) => event.calendarName === calendarName).length}
+                            {Array.isArray(googleEvents) 
+                              ? googleEvents.filter((event: any) => event.calendarName === calendarName).length 
+                              : 0}
                           </Badge>
                         </label>
                       ))}
@@ -823,7 +844,7 @@ export default function Calendar() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-therapy-text">Quick Locations</label>
                     <div className="space-y-1">
-                      {uniqueLocations.slice(0, 5).map((location: string) => (
+                      {Array.isArray(uniqueLocations) && uniqueLocations.slice(0, 5).map((location: string) => (
                         <button
                           key={location}
                           onClick={() => setLocationFilter(location)}
@@ -840,7 +861,7 @@ export default function Calendar() {
                     <label className="text-sm font-medium text-therapy-text">Calendar Stats</label>
                     <div className="space-y-1 text-xs text-gray-600">
                       <div>Total Events: {calendarEvents.length}</div>
-                      <div>This Week: {calendarDays.reduce((sum, day) => sum + day.events.length, 0)}</div>
+                      <div>This Week: {Array.isArray(calendarDays) ? calendarDays.reduce((sum, day) => sum + day.events.length, 0) : 0}</div>
                       <div>Today: {calendarDays.find(day => day.isToday)?.events.length || 0}</div>
                       {(searchFilter || locationFilter || calendarTypeFilter.length > 0) && (
                         <Badge variant="outline" className="text-xs">
@@ -995,7 +1016,7 @@ export default function Calendar() {
                 </label>
                 {eventSessionNotes && eventSessionNotes.length > 0 ? (
                   <div className="space-y-2 mt-2">
-                    {eventSessionNotes.map((note) => (
+                    {Array.isArray(eventSessionNotes) && eventSessionNotes.map((note) => (
                       <div key={note.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
                         <div className="flex justify-between items-start mb-2">
                           <h4 className="text-sm font-medium text-therapy-text">

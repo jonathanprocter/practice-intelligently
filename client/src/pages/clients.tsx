@@ -606,7 +606,7 @@ export default function Clients() {
           </Button>
         </div>
         <div className="grid gap-4">
-          {[...Array(6)].map((_, i) => (
+          {Array.from({ length: 6 }, (_, i) => (
             <Card key={i} className="p-6">
               <div className="animate-pulse">
                 <div className="flex items-center space-x-4">
@@ -736,7 +736,7 @@ export default function Clients() {
                   className="pl-10"
                   data-testid="input-search-clients"
                 />
-                {searchHistory.length > 0 && searchTerm === '' && (
+                {Array.isArray(searchHistory) && searchHistory.length > 0 && searchTerm === '' && (
                   <div className="absolute top-full mt-1 w-full bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 p-2">
                     <p className="text-xs text-gray-500 mb-2">Recent searches</p>
                     {searchHistory.slice(0, 5).map((term, i) => (
