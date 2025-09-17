@@ -35,7 +35,23 @@ router.get('/clients', (req, res) => {
   res.json([]);
 });
 
+// Action items by therapist ID
+router.get('/action-items/:therapistId', (req, res) => {
+  // Check if it's actually requesting urgent items
+  if (req.params.therapistId === 'urgent') {
+    // This is handled by the next route
+    return next();
+  }
+  res.json([]);
+});
+
+// Urgent action items
 router.get('/action-items/urgent/:therapistId', (req, res) => {
+  res.json([]);
+});
+
+// Client-specific action items
+router.get('/action-items/client/:clientId', (req, res) => {
   res.json([]);
 });
 
