@@ -1,17 +1,18 @@
 hidden = [".config", "node_modules", ".env"]
-run = "npm run start:production 2>/dev/null || npx ts-node --transpile-only server/index.ts"
-entrypoint = "server/index.ts"
+run = "node server/index.js"
+entrypoint = "server/index.js"
 modules = ["nodejs-18"]
 
 [nix]
 channel = "stable-23_11"
 
 [deployment]
-run = ["sh", "-c", "npm run start:production 2>/dev/null || npx ts-node --transpile-only server/index.ts"]
-build = ["sh", "-c", "npx vite build --mode production && echo 'Client built successfully'"]
+run = ["sh", "-c", "node server/index.js"]
+build = ["sh", "-c", "npm install --legacy-peer-deps && npm run build:client"]
+deploymentTarget = "cloudrun"
 
 [packager]
-language = "typescript"
+language = "nodejs"
 
 [packager.features]
 packageSearch = true
@@ -25,6 +26,7 @@ externalPort = 3000
 [[ports]]
 localPort = 3001
 externalPort = 3001
+exposeLocalhost = true
 
 [[ports]]
 localPort = 5000
@@ -39,17 +41,30 @@ localPort = 44411
 externalPort = 3002
 
 [workflows]
-runButton = "Run Application"
+runButton = "Start Application"
 
 [[workflows.workflow]]
-name = "Run Application"
-author = 37925715
+name = "Start Application"
+author = "replit"
 mode = "sequential"
+description = "Start Practice Intelligence App"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm install"
+args = "pkill -f 'node.*server' 2>/dev/null || true"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "pkill -f 'tsx' 2>/dev/null || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "lsof -ti:5000 | xargs kill -9 2>/dev/null || true"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "[ -d node_modules ] || npm install --legacy-peer-deps"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "NODE_ENV=development node server/index.js"

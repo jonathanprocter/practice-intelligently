@@ -1,42 +1,78 @@
-// Simple server to test basic functionality
 import express from 'express';
-import { createServer } from 'http';
+import cors from 'cors';
 import path from 'path';
-import fs from 'fs';
+import { fileURLToPath } from 'url';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const port = 5000;
+const PORT = process.env.PORT || 5000;
 
-// Body parsing
-app.use(express.json({ limit: '50mb' }));
+// Basic middleware
+app.use(cors());
+app.use(express.json());
 
-// Simple health check
+// Simple routes
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok',
-    timestamp: new Date().toISOString(),
-    message: 'Simple server running'
+    server: 'index-simple',
+    timestamp: new Date().toISOString()
   });
 });
 
-// Serve index.html for all other routes
-app.get('*', (req, res) => {
-  if (req.path.startsWith('/api') || req.path.includes('.')) {
-    return res.status(404).send('Not found');
-  }
-  
-  const indexPath = path.resolve(process.cwd(), 'client', 'index.html');
-  if (fs.existsSync(indexPath)) {
-    const html = fs.readFileSync(indexPath, 'utf-8');
-    res.send(html);
-  } else {
-    res.status(404).send('Index.html not found');
-  }
+app.get('/api/status', (req, res) => {
+  res.json({
+    running: true,
+    environment: process.env.NODE_ENV || 'development',
+    uptime: process.uptime()
+  });
 });
 
-const server = createServer(app);
+// Serve client files
+const clientPath = path.join(__dirname, '../client');
+app.use(express.static(clientPath));
 
-server.listen(port, '0.0.0.0', () => {
-  console.log(`Simple server listening on port ${port}`);
-  console.log(`Health check: http://localhost:${port}/health`);
+// Catch-all for client routing
+app.get('*', (req, res) => {
+  const indexPath = path.join(clientPath, 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      res.status(404).json({ 
+        error: 'Client not found',
+        path: indexPath,
+        message: err.message 
+      });
+    }
+  });
+});
+
+// Start server
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`
+==================================
+✅ Simple Server Started
+==================================
+🚀 Port: ${PORT}
+🏥 Environment: ${process.env.NODE_ENV || 'development'}
+📡 Health: http://localhost:${PORT}/health
+==================================
+  `);
+});
+
+// Error handling
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Error:', err);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: err.message 
+  });
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  server.close(() => process.exit(0));
+});
+
+process.on('SIGINT', () => {
+  server.close(() => process.exit(0));
 });
