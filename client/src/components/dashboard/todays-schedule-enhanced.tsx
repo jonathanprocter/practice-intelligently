@@ -136,9 +136,10 @@ function AppointmentCardEnhanced({
             </div>
             <div>
               <h4 className="font-semibold text-therapy-text flex items-center gap-2">
-                {appointment.clientName || appointment.clientFirstName && appointment.clientLastName 
-                  ? `${appointment.clientFirstName} ${appointment.clientLastName}`
-                  : "Client"}
+                {appointment.clientName || 
+                  (appointment.clientFirstName && appointment.clientLastName 
+                    ? `${appointment.clientFirstName} ${appointment.clientLastName}`
+                    : "Client")}
                 {hasNotes && <FileText className="h-3 w-3 text-therapy-success" />}
               </h4>
               <p className="text-sm text-therapy-text/60">

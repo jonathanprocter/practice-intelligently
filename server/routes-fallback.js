@@ -65,6 +65,144 @@ router.get('/calendar/events', (req, res) => {
   res.json([]);
 });
 
+router.get('/session-notes/today/:therapistId', (req, res) => {
+  res.json([]);
+});
+
+router.get('/appointments/:therapistId', (req, res) => {
+  res.json([]);
+});
+
+router.put('/appointments/:id', (req, res) => {
+  res.json({
+    id: req.params.id,
+    clientId: 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c',
+    startTime: new Date().toISOString(),
+    endTime: new Date(Date.now() + 3600000).toISOString(),
+    type: 'therapy',
+    status: req.body.status || 'completed',
+    notes: 'Session completed',
+    clientName: 'Demo Client'
+  });
+});
+
+router.delete('/appointments/:id', (req, res) => {
+  res.json({ success: true, id: req.params.id });
+});
+
+// Client-specific endpoints
+router.get('/appointments/client/:clientId', (req, res) => {
+  res.json([]);
+});
+
+router.get('/session-notes/client/:clientId', (req, res) => {
+  res.json([]);
+});
+
+router.get('/ai-insights/client/:clientId', (req, res) => {
+  res.json([]);
+});
+
+// Session notes endpoints  
+router.get('/session-notes', (req, res) => {
+  res.json([]);
+});
+
+router.post('/session-notes', (req, res) => {
+  res.json({
+    id: Date.now().toString(),
+    ...req.body,
+    createdAt: new Date().toISOString()
+  });
+});
+
+router.put('/session-notes/:id', (req, res) => {
+  res.json({
+    id: req.params.id,
+    ...req.body,
+    updatedAt: new Date().toISOString()
+  });
+});
+
+router.delete('/session-notes/:id', (req, res) => {
+  res.json({ success: true });
+});
+
+// API status endpoints
+router.get('/api-status', (req, res) => {
+  res.json([
+    { service: 'openai', status: 'not-configured' },
+    { service: 'anthropic', status: 'not-configured' }
+  ]);
+});
+
+router.get('/calendar/connection-status', (req, res) => {
+  res.json({ connected: false });
+});
+
+// Action items endpoints
+router.get('/action-items', (req, res) => {
+  res.json([]);
+});
+
+router.post('/action-items', (req, res) => {
+  res.json({
+    id: Date.now().toString(),
+    ...req.body,
+    createdAt: new Date().toISOString()
+  });
+});
+
+router.put('/action-items/:id', (req, res) => {
+  res.json({
+    id: req.params.id,
+    ...req.body,
+    updatedAt: new Date().toISOString()
+  });
+});
+
+// Progress metrics
+router.get('/progress-metrics/:therapistId', (req, res) => {
+  res.json([]);
+});
+
+// User endpoints
+router.get('/users/:userId', (req, res) => {
+  res.json({
+    id: req.params.userId,
+    name: 'Demo User',
+    email: 'demo@example.com'
+  });
+});
+
+router.put('/users/:userId', (req, res) => {
+  res.json({
+    id: req.params.userId,
+    ...req.body
+  });
+});
+
+// AI insights endpoints
+router.post('/ai-insights/generate', (req, res) => {
+  res.json([]);
+});
+
+router.patch('/ai-insights/:id/read', (req, res) => {
+  res.json({ success: true });
+});
+
+// Session preparation
+router.post('/session-notes/:id/generate-prep', (req, res) => {
+  res.json({ appointmentsUpdated: 0 });
+});
+
+router.post('/session-notes/:id/generate-tags', (req, res) => {
+  res.json({
+    id: req.params.id,
+    aiTags: ['therapy', 'session']
+  });
+});
+
 // Catch-all for other routes
 router.use('*', (req, res) => {
   console.log(`API route not found: ${req.method} ${req.originalUrl}`);

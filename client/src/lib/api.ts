@@ -499,6 +499,10 @@ export class ApiClient {
     return response.json();
   }
 
+  static async completeAppointment(id: string): Promise<Appointment> {
+    return ApiClient.updateAppointment(id, { status: 'completed' });
+  }
+
   static async cancelAppointment(id: string, reason?: string): Promise<Appointment> {
     const response = await apiRequest('DELETE', `/api/appointments/${id}`, { reason });
     return response.json();

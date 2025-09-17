@@ -1,14 +1,38 @@
-// Fallback WebSocket handler to prevent client errors
+// Fallback WebSocket handler using socket.io to prevent client errors
+import { Server } from 'socket.io';
+
 export function setupWebSocketFallback(server) {
-  console.log('⚠️ WebSocket fallback enabled (no real-time features)');
+  console.log('🔌 Setting up WebSocket server (fallback mode)');
   
-  // Just log that WebSocket is not available
-  // The client will handle disconnection gracefully
-  return {
-    emit: () => {},
-    on: () => {},
-    disconnect: () => {}
-  };
+  const io = new Server(server, {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    },
+    transports: ['websocket', 'polling']
+  });
+
+  io.on('connection', (socket) => {
+    console.log('Client connected:', socket.id);
+    
+    // Handle therapist room joining
+    socket.on('join-therapist-room', (therapistId) => {
+      socket.join(`therapist:${therapistId}`);
+      console.log(`Socket ${socket.id} joined room therapist:${therapistId}`);
+    });
+
+    // Handle disconnect
+    socket.on('disconnect', () => {
+      console.log('Client disconnected:', socket.id);
+    });
+
+    // Echo back any other events (for testing)
+    socket.onAny((event, ...args) => {
+      console.log(`Received event: ${event}`, args);
+    });
+  });
+
+  return io;
 }
 
 export default { setupWebSocketFallback };
