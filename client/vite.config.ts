@@ -31,5 +31,6 @@ export default defineConfig({
     },
     host: "0.0.0.0",
     cors: true,
+    allowedHosts: "all", // Allow all hosts to access the dev server
   },
 });
