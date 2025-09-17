@@ -83,7 +83,7 @@ async function startServer() {
     }
 
     // Setup client serving - prioritize built assets if they exist
-    const builtAssetsPath = path.join(__dirname, '../dist');
+    const builtAssetsPath = path.join(__dirname, '../dist/public');
     const sourceAssetsPath = path.join(__dirname, '../client');
     const builtIndexExists = fs.existsSync(path.join(builtAssetsPath, 'index.html'));
     const sourceIndexExists = fs.existsSync(path.join(sourceAssetsPath, 'index.html'));
