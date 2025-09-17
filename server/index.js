@@ -107,12 +107,18 @@ async function setupOptionalFeatures() {
       try {
         wsModule = await import('./websocket/websocket.server.js');
       } catch {
-        wsModule = await import('./websocket/websocket.server.ts');
+        try {
+          wsModule = await import('./websocket/websocket.server.ts');
+        } catch {
+          // Use fallback to prevent client errors
+          wsModule = await import('./websocket-fallback.js');
+        }
       }
       
-      if (wsModule.setupWebSocketServer) {
-        wsModule.setupWebSocketServer(server);
-        console.log('✅ WebSocket support enabled');
+      if (wsModule.setupWebSocketServer || wsModule.setupWebSocketFallback) {
+        const setupFn = wsModule.setupWebSocketServer || wsModule.setupWebSocketFallback;
+        setupFn(server);
+        console.log('✅ WebSocket support enabled (or fallback)');
       }
     } catch (err) {
       console.log('⚠️ WebSocket not available');

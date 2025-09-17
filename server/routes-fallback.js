@@ -12,7 +12,11 @@ router.get('/clients/:id', (req, res) => {
     email: 'demo@example.com',
     phoneNumber: '(555) 123-4567',
     dateOfBirth: '1990-01-01',
-    createdAt: new Date().toISOString()
+    status: 'active',
+    lastContact: new Date().toISOString(),
+    hipaaSignedDate: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   });
 });
 
@@ -58,7 +62,7 @@ router.get('/recent-activity/:therapistId', (req, res) => {
 });
 
 router.get('/calendar/events', (req, res) => {
-  res.json({ events: [] });
+  res.json([]);
 });
 
 // Catch-all for other routes
