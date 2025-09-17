@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import documentRoutesFix from './document-routes-fix';
-import { dbWrapper } from './db-wrapper';
+import documentRoutesFix from './document-routes-fix.js';
+import { dbWrapper } from './db-wrapper.js';
 
 const router = Router();
 
