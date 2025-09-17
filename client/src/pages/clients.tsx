@@ -48,13 +48,16 @@ interface EnhancedClient extends Client {
 
 // Export utilities
 const exportToCSV = (clients: Client[]) => {
+  // Ensure clients is always an array
+  const clientList = Array.isArray(clients) ? clients : [];
+  
   const headers = [
     'First Name', 'Last Name', 'Preferred Name', 'Email', 'Phone', 
     'Date of Birth', 'Gender', 'Status', 'Risk Level', 'Referral Source',
     'Emergency Contact', 'Created Date'
   ];
   
-  const rows = clients.map(client => [
+  const rows = clientList.map(client => [
     client.firstName,
     client.lastName,
     client.preferredName || '',
@@ -85,6 +88,9 @@ const exportToCSV = (clients: Client[]) => {
 };
 
 const exportToPDF = async (clients: Client[]) => {
+  // Ensure clients is always an array
+  const clientList = Array.isArray(clients) ? clients : [];
+  
   // Dynamic import to avoid bundle size issues
   const jsPDF = (await import('jspdf')).default;
   const doc = new jsPDF();
@@ -98,7 +104,7 @@ const exportToPDF = async (clients: Client[]) => {
   const lineHeight = 8;
   const pageHeight = doc.internal.pageSize.height;
   
-  clients.forEach((client, index) => {
+  clientList.forEach((client, index) => {
     if (yPos > pageHeight - 30) {
       doc.addPage();
       yPos = 20;
@@ -220,7 +226,7 @@ export default function Clients() {
 
   // Enhanced filtering and sorting
   const processedClients = useMemo(() => {
-    if (!clients) return [];
+    if (!clients || !Array.isArray(clients)) return [];
     
     let filtered = [...clients];
     
@@ -324,8 +330,8 @@ export default function Clients() {
     
     switch (action) {
       case 'delete':
-        const clientNames = clients
-          ?.filter(c => selectedClients.has(c.id))
+        const clientNames = (Array.isArray(clients) ? clients : [])
+          .filter(c => selectedClients.has(c.id))
           .map(c => `${c.firstName} ${c.lastName}`)
           .slice(0, 5)
           .join(', ');
@@ -335,7 +341,7 @@ export default function Clients() {
           try {
             // Delete each client sequentially
             for (const clientId of Array.from(selectedClients)) {
-              const client = clients?.find(c => c.id === clientId);
+              const client = (Array.isArray(clients) ? clients : []).find(c => c.id === clientId);
               const isFakeClient = client && !client.email && !client.phone && !client.dateOfBirth;
               await ApiClient.deleteClient(clientId, isFakeClient || false);
             }
@@ -358,11 +364,11 @@ export default function Clients() {
         archiveClientsMutation.mutate(Array.from(selectedClients));
         break;
       case 'export-csv':
-        const clientsToExport = clients?.filter(c => selectedClients.has(c.id)) || [];
+        const clientsToExport = (Array.isArray(clients) ? clients : []).filter(c => selectedClients.has(c.id));
         exportToCSV(clientsToExport);
         break;
       case 'export-pdf':
-        const clientsForPDF = clients?.filter(c => selectedClients.has(c.id)) || [];
+        const clientsForPDF = (Array.isArray(clients) ? clients : []).filter(c => selectedClients.has(c.id));
         exportToPDF(clientsForPDF);
         break;
     }
