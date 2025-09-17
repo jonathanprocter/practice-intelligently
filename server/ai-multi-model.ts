@@ -1,16 +1,26 @@
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
-import { GoogleGenAI } from '@google/generative-ai';
-import { perplexityClient } from './perplexity';
 
-// Initialize AI clients
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-if (!GEMINI_API_KEY) {
-  console.warn('GEMINI_API_KEY not configured');
+// Initialize AI clients - Only OpenAI and Anthropic
+const openai = process.env.OPENAI_API_KEY 
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
+
+const anthropic = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null;
+
+if (!openai && !anthropic) {
+  console.error('WARNING: No AI services configured. Please set OPENAI_API_KEY or ANTHROPIC_API_KEY');
 }
-const gemini = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
+
+if (openai) {
+  console.log('✅ OpenAI service initialized');
+}
+
+if (anthropic) {
+  console.log('✅ Anthropic service initialized');
+}
 
 export interface AIResponse {
   content: string;
@@ -22,6 +32,11 @@ export interface AIResponse {
 export class MultiModelAI {
   // Primary analysis using OpenAI for robust performance
   async generateClinicalAnalysis(content: string, context?: string): Promise<AIResponse> {
+    if (!openai) {
+      console.warn('OpenAI is not initialized, falling back to Claude.');
+      return this.fallbackToClaude(content, context);
+    }
+    
     try {
       const response = await openai.chat.completions.create({
         model: "gpt-4o", // Latest OpenAI model
@@ -71,107 +86,137 @@ export class MultiModelAI {
         confidence: 0.85
       };
     } catch (error) {
-      console.error('Claude analysis failed, falling back to Gemini:', error);
-      return this.fallbackToGemini(content, analysisType);
+      console.error('Claude analysis failed, falling back to OpenAI:', error);
+      return this.fallbackToOpenAI(content, analysisType);
     }
   }
 
-  // Research-backed recommendations using Perplexity
+  // Evidence-based recommendations using available AI services
   async getEvidenceBasedRecommendations(query: string, domain: 'clinical' | 'treatment' | 'education'): Promise<AIResponse> {
-    try {
-      let content: string;
+    const context = `Evidence-based research for ${domain}`;
+    
+    // Try OpenAI first for evidence-based recommendations
+    if (openai) {
+      try {
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: `You are an expert clinical therapist providing evidence-based recommendations for ${domain} practice. Include relevant research insights and best practices.`
+            },
+            {
+              role: "user",
+              content: query
+            }
+          ],
+          max_tokens: 2000,
+          temperature: 0.3
+        });
 
-      switch (domain) {
-        case 'clinical':
-          content = await perplexityClient.getClinicalResearch(query);
-          break;
-        case 'treatment':
-          content = await perplexityClient.getTreatmentProtocols(query, {});
-          break;
-        case 'education':
-          content = await perplexityClient.getContinuingEducation({}, {});
-          break;
-        default:
-          content = await perplexityClient.getClinicalResearch(query);
+        return {
+          content: response.choices[0].message.content || '',
+          model: 'gpt-4o-evidence',
+          confidence: 0.85
+        };
+      } catch (error) {
+        console.error('OpenAI evidence-based recommendations failed:', error);
       }
-
-      return {
-        content,
-        model: 'perplexity-sonar',
-        confidence: 0.95,
-        citations: [] // Perplexity provides citations
-      };
-    } catch (error) {
-      console.error('Perplexity analysis failed, falling back to OpenAI:', error);
-      return this.generateClinicalAnalysis(query, `Evidence-based research for ${domain}`);
     }
+    
+    // Fallback to Claude
+    if (anthropic) {
+      return this.fallbackToClaude(query, context);
+    }
+    
+    return {
+      content: 'AI services are not available for generating recommendations.',
+      model: 'none',
+      confidence: 0
+    };
   }
 
-  // Gemini for multimodal analysis (images, complex data)
-  async analyzeMultimodalContent(content: string, mediaType?: 'image' | 'document'): Promise<AIResponse> {
+  // Ensemble approach - combine insights from OpenAI and Claude
+  async generateEnsembleAnalysis(content: string, analysisType: string): Promise<AIResponse> {
     try {
-      if (!gemini) {
-        console.warn('Gemini is not initialized, cannot analyze multimodal content.');
+      const promises = [];
+      
+      // Add OpenAI if available
+      if (openai) {
+        promises.push(this.generateClinicalAnalysis(content, analysisType));
+      }
+      
+      // Add Claude if available
+      if (anthropic) {
+        promises.push(this.generateDetailedInsights(content, analysisType));
+      }
+      
+      if (promises.length === 0) {
         return {
-          content: 'Gemini is not initialized.',
-          model: 'gemini-not-initialized',
+          content: 'No AI services are configured. Please set OPENAI_API_KEY or ANTHROPIC_API_KEY.',
+          model: 'none',
           confidence: 0
         };
       }
-      const response = await gemini.models.generateContent({
-        model: "gemini-2.5-pro", // Latest Gemini model
-        contents: content,
-      });
-
-      return {
-        content: response.text || '',
-        model: 'gemini-2.5-pro',
-        confidence: 0.8
-      };
-    } catch (error) {
-      console.error('Gemini analysis failed, falling back to OpenAI:', error);
-      return this.fallbackToOpenAI(content, `Multimodal analysis for ${mediaType || 'content'}`);
-    }
-  }
-
-  // Ensemble approach - combine insights from multiple models
-  async generateEnsembleAnalysis(content: string, analysisType: string): Promise<AIResponse> {
-    try {
-      const [openaiResult, claudeResult, perplexityResult] = await Promise.allSettled([
-        this.generateClinicalAnalysis(content, analysisType),
-        this.generateDetailedInsights(content, analysisType),
-        this.getEvidenceBasedRecommendations(content, 'clinical')
-      ]);
-
+      
+      const results = await Promise.allSettled(promises);
+      
       // Combine successful results
-      const results: AIResponse[] = [];
-
-      if (openaiResult.status === 'fulfilled') results.push(openaiResult.value);
-      if (claudeResult.status === 'fulfilled') results.push(claudeResult.value);
-      if (perplexityResult.status === 'fulfilled') results.push(perplexityResult.value);
-
-      if (results.length === 0) {
+      const successfulResults: AIResponse[] = [];
+      
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          successfulResults.push(result.value);
+        }
+      }
+      
+      if (successfulResults.length === 0) {
         throw new Error('All AI models failed');
       }
-
-      // Synthesize the best insights
-      const combinedContent = await this.synthesizeInsights(results, analysisType);
-
+      
+      // If only one result, return it directly
+      if (successfulResults.length === 1) {
+        return successfulResults[0];
+      }
+      
+      // Synthesize multiple insights
+      const combinedContent = await this.synthesizeInsights(successfulResults, analysisType);
+      
       return {
         content: combinedContent,
         model: 'ensemble',
-        confidence: Math.max(...results.map(r => r.confidence || 0.5))
+        confidence: Math.max(...successfulResults.map(r => r.confidence || 0.5))
       };
     } catch (error) {
       console.error('Ensemble analysis failed:', error);
       // Final fallback to single best available model
-      return this.generateClinicalAnalysis(content, analysisType);
+      if (openai) {
+        return this.generateClinicalAnalysis(content, analysisType);
+      } else if (anthropic) {
+        return this.generateDetailedInsights(content, analysisType);
+      }
+      
+      return {
+        content: 'AI analysis is currently unavailable.',
+        model: 'none',
+        confidence: 0
+      };
     }
   }
 
   // Fallback methods
   private async fallbackToClaude(content: string, context?: string): Promise<AIResponse> {
-    const message = await anthropic.messages.create({
+    if (!anthropic) {
+      console.warn('Anthropic is not initialized.');
+      return {
+        content: 'Claude AI service is not configured.',
+        model: 'none',
+        confidence: 0
+      };
+    }
+    
+    try {
+      const message = await anthropic.messages.create({
       max_tokens: 2000,
       messages: [
         {
@@ -189,10 +234,28 @@ export class MultiModelAI {
       model: 'claude-sonnet-4-fallback',
       confidence: 0.7
     };
+    } catch (error) {
+      console.error('Claude fallback failed:', error);
+      return {
+        content: 'AI analysis is currently unavailable.',
+        model: 'none',
+        confidence: 0
+      };
+    }
   }
 
   private async fallbackToOpenAI(content: string, context?: string): Promise<AIResponse> {
-    const response = await openai.chat.completions.create({
+    if (!openai) {
+      console.warn('OpenAI is not initialized.');
+      return {
+        content: 'OpenAI service is not configured.',
+        model: 'none',
+        confidence: 0
+      };
+    }
+    
+    try {
+      const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
@@ -208,69 +271,67 @@ export class MultiModelAI {
       model: 'gpt-4o-fallback',
       confidence: 0.7
     };
-  }
-
-  private async fallbackToGemini(content: string, context?: string): Promise<AIResponse> {
-    if (!gemini) {
-      console.warn('Gemini is not initialized, cannot fallback to Gemini.');
+    } catch (error) {
+      console.error('OpenAI fallback failed:', error);
       return {
-        content: 'Gemini is not initialized.',
-        model: 'gemini-not-initialized',
+        content: 'AI analysis is currently unavailable.',
+        model: 'none',
         confidence: 0
       };
     }
-    const response = await gemini.models.generateContent({
-      model: "gemini-2.5-pro",
-      contents: `${context ? `Context: ${context}\n\n` : ''}${content}`,
-    });
-
-    return {
-      content: response.text || '',
-      model: 'gemini-2.5-pro-fallback',
-      confidence: 0.6
-    };
   }
 
   private async synthesizeInsights(results: AIResponse[], analysisType: string): Promise<string> {
     const combinedInsights = results.map((r, i) => `**${r.model} Analysis:**\n${r.content}`).join('\n\n---\n\n');
 
-    // Use OpenAI to synthesize the combined insights
-    try {
-      const synthesis = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert clinical supervisor. Synthesize multiple AI analyses into comprehensive clinical assessments."
-          },
-          {
-            role: "user",
-            content: `Synthesize the following multiple AI analyses into a comprehensive, clinically sophisticated ${analysisType} assessment. Focus on the most valuable insights and resolve any contradictions:\n\n${combinedInsights}`
-          }
-        ],
-        max_tokens: 2000,
-      });
+    // Use OpenAI to synthesize the combined insights if available
+    if (openai) {
+      try {
+        const synthesis = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: "You are an expert clinical supervisor. Synthesize multiple AI analyses into comprehensive clinical assessments."
+            },
+            {
+              role: "user",
+              content: `Synthesize the following multiple AI analyses into a comprehensive, clinically sophisticated ${analysisType} assessment. Focus on the most valuable insights and resolve any contradictions:\n\n${combinedInsights}`
+            }
+          ],
+          max_tokens: 2000,
+        });
 
-      return synthesis.choices[0].message.content || '';
-    } catch (error) {
-      console.error('OpenAI synthesis failed, falling back to Claude:', error);
-      
-      // Fallback to Claude for synthesis
-      const claudeSynthesis = await anthropic.messages.create({
-        max_tokens: 2000,
-        messages: [
-          {
-            role: 'user',
-            content: `As an expert clinical supervisor, synthesize the following multiple AI analyses into a comprehensive, clinically sophisticated ${analysisType} assessment. Focus on the most valuable insights and resolve any contradictions:\n\n${combinedInsights}`
-          }
-        ],
-        model: "claude-sonnet-4-20250514",
-      });
-
-      return Array.isArray(claudeSynthesis.content) 
-        ? (claudeSynthesis.content[0].type === 'text' ? claudeSynthesis.content[0].text : '')
-        : (typeof claudeSynthesis.content === 'string' ? claudeSynthesis.content : '');
+        return synthesis.choices[0].message.content || '';
+      } catch (error) {
+        console.error('OpenAI synthesis failed:', error);
+      }
     }
+    
+    // Fallback to Claude for synthesis if available
+    if (anthropic) {
+      try {
+        const claudeSynthesis = await anthropic.messages.create({
+          max_tokens: 2000,
+          messages: [
+            {
+              role: 'user',
+              content: `As an expert clinical supervisor, synthesize the following multiple AI analyses into a comprehensive, clinically sophisticated ${analysisType} assessment. Focus on the most valuable insights and resolve any contradictions:\n\n${combinedInsights}`
+            }
+          ],
+          model: "claude-sonnet-4-20250514",
+        });
+
+        return Array.isArray(claudeSynthesis.content) 
+          ? (claudeSynthesis.content[0].type === 'text' ? claudeSynthesis.content[0].text : '')
+          : (typeof claudeSynthesis.content === 'string' ? claudeSynthesis.content : '');
+      } catch (error) {
+        console.error('Claude synthesis failed:', error);
+      }
+    }
+    
+    // If synthesis fails, return the first result's content
+    return results[0]?.content || 'Unable to synthesize insights.';
   }
 
   // Additional AI analysis methods for advanced features
@@ -279,6 +340,10 @@ export class MultiModelAI {
     clientProfile: any;
     preferences: any;
   }): Promise<any> {
+    if (!openai) {
+      return { interventions: "AI service is not configured for generating interventions", evidence_level: "none", references: [] };
+    }
+    
     try {
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -312,6 +377,10 @@ export class MultiModelAI {
     appointments: any[];
     timeframeDays: number;
   }): Promise<any> {
+    if (!openai) {
+      return { efficiency_score: 0, insights: "AI service is not configured", recommendations: [] };
+    }
+    
     try {
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -344,6 +413,10 @@ export class MultiModelAI {
     clients: any[];
     appointments: any[];
   }): Promise<any> {
+    if (!openai) {
+      return { retention_score: 0, risk_factors: [], recommendations: "AI service is not configured" };
+    }
+    
     try {
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -376,6 +449,10 @@ export class MultiModelAI {
     sessionNotes: any[];
     clientFeedback: any[];
   }): Promise<any> {
+    if (!openai) {
+      return { strengths: [], development_areas: [], analysis: "AI service is not configured" };
+    }
+    
     try {
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -408,6 +485,10 @@ export class MultiModelAI {
     appointment: any;
     clientHistory: any[];
   }): Promise<any> {
+    if (!openai) {
+      return { key_focus_areas: [], preparation_notes: "AI service is not configured", suggested_interventions: [] };
+    }
+    
     try {
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -445,6 +526,16 @@ export class MultiModelAI {
     actionItems?: any[];
     assessments?: any[];
   }): Promise<any> {
+    if (!openai && !anthropic) {
+      return { 
+        prep_content: "AI services are not configured. Please set up OpenAI or Anthropic API keys.", 
+        key_focus_areas: [], 
+        suggested_techniques: [],
+        confidence: 0,
+        contextual: false
+      };
+    }
+    
     try {
       // Build comprehensive client context from database/chart
       let clientContext = '';
@@ -493,12 +584,16 @@ export class MultiModelAI {
         }
       }
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert clinical therapist providing gentle, personalized session preparation insights. 
+      // Use OpenAI if available, otherwise use Anthropic
+      let rawContent = '';
+      
+      if (openai) {
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: `You are an expert clinical therapist providing gentle, personalized session preparation insights. 
 
 CRITICAL FORMATTING REQUIREMENTS:
 - Use ONLY plain text with natural language flow
@@ -511,10 +606,10 @@ CRITICAL FORMATTING REQUIREMENTS:
 - Write in complete sentences and paragraphs, not lists or bullet points
 
 Provide contextual, personalized insights based on the client's actual history, treatment plans, and previous sessions. Be gentle, supportive, and clinically appropriate. Write in a warm, conversational tone as if speaking directly to the therapist.`
-          },
-          {
-            role: "user",
-            content: `Based on this comprehensive client information, generate personalized session preparation insights:
+            },
+            {
+              role: "user",
+              content: `Based on this comprehensive client information, generate personalized session preparation insights:
 
 ${clientContext}
 
@@ -527,13 +622,55 @@ Gentle reminders about client preferences or concerns - what to keep in mind
 Suggested focus areas for today's session - what to prioritize
 
 Write this as a warm, conversational note from one therapist to another. Use natural paragraphs separated by double line breaks. Avoid any formatting symbols, numbered lists, or bullet points. Write in complete sentences with a supportive, professional tone.`
-          }
-        ],
-        max_tokens: 1000,
-        temperature: 0.4
-      });
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.4
+        });
+        
+        rawContent = response.choices[0].message.content || '';
+      } else if (anthropic) {
+        const response = await anthropic.messages.create({
+          max_tokens: 1000,
+          messages: [
+            {
+              role: 'user',
+              content: `You are an expert clinical therapist providing gentle, personalized session preparation insights.
 
-      const rawContent = response.choices[0].message.content || '';
+CRITICAL FORMATTING REQUIREMENTS:
+- Use ONLY plain text with natural language flow
+- NO markdown formatting whatsoever - NO asterisks (*), NO hashtags (#), NO brackets [], NO underscores (_)
+- NO bold formatting markers (**text**), NO italic markers (*text*)
+- NO bullet points with dashes or symbols
+- Use CAPITAL LETTERS sparingly for emphasis only when absolutely necessary
+- Use proper paragraph breaks (double line breaks) to separate sections
+- Format as natural, readable prose with emphasis through word choice and sentence structure
+- Write in complete sentences and paragraphs, not lists or bullet points
+
+Provide contextual, personalized insights based on the client's actual history, treatment plans, and previous sessions. Be gentle, supportive, and clinically appropriate. Write in a warm, conversational tone as if speaking directly to the therapist.
+
+Based on this comprehensive client information, generate personalized session preparation insights:
+
+${clientContext}
+
+Write a gentle, flowing therapeutic preparation note covering these areas in natural prose:
+
+Key themes from recent sessions - what patterns have emerged
+Progress toward treatment goals - how the client is progressing  
+Relevant therapeutic approaches based on client history - what methods work best
+Gentle reminders about client preferences or concerns - what to keep in mind
+Suggested focus areas for today's session - what to prioritize
+
+Write this as a warm, conversational note from one therapist to another. Use natural paragraphs separated by double line breaks. Avoid any formatting symbols, numbered lists, or bullet points. Write in complete sentences with a supportive, professional tone.`
+            }
+          ],
+          model: "claude-sonnet-4-20250514"
+        });
+        
+        rawContent = Array.isArray(response.content) 
+          ? (response.content[0].type === 'text' ? response.content[0].text : '')
+          : (typeof response.content === 'string' ? response.content : '');
+      }
       
       // Strip any remaining markdown formatting to ensure pure rich text
       const content = this.stripMarkdownFormatting(rawContent);
@@ -639,6 +776,10 @@ Write this as a warm, conversational note from one therapist to another. Use nat
     therapistId: string;
     clientProfile: any;
   }): Promise<any> {
+    if (!openai) {
+      return { questions: [], personalized_content: "AI service is not configured", priority: "low" };
+    }
+    
     try {
       const response = await openai.chat.completions.create({
         model: "gpt-4o",
