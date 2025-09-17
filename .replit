@@ -20,10 +20,6 @@ guessImports = true
 enabledForHosting = true
 
 [[ports]]
-localPort = 3000
-externalPort = 3000
-
-[[ports]]
 localPort = 3001
 externalPort = 3001
 exposeLocalhost = true
@@ -33,11 +29,11 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 43195
-externalPort = 3003
+localPort = 5173
+externalPort = 3000
 
 [[ports]]
-localPort = 44411
+localPort = 43195
 externalPort = 3002
 
 [workflows]
