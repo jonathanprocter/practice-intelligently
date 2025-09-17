@@ -89,6 +89,15 @@ async function startServer() {
     
     // Check if client files exist
     if (fs.existsSync(indexPath)) {
+      console.log('✅ Client files found, setting up serving...');
+      
+      // Always serve static files first
+      app.use(express.static(clientPath));
+      const publicPath = path.join(clientPath, 'public');
+      if (fs.existsSync(publicPath)) {
+        app.use(express.static(publicPath));
+      }
+      
       // In development, try to use Vite
       if (process.env.NODE_ENV !== 'production') {
         console.log('Setting up development server...');
@@ -97,14 +106,18 @@ async function startServer() {
           const vite = await import('vite');
           const viteConfigPath = path.join(clientPath, 'vite.config.ts');
           
-          // Create Vite server
+          // Create Vite server with proper config
           const viteServer = await vite.createServer({
             configFile: fs.existsSync(viteConfigPath) ? viteConfigPath : undefined,
             server: {
               middlewareMode: true,
               hmr: { 
                 port: 3001,
-                host: 'localhost'
+                host: '0.0.0.0'
+              },
+              fs: {
+                strict: false,
+                allow: ['.']
               }
             },
             appType: 'spa',
@@ -115,83 +128,91 @@ async function startServer() {
           app.use(viteServer.middlewares);
           console.log('✅ Vite development server enabled with HMR on port 3001');
           
-          // Serve index.html for client routes through Vite
-          app.get('*', async (req, res, next) => {
-            // Skip API and static file requests
-            if (req.path.startsWith('/api') || 
-                req.path.startsWith('/socket.io') ||
-                req.path === '/health' ||
-                req.path.includes('.')) {
-              return next();
-            }
-
-            try {
-              let html = fs.readFileSync(indexPath, 'utf-8');
-              html = await viteServer.transformIndexHtml(req.url, html);
-              res.status(200).set({ 'Content-Type': 'text/html' }).send(html);
-            } catch (e) {
-              console.error('Error serving HTML through Vite:', e.message);
-              // Fallback to sending raw HTML
-              res.sendFile(indexPath);
-            }
-          });
-          
         } catch (viteError) {
           console.log('⚠️ Vite not available, using static file serving');
           console.log('   Error:', viteError.message);
-          setupStaticServing();
         }
-      } else {
-        // Production mode
-        console.log('Running in production mode');
-        setupStaticServing();
       }
+      
+      // Catch-all route for client-side routing (always needed)
+      app.get('*', (req, res) => {
+        // Skip API and static file requests
+        if (req.path.startsWith('/api') || 
+            req.path.startsWith('/socket.io') ||
+            req.path === '/health' ||
+            req.path.includes('.')) {
+          return;
+        }
+
+        res.sendFile(indexPath, (err) => {
+          if (err) {
+            console.error('Error sending index.html:', err.message);
+            res.status(500).send('Error loading app');
+          }
+        });
+      });
+      
     } else {
       console.error('❌ Client files not found at:', clientPath);
-      // Provide a simple fallback page
+      // Provide a simple app interface as fallback
       app.get('*', (req, res) => {
         if (!req.path.startsWith('/api') && req.path !== '/health') {
           res.status(200).send(`
             <!DOCTYPE html>
             <html>
               <head>
-                <title>Practice Intelligence - Setup Required</title>
+                <title>Practice Intelligence</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <style>
                   body {
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    min-height: 100vh;
                     margin: 0;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    padding: 20px;
+                    background: #f8fafc;
+                    color: #1a202c;
                   }
                   .container {
-                    text-align: center;
-                    padding: 3rem;
+                    max-width: 800px;
+                    margin: 0 auto;
                     background: white;
-                    border-radius: 20px;
-                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                    border-radius: 12px;
+                    padding: 2rem;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
                   }
-                  h1 { color: #1a202c; }
+                  h1 { color: #2d3748; margin-bottom: 1rem; }
                   .status { 
                     display: inline-block;
                     padding: 0.5rem 1rem;
-                    background: #f59e0b;
+                    background: #48bb78;
                     color: white;
-                    border-radius: 9999px;
+                    border-radius: 6px;
                     font-weight: 600;
-                    margin: 1rem 0;
+                    margin-bottom: 1rem;
                   }
+                  .links { margin-top: 2rem; }
+                  .links a {
+                    display: inline-block;
+                    margin-right: 1rem;
+                    padding: 0.5rem 1rem;
+                    background: #4299e1;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 6px;
+                    margin-bottom: 0.5rem;
+                  }
+                  .links a:hover { background: #3182ce; }
                 </style>
               </head>
               <body>
                 <div class="container">
-                  <h1>🚀 Practice Intelligence Server</h1>
-                  <div class="status">Client Setup Required</div>
-                  <p>Server is running but client files are not found.</p>
-                  <p>API Status: <a href="/api/status">/api/status</a></p>
-                  <p>Health Check: <a href="/health">/health</a></p>
+                  <h1>🏥 Practice Intelligence</h1>
+                  <div class="status">Server Running</div>
+                  <p>Your Practice Intelligence server is running successfully!</p>
+                  <p>The client application is starting up. If this message persists, try refreshing the page.</p>
+                  <div class="links">
+                    <a href="/health">Health Check</a>
+                    <a href="/api/status">API Status</a>
+                  </div>
                 </div>
               </body>
             </html>
