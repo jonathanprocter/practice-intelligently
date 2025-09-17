@@ -60,13 +60,13 @@ const exportToCSV = (clients: Client[]) => {
     client.preferredName || '',
     client.email || '',
     client.phone || '',
-    client.dateOfBirth ? format(new Date(client.dateOfBirth), 'MM/dd/yyyy') : '',
+    client.dateOfBirth && isValid(new Date(client.dateOfBirth)) ? format(new Date(client.dateOfBirth), 'MM/dd/yyyy') : '',
     client.gender || '',
     client.status,
     client.riskLevel || '',
     client.referralSource || '',
     client.emergencyContact ? JSON.stringify(client.emergencyContact) : '',
-    format(new Date(client.createdAt), 'MM/dd/yyyy')
+    client.createdAt && isValid(new Date(client.createdAt)) ? format(new Date(client.createdAt), 'MM/dd/yyyy') : 'Unknown date'
   ]);
   
   const csvContent = [

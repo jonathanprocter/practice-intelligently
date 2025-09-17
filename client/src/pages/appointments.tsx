@@ -172,12 +172,20 @@ export default function Appointments() {
   const noShows = appointments.filter(apt => apt.status === 'no_show').length;
   const newClients = appointments.filter(apt => apt.status === 'confirmed' && apt.type?.includes('Initial')).length;
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
+  const formatTime = (dateString: string | undefined | null) => {
+    if (!dateString) return 'Unknown time';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid time';
+      return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return 'Unknown time';
+    }
   };
 
   const getStatusColor = (status: string) => {

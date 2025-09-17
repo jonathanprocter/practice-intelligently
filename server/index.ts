@@ -95,6 +95,7 @@ async function initializeServer() {
             middlewareMode: true,
             host: true,
             cors: true,
+            allowedHosts: 'all', // Allow all hosts including Replit domains
             hmr: {
               port: 3001
             }

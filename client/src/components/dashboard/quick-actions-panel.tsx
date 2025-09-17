@@ -29,12 +29,17 @@ export default function QuickActionsPanel() {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
-  // Fetch action items count
-  const { data: actionItems } = useQuery({
+  // Fetch action items count with error handling
+  const { data: actionItems = 0 } = useQuery({
     queryKey: ['action-items-count'],
     queryFn: async () => {
-      const items = await ApiClient.getUrgentActionItems();
-      return items.length;
+      try {
+        const items = await ApiClient.getUrgentActionItems();
+        return Array.isArray(items) ? items.length : 0;
+      } catch (error) {
+        console.error('Error fetching action items count:', error);
+        return 0;
+      }
     },
     refetchInterval: 60000,
   });

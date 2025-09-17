@@ -191,10 +191,28 @@ export default function Dashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [dashboardLayout, setDashboardLayout] = useState<'default' | 'compact' | 'expanded'>('default');
 
-  // Main stats query with improved caching
+  // Main stats query with improved caching and default values
   const statsQuery = useQuery({
     queryKey: ['dashboard-stats', therapistId],
-    queryFn: () => ApiClient.getDashboardStats(),
+    queryFn: async () => {
+      try {
+        const result = await ApiClient.getDashboardStats();
+        return result || {
+          todaysSessions: 0,
+          activeClients: 0,
+          urgentActionItems: 0,
+          completionRate: 0
+        };
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+        return {
+          todaysSessions: 0,
+          activeClients: 0,
+          urgentActionItems: 0,
+          completionRate: 0
+        };
+      }
+    },
     staleTime: DASHBOARD_CONFIG.staleTime.stats,
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
     refetchInterval: DASHBOARD_CONFIG.refreshIntervals.stats,
@@ -206,14 +224,30 @@ export default function Dashboard() {
     queries: [
       {
         queryKey: ['todays-schedule', therapistId],
-        queryFn: ApiClient.getTodaysAppointments,
+        queryFn: async () => {
+          try {
+            const result = await ApiClient.getTodaysAppointments();
+            return Array.isArray(result) ? result : [];
+          } catch (error) {
+            console.error('Error fetching today\'s appointments:', error);
+            return [];
+          }
+        },
         staleTime: DASHBOARD_CONFIG.staleTime.schedule,
         refetchInterval: DASHBOARD_CONFIG.refreshIntervals.schedule,
         gcTime: 5 * 60 * 1000,
       },
       {
         queryKey: ['ai-insights', therapistId],
-        queryFn: ApiClient.getAiInsights,
+        queryFn: async () => {
+          try {
+            const result = await ApiClient.getAiInsights();
+            return Array.isArray(result) ? result : [];
+          } catch (error) {
+            console.error('Error fetching AI insights:', error);
+            return [];
+          }
+        },
         staleTime: DASHBOARD_CONFIG.staleTime.insights,
         refetchInterval: DASHBOARD_CONFIG.refreshIntervals.insights,
         gcTime: 10 * 60 * 1000, // Keep AI insights longer
@@ -400,7 +434,12 @@ export default function Dashboard() {
             isLoading={statsQuery.isLoading}
             onRefresh={() => statsQuery.refetch()}
           >
-            <QuickStats stats={statsQuery.data} />
+            <QuickStats stats={statsQuery.data || {
+              todaysSessions: 0,
+              activeClients: 0,
+              urgentActionItems: 0,
+              completionRate: 0
+            }} />
           </DashboardSection>
         </ErrorBoundary>
 

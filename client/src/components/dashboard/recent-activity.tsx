@@ -34,9 +34,17 @@ const getActivityColor = (type: string) => {
 };
 
 export default function RecentActivity() {
-  const { data: activities, isLoading } = useQuery({
+  const { data: activities = [], isLoading } = useQuery({
     queryKey: ['recent-activity'],
-    queryFn: ApiClient.getRecentActivity,
+    queryFn: async () => {
+      try {
+        const result = await ApiClient.getRecentActivity();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.error('Error fetching recent activity:', error);
+        return [];
+      }
+    },
   });
 
   if (isLoading) {
@@ -68,7 +76,7 @@ export default function RecentActivity() {
       
       <div className="p-6">
         <div className="space-y-4">
-          {activities && activities.length > 0 ? (
+          {activities && Array.isArray(activities) && activities.length > 0 ? (
             activities.slice(0, 5).map((activity: Activity) => {
               const IconComponent = getActivityIcon(activity.type);
               return (
@@ -78,13 +86,13 @@ export default function RecentActivity() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-therapy-text">
-                      {activity.title}
+                      {activity.title || 'Activity'}
                     </p>
                     <p className="text-sm text-therapy-text/60">
-                      {activity.description}
+                      {activity.description || 'No description'}
                     </p>
                     <p className="text-xs text-therapy-text/40 mt-1">
-                      {activity.timestamp}
+                      {activity.timestamp || 'Unknown time'}
                     </p>
                   </div>
                 </div>

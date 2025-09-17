@@ -153,31 +153,24 @@ async function setupOptionalFeatures() {
     if (clientPath && fs.existsSync(indexPath)) {
       console.log(`✅ Client files found at ${clientPath}, setting up serving...`);
       
-      // Always serve static files first
-      app.use(express.static(clientPath));
-      
       if (useBuiltAssets) {
+        // In production, serve static files directly
+        app.use(express.static(clientPath));
         console.log('✅ Production static asset serving enabled');
       } else {
-        // In development with source files, also serve public directory
-        const publicPath = path.join(clientPath, 'public');
-        if (fs.existsSync(publicPath)) {
-          app.use(express.static(publicPath));
-        }
+        // In development mode, set up Vite FIRST to handle source files
+        console.log('Setting up development server with Vite...');
         
-        // Only try Vite if explicitly enabled via environment variable
-        if (process.env.ENABLE_VITE === 'true' && !useBuiltAssets) {
-          console.log('Setting up development server...');
-          
-          try {
-            const vite = await import('vite');
-            const viteConfigPath = path.join(clientPath, 'vite.config.ts');
+        try {
+          const vite = await import('vite');
+          const viteConfigPath = path.join(clientPath, 'vite.config.ts');
           
           // Create Vite server with proper config
           const viteServer = await vite.createServer({
             configFile: fs.existsSync(viteConfigPath) ? viteConfigPath : undefined,
             server: {
               middlewareMode: true,
+              allowedHosts: 'all',  // Allow all hosts including Replit domains
               hmr: { 
                 port: 3001,
                 host: '0.0.0.0'
@@ -191,14 +184,27 @@ async function setupOptionalFeatures() {
             root: clientPath
           });
           
-          // Use Vite middleware
+          // Use Vite middleware FIRST to handle all module requests
           app.use(viteServer.middlewares);
           console.log('✅ Vite development server enabled with HMR on port 3001');
           
+          // Only serve public directory for static assets (not source files)
+          const publicPath = path.join(clientPath, 'public');
+          if (fs.existsSync(publicPath)) {
+            app.use(express.static(publicPath));
+            console.log('✅ Public static assets enabled from', publicPath);
+          }
+          
         } catch (viteError) {
-          console.log('⚠️ Vite not available, using static file serving');
+          console.log('⚠️ Vite not available, falling back to static file serving');
           console.log('   Error:', viteError.message);
-        }
+          
+          // Fallback: serve static files if Vite is not available
+          app.use(express.static(clientPath));
+          const publicPath = path.join(clientPath, 'public');
+          if (fs.existsSync(publicPath)) {
+            app.use(express.static(publicPath));
+          }
         }
       }
       

@@ -39,9 +39,17 @@ export default function TodaysSessions() {
     setShowUpload(false);
   };
 
-  const { data: sessionNotes, isLoading, refetch } = useQuery({
+  const { data: sessionNotes = [], isLoading, refetch } = useQuery({
     queryKey: ['todays-sessions'],
-    queryFn: ApiClient.getTodaysSessionNotes,
+    queryFn: async () => {
+      try {
+        const result = await ApiClient.getTodaysSessionNotes();
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.error('Error fetching today\'s session notes:', error);
+        return [];
+      }
+    },
   });
 
   if (isLoading) {
@@ -105,7 +113,7 @@ export default function TodaysSessions() {
       )}
 
       <div className="p-6 space-y-4">
-        {sessionNotes && sessionNotes.length > 0 ? (
+        {sessionNotes && Array.isArray(sessionNotes) && sessionNotes.length > 0 ? (
           sessionNotes.map((note) => (
             <div key={note.id} className="flex items-start space-x-4 p-4 bg-therapy-bg rounded-lg">
               <div className="w-10 h-10 bg-therapy-primary/10 text-therapy-primary rounded-lg flex items-center justify-center">
@@ -120,7 +128,7 @@ export default function TodaysSessions() {
                   </div>
                 </div>
                 <p className="text-therapy-text/70 text-sm mb-2 line-clamp-2">
-                  {note.content ? note.content.substring(0, 100) + '...' : 'No content available'}
+                  {note.content ? (typeof note.content === 'string' ? note.content.substring(0, 100) + '...' : 'No content available') : 'No content available'}
                 </p>
                 <div className="flex items-center space-x-2">
                   {note.aiSummary && (
@@ -136,8 +144,8 @@ export default function TodaysSessions() {
                   <div className="flex items-center space-x-1 text-xs text-therapy-text/50">
                     <User className="h-3 w-3" />
                     <ClientLink 
-                      clientId={note.clientId} 
-                      clientName={`Client ${note.clientId.substring(0, 8)}`}
+                      clientId={note.clientId || ''} 
+                      clientName={note.clientId ? `Client ${note.clientId.substring(0, 8)}` : 'Unknown Client'}
                       className="hover:text-therapy-primary hover:underline transition-colors"
                     />
                   </div>

@@ -93,15 +93,50 @@ interface EngagementData {
 }
 
 export default function RealTimeMetrics() {
-  // Fetch dashboard stats
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  // Fetch dashboard stats with default values
+  const { data: stats = {
+    todaysSessions: 0,
+    activeClients: 0,
+    urgentActionItems: 0,
+    completionRate: 0,
+    monthlyRevenue: 0
+  }, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
-    queryFn: ApiClient.getDashboardStats,
+    queryFn: async () => {
+      try {
+        const result = await ApiClient.getDashboardStats();
+        return result || {
+          todaysSessions: 0,
+          activeClients: 0,
+          urgentActionItems: 0,
+          completionRate: 0,
+          monthlyRevenue: 0
+        };
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+        return {
+          todaysSessions: 0,
+          activeClients: 0,
+          urgentActionItems: 0,
+          completionRate: 0,
+          monthlyRevenue: 0
+        };
+      }
+    },
     refetchInterval: 60000, // Refresh every minute
   });
 
-  // Fetch engagement metrics
-  const { data: engagement, isLoading: engagementLoading } = useQuery({
+  // Fetch engagement metrics with default values
+  const { data: engagement = {
+    weeklyAppointments: [0, 0, 0, 0, 0, 0, 0],
+    monthlyTrend: 0,
+    attendanceRate: 0,
+    noShowRate: 0,
+    cancellationRate: 0,
+    averageSessionsPerWeek: 0,
+    clientRetentionRate: 0,
+    newClientsThisMonth: 0,
+  }, isLoading: engagementLoading } = useQuery({
     queryKey: ['engagement-metrics'],
     queryFn: async () => {
       // This would be a real API call in production
@@ -218,8 +253,11 @@ export default function RealTimeMetrics() {
         </CardHeader>
         <CardContent>
           <div className="flex items-end gap-2 h-20">
-            {engagement?.weeklyAppointments?.map((count, index) => {
-              const height = (count / Math.max(...(engagement.weeklyAppointments || [1]))) * 100;
+            {engagement?.weeklyAppointments && Array.isArray(engagement.weeklyAppointments) ? engagement.weeklyAppointments.map((count, index) => {
+              const maxCount = engagement.weeklyAppointments && engagement.weeklyAppointments.length > 0 
+                ? Math.max(...engagement.weeklyAppointments) 
+                : 1;
+              const height = (count / maxCount) * 100;
               const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
               return (
                 <div key={index} className="flex-1 flex flex-col items-center gap-1">
@@ -236,7 +274,7 @@ export default function RealTimeMetrics() {
                   <span className="text-xs text-therapy-text/60">{days[index]}</span>
                 </div>
               );
-            })}
+            }) : null}
           </div>
         </CardContent>
       </Card>
