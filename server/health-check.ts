@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { OpenAI } from 'openai';
 import { Anthropic } from '@anthropic-ai/sdk';
 
@@ -60,13 +60,11 @@ export async function checkGeminiHealth(): Promise<ApiHealthStatus> {
       return { ...status, status: 'offline', error: 'API key not configured' };
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     
     // Simple test call
-    await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: "test",
-    });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    await model.generateContent("test");
 
     return { ...status, status: 'online' };
   } catch (error) {

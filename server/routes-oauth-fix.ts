@@ -86,7 +86,7 @@ oauthFixRoutes.post('/api/auth/initialize', async (req, res) => {
  */
 oauthFixRoutes.post('/api/auth/clear', async (req, res) => {
   try {
-    await oauthTokenManager.clearTokens();
+    await oauthTokenManager.clearAllTokens();
     
     res.json({
       success: true,

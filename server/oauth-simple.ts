@@ -75,11 +75,10 @@ class SimpleOAuth {
   }
 
   async getAuthUrl(request?: any): Promise<string> {
-    // Update OAuth client with dynamic redirect URI if request is provided
-    if (request) {
-      const redirectUri = this.getRedirectUri(request);
-      this.oauth2Client.redirectUri = redirectUri;
-      console.log(`📝 Updated OAuth client redirect URI for auth URL: ${redirectUri}`);
+    // Get the redirect URI for this request
+    const redirectUri = request ? this.getRedirectUri(request) : undefined;
+    if (redirectUri) {
+      console.log(`📝 Using redirect URI for auth URL: ${redirectUri}`);
     }
     
     const scopes = [
@@ -92,7 +91,8 @@ class SimpleOAuth {
       access_type: 'offline',
       scope: scopes,
       prompt: 'consent',
-      include_granted_scopes: true
+      include_granted_scopes: true,
+      ...(redirectUri && { redirect_uri: redirectUri })
     });
 
     console.log(`✅ Generated OAuth URL: ${authUrl}`);
@@ -132,15 +132,17 @@ class SimpleOAuth {
 
   async exchangeCodeForTokens(code: string, request?: any): Promise<void> {
     try {
-      // Update redirect URI if request is provided
-      if (request) {
-        const redirectUri = this.getRedirectUri(request);
-        this.oauth2Client.redirectUri = redirectUri;
+      // Get redirect URI if request is provided
+      const redirectUri = request ? this.getRedirectUri(request) : undefined;
+      if (redirectUri) {
         console.log(`🔄 Using redirect URI for token exchange: ${redirectUri}`);
       }
       
       console.log('Exchanging code for tokens...');
-      const { tokens } = await this.oauth2Client.getToken(code);
+      const { tokens } = await this.oauth2Client.getToken({
+        code,
+        ...(redirectUri && { redirect_uri: redirectUri })
+      });
 
       this.tokens = tokens;
       this.oauth2Client.setCredentials(tokens);

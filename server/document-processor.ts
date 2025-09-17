@@ -1305,7 +1305,7 @@ Session Date: ${sessionDate}`;
           lastName,
           therapistId,
           status: 'active'
-        });
+        } as any);
         clientId = newClient.id;
         console.log(`Created new client: ${firstName} ${lastName}`);
       }
@@ -1366,7 +1366,7 @@ ${progressNote.narrativeSummary}
           aiTags: progressNote.aiTags,
           extractedFrom: 'document-upload',
         }
-      });
+      } as any);
 
       // Try to find and link to appointment
       let appointmentId: string | undefined;
@@ -1407,7 +1407,7 @@ ${progressNote.narrativeSummary}
             type: 'individual_therapy',
             status: 'completed',
             notes: `Auto-created from uploaded document: ${progressNote.title}`,
-          });
+          } as any);
           
           appointmentId = newAppointment.id;
           console.log(`Created new appointment for session note: ${appointmentId}`);

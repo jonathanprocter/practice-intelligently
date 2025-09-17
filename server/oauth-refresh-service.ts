@@ -289,7 +289,7 @@ export class OAuthRefreshService {
   }
 
   // Public API for checking connection status
-  async isConnected(): boolean {
+  async isConnected(): Promise<boolean> {
     const status = await this.getTokenStatus();
     return status.hasTokens && status.isValid;
   }

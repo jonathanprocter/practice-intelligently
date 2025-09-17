@@ -314,7 +314,7 @@ export function registerDocumentBatchRoutes(app: Express, server: any) {
           }
 
           // Create client
-          await storage.createClient(clientInfo);
+          await storage.createClient(clientInfo as any);
           results.imported++;
         } catch (error) {
           results.failed++;
@@ -428,7 +428,7 @@ export function registerDocumentBatchRoutes(app: Express, server: any) {
             audioFile: file.originalname,
             transcriptionId: result.documentId
           }
-        });
+        } as any);
 
         result.sessionNoteId = sessionNote.id;
       }

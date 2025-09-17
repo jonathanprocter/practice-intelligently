@@ -17,11 +17,12 @@ export default defineConfig({
   },
   root: __dirname,
   build: {
-    outDir: path.resolve(__dirname, "..", "dist/public"),
+    outDir: path.resolve(__dirname, "..", "dist"),
     emptyOutDir: true,
   },
   server: {
-    hmr: {
+    // Disable HMR in Replit to avoid "upgrade required" errors
+    hmr: process.env.REPLIT_DEV_DOMAIN ? false : {
       overlay: false,
       port: 3001,
       // Remove explicit host to let HMR use relative connections

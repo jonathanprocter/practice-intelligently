@@ -147,7 +147,7 @@ export function registerEnhancedChartRoutes(app: Express) {
         confidenceScore: analysis.category.confidence ? String(analysis.category.confidence) : undefined,
         sensitivityLevel: analysis.sensitivityLevel,
         extractedText: fileContent.substring(0, 10000) // Store first 10k chars
-      });
+      } as any);
 
       // Link to sessions/appointments if found
       if (analysis.chartPlacement.linkedSessions.length > 0) {

@@ -125,27 +125,43 @@ async function setupOptionalFeatures() {
     }
 
     // Setup client serving - prioritize built assets if they exist
-    const builtAssetsPath = path.join(__dirname, '../dist/public');
+    const distPath = path.join(__dirname, '../dist');
+    const distPublicPath = path.join(__dirname, '../dist/public');
     const sourceAssetsPath = path.join(__dirname, '../client');
-    const builtIndexExists = fs.existsSync(path.join(builtAssetsPath, 'index.html'));
+    
+    // Check multiple locations for built files
+    const distIndexExists = fs.existsSync(path.join(distPath, 'index.html'));
+    const distPublicIndexExists = fs.existsSync(path.join(distPublicPath, 'index.html'));
     const sourceIndexExists = fs.existsSync(path.join(sourceAssetsPath, 'index.html'));
     
     let clientPath, indexPath;
     let useBuiltAssets = false;
     
-    if (builtIndexExists) {
-      // Use built assets if available (production-ready)
-      clientPath = builtAssetsPath;
-      indexPath = path.join(builtAssetsPath, 'index.html');
+    // In Replit, we MUST use built assets if available, never raw TypeScript
+    const isReplit = !!process.env.REPLIT_DEV_DOMAIN;
+    
+    if (distIndexExists) {
+      // Use built assets from /dist (most common)
+      clientPath = distPath;
+      indexPath = path.join(distPath, 'index.html');
       useBuiltAssets = true;
       console.log('✅ Built assets found, using production build from /dist');
-    } else if (sourceIndexExists) {
-      // Fall back to source files for development
+    } else if (distPublicIndexExists) {
+      // Use built assets from /dist/public (alternate location)
+      clientPath = distPublicPath;
+      indexPath = path.join(distPublicPath, 'index.html');
+      useBuiltAssets = true;
+      console.log('✅ Built assets found, using production build from /dist/public');
+    } else if (sourceIndexExists && !isReplit) {
+      // Only use source files in non-Replit development (where Vite will transpile)
       clientPath = sourceAssetsPath;
       indexPath = path.join(sourceAssetsPath, 'index.html');
       console.log('✅ Source files found, using development setup from /client');
     } else {
       console.error('❌ No client files found in /dist or /client');
+      if (isReplit) {
+        console.error('⚠️ In Replit mode, built files are required. Run "npm run build" to create them.');
+      }
       clientPath = null;
       indexPath = null;
     }
@@ -153,78 +169,88 @@ async function setupOptionalFeatures() {
     if (clientPath && fs.existsSync(indexPath)) {
       console.log(`✅ Client files found at ${clientPath}, setting up serving...`);
       
-      if (useBuiltAssets) {
-        // In production, serve static files directly
+      if (useBuiltAssets || isReplit) {
+        // Always serve static files directly when we have built assets OR in Replit
         app.use(express.static(clientPath));
-        console.log('✅ Production static asset serving enabled');
-      } else {
-        // In development mode, set up Vite FIRST to handle source files
-        console.log('Setting up development server with Vite...');
+        console.log('✅ Static asset serving enabled from', clientPath);
         
-        try {
-          const vite = await import('vite');
-          const viteConfigPath = path.join(clientPath, 'vite.config.ts');
+        // Also serve public directory if it exists
+        const publicPath = path.join(clientPath, 'public');
+        if (fs.existsSync(publicPath)) {
+          app.use(express.static(publicPath));
+          console.log('✅ Public assets enabled from', publicPath);
+        }
+      } else {
+        // Only use Vite in non-Replit development mode
+        if (!isReplit) {
+          // Use Vite only when not in Replit
+          console.log('Setting up development server with Vite...');
           
-          // Create Vite server with proper config
-          const viteServer = await vite.createServer({
-            configFile: fs.existsSync(viteConfigPath) ? viteConfigPath : undefined,
-            server: {
-              middlewareMode: true,
-              host: '0.0.0.0',
-              // Explicitly allow all Replit domains
-              allowedHosts: process.env.REPLIT_DEV_DOMAIN ? [
-                '.replit.dev',
-                '.repl.co',
-                '.replit.app',
-                'localhost',
-                '127.0.0.1',
-                '0.0.0.0',
-                process.env.REPLIT_DEV_DOMAIN,
-                // Allow wildcard domains
-                '*.replit.dev',
-                '*.repl.co',
-                // Extract base domain and allow it
-                process.env.REPLIT_DEV_DOMAIN.split('.')[0] + '.replit.dev',
-                // Allow the specific subdomain pattern
-                process.env.REPLIT_DEV_DOMAIN.replace(/^[^.]+/, '*')
-              ] : ['.replit.dev', '.repl.co', '*.replit.dev', '*.repl.co', 'localhost'],
-              hmr: { 
-                port: 3001,
-                host: '0.0.0.0'
+          try {
+            const vite = await import('vite');
+            const viteConfigPath = path.join(clientPath, 'vite.config.ts');
+            
+            // Create Vite server with proper config
+            const viteServer = await vite.createServer({
+              configFile: fs.existsSync(viteConfigPath) ? viteConfigPath : undefined,
+              server: {
+                middlewareMode: true,
+                host: '0.0.0.0',
+                // Explicitly allow all Replit domains
+                allowedHosts: process.env.REPLIT_DEV_DOMAIN ? [
+                  '.replit.dev',
+                  '.repl.co',
+                  '.replit.app',
+                  'localhost',
+                  '127.0.0.1',
+                  '0.0.0.0',
+                  process.env.REPLIT_DEV_DOMAIN,
+                  // Allow wildcard domains
+                  '*.replit.dev',
+                  '*.repl.co',
+                  // Extract base domain and allow it
+                  process.env.REPLIT_DEV_DOMAIN.split('.')[0] + '.replit.dev',
+                  // Allow the specific subdomain pattern
+                  process.env.REPLIT_DEV_DOMAIN.replace(/^[^.]+/, '*')
+                ] : ['.replit.dev', '.repl.co', '*.replit.dev', '*.repl.co', 'localhost'],
+                hmr: { 
+                  port: 3001,
+                  host: '0.0.0.0'
+                },
+                fs: {
+                  strict: false,
+                  allow: ['.']
+                }
               },
-              fs: {
-                strict: false,
-                allow: ['.']
-              }
-            },
-            appType: 'spa',
-            root: clientPath
-          });
-          
-          // Use Vite middleware FIRST to handle all module requests
-          app.use(viteServer.middlewares);
-          console.log('✅ Vite development server enabled with HMR on port 3001');
-          console.log('✅ Vite server configured with explicit allowed hosts for Replit domains');
-          if (process.env.REPLIT_DEV_DOMAIN) {
-            console.log(`✅ Current Replit domain allowed: ${process.env.REPLIT_DEV_DOMAIN}`);
-          }
-          
-          // Only serve public directory for static assets (not source files)
-          const publicPath = path.join(clientPath, 'public');
-          if (fs.existsSync(publicPath)) {
-            app.use(express.static(publicPath));
-            console.log('✅ Public static assets enabled from', publicPath);
-          }
-          
-        } catch (viteError) {
-          console.log('⚠️ Vite not available, falling back to static file serving');
-          console.log('   Error:', viteError.message);
-          
-          // Fallback: serve static files if Vite is not available
-          app.use(express.static(clientPath));
-          const publicPath = path.join(clientPath, 'public');
-          if (fs.existsSync(publicPath)) {
-            app.use(express.static(publicPath));
+              appType: 'spa',
+              root: clientPath
+            });
+            
+            // Use Vite middleware FIRST to handle all module requests
+            app.use(viteServer.middlewares);
+            console.log('✅ Vite development server enabled with HMR on port 3001');
+            console.log('✅ Vite server configured with explicit allowed hosts for Replit domains');
+            if (process.env.REPLIT_DEV_DOMAIN) {
+              console.log(`✅ Current Replit domain allowed: ${process.env.REPLIT_DEV_DOMAIN}`);
+            }
+            
+            // Only serve public directory for static assets (not source files)
+            const publicPath = path.join(clientPath, 'public');
+            if (fs.existsSync(publicPath)) {
+              app.use(express.static(publicPath));
+              console.log('✅ Public static assets enabled from', publicPath);
+            }
+            
+          } catch (viteError) {
+            console.log('⚠️ Vite not available, falling back to static file serving');
+            console.log('   Error:', viteError.message);
+            
+            // Fallback: serve static files if Vite is not available
+            app.use(express.static(clientPath));
+            const publicPath = path.join(clientPath, 'public');
+            if (fs.existsSync(publicPath)) {
+              app.use(express.static(publicPath));
+            }
           }
         }
       }
