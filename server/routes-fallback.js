@@ -1,5 +1,16 @@
 // Temporary fallback routes to get the app running
 import express from 'express';
+import aiServices from './ai-services.js';
+import multer from 'multer';
+import mammoth from 'mammoth';
+import fs from 'fs/promises';
+import path from 'path';
+
+// Configure multer for file uploads
+const upload = multer({ 
+  dest: 'temp_uploads/',
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
 const router = express.Router();
 
@@ -29,11 +40,8 @@ router.get('/action-items/urgent/:therapistId', (req, res) => {
 });
 
 router.get('/health/ai-services', (req, res) => {
-  res.json({
-    openai: { status: 'not-configured', message: 'API key not provided' },
-    anthropic: { status: 'not-configured', message: 'API key not provided' },
-    overall: 'degraded'
-  });
+  const status = aiServices.getStatus();
+  res.json(status);
 });
 
 router.get('/dashboard/stats/:therapistId', (req, res) => {
@@ -130,9 +138,10 @@ router.delete('/session-notes/:id', (req, res) => {
 
 // API status endpoints
 router.get('/api-status', (req, res) => {
+  const status = aiServices.getStatus();
   res.json([
-    { service: 'openai', status: 'not-configured' },
-    { service: 'anthropic', status: 'not-configured' }
+    { service: 'openai', status: status.openai.status },
+    { service: 'anthropic', status: status.anthropic.status }
   ]);
 });
 
@@ -183,8 +192,32 @@ router.put('/users/:userId', (req, res) => {
 });
 
 // AI insights endpoints
-router.post('/ai-insights/generate', (req, res) => {
-  res.json([]);
+router.post('/ai-insights/generate', async (req, res) => {
+  try {
+    if (!aiServices.isAvailable()) {
+      return res.status(503).json({ 
+        error: 'AI services not available',
+        message: 'Please configure OPENAI_API_KEY or ANTHROPIC_API_KEY environment variables'
+      });
+    }
+
+    const { sessionData, historicalData } = req.body;
+    
+    if (!sessionData) {
+      return res.status(400).json({ error: 'Session data is required' });
+    }
+
+    const result = await aiServices.generateInsights(sessionData, historicalData || []);
+    
+    if (!result.success) {
+      return res.status(500).json({ error: result.error });
+    }
+
+    res.json(result.insights);
+  } catch (error) {
+    console.error('Error generating insights:', error);
+    res.status(500).json({ error: 'Failed to generate insights' });
+  }
 });
 
 router.patch('/ai-insights/:id/read', (req, res) => {
@@ -196,11 +229,199 @@ router.post('/session-notes/:id/generate-prep', (req, res) => {
   res.json({ appointmentsUpdated: 0 });
 });
 
-router.post('/session-notes/:id/generate-tags', (req, res) => {
-  res.json({
-    id: req.params.id,
-    aiTags: ['therapy', 'session']
-  });
+router.post('/session-notes/:id/generate-tags', async (req, res) => {
+  try {
+    if (!aiServices.isAvailable()) {
+      return res.json({
+        id: req.params.id,
+        aiTags: ['therapy', 'session', 'clinical']
+      });
+    }
+
+    const { content } = req.body;
+    if (!content) {
+      return res.json({
+        id: req.params.id,
+        aiTags: ['therapy', 'session']
+      });
+    }
+
+    const result = await aiServices.analyzeDocument(content, { generateTags: true });
+    
+    // Extract tags from analysis
+    const tags = [];
+    if (result.success && result.analysis) {
+      // Parse key themes and convert to tags
+      const themes = result.analysis.match(/Key Themes:?\s*([\s\S]*?)(?=\n\n|Client Presentation:|$)/i);
+      if (themes) {
+        const themeList = themes[1].split(/[\n,;•-]/).map(t => t.trim().toLowerCase()).filter(t => t.length > 0);
+        tags.push(...themeList.slice(0, 5));
+      }
+      tags.push('therapy', 'session', 'clinical');
+    }
+
+    res.json({
+      id: req.params.id,
+      aiTags: [...new Set(tags)] // Remove duplicates
+    });
+  } catch (error) {
+    console.error('Error generating tags:', error);
+    res.json({
+      id: req.params.id,
+      aiTags: ['therapy', 'session', 'error']
+    });
+  }
+});
+
+// New endpoint: Analyze uploaded documents
+router.post('/documents/analyze', upload.single('file'), async (req, res) => {
+  try {
+    if (!aiServices.isAvailable()) {
+      return res.status(503).json({ 
+        error: 'AI services not available',
+        message: 'Please configure OPENAI_API_KEY or ANTHROPIC_API_KEY environment variables'
+      });
+    }
+
+    let content = '';
+    
+    // Handle direct text content
+    if (req.body.content) {
+      content = req.body.content;
+    } 
+    // Handle file upload
+    else if (req.file) {
+      const filePath = req.file.path;
+      const fileExtension = path.extname(req.file.originalname).toLowerCase();
+      
+      try {
+        if (fileExtension === '.txt') {
+          content = await fs.readFile(filePath, 'utf-8');
+        } else if (fileExtension === '.docx') {
+          const buffer = await fs.readFile(filePath);
+          const result = await mammoth.extractRawText({ buffer });
+          content = result.value;
+        } else if (fileExtension === '.pdf') {
+          // For PDF, we'd need a PDF parser library
+          // For now, return an error
+          return res.status(400).json({ 
+            error: 'PDF processing not yet implemented',
+            message: 'Please upload .txt or .docx files'
+          });
+        } else {
+          return res.status(400).json({ 
+            error: 'Unsupported file type',
+            message: 'Please upload .txt, .docx, or provide text content'
+          });
+        }
+      } finally {
+        // Clean up uploaded file
+        try {
+          await fs.unlink(filePath);
+        } catch (unlinkError) {
+          console.error('Error deleting temp file:', unlinkError);
+        }
+      }
+    } else {
+      return res.status(400).json({ error: 'No content or file provided' });
+    }
+
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({ error: 'Empty content provided' });
+    }
+
+    // Analyze the document
+    const analysisResult = await aiServices.analyzeDocument(content);
+    
+    if (!analysisResult.success) {
+      return res.status(500).json({ error: analysisResult.error });
+    }
+
+    // Only detect sessions if explicitly requested
+    let sessionDetection = null;
+    if (req.query.includeSessions === 'true') {
+      sessionDetection = await aiServices.detectSessions(content);
+    }
+    
+    res.json({
+      success: true,
+      service: analysisResult.service,
+      analysis: analysisResult.analysis,
+      sessionCount: sessionDetection ? sessionDetection.sessionCount : undefined,
+      sessions: sessionDetection ? sessionDetection.sessions : undefined,
+      usage: analysisResult.usage
+    });
+  } catch (error) {
+    console.error('Error analyzing document:', error);
+    res.status(500).json({ error: 'Failed to analyze document', message: error.message });
+  }
+});
+
+// New endpoint: Generate session notes from transcript
+router.post('/sessions/generate-notes', async (req, res) => {
+  try {
+    if (!aiServices.isAvailable()) {
+      return res.status(503).json({ 
+        error: 'AI services not available',
+        message: 'Please configure OPENAI_API_KEY or ANTHROPIC_API_KEY environment variables'
+      });
+    }
+
+    const { transcript, clientInfo } = req.body;
+    
+    if (!transcript) {
+      return res.status(400).json({ error: 'Transcript is required' });
+    }
+
+    const result = await aiServices.generateSessionNotes(transcript, clientInfo || {});
+    
+    if (!result.success) {
+      return res.status(500).json({ error: result.error });
+    }
+
+    res.json({
+      success: true,
+      service: result.service,
+      notes: result.notes,
+      raw: result.raw
+    });
+  } catch (error) {
+    console.error('Error generating session notes:', error);
+    res.status(500).json({ error: 'Failed to generate session notes' });
+  }
+});
+
+// New endpoint: Generate clinical insights from session data
+router.post('/insights/generate', async (req, res) => {
+  try {
+    if (!aiServices.isAvailable()) {
+      return res.status(503).json({ 
+        error: 'AI services not available',
+        message: 'Please configure OPENAI_API_KEY or ANTHROPIC_API_KEY environment variables'
+      });
+    }
+
+    const { sessionData, historicalData } = req.body;
+    
+    if (!sessionData) {
+      return res.status(400).json({ error: 'Session data is required' });
+    }
+
+    const result = await aiServices.generateInsights(sessionData, historicalData || []);
+    
+    if (!result.success) {
+      return res.status(500).json({ error: result.error });
+    }
+
+    res.json({
+      success: true,
+      service: result.service,
+      insights: result.insights
+    });
+  } catch (error) {
+    console.error('Error generating insights:', error);
+    res.status(500).json({ error: 'Failed to generate insights' });
+  }
 });
 
 // Catch-all for other routes
