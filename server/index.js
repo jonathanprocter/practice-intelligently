@@ -83,27 +83,53 @@ async function startServer() {
       console.log('⚠️ WebSocket not available');
     }
 
-    // Setup client serving
-    const clientPath = path.join(__dirname, '../client');
-    const indexPath = path.join(clientPath, 'index.html');
+    // Setup client serving - prioritize built assets if they exist
+    const builtAssetsPath = path.join(__dirname, '../dist');
+    const sourceAssetsPath = path.join(__dirname, '../client');
+    const builtIndexExists = fs.existsSync(path.join(builtAssetsPath, 'index.html'));
+    const sourceIndexExists = fs.existsSync(path.join(sourceAssetsPath, 'index.html'));
     
-    // Check if client files exist
-    if (fs.existsSync(indexPath)) {
-      console.log('✅ Client files found, setting up serving...');
+    let clientPath, indexPath;
+    let useBuiltAssets = false;
+    
+    if (builtIndexExists) {
+      // Use built assets if available (production-ready)
+      clientPath = builtAssetsPath;
+      indexPath = path.join(builtAssetsPath, 'index.html');
+      useBuiltAssets = true;
+      console.log('✅ Built assets found, using production build from /dist');
+    } else if (sourceIndexExists) {
+      // Fall back to source files for development
+      clientPath = sourceAssetsPath;
+      indexPath = path.join(sourceAssetsPath, 'index.html');
+      console.log('✅ Source files found, using development setup from /client');
+    } else {
+      console.error('❌ No client files found in /dist or /client');
+      clientPath = null;
+      indexPath = null;
+    }
+    
+    if (clientPath && fs.existsSync(indexPath)) {
+      console.log(`✅ Client files found at ${clientPath}, setting up serving...`);
       
       // Always serve static files first
       app.use(express.static(clientPath));
-      const publicPath = path.join(clientPath, 'public');
-      if (fs.existsSync(publicPath)) {
-        app.use(express.static(publicPath));
-      }
       
-      // In development, try to use Vite
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('Setting up development server...');
+      if (useBuiltAssets) {
+        console.log('✅ Production static asset serving enabled');
+      } else {
+        // In development with source files, also serve public directory
+        const publicPath = path.join(clientPath, 'public');
+        if (fs.existsSync(publicPath)) {
+          app.use(express.static(publicPath));
+        }
         
-        try {
-          const vite = await import('vite');
+        // Try to use Vite only in development with source files
+        if (process.env.DEV === 'true' || (process.env.NODE_ENV !== 'production' && !useBuiltAssets)) {
+          console.log('Setting up development server...');
+          
+          try {
+            const vite = await import('vite');
           const viteConfigPath = path.join(clientPath, 'vite.config.ts');
           
           // Create Vite server with proper config

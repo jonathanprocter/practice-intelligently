@@ -10,6 +10,6 @@
     "noImplicitAny": false,
     "skipLibCheck": true
   },
-  "include": ["server/index.ts", "server/routes.ts", "server/vite.ts", "server/storage.ts", "shared/schema.ts"],
-  "exclude": ["node_modules", "client", "dist", "**/*.test.ts", "**/*.spec.ts", "server/*-enhanced.ts", "server/*-optimized.ts", "server/document-*.ts", "server/ai-*.ts", "server/websocket/*.ts"]
+  "include": ["server/index.ts", "server/routes.ts", "server/vite.ts", "server/storage.ts", "server/websocket/websocket.server.ts", "shared/schema.ts"],
+  "exclude": ["node_modules", "client", "dist", "**/*.test.ts", "**/*.spec.ts", "server/*-enhanced.ts", "server/*-optimized.ts", "server/document-*.ts", "server/ai-*.ts", "server/websocket/websocket-*.ts"]
 }
