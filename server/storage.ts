@@ -4060,7 +4060,7 @@ Generate a comprehensive summary in the following JSON format:
       // Only include defined values from the note object
       Object.keys(note).forEach(key => {
         const value = (note as any)[key];
-        if (value !== undefined && value !== null) {
+        if (value !== undefined) {
           updateData[key] = value;
         }
       });
