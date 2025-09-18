@@ -69,7 +69,26 @@ router.get('/dashboard/stats/:therapistId', async (req, res) => {
 router.get('/appointments/today/:therapistId', async (req, res) => {
   try {
     const appointments = await storage.getTodaysAppointments(req.params.therapistId);
-    res.json(appointments || []);
+    
+    // Transform appointments to SimplePractice format
+    const formattedAppointments = (appointments || []).map(apt => ({
+      id: apt.id,
+      title: apt.clientName || 'Client Appointment',
+      clientName: apt.clientName,
+      clientId: apt.clientId,
+      startTime: apt.startTime || apt.start_time,
+      endTime: apt.endTime || apt.end_time,
+      status: apt.status || 'confirmed',
+      type: apt.type || 'therapy',
+      location: apt.location || 'Office',
+      notes: apt.notes,
+      calendarName: 'SimplePractice',  // Mark as SimplePractice appointment
+      isSimplePractice: true,  // Flag for styling
+      backgroundColor: '#E8F4FD',
+      borderColor: '#0056A6'
+    }));
+    
+    res.json(formattedAppointments);
   } catch (error) {
     console.error('Appointments error:', error);
     res.json([]);
@@ -137,9 +156,47 @@ router.get('/recent-activity/:therapistId', async (req, res) => {
   }
 });
 
-// Calendar events
-router.get('/calendar/events', (req, res) => {
-  res.json([]);
+// Calendar events - includes SimplePractice appointments
+router.get('/calendar/events', async (req, res) => {
+  try {
+    const { timeMin, timeMax } = req.query;
+    const therapistId = 'e66b8b8e-e7a2-40b9-ae74-00c93ffe503c'; // Should come from auth
+    
+    // Get appointments from database for the time range
+    const appointments = await storage.getAppointmentsByDateRange(
+      therapistId,
+      new Date(timeMin),
+      new Date(timeMax)
+    );
+    
+    // Transform appointments to calendar event format
+    const events = (appointments || []).map(apt => ({
+      id: apt.id,
+      googleEventId: `sp_${apt.id}`, // Prefix for SimplePractice
+      title: apt.clientName || 'Client Appointment',
+      clientName: apt.clientName,
+      clientId: apt.clientId,
+      startTime: apt.startTime || apt.start_time,
+      endTime: apt.endTime || apt.end_time,
+      start: { dateTime: apt.startTime || apt.start_time },
+      end: { dateTime: apt.endTime || apt.end_time },
+      status: apt.status || 'confirmed',
+      type: apt.type || 'therapy',
+      location: apt.location || 'Office',
+      notes: apt.notes,
+      summary: apt.clientName || 'Client Appointment',
+      calendarName: 'SimplePractice',
+      calendarId: 'simplepractice',
+      isSimplePractice: true,
+      backgroundColor: '#E8F4FD',
+      borderColor: '#0056A6'
+    }));
+    
+    res.json(events);
+  } catch (error) {
+    console.error('Calendar events error:', error);
+    res.json([]);
+  }
 });
 
 // Health check for AI services

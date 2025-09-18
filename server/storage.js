@@ -2948,6 +2948,38 @@ var DatabaseStorage = class {
       end_time: apt.endTime
     }));
   }
+  async getAppointmentsByDateRange(therapistId, startDate, endDate) {
+    const appointmentsWithClients = await db.select({
+      id: appointments.id,
+      clientId: appointments.clientId,
+      therapistId: appointments.therapistId,
+      startTime: appointments.startTime,
+      endTime: appointments.endTime,
+      type: appointments.type,
+      status: appointments.status,
+      location: appointments.location,
+      notes: appointments.notes,
+      appointmentNumber: appointments.appointmentNumber,
+      createdAt: appointments.createdAt,
+      updatedAt: appointments.updatedAt,
+      clientName: sql2`${clients.firstName} || ' ' || ${clients.lastName}`.as("clientName"),
+      clientFirstName: clients.firstName,
+      clientLastName: clients.lastName
+    }).from(appointments).leftJoin(clients, eq(appointments.clientId, clients.id)).where(
+      and(
+        eq(appointments.therapistId, therapistId),
+        gte(appointments.startTime, startDate),
+        lte(appointments.startTime, endDate)
+      )
+    ).orderBy(appointments.startTime);
+    return appointmentsWithClients.map((apt) => ({
+      ...apt,
+      clientName: apt.clientName || "Unknown Client",
+      client_name: apt.clientName || "Unknown Client",
+      start_time: apt.startTime,
+      end_time: apt.endTime
+    }));
+  }
   async getUpcomingAppointments(therapistId, days = 7) {
     const now = /* @__PURE__ */ new Date();
     const easternNow = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));

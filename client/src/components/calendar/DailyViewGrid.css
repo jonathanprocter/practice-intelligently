@@ -275,10 +275,10 @@
 
 /* Calendar-specific styling */
 .appointment.simplepractice {
-  background: white;
-  border-left: 8px solid #6495ed;
-  color: #1e3a8a;
-  box-shadow: 0 2px 8px rgba(100, 149, 237, 0.2);
+  background: #E8F4FD;  /* SimplePractice light blue background */
+  border-left: 8px solid #0056A6;  /* SimplePractice French blue thick border */
+  color: #0056A6;  /* French blue text */
+  box-shadow: 0 2px 8px rgba(0, 86, 166, 0.2);  /* French blue shadow */
 }
 
 .appointment.google-calendar {

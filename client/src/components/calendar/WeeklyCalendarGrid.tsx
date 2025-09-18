@@ -541,13 +541,13 @@ export const WeeklyCalendarGrid = ({
                         top: '3px',
                         left: '3px',
                         zIndex: 10,
-                        backgroundColor: '#f8fafc',
-                        border: '1px solid #e2e8f0',
-                        borderLeft: '3px solid #3b82f6',
+                        backgroundColor: '#E8F4FD',  // SimplePractice light blue background
+                        border: '1px solid #B3D9F2',  // Light blue border
+                        borderLeft: '5px solid #0056A6',  // SimplePractice French blue thick border
                         borderRadius: '4px',
                         padding: event.slotsToSpan >= 3 ? '6px' : event.slotsToSpan >= 2 ? '4px' : '3px',
                         overflow: 'hidden',
-                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                        boxShadow: '0 1px 3px rgba(0, 86, 166, 0.15)',  // French blue shadow
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'flex-start'
