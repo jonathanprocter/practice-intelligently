@@ -3,7 +3,7 @@ import { useQuery, useQueries } from "@tanstack/react-query";
 import { ApiClient, type DashboardStats } from "@/lib/api";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useState, useEffect, useMemo } from "react";
-import { RefreshCw, Settings, LayoutGrid, Maximize2, Minimize2 } from "lucide-react";
+import { RefreshCw, Settings, LayoutGrid, Maximize2, Minimize2, Activity, Calendar, Users, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -80,7 +80,7 @@ function DashboardSkeleton({ section = 'full' }: { section?: string }) {
   return <SectionLoader title="Loading dashboard..." />;
 }
 
-// Dashboard Section Wrapper with animations
+// Dashboard Section Wrapper with animations and enhanced styling
 function DashboardSection({ 
   children, 
   title, 
@@ -89,7 +89,8 @@ function DashboardSection({
   onRefresh,
   className,
   collapsible = false,
-  defaultCollapsed = false
+  defaultCollapsed = false,
+  description
 }: {
   children: React.ReactNode;
   title?: string;
@@ -99,6 +100,7 @@ function DashboardSection({
   className?: string;
   collapsible?: boolean;
   defaultCollapsed?: boolean;
+  description?: string;
 }) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
@@ -107,7 +109,10 @@ function DashboardSection({
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className={cn("therapy-card p-4 border-red-200 bg-red-50", className)}
+        className={cn(
+          "bg-red-50 border border-red-200 rounded-lg p-4",
+          className
+        )}
       >
         <div className="flex items-center justify-between mb-2">
           {title && <h3 className="text-sm font-medium text-red-800">{title}</h3>}
@@ -133,21 +138,34 @@ function DashboardSection({
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className={className}
+        className={cn(
+          "bg-white rounded-lg shadow-sm border border-gray-100",
+          className
+        )}
       >
         <motion.div 
-          className="flex items-center justify-between mb-2"
-          whileHover={{ x: 2 }}
+          className="p-4 border-b border-gray-100 cursor-pointer"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          whileHover={{ backgroundColor: "rgba(59, 89, 152, 0.02)" }}
         >
-          <h3 className="text-lg font-semibold text-therapy-text">{title}</h3>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1 rounded hover:bg-accent"
-          >
-            {isCollapsed ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
-          </motion.button>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+              {description && (
+                <p className="text-sm text-gray-500 mt-1">{description}</p>
+              )}
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="p-2 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              {isCollapsed ? 
+                <Maximize2 className="h-4 w-4 text-gray-400" /> : 
+                <Minimize2 className="h-4 w-4 text-gray-400" />
+              }
+            </motion.button>
+          </div>
         </motion.div>
         <AnimatePresence>
           {!isCollapsed && (
@@ -156,8 +174,11 @@ function DashboardSection({
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              className="overflow-hidden"
             >
-              {isLoading ? <DashboardSkeleton section={title?.toLowerCase()} /> : children}
+              <div className="p-4">
+                {isLoading ? <DashboardSkeleton section={title?.toLowerCase()} /> : children}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -181,7 +202,75 @@ function DashboardSection({
   );
 }
 
-// Main Dashboard Component
+// Enhanced Stat Card Component
+function StatCard({ 
+  title, 
+  value, 
+  icon: Icon, 
+  description, 
+  trend,
+  color = "blue" 
+}: { 
+  title: string; 
+  value: string | number; 
+  icon: any;
+  description?: string;
+  trend?: { value: number; isPositive: boolean };
+  color?: "blue" | "green" | "purple" | "orange";
+}) {
+  const colorClasses = {
+    blue: "bg-blue-50 text-blue-600 border-blue-200",
+    green: "bg-green-50 text-green-600 border-green-200",
+    purple: "bg-purple-50 text-purple-600 border-purple-200",
+    orange: "bg-orange-50 text-orange-600 border-orange-200"
+  };
+
+  const iconBgClasses = {
+    blue: "bg-gradient-to-br from-blue-500 to-blue-600",
+    green: "bg-gradient-to-br from-green-500 to-green-600",
+    purple: "bg-gradient-to-br from-purple-500 to-purple-600",
+    orange: "bg-gradient-to-br from-orange-500 to-orange-600"
+  };
+
+  return (
+    <motion.div
+      whileHover={{ y: -2, boxShadow: "0 8px 30px rgba(0,0,0,0.08)" }}
+      className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 relative overflow-hidden group"
+    >
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-gradient-to-br from-gray-50 to-gray-100 rounded-full opacity-50" />
+      
+      <div className="relative">
+        <div className="flex items-start justify-between mb-4">
+          <div className={cn(
+            "p-3 rounded-xl shadow-lg",
+            iconBgClasses[color]
+          )}>
+            <Icon className="h-5 w-5 text-white" />
+          </div>
+          {trend && (
+            <span className={cn(
+              "text-xs font-medium px-2 py-1 rounded-full",
+              trend.isPositive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+            )}>
+              {trend.isPositive ? "+" : ""}{trend.value}%
+            </span>
+          )}
+        </div>
+        
+        <h3 className="text-3xl font-bold text-gray-900 mb-1">
+          {value}
+        </h3>
+        <p className="text-sm font-medium text-gray-600">{title}</p>
+        {description && (
+          <p className="text-xs text-gray-500 mt-2">{description}</p>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// Main Dashboard Component with enhanced styling
 export default function Dashboard() {
   const therapistId = getTherapistId();
   const { toast } = useToast();
@@ -313,23 +402,6 @@ export default function Dashboard() {
     }));
   }, [dashboardLayout]);
 
-  // Determine grid layout based on preference
-  const getGridClass = (section: string) => {
-    if (dashboardLayout === 'compact') {
-      return section === 'primary' ? 'lg:grid-cols-3' : 'lg:grid-cols-2';
-    }
-    if (dashboardLayout === 'expanded') {
-      return 'lg:grid-cols-1';
-    }
-    // Default layout
-    switch (section) {
-      case 'primary': return 'lg:grid-cols-3 xl:grid-cols-4';
-      case 'secondary': return 'lg:grid-cols-2';
-      case 'tertiary': return 'lg:grid-cols-2';
-      default: return 'lg:grid-cols-2';
-    }
-  };
-
   // Get greeting based on time of day
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -338,179 +410,258 @@ export default function Dashboard() {
     return 'Good Evening';
   };
 
+  const stats = statsQuery.data || {
+    todaysSessions: 0,
+    activeClients: 0,
+    urgentActionItems: 0,
+    completionRate: 0
+  };
+
   return (
-    <div className="min-h-screen bg-therapy-bg overflow-x-hidden">
-      {/* Sticky Header - iPhone Optimized */}
-      <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-therapy-border header-safe">
-        <div className="px-3 sm:px-6 py-3 sm:py-4">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-xl sm:text-2xl font-bold text-therapy-text truncate">
-                {getGreeting()}
-              </h1>
-              <p className="text-xs sm:text-sm text-therapy-text/60">
-                {new Date().toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              {/* Health Indicator - Hidden on mobile */}
-              <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-lg">
-                <div className={cn(
-                  "h-2 w-2 rounded-full",
-                  dashboardHealth.status === 'healthy' ? "bg-green-500" :
-                  dashboardHealth.status === 'partial' ? "bg-yellow-500" :
-                  "bg-red-500"
-                )} />
-                <span className="text-xs text-gray-600">
-                  {dashboardHealth.loadedSections}/{dashboardHealth.totalSections} loaded
-                </span>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white overflow-x-hidden">
+      {/* Premium Header Section */}
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto">
+          <div className="px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+                  {getGreeting()}
+                </h1>
+                <p className="text-gray-600 mt-1">
+                  {new Date().toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </p>
               </div>
 
-              {/* Layout Toggle - Simplified for mobile */}
-              <div className="hidden sm:flex bg-gray-100 rounded-lg p-1">
-                <Button
-                  variant={dashboardLayout === 'compact' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setDashboardLayout('compact')}
-                  className="px-2 min-h-[36px]"
-                  title="Compact view"
-                  data-testid="layout-compact"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={dashboardLayout === 'default' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setDashboardLayout('default')}
-                  className="px-2 min-h-[36px]"
-                  data-testid="layout-default"
-                >
-                  Default
-                </Button>
-                <Button
-                  variant={dashboardLayout === 'expanded' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setDashboardLayout('expanded')}
-                  className="px-2 min-h-[36px]"
-                  data-testid="layout-expanded"
-                >
-                  Wide
-                </Button>
-              </div>
+              <div className="flex items-center gap-3">
+                {/* System Status */}
+                <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
+                  <div className={cn(
+                    "h-2 w-2 rounded-full animate-pulse",
+                    dashboardHealth.status === 'healthy' ? "bg-green-500" :
+                    dashboardHealth.status === 'partial' ? "bg-yellow-500" :
+                    "bg-red-500"
+                  )} />
+                  <span className="text-sm font-medium text-gray-700">
+                    System {dashboardHealth.status === 'healthy' ? 'Operational' : 
+                           dashboardHealth.status === 'partial' ? 'Partial' : 'Degraded'}
+                  </span>
+                </div>
 
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleRefreshDashboard}
-                disabled={isRefreshing}
-                className="min-h-[44px] flex-1 sm:flex-none"
-                data-testid="refresh-dashboard"
-              >
-                <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
-                <span className="ml-2 hidden sm:inline">Refresh</span>
-              </Button>
+                {/* Layout Toggle */}
+                <div className="hidden sm:flex bg-gray-100 rounded-lg p-1">
+                  <Button
+                    variant={dashboardLayout === 'compact' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setDashboardLayout('compact')}
+                    className="px-3"
+                    data-testid="layout-compact"
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={dashboardLayout === 'default' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setDashboardLayout('default')}
+                    className="px-3"
+                    data-testid="layout-default"
+                  >
+                    Default
+                  </Button>
+                  <Button
+                    variant={dashboardLayout === 'expanded' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setDashboardLayout('expanded')}
+                    className="px-3"
+                    data-testid="layout-expanded"
+                  >
+                    Wide
+                  </Button>
+                </div>
 
-              <div className="hidden sm:block">
-                <ApiStatusIndicators />
+                {/* Refresh Button */}
+                <Button 
+                  variant="outline" 
+                  size="default"
+                  onClick={handleRefreshDashboard}
+                  disabled={isRefreshing}
+                  className="gap-2"
+                  data-testid="refresh-dashboard"
+                >
+                  <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+                  <span className="hidden sm:inline">Refresh</span>
+                </Button>
+
+                {/* API Status */}
+                <div className="hidden sm:block">
+                  <ApiStatusIndicators />
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content - iPhone Optimized */}
-      <div className="p-3 sm:p-6 max-w-[1800px] mx-auto space-y-4 sm:space-y-6 safe-area-bottom">
-        {/* Primary Section - Always visible */}
+      {/* Main Content Area */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Key Metrics Cards */}
         <ErrorBoundary>
           <DashboardSection
             error={statsQuery.error as Error | null}
             isLoading={statsQuery.isLoading}
             onRefresh={() => statsQuery.refetch()}
           >
-            <QuickStats stats={statsQuery.data || {
-              todaysSessions: 0,
-              activeClients: 0,
-              urgentActionItems: 0,
-              completionRate: 0
-            }} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <StatCard
+                title="Today's Sessions"
+                value={stats.todaysSessions}
+                icon={Calendar}
+                color="blue"
+                description="Scheduled appointments"
+                trend={{ value: 12, isPositive: true }}
+              />
+              <StatCard
+                title="Active Clients"
+                value={stats.activeClients}
+                icon={Users}
+                color="green"
+                description="Currently in treatment"
+                trend={{ value: 5, isPositive: true }}
+              />
+              <StatCard
+                title="Urgent Items"
+                value={stats.urgentActionItems}
+                icon={Activity}
+                color="orange"
+                description="Requires attention"
+                trend={{ value: 3, isPositive: false }}
+              />
+              <StatCard
+                title="Completion Rate"
+                value={`${stats.completionRate}%`}
+                icon={CheckCircle2}
+                color="purple"
+                description="Weekly average"
+                trend={{ value: 8, isPositive: true }}
+              />
+            </div>
           </DashboardSection>
         </ErrorBoundary>
 
-        {/* Main Dashboard Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          {/* Left Column - Main Content (2 cols on lg) */}
-          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-            {/* Today's Schedule - Enhanced */}
+        {/* Main Dashboard Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content Column */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Today's Schedule - Primary Focus */}
             <ErrorBoundary>
-              <TodaysSchedule />
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-gray-900">Today's Schedule</h2>
+                  <span className="text-sm text-gray-500">
+                    {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  </span>
+                </div>
+                <TodaysSchedule />
+              </div>
             </ErrorBoundary>
 
             {/* Real-Time Metrics */}
             <ErrorBoundary>
-              <RealTimeMetrics />
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Practice Metrics</h2>
+                <RealTimeMetrics />
+              </div>
             </ErrorBoundary>
 
             {/* Recent Activity */}
             <ErrorBoundary>
-              <RecentActivity />
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
+                <RecentActivity />
+              </div>
             </ErrorBoundary>
 
+            {/* AI Insights - Conditional based on layout */}
             {dashboardLayout !== 'compact' && (
               <ErrorBoundary>
-                <AiInsightsPanel />
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-blue-100 p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">AI Insights</h2>
+                  <AiInsightsPanel />
+                </div>
               </ErrorBoundary>
             )}
           </div>
 
-          {/* Right Column - Quick Actions & Secondary Content */}
-          <div className="space-y-4 sm:space-y-6">
-            {/* Quick Actions Panel */}
+          {/* Sidebar Column */}
+          <div className="space-y-6">
+            {/* Quick Actions */}
             <ErrorBoundary>
-              <QuickActionsPanel />
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+                <QuickActionsPanel />
+              </div>
             </ErrorBoundary>
 
             {/* Urgent Action Items */}
             <ErrorBoundary>
-              <UrgentActionItems />
+              <div className="bg-red-50 rounded-xl shadow-sm border border-red-100 p-6">
+                <h2 className="text-lg font-semibold text-red-900 mb-4">Urgent Items</h2>
+                <UrgentActionItems />
+              </div>
             </ErrorBoundary>
 
             {/* Today's Sessions */}
             <ErrorBoundary>
-              <TodaysSessions />
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Session Notes</h2>
+                <TodaysSessions />
+              </div>
             </ErrorBoundary>
 
+            {/* AI Insights - Compact layout */}
             {dashboardLayout === 'compact' && (
               <ErrorBoundary>
-                <AiInsightsPanel />
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-blue-100 p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">AI Insights</h2>
+                  <AiInsightsPanel />
+                </div>
               </ErrorBoundary>
             )}
-
-            {/* Document Uploader - Hidden on compact */}
           </div>
         </div>
 
-        {/* Tertiary Information - Lower Priority */}
-        <DashboardSection
-          title="Additional Insights"
-          collapsible
-          defaultCollapsed={dashboardLayout === 'compact'}
-        >
-          <div className={cn("grid grid-cols-1 gap-6", getGridClass('tertiary'))}>
-            <ErrorBoundary>
-              <RecentActivity />
-            </ErrorBoundary>
+        {/* Additional Insights - Collapsible Section */}
+        {dashboardLayout !== 'compact' && (
+          <div className="mt-8">
+            <DashboardSection
+              title="Additional Insights"
+              description="Detailed practice analytics and progress tracking"
+              collapsible
+              defaultCollapsed={false}
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ErrorBoundary>
+                  <div className="bg-white rounded-lg p-6 border border-gray-100">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Client Progress</h3>
+                    <ProgressOverview />
+                  </div>
+                </ErrorBoundary>
 
-            <ErrorBoundary>
-              <ProgressOverview />
-            </ErrorBoundary>
+                <ErrorBoundary>
+                  <div className="bg-white rounded-lg p-6 border border-gray-100">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Activity Timeline</h3>
+                    <RecentActivity />
+                  </div>
+                </ErrorBoundary>
+              </div>
+            </DashboardSection>
           </div>
-        </DashboardSection>
+        )}
       </div>
     </div>
   );
