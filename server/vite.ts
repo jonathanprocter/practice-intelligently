@@ -11,12 +11,39 @@ if (typeof import.meta.dirname === 'undefined') {
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
-import { createServer as createViteDevServer, createLogger } from "vite";
+import {
+  createServer as createViteDevServer,
+  createLogger,
+  mergeConfig,
+  type InlineConfig,
+} from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
 
 const viteLogger = createLogger();
+
+const clientRoot = path.resolve(import.meta.dirname, "../client");
+const indexHtmlPath = path.resolve(clientRoot, "index.html");
+
+async function loadIndexTemplate() {
+  try {
+    const rawTemplate = await fs.promises.readFile(indexHtmlPath, "utf-8");
+    return rawTemplate.replace(
+      /src="\/src\/main\.tsx(\?v=[^"]*)?"/,
+      `src="/src/main.tsx?v=${nanoid()}"`,
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    viteLogger.error(
+      `Failed to read client index.html from ${indexHtmlPath}: ${message}`,
+    );
+    throw new Error(
+      `Unable to load client application shell. Please check that ${indexHtmlPath} exists.`,
+      { cause: error instanceof Error ? error : undefined },
+    );
+  }
+}
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -33,17 +60,22 @@ export function log(message: string, source = "express") {
 }
 
 export async function setupVite(app: Express, server: Server) {
-  const vite = await createViteDevServer({
-    server: { 
-      middlewareMode: true,
-      hmr: {
-        port: 5173,
-        host: "0.0.0.0",
-      }
-    },
+  const mergedConfig = mergeConfig(viteConfig, {
+    configFile: false,
     appType: "spa",
-    root: path.resolve(__dirname, "../client"),
-  });
+    root: clientRoot,
+    server: {
+      middlewareMode: true,
+      hmr: { server },
+      watch: {
+        usePolling: true,
+        interval: 1000,
+      },
+      allowedHosts: true,
+    },
+  }) as InlineConfig;
+
+  const vite = await createViteDevServer(mergedConfig);
 
   app.use(vite.ssrFixStacktrace);
   app.use(vite.middlewares);
@@ -56,10 +88,20 @@ export async function setupVite(app: Express, server: Server) {
 
     try {
       const url = req.originalUrl;
-      let template = await vite.transformIndexHtml(url, indexTemplate);
-      res.status(200).set({ "Content-Type": "text/html" }).end(template);
+      const indexTemplate = await loadIndexTemplate();
+      const transformedTemplate = await vite.transformIndexHtml(
+        url,
+        indexTemplate,
+      );
+      res
+        .status(200)
+        .set({ "Content-Type": "text/html" })
+        .end(transformedTemplate);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
+      viteLogger.error(
+        `Error serving client route ${req.originalUrl}: ${(e as Error)?.message}`,
+      );
       next(e);
     }
   });
