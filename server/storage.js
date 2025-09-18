@@ -1118,24 +1118,28 @@ __export(email_service_exports, {
   sendCheckInEmail: () => sendCheckInEmail,
   sendEmail: () => sendEmail
 });
-import sgMail from "@sendgrid/mail";
+// SendGrid not installed - commenting out
+// import sgMail from "@sendgrid/mail";
 async function sendEmail(params) {
   try {
-    if (!process.env.SENDGRID_API_KEY) {
-      console.warn("SendGrid API key not configured, cannot send email");
-      return false;
-    }
-    await sgMail.send({
-      to: params.to,
-      from: params.from,
-      subject: params.subject,
-      text: params.text,
-      html: params.html
-    });
-    console.log("Email sent successfully to:", params.to);
-    return true;
+    // Email service temporarily disabled (SendGrid not installed)
+    console.warn("Email service not configured - skipping email send");
+    return false;
+    // if (!process.env.SENDGRID_API_KEY) {
+    //   console.warn("SendGrid API key not configured, cannot send email");
+    //   return false;
+    // }
+    // await sgMail.send({
+    //   to: params.to,
+    //   from: params.from,
+    //   subject: params.subject,
+    //   text: params.text,
+    //   html: params.html
+    // });
+    // console.log("Email sent successfully to:", params.to);
+    // return true;
   } catch (error) {
-    console.error("SendGrid email error:", error);
+    console.error("Email error:", error);
     return false;
   }
 }
@@ -1152,9 +1156,10 @@ async function sendCheckInEmail(clientEmail, subject, message, therapistEmail) {
 }
 var init_email_service = __esm({
   "server/email-service.ts"() {
-    if (process.env.SENDGRID_API_KEY) {
-      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    }
+    // SendGrid temporarily disabled
+    // if (process.env.SENDGRID_API_KEY) {
+    //   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    // }
   }
 });
 

@@ -50,15 +50,25 @@ app.get('/api/status', (req, res) => {
   });
 });
 
-// Load fallback routes immediately to prevent 404 errors
+// Load routes immediately to prevent 404 errors
 (async () => {
   try {
-    const fallbackRoutes = await import('./routes-fallback.js');
-    const router = fallbackRoutes.default || fallbackRoutes;
+    // Try to load actual routes first
+    const routesModule = await import('./routes.js');
+    const router = routesModule.default || routesModule;
     app.use('/api', router);
-    console.log('✅ Fallback API routes loaded at /api');
+    console.log('✅ API routes loaded at /api');
   } catch (err) {
-    console.log('⚠️ Could not load fallback routes:', err.message);
+    // If routes.js fails, try fallback
+    console.log('⚠️ Could not load routes.js, trying fallback:', err.message);
+    try {
+      const fallbackRoutes = await import('./routes-fallback.js');
+      const router = fallbackRoutes.default || fallbackRoutes;
+      app.use('/api', router);
+      console.log('✅ Fallback API routes loaded at /api');
+    } catch (fallbackErr) {
+      console.log('⚠️ Could not load any routes:', fallbackErr.message);
+    }
   }
 })();
 
