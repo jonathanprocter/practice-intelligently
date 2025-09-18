@@ -51,6 +51,16 @@ NODE_ENV=production
 - Git
 - Build essentials
 
+## Git Sync Configuration
+
+- The Replit start script now auto-configures a Git remote the first time it runs. Override the default GitHub repository by setting the `REPLIT_GIT_REMOTE` secret.
+- Set `REPLIT_GIT_USER_NAME` and `REPLIT_GIT_USER_EMAIL` secrets to prefill your Git identity for commits.
+- Use the helper command to re-run the sync at any time:
+  ```bash
+  npm run replit:git-sync
+  ```
+- When pushing from Replit you still need a GitHub Personal Access Token. Paste the token when Git prompts for a password after `git push origin main`.
+
 ## Installation Steps in Replit
 
 1. **Fork/Import the Repository**

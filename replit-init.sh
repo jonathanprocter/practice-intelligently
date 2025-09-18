@@ -9,17 +9,52 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Step 1: Check Node.js version
+# Step 1: Ensure Git remote is configured for Replit pushes
+if command -v git &>/dev/null && git rev-parse --is-inside-work-tree &>/dev/null; then
+    echo -e "${YELLOW}Verifying Git remote configuration...${NC}"
+
+    REMOTE_URL=${REPLIT_GIT_REMOTE:-"https://github.com/jonathanprocter/practice-intelligence_clients.git"}
+
+    if ! git remote get-url origin &>/dev/null; then
+        echo -e "${YELLOW}Adding origin remote: $REMOTE_URL${NC}"
+        if git remote add origin "$REMOTE_URL"; then
+            echo -e "${GREEN}✓ Remote 'origin' configured${NC}"
+        else
+            echo -e "${RED}⚠️  Unable to add Git remote. Check the URL or network connection.${NC}"
+        fi
+    else
+        current_remote=$(git remote get-url origin)
+        echo -e "${GREEN}✓ Remote 'origin' already set to ${current_remote}${NC}"
+    fi
+
+    if [ -n "$REPLIT_GIT_USER_NAME" ]; then
+        git config user.name "$REPLIT_GIT_USER_NAME"
+    fi
+    if [ -n "$REPLIT_GIT_USER_EMAIL" ]; then
+        git config user.email "$REPLIT_GIT_USER_EMAIL"
+    fi
+
+    echo -e "${YELLOW}Fetching latest changes from origin...${NC}"
+    if git fetch origin --prune 2>/dev/null; then
+        echo -e "${GREEN}✓ Git fetch completed${NC}"
+    else
+        echo -e "${RED}⚠️  Git fetch failed. Configure credentials for private repositories or check your connection.${NC}"
+    fi
+else
+    echo -e "${YELLOW}Skipping Git remote setup (repository not detected).${NC}"
+fi
+
+# Step 2: Check Node.js version
 echo -e "${YELLOW}Checking Node.js version...${NC}"
 node_version=$(node -v)
 echo -e "${GREEN}✓ Node.js version: $node_version${NC}"
 
-# Step 2: Install dependencies
+# Step 3: Install dependencies
 echo -e "${YELLOW}Installing dependencies...${NC}"
 npm install --silent
 echo -e "${GREEN}✓ Dependencies installed${NC}"
 
-# Step 3: Check if database exists
+# Step 4: Check if database exists
 if [ -f "data/therapy.db" ]; then
     echo -e "${GREEN}✓ Database already exists${NC}"
 else
@@ -28,29 +63,29 @@ else
     echo -e "${GREEN}✓ Database directory created${NC}"
 fi
 
-# Step 4: Initialize database with test data
+# Step 5: Initialize database with test data
 echo -e "${YELLOW}Initializing database...${NC}"
 node test-database.js
 echo -e "${GREEN}✓ Database initialized with test data${NC}"
 
-# Step 5: Fix any schema issues
+# Step 6: Fix any schema issues
 echo -e "${YELLOW}Checking database schema...${NC}"
 node fix-database-schema.js 2>/dev/null || true
 echo -e "${GREEN}✓ Database schema verified${NC}"
 
-# Step 6: Create required directories
+# Step 7: Create required directories
 echo -e "${YELLOW}Creating required directories...${NC}"
 mkdir -p uploads temp_uploads logs attached_assets
 echo -e "${GREEN}✓ Directories created${NC}"
 
-# Step 7: Set up environment variables if not present
+# Step 8: Set up environment variables if not present
 if [ ! -f ".env" ]; then
     echo -e "${YELLOW}Creating .env file...${NC}"
     cp .env.development .env
     echo -e "${GREEN}✓ Environment file created${NC}"
 fi
 
-# Step 8: Check PM2 installation
+# Step 9: Check PM2 installation
 echo -e "${YELLOW}Checking PM2...${NC}"
 if ! command -v pm2 &> /dev/null; then
     echo -e "${YELLOW}Installing PM2...${NC}"
@@ -58,12 +93,12 @@ if ! command -v pm2 &> /dev/null; then
 fi
 echo -e "${GREEN}✓ PM2 available${NC}"
 
-# Step 9: Stop any existing PM2 processes
+# Step 10: Stop any existing PM2 processes
 echo -e "${YELLOW}Cleaning up existing processes...${NC}"
 npx pm2 delete all 2>/dev/null || true
 echo -e "${GREEN}✓ Process cleanup complete${NC}"
 
-# Step 10: Start the application
+# Step 11: Start the application
 echo -e "${YELLOW}Starting the development server...${NC}"
 echo ""
 echo -e "${GREEN}=============================================="

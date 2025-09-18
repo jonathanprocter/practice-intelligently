@@ -1,8 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Loader2, Minimize2, Maximize2 } from 'lucide-react';
+import { cn } from "@/lib/utils";
 
 // Stable Compass component with speech recognition temporarily disabled
-export default function CompassStable() {
+type CompassStableProps = {
+  className?: string;
+};
+
+export default function CompassStable({ className = "" }: CompassStableProps = {}) {
   // State management
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -121,7 +126,7 @@ export default function CompassStable() {
 
   if (!isOpen) {
     return (
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className={cn("fixed bottom-4 right-4 z-50", className)}>
         <button
           onClick={() => setIsOpen(true)}
           className="bg-purple-600 hover:bg-purple-700 text-white rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-105"
@@ -135,9 +140,13 @@ export default function CompassStable() {
   }
 
   return (
-    <div className={`fixed bottom-4 right-4 z-50 transition-all duration-300 ${
-      isMinimized ? 'w-80 h-12' : 'w-96 h-[600px]'
-    }`}>
+    <div
+      className={cn(
+        "fixed bottom-4 right-4 z-50 transition-all duration-300",
+        isMinimized ? "w-80 h-12" : "w-96 h-[600px]",
+        className,
+      )}
+    >
       <div className="bg-white rounded-lg shadow-xl border border-gray-200 h-full flex flex-col">
         {/* Header */}
         <div className="bg-purple-600 text-white p-4 rounded-t-lg flex items-center justify-between">

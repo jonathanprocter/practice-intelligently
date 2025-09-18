@@ -148,17 +148,16 @@ npx pm2 monit  # Monitor resources
 
 ### Setup Git in Replit Shell:
 ```bash
-# Configure Git (use your info)
-git config --global user.email "your-email@example.com"
-git config --global user.name "Your Name"
+# 1. Configure remote + fetch (auto-uses REPLIT_GIT_* secrets if present)
+npm run replit:git-sync
 
-# Check current status
+# 2. Review changes
 git status
 
-# Pull latest changes
+# 3. Pull the latest work from GitHub
 git pull origin main
 
-# Push your changes
+# 4. Push your changes (requires a GitHub token on first use)
 git add .
 git commit -m "Your commit message"
 git push origin main

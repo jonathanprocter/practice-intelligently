@@ -19,6 +19,7 @@
     "fix:oauth": "node fix-oauth.js",
     "migrate": "node migrate-database.js",
     "setup": "npm run migrate && npm run fix:oauth",
+    "replit:git-sync": "bash scripts/replit-git-sync.sh",
     "test": "npm run test:system"
   },
   "dependencies": {
