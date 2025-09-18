@@ -2,7 +2,7 @@
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { ApiClient, type DashboardStats } from "@/lib/api";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Suspense, lazy, useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { RefreshCw, Settings, LayoutGrid, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -18,18 +18,15 @@ import QuickStats from "@/components/dashboard/quick-stats";
 import ApiStatusIndicators from "@/components/dashboard/api-status-indicators";
 import { AIInsightsWidget } from "@/components/dashboard/ai-insights-widget";
 
-// Lazy load heavy/secondary components
-const TodaysSchedule = lazy(() => import("@/components/dashboard/todays-schedule-enhanced"));
-const AiInsightsPanel = lazy(() => import("@/components/dashboard/ai-insights-panel"));
-const UrgentActionItems = lazy(() => import("@/components/dashboard/urgent-action-items"));
-const TodaysSessions = lazy(() => import("@/components/dashboard/todays-sessions"));
-const RecentActivity = lazy(() => import("@/components/dashboard/recent-activity"));
-const ProgressOverview = lazy(() => import("@/components/dashboard/progress-overview"));
-const RealTimeMetrics = lazy(() => import("@/components/dashboard/real-time-metrics"));
-const QuickActionsPanel = lazy(() => import("@/components/dashboard/quick-actions-panel"));
-const SessionDocumentUploader = lazy(() => import("@/components/SessionDocumentUploader").then(
-  module => ({ default: module.SessionDocumentUploader })
-));
+// Import dashboard components directly to avoid lazy loading issues
+import TodaysSchedule from "@/components/dashboard/todays-schedule-enhanced";
+import AiInsightsPanel from "@/components/dashboard/ai-insights-panel";
+import UrgentActionItems from "@/components/dashboard/urgent-action-items";
+import TodaysSessions from "@/components/dashboard/todays-sessions";
+import RecentActivity from "@/components/dashboard/recent-activity";
+import ProgressOverview from "@/components/dashboard/progress-overview";
+import RealTimeMetrics from "@/components/dashboard/real-time-metrics";
+import QuickActionsPanel from "@/components/dashboard/quick-actions-panel";
 
 // Dashboard configuration
 const DASHBOARD_CONFIG = {
@@ -451,30 +448,22 @@ export default function Dashboard() {
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Today's Schedule - Enhanced */}
             <ErrorBoundary>
-              <Suspense fallback={<DashboardSkeleton />}>
-                <TodaysSchedule />
-              </Suspense>
+              <TodaysSchedule />
             </ErrorBoundary>
 
             {/* Real-Time Metrics */}
             <ErrorBoundary>
-              <Suspense fallback={<DashboardSkeleton />}>
-                <RealTimeMetrics />
-              </Suspense>
+              <RealTimeMetrics />
             </ErrorBoundary>
 
             {/* Recent Activity */}
             <ErrorBoundary>
-              <Suspense fallback={<DashboardSkeleton />}>
-                <RecentActivity />
-              </Suspense>
+              <RecentActivity />
             </ErrorBoundary>
 
             {dashboardLayout !== 'compact' && (
               <ErrorBoundary>
-                <Suspense fallback={<DashboardSkeleton />}>
-                  <AiInsightsPanel />
-                </Suspense>
+                <AiInsightsPanel />
               </ErrorBoundary>
             )}
           </div>
@@ -483,41 +472,26 @@ export default function Dashboard() {
           <div className="space-y-4 sm:space-y-6">
             {/* Quick Actions Panel */}
             <ErrorBoundary>
-              <Suspense fallback={<DashboardSkeleton />}>
-                <QuickActionsPanel />
-              </Suspense>
+              <QuickActionsPanel />
             </ErrorBoundary>
 
             {/* Urgent Action Items */}
             <ErrorBoundary>
-              <Suspense fallback={<DashboardSkeleton />}>
-                <UrgentActionItems />
-              </Suspense>
+              <UrgentActionItems />
             </ErrorBoundary>
 
             {/* Today's Sessions */}
             <ErrorBoundary>
-              <Suspense fallback={<DashboardSkeleton />}>
-                <TodaysSessions />
-              </Suspense>
+              <TodaysSessions />
             </ErrorBoundary>
 
             {dashboardLayout === 'compact' && (
               <ErrorBoundary>
-                <Suspense fallback={<DashboardSkeleton />}>
-                  <AiInsightsPanel />
-                </Suspense>
+                <AiInsightsPanel />
               </ErrorBoundary>
             )}
 
             {/* Document Uploader - Hidden on compact */}
-            {dashboardLayout !== 'compact' && (
-              <ErrorBoundary>
-                <Suspense fallback={<DashboardSkeleton />}>
-                  <SessionDocumentUploader therapistId={therapistId} />
-                </Suspense>
-              </ErrorBoundary>
-            )}
           </div>
         </div>
 
@@ -529,15 +503,11 @@ export default function Dashboard() {
         >
           <div className={cn("grid grid-cols-1 gap-6", getGridClass('tertiary'))}>
             <ErrorBoundary>
-              <Suspense fallback={<DashboardSkeleton />}>
-                <RecentActivity />
-              </Suspense>
+              <RecentActivity />
             </ErrorBoundary>
 
             <ErrorBoundary>
-              <Suspense fallback={<DashboardSkeleton />}>
-                <ProgressOverview />
-              </Suspense>
+              <ProgressOverview />
             </ErrorBoundary>
           </div>
         </DashboardSection>
