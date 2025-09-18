@@ -5368,7 +5368,7 @@ Generate a comprehensive summary in the following JSON format:
       const updateData = {};
       Object.keys(note).forEach((key) => {
         const value = note[key];
-        if (value !== void 0 && value !== null) {
+        if (value !== void 0) {
           updateData[key] = value;
         }
       });
