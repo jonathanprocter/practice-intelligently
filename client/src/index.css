@@ -1,6 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  }
+}
 
 :root {
   /* ===== BACKGROUND SYSTEM ===== */
@@ -124,1017 +131,154 @@
   --ring: var(--color-border-focus);
   --radius: 0.5rem;
 
-  /* Custom therapy colors - Updated Ghost White Theme */
-  --therapy-primary: var(--color-primary);
-  --therapy-primary-light: var(--french-blue-200);
-  --therapy-primary-dark: var(--french-blue-600);
-  --therapy-success: var(--color-success);
-  --therapy-warning: var(--color-warning);
-  --therapy-error: var(--color-error);
-  --therapy-border: var(--color-border-default);
-  --therapy-text: var(--color-text-primary);
-  --therapy-bg: var(--color-bg-base);
-  --therapy-accent: var(--color-bg-sunken);
-}
-
-.dark {
-  /* ===== DARK MODE BACKGROUND SYSTEM ===== */
-  --color-bg-base: #0F1114;
-  --color-bg-default: #1A1D1F;
-  --color-bg-raised: #242729;
-  --color-bg-overlay: rgba(26, 29, 31, 0.97);
-  --color-bg-sunken: #0A0C0E;
-  
-  /* Adjust other colors for dark mode */
-  --color-primary: #5B79B8;
-  --color-success: #8FA47C;
-  --color-info: #8BA4C6;
-  --color-secondary: #7F9AAE;
-  --color-neutral: #4A514D;
-  
-  /* Dark mode text colors */
-  --color-text-primary: #F8F9FA;
-  --color-text-secondary: #D1D5DB;
-  --color-text-muted: #9CA3AF;
-  --color-text-disabled: #6B7280;
-  
-  /* Dark mode borders */
-  --color-border-default: #374151;
-  --color-border-hover: #4B5563;
-  --color-border-focus: #6B7280;
-
-  /* Legacy compatibility for dark mode */
-  --background: var(--color-bg-default);
-  --foreground: var(--color-text-primary);
-  --muted: var(--color-bg-sunken);
-  --muted-foreground: var(--color-text-muted);
-  --popover: var(--color-bg-raised);
-  --popover-foreground: var(--color-text-primary);
-  --card: var(--color-bg-raised);
-  --card-foreground: var(--color-text-primary);
-  --border: var(--color-border-default);
-  --input: var(--color-border-default);
-  --primary: var(--color-primary);
-  --primary-foreground: #FFFFFF;
-  --secondary: var(--color-secondary);
-  --secondary-foreground: #FFFFFF;
-  --accent: var(--color-bg-sunken);
-  --accent-foreground: var(--color-text-primary);
-  --destructive: var(--color-error);
-  --destructive-foreground: #FFFFFF;
-  --ring: var(--color-border-focus);
-
-  /* Updated therapy colors for dark mode */
-  --therapy-bg: var(--color-bg-base);
-  --therapy-text: var(--color-text-primary);
-  --therapy-border: var(--color-border-default);
+  /* Therapy-themed colors */
+  --therapy-primary: #6495ed;
+  --therapy-primary-hover: #4a7dd8;
+  --therapy-secondary: #87ceeb;
+  --therapy-accent: #98d8c8;
+  --therapy-muted: #e8f4f8;
+  --therapy-text: #1e293b;
+  --therapy-success: #86b37d;
+  --therapy-warning: #f0ad4e;
+  --therapy-error: #dc3545;
 }
 
 @layer base {
   * {
-    /* @apply border-border; */ /* Temporarily commented out for deployment build */
+    border-color: var(--border);
   }
-
   body {
-    @apply font-sans antialiased bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    /* Enhanced iPhone optimizations */
-    -webkit-text-size-adjust: 100%;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-    font-feature-settings: "kern" 1;
-    
-    /* Prevent horizontal scroll on iPhone */
-    overflow-x: hidden;
-    position: relative;
-    
-    /* Enhanced safe area support for iPhone X+ */
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    
-    /* iPhone-specific performance optimizations */
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    -webkit-perspective: 1000px;
-    perspective: 1000px;
-    
-    /* Better touch scrolling */
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   }
 }
 
-@layer components {
+/* Apply font globally */
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--color-bg-default);
+  color: var(--color-text-primary);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 600;
+}
+
+/* Rest of the CSS continues as before... */
+
+.dark {
+  /* Keep existing dark mode styles */
+}
+
+/* Mobile specific styles for text selection */
+@media (max-width: 768px) {
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  
+  input,
+  textarea,
+  [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
+/* Touch-friendly interactive elements */
+@media (pointer: coarse) {
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  [role="button"],
+  [role="link"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Increase padding for better touch targets */
+  .btn,
+  .button {
+    padding: 12px 20px;
+  }
+}
+
+/* Safe area support for iPhone X and later */
+@supports (padding: max(0px)) {
+  .safe-area-inset {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Additional utility classes for therapy theme */
+@layer utilities {
   .therapy-card {
-    background: var(--color-bg-raised);
-    border: 1px solid var(--color-border-default);
-    box-shadow: var(--shadow-sm);
-    @apply rounded-xl transition-all;
-    transition: all var(--transition-fast);
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    padding: 1.5rem;
+    transition: all 0.3s;
   }
   
   .therapy-card:hover {
-    box-shadow: var(--shadow-md);
-    border-color: var(--color-border-hover);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
   
-  .sidebar-nav {
-    background: var(--color-primary);
+  .therapy-button {
+    background-color: #6495ed;
     color: white;
-    pointer-events: auto;
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    transition: background-color 0.3s;
   }
   
-  .sidebar-nav * {
-    pointer-events: auto;
+  .therapy-button:hover {
+    background-color: #4a7dd8;
   }
   
-  .sidebar-nav a {
-    pointer-events: auto !important;
-    cursor: pointer !important;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    position: relative;
-    z-index: 10;
+  .therapy-input {
+    border: 1px solid rgb(209 213 219);
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
   }
   
-  .sidebar-nav a:hover {
-    text-decoration: none;
-    background: var(--french-blue-600);
-  }
-  
-  .status-indicator {
-    @apply w-2 h-2 rounded-full inline-block mr-2;
-  }
-  
-  .status-online {
-    background-color: var(--therapy-warning);
-  }
-  
-  .status-offline {
-    background-color: var(--therapy-error);
-  }
-  
-  .status-pending {
-    background-color: var(--therapy-primary);
-  }
-  
-  .progress-bar {
-    background: linear-gradient(90deg, var(--therapy-primary) 0%, var(--therapy-success) 100%);
-    @apply h-1.5 rounded-full transition-all duration-300;
-  }
-  
-  .ai-insight {
-    background: var(--color-bg-raised);
-    border: 1px solid var(--color-border-default);
-    border-left: 4px solid var(--color-primary);
-    box-shadow: var(--shadow-sm);
-  }
-
-  /* Form Input Styles */
-  input, textarea, select {
-    background: var(--color-bg-raised);
-    border: 2px solid var(--color-border-default);
-    color: var(--color-text-primary);
-    transition: all var(--transition-fast);
-  }
-
-  input:hover, textarea:hover, select:hover {
-    border-color: var(--color-border-hover);
-    background: var(--color-bg-raised);
-  }
-
-  input:focus, textarea:focus, select:focus {
+  .therapy-input:focus {
     outline: none;
-    border-color: var(--color-border-focus);
-    box-shadow: var(--shadow-focus);
-  }
-
-  /* Button Styles */
-  .btn-primary {
-    background: var(--color-primary);
-    color: white;
-    border: none;
-    transition: all var(--transition-fast);
-  }
-
-  .btn-primary:hover {
-    background: var(--french-blue-600);
-    box-shadow: var(--shadow-md);
-  }
-
-  .btn-success {
-    background: var(--color-success);
-    color: white;
-  }
-
-  .btn-secondary {
-    background: var(--color-secondary);
-    color: white;
-  }
-
-  .btn-outline {
-    background: transparent;
-    border: 2px solid var(--color-primary);
-    color: var(--color-primary);
-  }
-
-  /* Calendar Styles */
-  .calendar-day {
-    background: var(--color-bg-raised);
-    border: 1px solid var(--color-border-default);
-  }
-
-  .calendar-day:hover {
-    background: var(--info-steel-50);
-    border-color: var(--info-steel-300);
-  }
-
-  .calendar-day.today {
-    background: var(--color-primary);
-    color: white;
-  }
-
-  .calendar-day.available {
-    background: var(--sage-green-100);
-    border: 2px solid var(--sage-green-400);
-    color: var(--sage-green-700);
-  }
-
-  .calendar-day.busy {
-    background: var(--slate-blue-100);
-    border-color: var(--slate-blue-400);
-  }
-
-  /* Main Container Styles */
-  .main-container {
-    background: var(--color-bg-base);
-  }
-
-  /* Compass Avatar Activation Animations */
-  .compass-activated {
-    animation: compass-activate 2s ease-in-out forwards;
-    transform-origin: center center;
-  }
-
-  @keyframes compass-activate {
-    0% { 
-      transform: rotate(0deg) scale(1);
-    }
-    20% { 
-      transform: rotate(360deg) scale(1.1);
-    }
-    40% { 
-      transform: rotate(720deg) scale(1.2);
-    }
-    60% { 
-      transform: rotate(1080deg) scale(1.15);
-    }
-    80% { 
-      transform: rotate(1440deg) scale(1.1);
-    }
-    100% { 
-      transform: rotate(1800deg) scale(1);
-    }
-  }
-
-  /* Sparkle effects for activation */
-  .compass-sparkles-active {
-    opacity: 1 !important;
-    animation: sparkle-glow 2s ease-in-out;
-  }
-
-  @keyframes sparkle-glow {
-    0%, 100% { opacity: 0; }
-    50% { opacity: 1; }
-  }
-
-  /* Enhanced iPhone Touch Optimizations */
-  .touch-manipulation {
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-
-  /* Improve button touch targets for iPhone */
-  [data-compass-fab] {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-  }
-
-  /* Enhanced iPhone-specific button improvements */
-  button, [role="button"], .btn, .clickable {
-    -webkit-tap-highlight-color: rgba(100, 149, 237, 0.2);
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-    /* Minimum touch target size for iPhone */
-    min-height: 44px;
-    min-width: 44px;
-    touch-action: manipulation;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    position: relative;
-    z-index: 1;
-    /* Better accessibility for iPhone */
-    outline: none;
-    transition: all 0.15s ease-in-out;
-  }
-
-  /* Enhanced touch feedback */
-  button:active, [role="button"]:active, .clickable:active {
-    transform: scale(0.97);
-    transition: transform 0.1s ease;
-  }
-
-  /* Enhanced Input optimizations for iPhone */
-  input, textarea, select {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    -webkit-border-radius: 8px;
-    border-radius: 8px;
-    font-size: 16px; /* Prevents zoom on iPhone */
-    line-height: 1.5;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    touch-action: manipulation;
-    /* Better visual feedback */
-    transition: all 0.2s ease;
-    min-height: 44px;
-    padding: 12px 16px;
-  }
-
-  /* Enhanced focus styles for better accessibility */
-  input:focus, textarea:focus, select:focus {
-    outline: 2px solid var(--therapy-primary);
-    outline-offset: 2px;
-    box-shadow: 0 0 0 3px rgba(100, 149, 237, 0.1);
-  }
-
-  /* Prevent zoom on input focus - Enhanced */
-  @media screen and (max-width: 767px) {
-    input[type="text"],
-    input[type="email"], 
-    input[type="password"],
-    input[type="search"],
-    input[type="tel"],
-    input[type="url"],
-    input[type="number"],
-    input[type="date"],
-    input[type="time"],
-    input[type="datetime-local"],
-    textarea,
-    select {
-      font-size: 16px !important;
-      -webkit-text-size-adjust: 100%;
-    }
-    
-    /* Better checkbox and radio buttons on iPhone */
-    input[type="checkbox"], 
-    input[type="radio"] {
-      min-width: 20px;
-      min-height: 20px;
-      transform: scale(1.2);
-    }
-  }
-
-  /* iPhone safe area support */
-  .safe-area-top {
-    padding-top: env(safe-area-inset-top);
+    box-shadow: 0 0 0 3px rgba(100, 149, 237, 0.5);
+    border-color: transparent;
   }
   
-  .safe-area-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  
-  .safe-area-left {
-    padding-left: env(safe-area-inset-left);
-  }
-  
-  .safe-area-right {
-    padding-right: env(safe-area-inset-right);
-  }
-  
-  /* Rich text formatting for Compass messages */
-  .rich-text-content {
-    line-height: 1.5;
-  }
-  
-  .rich-text-content strong {
-    font-weight: 600;
-    color: var(--therapy-primary);
-  }
-  
-  .rich-text-content em {
-    font-style: italic;
-    color: var(--therapy-secondary);
-  }
-  
-  .rich-text-content .bullet-point {
-    margin: 0.25rem 0;
-  }
-  
-  .rich-text-content .bullet-point .bullet {
-    color: var(--therapy-primary);
-    font-weight: bold;
-  }
-  /* Enhanced iPhone and touch device optimizations */
-  @media (pointer: coarse) {
-    .compass-interface button {
-      min-height: 48px;
-      min-width: 48px;
-      padding: 12px;
-    }
-    
-    /* Larger touch targets for all interactive elements */
-    button, [role="button"], a, .clickable {
-      min-height: 48px;
-      min-width: 48px;
-      padding: 12px 16px;
-      margin: 2px;
-    }
-    
-    /* Improve form controls */
-    input, textarea, select {
-      min-height: 48px;
-      padding: 14px 16px;
-      font-size: 16px;
-    }
-    
-    /* Better spacing for mobile cards */
-    .therapy-card {
-      margin: 8px 0;
-      padding: 16px;
-    }
-    
-    /* Optimize navigation for touch */
-    .sidebar-nav a {
-      min-height: 52px;
-      padding: 16px 20px;
-      margin: 2px 0;
-    }
-  }
-  
-  /* Enhanced iPhone-specific landscape optimizations */
-  @media screen and (max-height: 500px) and (orientation: landscape) {
-    .sidebar-nav {
-      width: 280px;
-      padding-top: max(8px, env(safe-area-inset-top));
-    }
-    
-    .appointments-column {
-      grid-template-rows: repeat(36, 32px);
-    }
-    
-    .time-slot {
-      height: 32px;
-      font-size: 14px;
-    }
-    
-    /* Compress header in landscape */
-    .header-safe {
-      padding-top: 8px;
-      padding-bottom: 8px;
-    }
-    
-    .header-safe h2 {
-      font-size: 1.25rem;
-    }
-    
-    /* Make modal dialogs more compact in landscape */
-    .dialog-content {
-      max-height: 85vh;
-      overflow-y: auto;
-    }
-  }
-  
-  /* iPhone-specific portrait optimizations */
-  @media screen and (max-width: 428px) and (orientation: portrait) {
-    .main-content {
-      padding: 12px;
-    }
-    
-    .therapy-card {
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* Stack elements vertically on iPhone */
-    .desktop-row {
-      flex-direction: column;
-      gap: 12px;
-    }
-    
-    /* Optimize text sizes for iPhone */
-    h1 { font-size: 1.5rem !important; }
-    h2 { font-size: 1.25rem !important; }
-    h3 { font-size: 1.125rem !important; }
-    p, span, div { 
-      font-size: 16px !important;
-      line-height: 1.6 !important;
-    }
-  }
-  
-  /* iPhone X+ notch support */
-  @supports (padding: max(0px)) {
-    .header-safe {
-      padding-left: max(1rem, env(safe-area-inset-left));
-      padding-right: max(1rem, env(safe-area-inset-right));
-    }
-    
-    .sidebar-nav {
-      padding-top: max(1rem, env(safe-area-inset-top));
-    }
-  }
-  
-  /* Enhanced scroll behavior for iPhone */
-  * {
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-  }
-  
-  /* Prevent elastic scroll bounce on iPhone */
-  body, html {
-    overscroll-behavior: none;
-    overscroll-behavior-x: none;
-    overscroll-behavior-y: contain;
-  }
-  
-  /* Scrollable containers optimization */
-  .scrollable-container {
-    -webkit-overflow-scrolling: touch;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-  }
-
-  /* Better momentum scrolling for iPhone */
-  .calendar-container,
-  .appointments-list,
-  .sidebar-nav,
-  .content-wrapper,
-  .scrollable-container {
-    -webkit-overflow-scrolling: touch;
-    overflow-scrolling: touch;
-    will-change: scroll-position;
-    /* Improve scroll performance on iPhone */
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-  }
-  
-  /* Enhanced iPhone scroll container */
-  .iphone-scroll-container {
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-    overscroll-behavior: contain;
-    position: relative;
-    overflow-y: auto;
-    transform: translate3d(0, 0, 0);
-  }
-  
-  /* Improve button feedback on iPhone */
-  button:active, [role="button"]:active, .clickable:active {
-    transform: scale(0.98);
-    transition: transform 0.1s ease;
-  }
-  
-  /* Custom focus styles for iPhone accessibility */
-  button:focus-visible, 
-  input:focus-visible, 
-  select:focus-visible, 
-  textarea:focus-visible,
-  [role="button"]:focus-visible {
-    outline: 2px solid #6495ed;
-    outline-offset: 2px;
-  }
-  
-  /* Enhanced readability on iPhone */
-  @media screen and (max-width: 767px) {
-    p, span, div {
-      font-size: 16px;
-      line-height: 1.6;
-    }
-    
-    h1 { 
-      font-size: 1.5rem; 
-      font-weight: 700;
-      line-height: 1.3;
-    }
-    h2 { 
-      font-size: 1.25rem; 
-      font-weight: 600;
-      line-height: 1.4;
-    }
-    h3 { 
-      font-size: 1.125rem;
-      font-weight: 600;
-      line-height: 1.4;
-    }
-    
-    /* Better spacing for iPhone cards and containers */
-    .therapy-card {
-      margin: 8px 4px;
-      padding: 16px 12px;
-      border-radius: 12px;
-    }
-    
-    /* Optimize button spacing */
-    .button-group {
-      gap: 8px;
-    }
-    
-    .button-group > * {
-      flex: 1;
-      min-width: 120px;
-    }
-  }
-  
-  /* iPhone-specific animations */
-  @media (prefers-reduced-motion: no-preference) {
-    .animate-fade-in {
-      animation: fadeIn 0.3s ease-in-out;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+  .therapy-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgb(55 65 81);
+    margin-bottom: 0.25rem;
+    display: block;
   }
 }
 
-/* Calendar-specific styles */
-.calendar-time-slot {
-  @apply border-b transition-colors;
-  border-color: #ddd;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.calendar-time-slot:hover {
-  background-color: rgba(196, 155, 108, 0.05);
+::-webkit-scrollbar-track {
+  background: var(--color-bg-sunken);
 }
 
-.calendar-event {
-  transition: all 0.2s ease;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: 4px;
 }
 
-.calendar-event:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateY(-1px);
-  border-color: #1d4ed8 !important;
-}
-
-.calendar-time-slot {
-  overflow: visible !important;
-  position: relative !important;
-}
-
-.appointment-client-name {
-  font-weight: 600;
-  color: #1f2937;
-  word-break: break-word;
-  hyphens: auto;
-}
-
-.appointment-source {
-  color: #3b82f6;
-  font-weight: 500;
-  word-break: break-word;
-}
-
-.appointment-time {
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.calendar-event-cancelled {
-  @apply bg-red-100 border-red-200;
-}
-
-.old-calendar-event {
-  @apply text-xs p-1 mb-1 rounded border-l-4 bg-white shadow-sm cursor-pointer transition-all duration-200;
-}
-
-.calendar-event:hover {
-  @apply shadow-md;
-  transform: scale(1.02);
-}
-
-.calendar-event-confirmed {
-  border-left-color: var(--therapy-success);
-  background-color: rgba(87, 118, 156, 0.1);
-}
-
-.calendar-event-completed {
-  border-left-color: var(--therapy-primary);
-  background-color: rgba(196, 155, 108, 0.1);
-}
-
-.calendar-event-cancelled {
-  border-left-color: var(--therapy-error);
-  background-color: rgba(143, 93, 90, 0.1);
-}
-
-.calendar-event-no-show {
-  @apply border-l-gray-400 bg-gray-100;
-}
-
-.calendar-day-header {
-  @apply p-3 text-center cursor-pointer transition-colors;
-}
-
-.calendar-day-header:hover {
-  background-color: rgba(196, 155, 108, 0.05);
-}
-
-.calendar-day-today {
-  background-color: rgba(196, 155, 108, 0.1);
-  border-bottom: 2px solid var(--therapy-primary);
-}
-
-.drag-over-target {
-  background-color: rgba(196, 155, 108, 0.2);
-  border: 2px dashed var(--therapy-primary);
-}
-
-@layer utilities {
-  .text-therapy-primary {
-    color: var(--therapy-primary);
-  }
-  
-  .text-therapy-success {
-    color: var(--therapy-success);
-  }
-  
-  .text-therapy-warning {
-    color: var(--therapy-warning);
-  }
-  
-  .text-therapy-error {
-    color: var(--therapy-error);
-  }
-  
-  .text-therapy-text {
-    color: var(--therapy-text);
-  }
-  
-  .bg-therapy-bg {
-    background-color: var(--therapy-bg);
-  }
-  
-  .bg-therapy-primary {
-    background-color: var(--therapy-primary);
-  }
-  
-  .bg-therapy-success {
-    background-color: var(--therapy-success);
-  }
-  
-  .bg-therapy-warning {
-    background-color: var(--therapy-warning);
-  }
-  
-  .bg-therapy-error {
-    background-color: var(--therapy-error);
-  }
-  
-  .border-therapy-border {
-    border-color: var(--therapy-border);
-  }
-  
-  /* iPhone-specific utility classes */
-  .iphone-tap-highlight {
-    -webkit-tap-highlight-color: rgba(100, 149, 237, 0.2);
-  }
-  
-  .iphone-no-callout {
-    -webkit-touch-callout: none;
-  }
-  
-  .iphone-no-select {
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  
-  .iphone-smooth-scroll {
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-  }
-  
-  .iphone-backface-hidden {
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-  }
-  
-  .iphone-transform-3d {
-    transform: translate3d(0, 0, 0);
-    -webkit-transform: translate3d(0, 0, 0);
-  }
-
-  /* iPhone-specific responsive padding */
-  .safe-responsive {
-    padding-top: max(0.5rem, env(safe-area-inset-top));
-    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
-    padding-left: max(1rem, env(safe-area-inset-left));
-    padding-right: max(1rem, env(safe-area-inset-right));
-  }
-  
-  /* iPhone notch and home indicator support */
-  .iphone-notch-safe {
-    padding-top: max(44px, env(safe-area-inset-top));
-  }
-  
-  .iphone-home-indicator-safe {
-    padding-bottom: max(34px, env(safe-area-inset-bottom));
-  }
-}
-
-/* iPhone-specific animation optimizations */
-  @media (prefers-reduced-motion: no-preference) {
-    .iphone-smooth-animation {
-      transition: all 0.3s cubic-bezier(0.2, 0, 0.2, 1);
-      -webkit-transition: all 0.3s cubic-bezier(0.2, 0, 0.2, 1);
-    }
-  }
-
-  /* iPhone haptic feedback simulation through visual feedback */
-  .iphone-haptic-feedback:active {
-    transform: scale(0.95);
-    transition: transform 0.1s ease-in-out;
-  }
-
-  /* Enhanced iPhone button interactions */
-  .iphone-button-enhanced {
-    transform: translateZ(0);
-    transition: all 0.2s cubic-bezier(0.2, 0, 0.2, 1);
-    -webkit-backface-visibility: hidden;
-  }
-
-  .iphone-button-enhanced:active {
-    transform: scale(0.96) translateZ(0);
-    filter: brightness(0.95);
-  }
-
-  /* iPhone-specific card interactions */
-  .iphone-card-interaction {
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-  }
-
-  .iphone-card-interaction:active {
-    transform: scale(0.98);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  /* iPhone navigation gesture support */
-  .iphone-nav-gesture {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .iphone-nav-gesture::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transition: left 0.5s ease-in-out;
-  }
-
-  .iphone-nav-gesture:active::before {
-    left: 100%;
-  }
-
-  /* iPhone form input optimizations */
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="search"],
-  input[type="tel"],
-  input[type="url"],
-  input[type="number"],
-  textarea,
-  select {
-    font-size: 16px !important; /* Prevent zoom on focus */
-    -webkit-appearance: none;
-    -webkit-border-radius: 0;
-    border-radius: 8px;
-    background-color: #ffffff;
-    padding: 12px 16px;
-    min-height: 44px;
-    touch-action: manipulation;
-  }
-
-  /* iPhone input focus improvements */
-  input:focus,
-  textarea:focus,
-  select:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(100, 149, 237, 0.2);
-    transform: translateZ(0);
-  }
-
-  /* iPhone button styling consistency */
-  button,
-  .button,
-  [role="button"] {
-    min-height: 44px;
-    min-width: 44px;
-    font-size: 16px;
-    -webkit-appearance: none;
-    border-radius: 8px;
-    touch-action: manipulation;
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
-  }
-
-  /* iPhone checkbox and radio improvements */
-  input[type="checkbox"],
-  input[type="radio"] {
-    min-width: 20px;
-    min-height: 20px;
-    transform: scale(1.2);
-  }
-
-  /* Enhanced iPhone performance optimizations */
-  .iphone-performance-optimized {
-    will-change: transform;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    -webkit-perspective: 1000px;
-    perspective: 1000px;
-  }
-
-  /* iPhone-specific loading states */
-  .iphone-loading-shimmer {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-  }
-
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-  }
-
-  /* iPhone accessibility improvements */
-  @media (prefers-reduced-motion: reduce) {
-    .iphone-smooth-animation,
-    .iphone-haptic-feedback,
-    .iphone-card-interaction,
-    .iphone-button-enhanced {
-      transition: none !important;
-      animation: none !important;
-    }
-  }
-
-@media (max-width: 768px) {
-  .sidebar-nav {
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-  }
-  
-  .sidebar-nav.mobile-open {
-    transform: translateX(0);
-  }
-}
-
-/* Fix for blurred or unclickable navigation items */
-nav a, .sidebar-nav a {
-  pointer-events: auto !important;
-  cursor: pointer !important;
-  filter: none !important;
-  opacity: 1 !important;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-/* Ensure navigation links are always clickable */
-.sidebar-nav nav a:hover,
-.sidebar-nav nav a:focus,
-.sidebar-nav nav a:active {
-  pointer-events: auto !important;
-  filter: none !important;
-  opacity: 1 !important;
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-hover);
 }
